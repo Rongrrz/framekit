@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "webextensions": true
+  },
+  "ignorePatterns": ["node_modules", "dist", "build"],
+  "rules": {
+    "eqeqeq": "error",
+    "no-array-constructor": "error",
+    "no-control-regex": "error",
+    "no-debugger": "error",
+    "no-duplicate-imports": "error",
+    "no-else-return": "error",
+    "no-empty": "warn",
+    "no-inner-declarations": "error",
+    "no-lonely-if": "error",
+    "no-new-wrappers": "error",
+    "no-prototype-builtins": "error",
+    "no-self-compare": "error",
+    "no-sparse-arrays": "error",
+    "no-throw-literal": "error",
+    "no-unreachable": "error",
+    "no-unused-vars": "error",
+    "no-useless-concat": "error",
+    "no-useless-rename": "error",
+    "no-useless-return": "error",
+    "no-var": "error",
+    "object-shorthand": "error",
+    "prefer-const": "error",
+    "prefer-template": "error"
+  }
+}
