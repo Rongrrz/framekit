@@ -1,8 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "env": {
-    "browser": true,
-    "webextensions": true
+    "browser": true
   },
   "ignorePatterns": ["node_modules", "dist", "build"],
   "rules": {
