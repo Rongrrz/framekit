@@ -35,7 +35,7 @@ export function App() {
       Position={origin}
       BackgroundColor={Color4.hext('#0b1020')}
       ClipDescendants={false}
-      style={textBase}
+      styleOverride={textBase}
     >
       <Frame
         Size={UDim2.new(1, -48, 1, -48)}
@@ -44,7 +44,7 @@ export function App() {
         BackgroundColor={Color4.hext('#111827')}
         BorderRadius={28}
         ClipDescendants={false}
-        style={{
+        styleOverride={{
           maxWidth: 1180,
           maxHeight: 720,
           minWidth: 820,
@@ -76,7 +76,7 @@ export function App() {
             Size={UDim2.fromOffset(300, 24)}
             Position={UDim2.fromOffset(26, 24)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={caption}
+            styleOverride={caption}
           >
             FrameKit playground
           </Frame>
@@ -86,7 +86,7 @@ export function App() {
             Size={UDim2.new(1, -320, 0, 46)}
             Position={UDim2.fromOffset(24, 54)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{
+            styleOverride={{
               ...textBase,
               fontSize: 34,
               fontWeight: 800,
@@ -108,7 +108,7 @@ export function App() {
               Size={UDim2.fromScale(1, 1)}
               Position={origin}
               BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-              style={{
+              styleOverride={{
                 ...textBase,
                 color: '#0f172a',
                 fontSize: 14,
@@ -136,7 +136,7 @@ export function App() {
             Size={UDim2.new(1, -48, 0, 24)}
             Position={UDim2.fromOffset(24, 24)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{ ...caption, color: '#0369a1' }}
+            styleOverride={{ ...caption, color: '#0369a1' }}
           >
             Bordered card
           </Frame>
@@ -146,7 +146,7 @@ export function App() {
             Size={UDim2.new(1, -48, 0, 72)}
             Position={UDim2.fromOffset(24, 60)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{
+            styleOverride={{
               ...textBase,
               color: '#0f172a',
               fontSize: 30,
@@ -162,7 +162,7 @@ export function App() {
             Size={UDim2.new(1, -48, 0, 72)}
             Position={UDim2.fromOffset(24, 148)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{
+            styleOverride={{
               ...textBase,
               color: '#475569',
               fontSize: 15,
@@ -191,7 +191,7 @@ export function App() {
               Size={UDim2.new(1, -36, 0, 42)}
               Position={UDim2.fromOffset(18, 24)}
               BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-              style={{
+              styleOverride={{
                 ...textBase,
                 color: '#075985',
                 fontSize: 15,
@@ -222,7 +222,7 @@ export function App() {
             Size={UDim2.new(1, -48, 0, 24)}
             Position={UDim2.fromOffset(24, 24)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{ ...caption, color: '#fde68a' }}
+            styleOverride={{ ...caption, color: '#fde68a' }}
           >
             Highlighted panel
           </Frame>
@@ -232,7 +232,7 @@ export function App() {
             Size={UDim2.new(1, -48, 0, 38)}
             Position={UDim2.fromOffset(24, 58)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{
+            styleOverride={{
               ...textBase,
               fontSize: 26,
               fontWeight: 820,
@@ -247,7 +247,7 @@ export function App() {
             Size={UDim2.new(1, -48, 0, 54)}
             Position={UDim2.fromOffset(24, 112)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{
+            styleOverride={{
               ...textBase,
               color: '#cbd5e1',
               fontSize: 15,
@@ -278,7 +278,7 @@ export function App() {
             Size={UDim2.new(1, -48, 0, 24)}
             Position={UDim2.fromOffset(24, 22)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{ ...caption, color: '#334155' }}
+            styleOverride={{ ...caption, color: '#334155' }}
           >
             Nested frame
           </Frame>
@@ -308,7 +308,7 @@ export function App() {
               Size={UDim2.new(1, -104, 0, 44)}
               Position={UDim2.fromOffset(88, 23)}
               BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-              style={{
+              styleOverride={{
                 ...textBase,
                 color: '#334155',
                 fontSize: 15,
@@ -339,7 +339,7 @@ export function App() {
             Size={UDim2.fromOffset(156, 22)}
             Position={UDim2.fromOffset(22, 24)}
             BackgroundColor={Color4.rgbt(0, 0, 0, 1)}
-            style={{ ...caption, color: '#cbd5e1' }}
+            styleOverride={{ ...caption, color: '#cbd5e1' }}
           >
             Stroke samples
           </Frame>

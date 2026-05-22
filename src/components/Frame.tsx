@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { isDecorator } from '../decorators/decorator';
+import { extractDecorators } from '../decorators/decorator';
 import { Color4 } from '../primitives/Color4';
 import { UDim2 } from '../primitives/UDim2';
 import { Vector2 } from '../primitives/Vector2';
@@ -22,7 +22,7 @@ type FrameProps = {
   ClipDescendants?: boolean;
 
   className?: string;
-  style?: React.CSSProperties;
+  styleOverride?: React.CSSProperties;
 };
 
 export function Frame(props: FrameProps) {
@@ -40,7 +40,7 @@ export function Frame(props: FrameProps) {
     ZIndex = 1,
     ClipDescendants = true,
     className,
-    style,
+    styleOverride,
     ...rest
   } = props;
 
@@ -58,26 +58,12 @@ export function Frame(props: FrameProps) {
     overflow: ClipDescendants ? 'hidden' : 'visible',
   };
 
-  const normalChildren = [];
-  React.Children.forEach(children, (child) => {
-    if (!React.isValidElement(child)) {
-      return;
-    }
-    if (typeof child.type === 'string') {
-      normalChildren.push(child);
-      return;
-    }
-    if (isDecorator(child.type)) {
-      const css = child.type.toCss(child.props, 'Frame');
-      Object.assign(frameStyle, css);
-      return;
-    }
-    normalChildren.push(child);
-  });
+  const { normalChildren, decoratorStyle } = extractDecorators(children);
 
   const computedStyle: React.CSSProperties = {
     ...frameStyle,
-    ...style,
+    ...decoratorStyle,
+    ...styleOverride,
   };
 
   return React.createElement(
@@ -87,6 +73,6 @@ export function Frame(props: FrameProps) {
       className,
       style: computedStyle,
     },
-    children,
+    normalChildren,
   );
 }
