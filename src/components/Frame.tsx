@@ -70,6 +70,7 @@ export function Frame(props: FrameProps) {
     if (isDecorator(child.type)) {
       const css = child.type.toCss(child.props, 'Frame');
       Object.assign(frameStyle, css);
+      return;
     }
     normalChildren.push(child);
   });
