@@ -1,7 +1,7 @@
 // The consequences of Color4 is that we'd lose IDE support of showing
 // a snippet of the color
 
-import { clamp } from '../utils/MathUtils';
+import { clamp } from '../MathUtils';
 
 // This is where we differentiate from Roblox, as we will just take the RGB values...
 export class Color4 {

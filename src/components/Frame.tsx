@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { extractDecorators } from '../decorators/decorator';
 import { Color4 } from '../primitives/Color4';
 import { UDim2 } from '../primitives/UDim2';
 import { Vector2 } from '../primitives/Vector2';
@@ -7,7 +8,7 @@ import { colorToCss, positionToCss, sizeToCss } from '../rendering/toCss';
 
 type FrameProps = {
   as?: React.ElementType;
-  children?: React.ReactNode;
+  children?: React.ReactElement | React.ReactElement[];
 
   Size: UDim2;
   Position: UDim2;
@@ -21,7 +22,7 @@ type FrameProps = {
   ClipDescendants?: boolean;
 
   className?: string;
-  style?: React.CSSProperties;
+  styleOverride?: React.CSSProperties;
 };
 
 export function Frame(props: FrameProps) {
@@ -39,7 +40,7 @@ export function Frame(props: FrameProps) {
     ZIndex = 1,
     ClipDescendants = true,
     className,
-    style,
+    styleOverride,
     ...rest
   } = props;
 
@@ -57,9 +58,12 @@ export function Frame(props: FrameProps) {
     overflow: ClipDescendants ? 'hidden' : 'visible',
   };
 
+  const { normalChildren, decoratorStyle } = extractDecorators(children);
+
   const computedStyle: React.CSSProperties = {
     ...frameStyle,
-    ...style,
+    ...decoratorStyle,
+    ...styleOverride,
   };
 
   return React.createElement(
@@ -69,6 +73,6 @@ export function Frame(props: FrameProps) {
       className,
       style: computedStyle,
     },
-    children,
+    normalChildren,
   );
 }
