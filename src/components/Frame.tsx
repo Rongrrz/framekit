@@ -8,7 +8,7 @@ import { colorToCss, positionToCss, sizeToCss } from '../rendering/toCss';
 
 type FrameProps = {
   as?: React.ElementType;
-  children?: React.ReactNode;
+  children?: React.ReactElement | React.ReactElement[];
 
   Size: UDim2;
   Position: UDim2;
