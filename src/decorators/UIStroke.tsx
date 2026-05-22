@@ -4,6 +4,7 @@ import { colorToCss } from '../rendering/toCss';
 import type { BorderStrokePosition, LineJoinMode } from '../types';
 import { createUIDecorator, isTextHost, type UIDecorator } from './decorator';
 
+// TODO: Extract text (ApplyStrokeMode) mode into UITextStroke...
 type UIStrokeProps = {
   ApplyStrokeMode?: 'Border' | 'Contextual';
   Enabled?: boolean;
