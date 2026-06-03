@@ -1,9 +1,10 @@
 import React from 'react';
 
+import { UICorner } from './UICorner';
 import { UIStroke } from './UIStroke';
 import { UITextStroke } from './UITextStroke';
 
-const Decorators: Set<UIDecorator<any>> = new Set([UIStroke, UITextStroke]);
+const Decorators: Set<UIDecorator<any>> = new Set([UICorner, UIStroke, UITextStroke]);
 
 export function isDecorator(type: unknown): type is UIDecorator<any> {
   return Decorators.has(type as UIDecorator<any>);

@@ -1,46 +1,24 @@
 import React from 'react';
 
 import { extractDecorators } from '../../decorators/decorator';
-import { framePropsToCss } from './framePropsToCss';
+import { framePropsToCss } from './propsToCss';
 import type { FrameProps } from './types';
 
 export function Frame(props: FrameProps) {
-  const {
-    as = 'div',
-    children,
-    className,
-    styleOverride,
-    Size,
-    Position,
-    AnchorPoint,
-    BackgroundColor,
-    BorderColor,
-    BorderWidth,
-    BorderRadius,
-    Visible,
-    ZIndex,
-    ClipDescendants,
-  } = props;
+  const { as = 'div', children, className, styleOverride } = props;
 
   const { normalChildren, decoratorStyle } = extractDecorators(children);
-  const frameStyle = framePropsToCss({
-    Size,
-    Position,
-    AnchorPoint,
-    BackgroundColor,
-    BorderColor,
-    BorderWidth,
-    BorderRadius,
-    Visible,
-    ZIndex,
-    ClipDescendants,
-  });
+
   const computedStyle: React.CSSProperties = {
-    ...frameStyle,
+    ...framePropsToCss(props),
     ...decoratorStyle,
     ...styleOverride,
   };
 
+  // React.createElement expects:
+  // - Element to create (div, article, etc.)
+  // - {className, style}
+  // - children
   return React.createElement(
     as,
     {

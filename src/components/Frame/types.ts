@@ -36,15 +36,6 @@ export interface FrameProps {
   /** Background color of the Frame. */
   BackgroundColor?: Color4;
 
-  /** Border color of the Frame. */
-  BorderColor?: Color4;
-
-  /** Border width in pixels. */
-  BorderWidth?: number;
-
-  /** Border radius in pixels. */
-  BorderRadius?: number;
-
   /** Whether the Frame is rendered visibly. */
   Visible?: boolean;
 
