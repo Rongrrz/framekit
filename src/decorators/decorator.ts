@@ -1,31 +1,20 @@
 import React from 'react';
 
 import { UIStroke } from './UIStroke';
+import { UITextStroke } from './UITextStroke';
 
-const Decorators: Set<UIDecorator<any>> = new Set([UIStroke]);
+const Decorators: Set<UIDecorator<any>> = new Set([UIStroke, UITextStroke]);
 
 export function isDecorator(type: unknown): type is UIDecorator<any> {
   return Decorators.has(type as UIDecorator<any>);
 }
 
-export type HostType =
-  | 'Frame'
-  | 'TextLabel'
-  | 'TextButton'
-  | 'ImageLabel'
-  | 'ImageButton'
-  | 'ScrollingFrame';
-
-export function isTextHost(hostType: HostType): boolean {
-  return hostType === 'TextLabel' || hostType === 'TextButton';
-}
-
 export type UIDecorator<Props> = React.FunctionComponent<Props> & {
-  toCss: (props: Props, hostType: HostType) => React.CSSProperties;
+  toCss: (props: Props) => React.CSSProperties;
 };
 
 export function createUIDecorator<Props>(
-  toCss: (props: Props, hostType: HostType) => React.CSSProperties,
+  toCss: (props: Props) => React.CSSProperties,
 ): UIDecorator<Props> {
   const component = () => null;
   component.toCss = toCss;
@@ -45,7 +34,7 @@ export function extractDecorators(children: React.ReactNode): {
       return;
     }
     if (isDecorator(child.type)) {
-      const css = child.type.toCss(child.props, 'Frame');
+      const css = child.type.toCss(child.props);
       Object.assign(decoratorStyle, css);
       return;
     }
