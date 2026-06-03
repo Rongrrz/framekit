@@ -6,7 +6,7 @@ import { UDim2 } from '../primitives/UDim2';
 import { Vector2 } from '../primitives/Vector2';
 import { colorToCss, positionToCss, sizeToCss } from '../rendering/toCss';
 
-type FrameProps = {
+export type FrameProps = {
   as?: React.ElementType;
   children?: React.ReactElement | React.ReactElement[];
 
