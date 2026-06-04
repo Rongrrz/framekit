@@ -18,6 +18,7 @@ export const UITextStroke: UIDecorator<UITextStrokeProps> = createUIDecorator((p
   const thickness = props.Thickness ?? 1;
 
   return {
+    paintOrder: 'stroke fill',
     WebkitTextStrokeColor: color,
     WebkitTextStrokeWidth: thickness,
   };
