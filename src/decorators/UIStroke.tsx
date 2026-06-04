@@ -2,11 +2,9 @@ import { Enum } from '../enums';
 import { Color4 } from '../primitives/Color4';
 import { colorToCss } from '../rendering/toCss';
 import type { BorderStrokePosition, LineJoinMode } from '../types';
-import { createUIDecorator, isTextHost, type UIDecorator } from './decorator';
+import { createUIDecorator, type UIDecorator } from './decorator';
 
-// TODO: Extract text (ApplyStrokeMode) mode into UITextStroke...
 type UIStrokeProps = {
-  ApplyStrokeMode?: 'Border' | 'Contextual';
   Enabled?: boolean;
   Color?: Color4;
   Thickness?: number;
@@ -14,7 +12,7 @@ type UIStrokeProps = {
   BorderStrokePosition?: BorderStrokePosition;
 };
 
-export const UIStroke: UIDecorator<UIStrokeProps> = createUIDecorator((props, hostType) => {
+export const UIStroke: UIDecorator<UIStrokeProps> = createUIDecorator((props) => {
   if (props.Enabled === false) {
     return {};
   }
@@ -22,15 +20,12 @@ export const UIStroke: UIDecorator<UIStrokeProps> = createUIDecorator((props, ho
   const color4 = props.Color ?? Color4.rgbt(0, 0, 0, 0);
   const color = colorToCss(color4);
   const thickness = props.Thickness ?? 1;
-  const applyStrokeMode = props.ApplyStrokeMode ?? 'Border';
 
-  const shouldUseTextStroke = isTextHost(hostType) && applyStrokeMode === 'Contextual';
-  return shouldUseTextStroke
-    ? {
-        WebkitTextStrokeColor: color,
-        WebkitTextStrokeWidth: thickness,
-      }
-    : strokeToCss(props.BorderStrokePosition ?? Enum.BorderStrokePosition.Outer, thickness, color);
+  return strokeToCss(
+    props.BorderStrokePosition ?? Enum.BorderStrokePosition.Outer,
+    thickness,
+    color,
+  );
 });
 
 function strokeToCss(
