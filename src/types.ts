@@ -11,12 +11,3 @@ export type NonTextChild = ReactElement | false | null | undefined;
 export type NonTextChildren = NonTextChild | NonTextChild[];
 
 export type Callable = (...args: any[]) => unknown;
-
-export interface GuiButtonProps {
-  MouseButton1Click?: Callable;
-  MouseButton1Down?: Callable;
-  MouseButton1Up?: Callable;
-  MouseButton2Click?: Callable;
-  MouseButton2Down?: Callable;
-  MouseButton2Up?: Callable;
-}

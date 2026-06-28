@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { extractDecorators } from '../../decorators/decorator';
+import { extractDecorators } from '../../decorators/helpers';
 import { framePropsToCss } from './propsToCss';
 import type { FrameProps } from './types';
 

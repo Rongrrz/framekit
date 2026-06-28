@@ -1,6 +1,6 @@
 import { Color4 } from '../primitives/Color4';
 import { colorToCss } from '../rendering/toCss';
-import { createUIDecorator, type UIDecorator } from './decorator';
+import { createUIDecorator, type UIDecorator } from './createUIDecorator';
 
 type UITextStrokeProps = {
   Enabled?: boolean;

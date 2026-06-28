@@ -1,5 +1,6 @@
 import React from 'react';
 
+import type { UIDecorator } from './createUIDecorator';
 import { UICorner } from './UICorner';
 import { UIStroke } from './UIStroke';
 import { UITextStroke } from './UITextStroke';
@@ -8,18 +9,6 @@ const Decorators: Set<UIDecorator<any>> = new Set([UICorner, UIStroke, UITextStr
 
 export function isDecorator(type: unknown): type is UIDecorator<any> {
   return Decorators.has(type as UIDecorator<any>);
-}
-
-export type UIDecorator<Props> = React.FunctionComponent<Props> & {
-  toCss: (props: Props) => React.CSSProperties;
-};
-
-export function createUIDecorator<Props>(
-  toCss: (props: Props) => React.CSSProperties,
-): UIDecorator<Props> {
-  const component = () => null;
-  component.toCss = toCss;
-  return component;
 }
 
 export function extractDecorators(children: React.ReactNode): {

@@ -1,4 +1,4 @@
-import { createUIDecorator, type UIDecorator } from './decorator';
+import { createUIDecorator, type UIDecorator } from './createUIDecorator';
 
 type UICornerProps = {
   Enabled?: boolean;
