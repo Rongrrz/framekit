@@ -1,2 +1,13 @@
-// This is where we can expose the public API of framekit.
-export {};
+export { Instance } from './core/Instance';
+export { Signal, type SignalConnection } from './core/Signal';
+export { Frame, type AutomaticSize } from './gui/Frame';
+export { ImageButton } from './gui/ImageButton';
+export { ImageLabel, type ScaleType } from './gui/ImageLabel';
+export { ScreenGui } from './gui/ScreenGui';
+export { ScrollingFrame, type ScrollingDirection } from './gui/ScrollingFrame';
+export { TextButton } from './gui/TextButton';
+export { TextLabel, type TextXAlignment, type TextYAlignment } from './gui/TextLabel';
+export { Color3 } from './primitives/Color3';
+export { UDim } from './primitives/UDim';
+export { UDim2 } from './primitives/UDim2';
+export { Vector2 } from './primitives/Vector2';

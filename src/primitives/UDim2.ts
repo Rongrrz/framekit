@@ -4,13 +4,9 @@ export class UDim2 {
   public readonly X: UDim;
   public readonly Y: UDim;
 
-  private constructor(xScale: number, xOffset: number, yScale: number, yOffset: number) {
-    this.X = UDim.new(xScale, xOffset);
-    this.Y = UDim.new(yScale, yOffset);
-  }
-
-  public static new(xScale: number, xOffset: number, yScale: number, yOffset: number): UDim2 {
-    return new UDim2(xScale, xOffset, yScale, yOffset);
+  public constructor(xScale: number, xOffset: number, yScale: number, yOffset: number) {
+    this.X = new UDim(xScale, xOffset);
+    this.Y = new UDim(yScale, yOffset);
   }
 
   public static fromScale(xScale: number, yScale: number): UDim2 {

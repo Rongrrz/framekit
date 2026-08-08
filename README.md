@@ -15,5 +15,21 @@ That however, removed all the fun in designing and writing code.
 So, instead of fully escaping my comfort zone,
 I decided to bring part of that comfort zone with me.
 
-😄 FrameKit is a React UI framework that ports a Roblox-like GUI model
-to the web... for better or for worse.
+😄 Framekit is a React-independent TypeScript UI framework that maps a
+Roblox-inspired object model directly onto browser DOM and CSS.
+
+```ts
+import { Color3, Frame, ScreenGui, UDim2 } from 'framekit';
+
+const gui = new ScreenGui();
+gui.Mount('#app');
+
+const frame = new Frame();
+frame.Size = UDim2.fromOffset(300, 180);
+frame.BackgroundColor3 = Color3.fromRGB(37, 99, 235);
+frame.Parent = gui;
+```
+
+The current migration slice provides `Instance`, `ScreenGui`, `Frame`, and the
+`UDim`, `UDim2`, `Vector2`, and `Color3` value types. Text,
+image, interaction, and scrolling objects will follow on this direct-DOM core.
