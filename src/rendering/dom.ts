@@ -7,11 +7,3 @@ export function udimToCss(value: UDim): string {
   const operator = value.Offset < 0 ? '-' : '+';
   return `calc(${percent}% ${operator} ${Math.abs(value.Offset)}px)`;
 }
-
-export interface DomBacked {
-  readonly Element: HTMLElement;
-}
-
-export function isDomBacked(instance: unknown): instance is DomBacked {
-  return typeof instance === 'object' && instance !== null && 'Element' in instance;
-}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MathUtils } from '../utils/MathUtils';
+import { MathUtils } from '../utils/math';
 
 describe('MathUtils.clampColor', () => {
   it('rounds values into the unsigned byte range', () => {

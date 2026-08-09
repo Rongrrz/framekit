@@ -1,4 +1,4 @@
-import { MathUtils } from '../utils/MathUtils';
+import { MathUtils } from '../utils/math';
 
 /** An immutable RGB color. Components are stored as integers from 0 to 255. */
 export class Color3 {

@@ -1,12 +1,38 @@
-export { Instance } from './core/Instance';
-export { Signal, type SignalConnection } from './core/Signal';
-export { Frame, type AutomaticSize } from './gui/Frame';
-export { ImageButton } from './gui/ImageButton';
-export { ImageLabel, type ScaleType } from './gui/ImageLabel';
-export { ScreenGui } from './gui/ScreenGui';
-export { ScrollingFrame, type ScrollingDirection } from './gui/ScrollingFrame';
-export { TextButton } from './gui/TextButton';
-export { TextLabel, type TextXAlignment, type TextYAlignment } from './gui/TextLabel';
+export { destroy, isDestroyed, props, update } from './core/node';
+export type { GuiNode, Node, NodeProps } from './core/node';
+export type { Signal, Unsubscribe } from './core/signal';
+export { append, children, detach, find, parent } from './core/tree';
+export {
+  createFrame,
+  createImageButton,
+  createImageLabel,
+  createNode,
+  createScreenGui,
+  createScrollingFrame,
+  createSignal,
+  createTextButton,
+  createTextLabel,
+} from './factory';
+export type { AutomaticSize, FrameNode, FrameProps } from './gui/frame-node';
+export type { ImageButtonNode, ImageButtonProps } from './gui/image-button';
+export type { ImageLabelNode, ImageLabelProps, ScaleType } from './gui/image-label';
+export { isMounted, mount, unmount } from './gui/screen-gui';
+export type { ScreenGuiNode, ScreenGuiProps } from './gui/screen-gui';
+export { canvasPosition, scrollTo } from './gui/scrolling-frame';
+export type {
+  ScrollingDirection,
+  ScrollingFrameNode,
+  ScrollingFrameProps,
+} from './gui/scrolling-frame';
+export type { TextButtonNode, TextButtonProps } from './gui/text-button';
+export type {
+  TextLabelNode,
+  TextLabelProps,
+  TextXAlignment,
+  TextYAlignment,
+} from './gui/text-label';
+export { on } from './rendering/button-events';
+export type { ButtonEvent, ButtonNode, ButtonProps } from './rendering/button-events';
 export { Color3 } from './primitives/Color3';
 export { UDim } from './primitives/UDim';
 export { UDim2 } from './primitives/UDim2';
