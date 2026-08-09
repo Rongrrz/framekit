@@ -1,0 +1,82 @@
+import { node, type Node, type NodeProps } from './core/node';
+import { signal, type Signal } from './core/signals';
+import { uiCornerNode, type UICornerNode, type UICornerProps } from './decorators/ui-corner';
+import { uiStrokeNode, type UIStrokeNode, type UIStrokeProps } from './decorators/ui-stroke';
+import { frameDefaults, frameNode, type FrameNode, type FrameProps } from './gui/frame-node';
+import { imageButtonNode, type ImageButtonNode, type ImageButtonProps } from './gui/image-button';
+import {
+  imageLabelDefaults,
+  imageNode,
+  type ImageLabelNode,
+  type ImageLabelProps,
+} from './gui/image-label';
+import { screenGuiNode, type ScreenGuiNode, type ScreenGuiProps } from './gui/screen-gui';
+import {
+  scrollingFrameNode,
+  type ScrollingFrameNode,
+  type ScrollingFrameProps,
+} from './gui/scrolling-frame';
+import { textButtonNode, type TextButtonNode, type TextButtonProps } from './gui/text-button';
+import {
+  textLabelDefaults,
+  textNode,
+  type TextLabelNode,
+  type TextLabelProps,
+} from './gui/text-label';
+
+/** Creates an element-less node for organizing a FrameKit tree. */
+export function createNode(initial: Partial<NodeProps> = {}): Node<NodeProps> {
+  return node({ Name: 'Node', ...initial });
+}
+
+/** Creates a standalone synchronous signal with typed arguments. */
+export function createSignal<Arguments extends unknown[] = []>(): Signal<Arguments> {
+  return signal<Arguments>();
+}
+
+/** Creates a corner decorator that applies border radius to its GUI parent. */
+export function createUICorner(initial: Partial<UICornerProps> = {}): UICornerNode {
+  return uiCornerNode(initial);
+}
+
+/** Creates a stroke decorator that applies a border effect to its GUI parent. */
+export function createUIStroke(initial: Partial<UIStrokeProps> = {}): UIStrokeNode {
+  return uiStrokeNode(initial);
+}
+
+/** Creates a general-purpose rectangular GUI node. */
+export function createFrame(initial: Partial<FrameProps> = {}): FrameNode {
+  return frameNode('Frame', document.createElement('div'), frameDefaults(), initial);
+}
+
+/** Creates the root GUI node that can be mounted into the document. */
+export function createScreenGui(initial: Partial<ScreenGuiProps> = {}): ScreenGuiNode {
+  return screenGuiNode(initial);
+}
+
+/** Creates a non-interactive text GUI node. */
+export function createTextLabel(initial: Partial<TextLabelProps> = {}): TextLabelNode {
+  return textNode('TextLabel', document.createElement('div'), textLabelDefaults(), initial);
+}
+
+/** Creates a text GUI node backed by a semantic HTML button. */
+export function createTextButton(initial: Partial<TextButtonProps> = {}): TextButtonNode {
+  return textButtonNode(initial);
+}
+
+/** Creates a non-interactive image GUI node. */
+export function createImageLabel(initial: Partial<ImageLabelProps> = {}): ImageLabelNode {
+  return imageNode('ImageLabel', document.createElement('div'), imageLabelDefaults(), initial);
+}
+
+/** Creates an image GUI node backed by a semantic HTML button. */
+export function createImageButton(initial: Partial<ImageButtonProps> = {}): ImageButtonNode {
+  return imageButtonNode(initial);
+}
+
+/** Creates a frame with native horizontal and/or vertical scrolling. */
+export function createScrollingFrame(
+  initial: Partial<ScrollingFrameProps> = {},
+): ScrollingFrameNode {
+  return scrollingFrameNode(initial);
+}
