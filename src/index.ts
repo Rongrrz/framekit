@@ -13,9 +13,18 @@ export {
   createTextButton,
   createTextLabel,
   createUICorner,
+  createUIListLayout,
   createUIStroke,
 } from './factory';
 export type { UICornerNode, UICornerProps } from './decorators/ui-corner';
+export type {
+  FillDirection,
+  HorizontalAlignment,
+  SortOrder,
+  UIListLayoutNode,
+  UIListLayoutProps,
+  VerticalAlignment,
+} from './decorators/ui-list-layout';
 export type { BorderStrokePosition, UIStrokeNode, UIStrokeProps } from './decorators/ui-stroke';
 export type { AutomaticSize, FrameNode, FrameProps } from './gui/frame-node';
 export type { ImageButtonNode, ImageButtonProps } from './gui/image-button';

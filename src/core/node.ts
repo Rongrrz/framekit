@@ -23,6 +23,23 @@ export type DecoratorStyles = Readonly<Record<string, string>>;
 
 export type Decorator<Props extends NodeProps> = (props: Readonly<Props>) => DecoratorStyles;
 
+/** The layout-relevant properties exposed for each direct GUI child. */
+export type LayoutChild = Readonly<{
+  Name: string;
+  LayoutOrder: number;
+}>;
+
+/** Styles a layout contributes to its parent and each direct GUI child. */
+export type LayoutStyles = Readonly<{
+  parent: DecoratorStyles;
+  children: readonly DecoratorStyles[];
+}>;
+
+export type Layout<Props extends NodeProps> = (
+  props: Readonly<Props>,
+  children: readonly LayoutChild[],
+) => LayoutStyles;
+
 /** Internal mutable state associated with an opaque node handle. */
 export type NodeState<Props extends NodeProps = NodeProps> = {
   props: Props;
@@ -31,8 +48,10 @@ export type NodeState<Props extends NodeProps = NodeProps> = {
   destroyed: boolean;
   render: Render<Props> | undefined;
   decorate: Decorator<Props> | undefined;
+  layout: Layout<Props> | undefined;
   cleanups: Set<() => void>;
   appliedStyles: Set<string>;
+  appliedChildStyles: Map<Node, Set<string>>;
 };
 
 const states = new WeakMap<Node, NodeState<any>>();
@@ -43,18 +62,21 @@ export function node<Props extends NodeProps>(
   element: HTMLElement,
   render?: Render<Props>,
   decorate?: Decorator<Props>,
+  layout?: Layout<Props>,
 ): GuiNode<Props>;
 export function node<Props extends NodeProps>(
   props: Props,
   element?: undefined,
   render?: Render<Props>,
   decorate?: Decorator<Props>,
+  layout?: Layout<Props>,
 ): Node<Props>;
 export function node<Props extends NodeProps>(
   props: Props,
   element?: HTMLElement,
   render?: Render<Props>,
   decorate?: Decorator<Props>,
+  layout?: Layout<Props>,
 ): Node<Props> {
   const handle = Object.freeze({ element }) as Node<Props>;
   states.set(handle, {
@@ -64,8 +86,10 @@ export function node<Props extends NodeProps>(
     destroyed: false,
     render,
     decorate,
+    layout,
     cleanups: new Set(),
     appliedStyles: new Set(),
+    appliedChildStyles: new Map(),
   });
   renderNode(handle, new Set(Object.keys(props) as (keyof Props)[]));
   return handle;
@@ -79,6 +103,14 @@ export function decoratorNode<Props extends NodeProps>(
   return node(props, undefined, undefined, decorate);
 }
 
+/** Creates an element-less node that controls its parent's direct GUI children. */
+export function layoutNode<Props extends NodeProps>(
+  props: Props,
+  layout: Layout<Props>,
+): Node<Props> {
+  return node(props, undefined, undefined, undefined, layout);
+}
+
 /** Applies a partial property update and synchronizes the affected rendering. */
 export function update<Props extends NodeProps>(handle: Node<Props>, patch: Partial<Props>): void {
   assertNodeActive(handle);
@@ -86,10 +118,11 @@ export function update<Props extends NodeProps>(handle: Node<Props>, patch: Part
   const changed = new Set(Object.keys(patch) as (keyof Props)[]);
   if (changed.size === 0) return;
   state.props = { ...state.props, ...patch };
-  if (state.decorate) {
+  if (state.decorate || state.layout) {
     if (state.parent) renderNode(state.parent);
   } else {
     renderNode(handle, changed);
+    if (state.parent && hasLayout(state.parent)) renderNode(state.parent);
   }
 }
 
@@ -110,7 +143,7 @@ export function destroy(handle: Node): void {
     const index = siblings.indexOf(handle);
     if (index >= 0) siblings.splice(index, 1);
     state.parent = undefined;
-    if (state.decorate) renderNode(previous);
+    if (state.decorate || state.layout || hasLayout(previous)) renderNode(previous);
   }
   state.destroyed = true;
   for (const callback of state.cleanups) callback();
@@ -142,6 +175,11 @@ export function assertNodeActive(handle: Node): void {
   if (state.destroyed) throw new Error(`${state.props.Name} has been destroyed.`);
 }
 
+/** Returns whether a node currently contains a layout decorator. */
+export function hasLayout(handle: Node): boolean {
+  return nodeState(handle).children.some((child) => Boolean(nodeState(child).layout));
+}
+
 /** Renders a node's base styles followed by its decorator children. */
 export function renderNode<Props extends NodeProps>(
   handle: Node<Props>,
@@ -149,6 +187,13 @@ export function renderNode<Props extends NodeProps>(
 ): void {
   const state = nodeState(handle);
   const { element } = handle;
+  for (const [child, properties] of state.appliedChildStyles) {
+    if (nodeState(child).destroyed) continue;
+    for (const property of properties) child.element?.style.removeProperty(property);
+    renderNode(child);
+  }
+  state.appliedChildStyles.clear();
+
   if (element) {
     for (const property of state.appliedStyles) element.style.removeProperty(property);
     state.appliedStyles.clear();
@@ -157,12 +202,55 @@ export function renderNode<Props extends NodeProps>(
   state.render?.(state.props, changed);
   if (!element) return;
 
+  const preserveHiddenDisplay = element.style.display === 'none';
+
   for (const child of state.children) {
     const childState = nodeState(child);
-    if (!childState.decorate) continue;
-    for (const [property, value] of Object.entries(childState.decorate(childState.props))) {
-      element.style.setProperty(property, value);
-      state.appliedStyles.add(property);
+    if (childState.decorate) {
+      applyStyles(element, childState.decorate(childState.props), state, preserveHiddenDisplay);
     }
+    if (childState.layout) {
+      applyLayout(handle, childState, preserveHiddenDisplay);
+    }
+  }
+}
+
+function applyLayout(parent: Node, layoutState: NodeState, preserveHiddenDisplay: boolean): void {
+  const parentState = nodeState(parent);
+  const parentElement = parent.element;
+  if (!parentElement) return;
+  const guiChildren = parentState.children.filter((child) => Boolean(child.element));
+  const childProps = guiChildren.map((child): LayoutChild => {
+    const props = nodeState(child).props as NodeProps & { LayoutOrder?: unknown };
+    return {
+      Name: props.Name,
+      LayoutOrder: typeof props.LayoutOrder === 'number' ? props.LayoutOrder : 0,
+    };
+  });
+  const styles = layoutState.layout?.(layoutState.props, childProps);
+  if (!styles) return;
+  applyStyles(parentElement, styles.parent, parentState, preserveHiddenDisplay);
+  for (const [index, child] of guiChildren.entries()) {
+    const childStyles = styles.children[index];
+    if (!childStyles) continue;
+    const appliedProperties = parentState.appliedChildStyles.get(child) ?? new Set<string>();
+    for (const [property, value] of Object.entries(childStyles)) {
+      child.element?.style.setProperty(property, value);
+      appliedProperties.add(property);
+    }
+    parentState.appliedChildStyles.set(child, appliedProperties);
+  }
+}
+
+function applyStyles(
+  element: HTMLElement,
+  styles: DecoratorStyles,
+  state: Pick<NodeState, 'appliedStyles'>,
+  preserveHiddenDisplay: boolean,
+): void {
+  for (const [property, value] of Object.entries(styles)) {
+    if (property === 'display' && preserveHiddenDisplay) continue;
+    element.style.setProperty(property, value);
+    state.appliedStyles.add(property);
   }
 }

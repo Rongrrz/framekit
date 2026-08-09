@@ -14,6 +14,7 @@ export type FrameProps = NodeProps & {
   BackgroundColor3: Color3;
   BackgroundTransparency: number;
   ZIndex: number;
+  LayoutOrder: number;
   AutomaticSize: AutomaticSize;
   ClipsDescendants: boolean;
 };
@@ -30,6 +31,7 @@ export function frameDefaults(): FrameProps {
     BackgroundColor3: color3(200, 200, 200),
     BackgroundTransparency: 0,
     ZIndex: 1,
+    LayoutOrder: 0,
     AutomaticSize: 'None',
     ClipsDescendants: false,
   };
@@ -53,6 +55,7 @@ export function frameNode<Props extends FrameProps>(
 }
 
 function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
+  element.style.position = 'absolute';
   element.style.width =
     props.AutomaticSize === 'X' || props.AutomaticSize === 'XY' ? 'auto' : udimToCss(props.Size.X);
   element.style.height =

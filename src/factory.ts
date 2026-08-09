@@ -1,6 +1,11 @@
 import { node, type Node, type NodeProps } from './core/node';
 import { signal, type Signal } from './core/signals';
 import { uiCornerNode, type UICornerNode, type UICornerProps } from './decorators/ui-corner';
+import {
+  uiListLayoutNode,
+  type UIListLayoutNode,
+  type UIListLayoutProps,
+} from './decorators/ui-list-layout';
 import { uiStrokeNode, type UIStrokeNode, type UIStrokeProps } from './decorators/ui-stroke';
 import { frameDefaults, frameNode, type FrameNode, type FrameProps } from './gui/frame-node';
 import { imageButtonNode, type ImageButtonNode, type ImageButtonProps } from './gui/image-button';
@@ -37,6 +42,11 @@ export function createSignal<Arguments extends unknown[] = []>(): Signal<Argumen
 /** Creates a corner decorator that applies border radius to its GUI parent. */
 export function createUICorner(initial: Partial<UICornerProps> = {}): UICornerNode {
   return uiCornerNode(initial);
+}
+
+/** Creates a list layout that arranges its parent's direct GUI children. */
+export function createUIListLayout(initial: Partial<UIListLayoutProps> = {}): UIListLayoutNode {
+  return uiListLayoutNode(initial);
 }
 
 /** Creates a stroke decorator that applies a border effect to its GUI parent. */

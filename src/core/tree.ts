@@ -1,9 +1,16 @@
-import { assertNodeActive, nodeState, renderNode, type Node, type NodeState } from './node';
+import {
+  assertNodeActive,
+  hasLayout,
+  nodeState,
+  renderNode,
+  type Node,
+  type NodeState,
+} from './node';
 
 /**
  * Adds a node to a parent, moving it from its previous parent when necessary.
  * DOM-backed children are appended to the parent's element after the tree is updated.
- * When the child is a decorator, affected parents render again to recompute their styles.
+ * When the child is a decorator or a parent has a layout, affected parents render again.
  * Calling this with an existing parent-child pair has no effect.
  *
  * @throws When either node is destroyed or the operation would create a cycle.
@@ -16,8 +23,8 @@ export function append(parent: Node, child: Node): void {
   }
   const parentState = nodeState(parent);
   const childState = nodeState(child);
-  if (childState.decorate && !parent.element) {
-    throw new TypeError('UI decorators must be appended to a DOM-backed node.');
+  if ((childState.decorate || childState.layout) && !parent.element) {
+    throw new TypeError('UI decorators and layouts must be appended to a DOM-backed node.');
   }
   if (childState.parent === parent) return;
 
@@ -26,16 +33,16 @@ export function append(parent: Node, child: Node): void {
   childState.parent = parent;
   parentState.children.push(child);
   if (child.element) parent.element?.append(child.element);
-  if (childState.decorate) {
-    if (previous) renderNode(previous);
-    renderNode(parent);
+  if (previous && (childState.decorate || childState.layout || hasLayout(previous))) {
+    renderNode(previous);
   }
+  if (childState.decorate || childState.layout || hasLayout(parent)) renderNode(parent);
 }
 
 /**
  * Removes a node from its parent and from the DOM without destroying it.
  * Its descendants remain attached to the node and it can be appended again later.
- * Detaching a decorator renders the previous parent again without its styles.
+ * Detaching a decorator or a laid-out child renders the previous parent again.
  *
  * @throws When the node has been destroyed.
  */
@@ -45,7 +52,7 @@ export function detach(handle: Node): void {
   const previous = state.parent;
   detachFromParent(handle, state);
   handle.element?.remove();
-  if (previous && state.decorate) renderNode(previous);
+  if (previous && (state.decorate || state.layout || hasLayout(previous))) renderNode(previous);
 }
 
 /**

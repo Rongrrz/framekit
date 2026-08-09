@@ -9,9 +9,11 @@ import {
   createTextButton,
   createTextLabel,
   createUICorner,
+  createUIListLayout,
   createUIStroke,
   mount,
   on,
+  udim,
   udim2FromOffset,
   udim2FromScale,
   update,
@@ -86,6 +88,13 @@ const items = createScrollingFrame({
 });
 append(card, items);
 append(items, createUICorner({ CornerRadius: 14 }));
+append(
+  items,
+  createUIListLayout({
+    Padding: udim(0, 8),
+    HorizontalAlignment: 'Center',
+  }),
+);
 
 const itemNames = [
   'Crystal Compass',
@@ -99,11 +108,10 @@ const itemNames = [
   'Ember Torch',
   'Royal Signet',
 ];
-for (const [index, name] of itemNames.entries()) {
+for (const name of itemNames) {
   const item = createTextButton({
     Name: name,
     Size: udim2FromOffset(352, 48),
-    Position: udim2FromOffset(16, 12 + index * 56),
     BackgroundColor3: color3(51, 65, 85),
     Text: name,
     TextColor3: color3(226, 232, 240),
