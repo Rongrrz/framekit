@@ -1,12 +1,13 @@
 import { dispatch, subscribe } from '../core/events';
 import { cleanup, type GuiNode } from '../core/node';
-import type { Unsubscribe } from '../core/signal';
+import type { Unsubscribe } from '../core/signals';
 import type { FrameProps } from '../gui/frame-node';
 
 export type ButtonProps = {
   Disabled: boolean;
 };
 
+/** Event names supported by text and image buttons. */
 export type ButtonEvent =
   | 'MouseButton1Click'
   | 'MouseButton1Down'
@@ -17,8 +18,11 @@ export type ButtonEvent =
   | 'MouseEnter'
   | 'MouseLeave';
 
-export type ButtonNode = GuiNode<FrameProps & ButtonProps>;
+export type ButtonNode = GuiNode<FrameProps & ButtonProps> & {
+  readonly element: HTMLButtonElement;
+};
 
+/** Subscribes to a typed button event and returns an idempotent unsubscribe function. */
 export function on(
   node: ButtonNode,
   event: ButtonEvent,
@@ -38,6 +42,7 @@ export function attachButtonBehavior(node: ButtonNode, button: HTMLButtonElement
   button.addEventListener(
     'mousedown',
     (event) => {
+      if (button.disabled) return;
       if (event.button === 0) {
         leftDown = true;
         dispatch(node, 'MouseButton1Down', event);
@@ -51,6 +56,11 @@ export function attachButtonBehavior(node: ButtonNode, button: HTMLButtonElement
   button.addEventListener(
     'mouseup',
     (event) => {
+      if (button.disabled) {
+        leftDown = false;
+        rightDown = false;
+        return;
+      }
       if (event.button === 0) {
         dispatch(node, 'MouseButton1Up', event);
         if (leftDown) dispatch(node, 'MouseButton1Click', event);
@@ -64,7 +74,15 @@ export function attachButtonBehavior(node: ButtonNode, button: HTMLButtonElement
     options,
   );
   button.addEventListener('mouseenter', (event) => dispatch(node, 'MouseEnter', event), options);
-  button.addEventListener('mouseleave', (event) => dispatch(node, 'MouseLeave', event), options);
+  button.addEventListener(
+    'mouseleave',
+    (event) => {
+      leftDown = false;
+      rightDown = false;
+      dispatch(node, 'MouseLeave', event);
+    },
+    options,
+  );
   button.addEventListener('contextmenu', (event) => event.preventDefault(), options);
   cleanup(node, () => abortController.abort());
 }

@@ -1,4 +1,4 @@
-import { props, type GuiNode } from '../core/node';
+import { assertNodeActive, type GuiNode } from '../core/node';
 import { frameDefaults, frameNode, type FrameProps } from './frame-node';
 
 export type ScrollingDirection = 'X' | 'Y' | 'XY';
@@ -8,6 +8,9 @@ export type ScrollingFrameProps = FrameProps & {
 };
 
 export type ScrollingFrameNode = GuiNode<ScrollingFrameProps>;
+
+/** The current horizontal and vertical scroll offsets in CSS pixels. */
+export type CanvasPosition = Readonly<{ X: number; Y: number }>;
 
 export function scrollingFrameNode(initial: Partial<ScrollingFrameProps> = {}): ScrollingFrameNode {
   const element = document.createElement('div');
@@ -26,11 +29,14 @@ export function scrollingFrameNode(initial: Partial<ScrollingFrameProps> = {}): 
   );
 }
 
-export function canvasPosition(node: ScrollingFrameNode): Readonly<{ X: number; Y: number }> {
+/** Returns a snapshot of the scrolling frame's current scroll offsets. */
+export function canvasPosition(node: ScrollingFrameNode): CanvasPosition {
+  assertNodeActive(node);
   return { X: node.element.scrollLeft, Y: node.element.scrollTop };
 }
 
-export function scrollTo(node: ScrollingFrameNode, position: { X: number; Y: number }): void {
-  props(node);
+/** Immediately scrolls a scrolling frame to the supplied offsets. */
+export function scrollTo(node: ScrollingFrameNode, position: CanvasPosition): void {
+  assertNodeActive(node);
   node.element.scrollTo(position.X, position.Y);
 }

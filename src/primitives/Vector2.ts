@@ -1,10 +1,10 @@
-// This is really only for AnchorPoint
-export class Vector2 {
-  public readonly X: number;
-  public readonly Y: number;
+/** An immutable two-dimensional vector. */
+export type Vector2 = Readonly<{
+  X: number;
+  Y: number;
+}>;
 
-  public constructor(x: number, y: number) {
-    this.X = x;
-    this.Y = y;
-  }
+/** Creates an immutable two-dimensional vector. */
+export function vector2(x: number, y: number): Vector2 {
+  return Object.freeze({ X: x, Y: y });
 }

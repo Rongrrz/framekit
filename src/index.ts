@@ -1,6 +1,6 @@
 export { destroy, isDestroyed, props, update } from './core/node';
 export type { GuiNode, Node, NodeProps } from './core/node';
-export type { Signal, Unsubscribe } from './core/signal';
+export type { Signal, Unsubscribe } from './core/signals';
 export { append, children, detach, find, parent } from './core/tree';
 export {
   createFrame,
@@ -24,6 +24,7 @@ export { isMounted, mount, unmount } from './gui/screen-gui';
 export type { ScreenGuiNode, ScreenGuiProps } from './gui/screen-gui';
 export { canvasPosition, scrollTo } from './gui/scrolling-frame';
 export type {
+  CanvasPosition,
   ScrollingDirection,
   ScrollingFrameNode,
   ScrollingFrameProps,
@@ -37,7 +38,11 @@ export type {
 } from './gui/text-label';
 export { on } from './rendering/button-events';
 export type { ButtonEvent, ButtonNode, ButtonProps } from './rendering/button-events';
-export { Color3 } from './primitives/Color3';
-export { UDim } from './primitives/UDim';
-export { UDim2 } from './primitives/UDim2';
-export { Vector2 } from './primitives/Vector2';
+export { color3, color3FromHex, color3ToCss } from './primitives/color3';
+export type { Color3 } from './primitives/color3';
+export { udim } from './primitives/udim';
+export type { UDim } from './primitives/udim';
+export { udim2, udim2FromOffset, udim2FromScale } from './primitives/udim2';
+export type { UDim2 } from './primitives/udim2';
+export { vector2 } from './primitives/vector2';
+export type { Vector2 } from './primitives/vector2';

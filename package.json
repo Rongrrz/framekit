@@ -8,6 +8,7 @@
     "README.md"
   ],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,6 +20,7 @@
     }
   },
   "scripts": {
+    "check": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run build",
     "dev": "vite",
     "build": "tsc -b && vite build && tsc -p tsconfig.build.json",
     "watch": "tsc -b && vite build --watch",

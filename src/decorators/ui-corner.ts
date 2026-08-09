@@ -1,4 +1,4 @@
-import { node, type Node, type NodeProps, type Styles } from '../core/node';
+import { decoratorNode, type DecoratorStyles, type Node, type NodeProps } from '../core/node';
 
 export type UICornerProps = NodeProps & {
   Enabled: boolean;
@@ -8,11 +8,9 @@ export type UICornerProps = NodeProps & {
 export type UICornerNode = Node<UICornerProps>;
 
 export function uiCornerNode(initial: Partial<UICornerProps> = {}): UICornerNode {
-  return node(
+  return decoratorNode(
     { Name: 'UICorner', Enabled: true, CornerRadius: 0, ...initial },
-    undefined,
-    undefined,
-    (props): Styles =>
+    (props): DecoratorStyles =>
       props.Enabled ? { 'border-radius': `${Math.max(0, props.CornerRadius)}px` } : {},
   );
 }

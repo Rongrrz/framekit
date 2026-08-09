@@ -1,9 +1,10 @@
-export class UDim {
-  public readonly Scale: number;
-  public readonly Offset: number;
+/** An immutable scale-and-offset dimension. */
+export type UDim = Readonly<{
+  Scale: number;
+  Offset: number;
+}>;
 
-  public constructor(scale: number, offset: number) {
-    this.Scale = scale;
-    this.Offset = offset;
-  }
+/** Creates an immutable scale-and-offset dimension. */
+export function udim(scale: number, offset: number): UDim {
+  return Object.freeze({ Scale: scale, Offset: offset });
 }

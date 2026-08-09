@@ -1,7 +1,7 @@
 import { node, type GuiNode, type NodeProps, type Render } from '../core/node';
-import { Color3 } from '../primitives/Color3';
-import { UDim2 } from '../primitives/UDim2';
-import { Vector2 } from '../primitives/Vector2';
+import { color3, color3ToCss, type Color3 } from '../primitives/color3';
+import { udim2FromOffset, type UDim2 } from '../primitives/udim2';
+import { vector2, type Vector2 } from '../primitives/vector2';
 import { udimToCss } from '../rendering/dom';
 
 export type AutomaticSize = 'None' | 'X' | 'Y' | 'XY';
@@ -23,11 +23,11 @@ export type FrameNode = GuiNode<FrameProps>;
 export function frameDefaults(): FrameProps {
   return {
     Name: 'Frame',
-    Size: UDim2.fromOffset(100, 100),
-    Position: UDim2.fromOffset(0, 0),
-    AnchorPoint: new Vector2(0, 0),
+    Size: udim2FromOffset(100, 100),
+    Position: udim2FromOffset(0, 0),
+    AnchorPoint: vector2(0, 0),
     Visible: true,
-    BackgroundColor3: Color3.fromRGB(200, 200, 200),
+    BackgroundColor3: color3(200, 200, 200),
     BackgroundTransparency: 0,
     ZIndex: 1,
     AutomaticSize: 'None',
@@ -49,7 +49,7 @@ export function frameNode<Props extends FrameProps>(
     renderFrame(element, props);
     renderExtra?.(props, changed);
   });
-  return handle as GuiNode<Props>;
+  return handle;
 }
 
 function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
@@ -61,7 +61,7 @@ function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
   element.style.top = udimToCss(props.Position.Y);
   element.style.transform = `translate(${-props.AnchorPoint.X * 100}%, ${-props.AnchorPoint.Y * 100}%)`;
   element.style.display = props.Visible ? '' : 'none';
-  element.style.backgroundColor = props.BackgroundColor3.toCSS(props.BackgroundTransparency);
+  element.style.backgroundColor = color3ToCss(props.BackgroundColor3, props.BackgroundTransparency);
   element.style.zIndex = String(props.ZIndex);
   element.style.overflow = props.ClipsDescendants ? 'hidden' : 'visible';
 }

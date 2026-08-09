@@ -1,5 +1,5 @@
 import { assertNodeActive, cleanup, isDestroyed, type Node } from './node';
-import { signal, type Signal, type Unsubscribe } from './signal';
+import { signal, type Signal, type Unsubscribe } from './signals';
 
 const nodeChannels = new WeakMap<Node, Map<PropertyKey, Signal<unknown[]>>>();
 

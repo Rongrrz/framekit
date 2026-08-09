@@ -3,7 +3,9 @@ import { attachButtonBehavior, type ButtonProps } from '../rendering/button-even
 import { imageLabelDefaults, imageNode, type ImageLabelProps } from './image-label';
 
 export type ImageButtonProps = ImageLabelProps & ButtonProps;
-export type ImageButtonNode = GuiNode<ImageButtonProps>;
+export type ImageButtonNode = GuiNode<ImageButtonProps> & {
+  readonly element: HTMLButtonElement;
+};
 
 export function imageButtonNode(initial: Partial<ImageButtonProps> = {}): ImageButtonNode {
   const element = document.createElement('button');
@@ -16,6 +18,7 @@ export function imageButtonNode(initial: Partial<ImageButtonProps> = {}): ImageB
       element.disabled = props.Disabled;
     },
   );
-  attachButtonBehavior(node, element);
-  return node;
+  const button = node as ImageButtonNode;
+  attachButtonBehavior(button, element);
+  return button;
 }

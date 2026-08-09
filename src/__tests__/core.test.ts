@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   append,
   children,
-  Color3,
+  color3,
   createFrame,
   createNode,
   createScreenGui,
@@ -15,10 +15,11 @@ import {
   mount,
   parent,
   props,
-  UDim2,
+  udim2,
+  udim2FromScale,
   unmount,
   update,
-  Vector2,
+  vector2,
 } from '..';
 
 afterEach(() => document.body.replaceChildren());
@@ -64,6 +65,23 @@ describe('signals', () => {
     expect(listener).toHaveBeenCalledOnce();
     expect(listener).toHaveBeenCalledWith(1);
   });
+
+  it('uses an emission snapshot and can clear every subscriber', () => {
+    const signal = createSignal();
+    const lateSubscriber = vi.fn();
+    const firstSubscriber = vi.fn(() => signal.subscribe(lateSubscriber));
+    signal.subscribe(firstSubscriber);
+
+    signal.emit();
+    expect(lateSubscriber).not.toHaveBeenCalled();
+    signal.emit();
+    expect(lateSubscriber).toHaveBeenCalledOnce();
+
+    signal.clear();
+    signal.emit();
+    expect(firstSubscriber).toHaveBeenCalledTimes(2);
+    expect(lateSubscriber).toHaveBeenCalledOnce();
+  });
 });
 
 describe('screen GUIs and frames', () => {
@@ -87,10 +105,10 @@ describe('screen GUIs and frames', () => {
   it('updates native styles from a property patch', () => {
     const frame = createFrame();
     update(frame, {
-      Size: new UDim2(0.5, -20, 1, -40),
-      Position: UDim2.fromScale(0.5, 0.25),
-      AnchorPoint: new Vector2(0.5, 1),
-      BackgroundColor3: Color3.fromRGB(25, 50, 75),
+      Size: udim2(0.5, -20, 1, -40),
+      Position: udim2FromScale(0.5, 0.25),
+      AnchorPoint: vector2(0.5, 1),
+      BackgroundColor3: color3(25, 50, 75),
       BackgroundTransparency: 0.25,
       Visible: false,
       ZIndex: 8,
@@ -102,6 +120,27 @@ describe('screen GUIs and frames', () => {
     expect(frame.element.style.display).toBe('none');
     expect(frame.element.style.zIndex).toBe('8');
     expect(props(frame).Visible).toBe(false);
+  });
+
+  it('renders automatic sizing and descendant clipping', () => {
+    const frame = createFrame({ AutomaticSize: 'X', ClipsDescendants: true });
+    expect(frame.element.style.width).toBe('auto');
+    expect(frame.element.style.height).toBe('100px');
+    expect(frame.element.style.overflow).toBe('hidden');
+
+    update(frame, { AutomaticSize: 'XY', ClipsDescendants: false });
+    expect(frame.element.style.height).toBe('auto');
+    expect(frame.element.style.overflow).toBe('visible');
+  });
+
+  it('reports missing mount targets and rejects lifecycle calls after destruction', () => {
+    const gui = createScreenGui();
+    expect(() => mount(gui, '#missing-target')).toThrow(/not found/);
+    expect(isMounted(gui)).toBe(false);
+    destroy(gui);
+    expect(() => mount(gui, document.body)).toThrow(/destroyed/);
+    expect(() => unmount(gui)).toThrow(/destroyed/);
+    expect(() => isMounted(gui)).toThrow(/destroyed/);
   });
 
   it('controls the whole tree and cleans up when destroyed', () => {

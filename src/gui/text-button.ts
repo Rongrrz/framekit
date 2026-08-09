@@ -3,7 +3,9 @@ import { attachButtonBehavior, type ButtonProps } from '../rendering/button-even
 import { textLabelDefaults, textNode, type TextLabelProps } from './text-label';
 
 export type TextButtonProps = TextLabelProps & ButtonProps;
-export type TextButtonNode = GuiNode<TextButtonProps>;
+export type TextButtonNode = GuiNode<TextButtonProps> & {
+  readonly element: HTMLButtonElement;
+};
 
 export function textButtonNode(initial: Partial<TextButtonProps> = {}): TextButtonNode {
   const element = document.createElement('button');
@@ -17,6 +19,7 @@ export function textButtonNode(initial: Partial<TextButtonProps> = {}): TextButt
       element.disabled = props.Disabled;
     },
   );
-  attachButtonBehavior(node, element);
-  return node;
+  const button = node as TextButtonNode;
+  attachButtonBehavior(button, element);
+  return button;
 }

@@ -19,18 +19,18 @@ export type Render<Props extends NodeProps> = (
   changed: ReadonlySet<keyof Props>,
 ) => void;
 
-export type Styles = Readonly<Record<string, string>>;
+export type DecoratorStyles = Readonly<Record<string, string>>;
 
-export type Decorate<Props extends NodeProps> = (props: Readonly<Props>) => Styles;
+export type Decorator<Props extends NodeProps> = (props: Readonly<Props>) => DecoratorStyles;
 
 /** Internal mutable state associated with an opaque node handle. */
 export type NodeState<Props extends NodeProps = NodeProps> = {
   props: Props;
-  parent?: Node;
+  parent: Node | undefined;
   children: Node[];
   destroyed: boolean;
-  render?: Render<Props>;
-  decorate?: Decorate<Props>;
+  render: Render<Props> | undefined;
+  decorate: Decorator<Props> | undefined;
   cleanups: Set<() => void>;
   appliedStyles: Set<string>;
 };
@@ -40,13 +40,26 @@ const states = new WeakMap<Node, NodeState<any>>();
 /** Internal building block used by FrameKit factories. */
 export function node<Props extends NodeProps>(
   props: Props,
+  element: HTMLElement,
+  render?: Render<Props>,
+  decorate?: Decorator<Props>,
+): GuiNode<Props>;
+export function node<Props extends NodeProps>(
+  props: Props,
+  element?: undefined,
+  render?: Render<Props>,
+  decorate?: Decorator<Props>,
+): Node<Props>;
+export function node<Props extends NodeProps>(
+  props: Props,
   element?: HTMLElement,
   render?: Render<Props>,
-  decorate?: Decorate<Props>,
+  decorate?: Decorator<Props>,
 ): Node<Props> {
   const handle = Object.freeze({ element }) as Node<Props>;
   states.set(handle, {
     props,
+    parent: undefined,
     children: [],
     destroyed: false,
     render,
@@ -58,21 +71,35 @@ export function node<Props extends NodeProps>(
   return handle;
 }
 
+/** Creates an element-less node that contributes styles to its parent. */
+export function decoratorNode<Props extends NodeProps>(
+  props: Props,
+  decorate: Decorator<Props>,
+): Node<Props> {
+  return node(props, undefined, undefined, decorate);
+}
+
+/** Applies a partial property update and synchronizes the affected rendering. */
 export function update<Props extends NodeProps>(handle: Node<Props>, patch: Partial<Props>): void {
   assertNodeActive(handle);
   const state = nodeState(handle);
   const changed = new Set(Object.keys(patch) as (keyof Props)[]);
   if (changed.size === 0) return;
   state.props = { ...state.props, ...patch };
-  renderNode(handle, changed);
-  if (state.decorate && state.parent) renderNode(state.parent);
+  if (state.decorate) {
+    if (state.parent) renderNode(state.parent);
+  } else {
+    renderNode(handle, changed);
+  }
 }
 
+/** Returns a readonly snapshot of a node's current properties. */
 export function props<Props extends NodeProps>(handle: Node<Props>): Readonly<Props> {
   assertNodeActive(handle);
   return { ...nodeState(handle).props };
 }
 
+/** Recursively destroys a node, its descendants, DOM, and lifecycle resources. */
 export function destroy(handle: Node): void {
   const state = nodeState(handle);
   if (state.destroyed) return;
@@ -80,9 +107,10 @@ export function destroy(handle: Node): void {
   if (state.parent) {
     const previous = state.parent;
     const siblings = nodeState(state.parent).children;
-    siblings.splice(siblings.indexOf(handle), 1);
+    const index = siblings.indexOf(handle);
+    if (index >= 0) siblings.splice(index, 1);
     state.parent = undefined;
-    renderNode(previous);
+    if (state.decorate) renderNode(previous);
   }
   state.destroyed = true;
   for (const callback of state.cleanups) callback();
@@ -90,6 +118,7 @@ export function destroy(handle: Node): void {
   handle.element?.remove();
 }
 
+/** Reports whether a node has been destroyed. */
 export function isDestroyed(handle: Node): boolean {
   return nodeState(handle).destroyed;
 }

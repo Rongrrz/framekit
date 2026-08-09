@@ -1,5 +1,5 @@
-import { node, type Node, type NodeProps, type Styles } from '../core/node';
-import { Color3 } from '../primitives/Color3';
+import { decoratorNode, type DecoratorStyles, type Node, type NodeProps } from '../core/node';
+import { color3, color3ToCss, type Color3 } from '../primitives/color3';
 
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
 
@@ -14,25 +14,23 @@ export type UIStrokeProps = NodeProps & {
 export type UIStrokeNode = Node<UIStrokeProps>;
 
 export function uiStrokeNode(initial: Partial<UIStrokeProps> = {}): UIStrokeNode {
-  return node(
+  return decoratorNode(
     {
       Name: 'UIStroke',
       Enabled: true,
-      Color: Color3.fromRGB(0, 0, 0),
+      Color: color3(0, 0, 0),
       Transparency: 0,
       Thickness: 1,
       BorderStrokePosition: 'Outer',
       ...initial,
     },
-    undefined,
-    undefined,
-    (props): Styles => (props.Enabled ? { 'box-shadow': strokeShadow(props) } : {}),
+    (props): DecoratorStyles => (props.Enabled ? { 'box-shadow': strokeShadow(props) } : {}),
   );
 }
 
 function strokeShadow(props: Readonly<UIStrokeProps>): string {
   const thickness = Math.max(0, props.Thickness);
-  const color = props.Color.toCSS(props.Transparency);
+  const color = color3ToCss(props.Color, props.Transparency);
   if (props.BorderStrokePosition === 'Inner') return `inset 0 0 0 ${thickness}px ${color}`;
   if (props.BorderStrokePosition === 'Outer') return `0 0 0 ${thickness}px ${color}`;
   const halfThickness = thickness / 2;

@@ -1,5 +1,5 @@
 import type { GuiNode, Render } from '../core/node';
-import { MathUtils } from '../utils/math';
+import { clamp } from '../utils/math';
 import { frameDefaults, frameNode, type FrameProps } from './frame-node';
 
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
@@ -12,6 +12,8 @@ export type ImageLabelProps = FrameProps & {
 };
 
 export type ImageLabelNode = GuiNode<ImageLabelProps>;
+
+const objectFit = { Stretch: 'fill', Fit: 'contain', Crop: 'cover' } as const;
 
 export function imageLabelDefaults(): ImageLabelProps {
   return {
@@ -45,15 +47,16 @@ export function imageNode<Props extends ImageLabelProps>(
   element.prepend(imageElement);
 
   return frameNode(kind, element, defaults, initial, (props, changed) => {
-    if (changed.has('Image')) imageElement.src = props.Image;
+    if (changed.has('Image')) {
+      if (props.Image) imageElement.src = props.Image;
+      else imageElement.removeAttribute('src');
+    }
     if (changed.has('AltText')) imageElement.alt = props.AltText;
     if (changed.has('ImageTransparency')) {
-      imageElement.style.opacity = String(1 - MathUtils.clamp(props.ImageTransparency, 0, 1));
+      imageElement.style.opacity = String(1 - clamp(props.ImageTransparency, 0, 1));
     }
     if (changed.has('ScaleType')) {
-      imageElement.style.objectFit = { Stretch: 'fill', Fit: 'contain', Crop: 'cover' }[
-        props.ScaleType
-      ];
+      imageElement.style.objectFit = objectFit[props.ScaleType];
     }
     renderExtra?.(props, changed);
   });

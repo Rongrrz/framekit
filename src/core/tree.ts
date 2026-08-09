@@ -3,7 +3,7 @@ import { assertNodeActive, nodeState, renderNode, type Node, type NodeState } fr
 /**
  * Adds a node to a parent, moving it from its previous parent when necessary.
  * DOM-backed children are appended to the parent's element after the tree is updated.
- * Both affected parents are rendered again so their decorator children are recomputed.
+ * When the child is a decorator, affected parents render again to recompute their styles.
  * Calling this with an existing parent-child pair has no effect.
  *
  * @throws When either node is destroyed or the operation would create a cycle.
@@ -16,6 +16,9 @@ export function append(parent: Node, child: Node): void {
   }
   const parentState = nodeState(parent);
   const childState = nodeState(child);
+  if (childState.decorate && !parent.element) {
+    throw new TypeError('UI decorators must be appended to a DOM-backed node.');
+  }
   if (childState.parent === parent) return;
 
   const previous = childState.parent;
@@ -23,14 +26,16 @@ export function append(parent: Node, child: Node): void {
   childState.parent = parent;
   parentState.children.push(child);
   if (child.element) parent.element?.append(child.element);
-  if (previous) renderNode(previous);
-  renderNode(parent);
+  if (childState.decorate) {
+    if (previous) renderNode(previous);
+    renderNode(parent);
+  }
 }
 
 /**
  * Removes a node from its parent and from the DOM without destroying it.
  * Its descendants remain attached to the node and it can be appended again later.
- * The previous parent is rendered again without the detached node's decoration.
+ * Detaching a decorator renders the previous parent again without its styles.
  *
  * @throws When the node has been destroyed.
  */
@@ -40,7 +45,7 @@ export function detach(handle: Node): void {
   const previous = state.parent;
   detachFromParent(handle, state);
   handle.element?.remove();
-  if (previous) renderNode(previous);
+  if (previous && state.decorate) renderNode(previous);
 }
 
 /**
@@ -88,7 +93,8 @@ export function find(handle: Node, name: string, recursive = false): Node | unde
 function detachFromParent(handle: Node, state: NodeState): void {
   if (!state.parent) return;
   const siblings = nodeState(state.parent).children;
-  siblings.splice(siblings.indexOf(handle), 1);
+  const index = siblings.indexOf(handle);
+  if (index >= 0) siblings.splice(index, 1);
   state.parent = undefined;
 }
 

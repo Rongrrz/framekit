@@ -1,5 +1,5 @@
 import type { GuiNode, Render } from '../core/node';
-import { Color3 } from '../primitives/Color3';
+import { color3, color3ToCss, type Color3 } from '../primitives/color3';
 import { frameDefaults, frameNode, type FrameProps } from './frame-node';
 
 export type TextXAlignment = 'Left' | 'Center' | 'Right';
@@ -19,12 +19,15 @@ export type TextLabelProps = FrameProps & {
 
 export type TextLabelNode = GuiNode<TextLabelProps>;
 
+const horizontalAlignment = { Left: 'flex-start', Center: 'center', Right: 'flex-end' } as const;
+const verticalAlignment = { Top: 'flex-start', Center: 'center', Bottom: 'flex-end' } as const;
+
 export function textLabelDefaults(): TextLabelProps {
   return {
     ...frameDefaults(),
     Name: 'TextLabel',
     Text: '',
-    TextColor3: Color3.fromRGB(0, 0, 0),
+    TextColor3: color3(0, 0, 0),
     TextTransparency: 0,
     TextSize: 14,
     TextWrapped: false,
@@ -54,14 +57,12 @@ export function textNode<Props extends TextLabelProps>(
   element.prepend(textElement);
 
   return frameNode(kind, element, defaults, initial, (props, changed) => {
-    const horizontal = { Left: 'flex-start', Center: 'center', Right: 'flex-end' } as const;
-    const vertical = { Top: 'flex-start', Center: 'center', Bottom: 'flex-end' } as const;
     textElement.textContent = props.Text;
-    textElement.style.color = props.TextColor3.toCSS(props.TextTransparency);
+    textElement.style.color = color3ToCss(props.TextColor3, props.TextTransparency);
     textElement.style.fontSize = `${Math.max(0, props.TextSize)}px`;
     textElement.style.whiteSpace = props.TextWrapped ? 'normal' : 'nowrap';
-    textElement.style.justifyContent = horizontal[props.TextXAlignment];
-    textElement.style.alignItems = vertical[props.TextYAlignment];
+    textElement.style.justifyContent = horizontalAlignment[props.TextXAlignment];
+    textElement.style.alignItems = verticalAlignment[props.TextYAlignment];
     textElement.style.textAlign = props.TextXAlignment.toLowerCase();
     textElement.style.fontFamily = props.FontFamily;
     textElement.style.fontWeight = String(props.FontWeight);

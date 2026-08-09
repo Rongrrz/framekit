@@ -1,4 +1,4 @@
-import { UDim } from '../primitives/UDim';
+import type { UDim } from '../primitives/udim';
 
 export function udimToCss(value: UDim): string {
   const percent = value.Scale * 100;
