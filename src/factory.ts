@@ -1,5 +1,7 @@
 import { node, type Node, type NodeProps } from './core/node';
 import { signal, type Signal } from './core/signal';
+import { uiCornerNode, type UICornerNode, type UICornerProps } from './decorators/ui-corner';
+import { uiStrokeNode, type UIStrokeNode, type UIStrokeProps } from './decorators/ui-stroke';
 import { frameDefaults, frameNode, type FrameNode, type FrameProps } from './gui/frame-node';
 import { imageButtonNode, type ImageButtonNode, type ImageButtonProps } from './gui/image-button';
 import {
@@ -28,6 +30,14 @@ export function createNode(initial: Partial<NodeProps> = {}): Node<NodeProps> {
 
 export function createSignal<Arguments extends unknown[] = []>(): Signal<Arguments> {
   return signal<Arguments>();
+}
+
+export function createUICorner(initial: Partial<UICornerProps> = {}): UICornerNode {
+  return uiCornerNode(initial);
+}
+
+export function createUIStroke(initial: Partial<UIStrokeProps> = {}): UIStrokeNode {
+  return uiStrokeNode(initial);
 }
 
 export function createFrame(initial: Partial<FrameProps> = {}): FrameNode {

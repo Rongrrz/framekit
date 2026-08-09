@@ -12,7 +12,11 @@ export {
   createSignal,
   createTextButton,
   createTextLabel,
+  createUICorner,
+  createUIStroke,
 } from './factory';
+export type { UICornerNode, UICornerProps } from './decorators/ui-corner';
+export type { BorderStrokePosition, UIStrokeNode, UIStrokeProps } from './decorators/ui-stroke';
 export type { AutomaticSize, FrameNode, FrameProps } from './gui/frame-node';
 export type { ImageButtonNode, ImageButtonProps } from './gui/image-button';
 export type { ImageLabelNode, ImageLabelProps, ScaleType } from './gui/image-label';

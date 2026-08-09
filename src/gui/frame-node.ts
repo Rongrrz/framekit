@@ -16,9 +16,6 @@ export type FrameProps = NodeProps & {
   ZIndex: number;
   AutomaticSize: AutomaticSize;
   ClipsDescendants: boolean;
-  BorderSizePixel: number;
-  BorderColor3: Color3;
-  CornerRadius: number;
 };
 
 export type FrameNode = GuiNode<FrameProps>;
@@ -35,9 +32,6 @@ export function frameDefaults(): FrameProps {
     ZIndex: 1,
     AutomaticSize: 'None',
     ClipsDescendants: false,
-    BorderSizePixel: 0,
-    BorderColor3: Color3.fromRGB(0, 0, 0),
-    CornerRadius: 0,
   };
 }
 
@@ -70,8 +64,4 @@ function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
   element.style.backgroundColor = props.BackgroundColor3.toCSS(props.BackgroundTransparency);
   element.style.zIndex = String(props.ZIndex);
   element.style.overflow = props.ClipsDescendants ? 'hidden' : 'visible';
-  element.style.borderStyle = props.BorderSizePixel > 0 ? 'solid' : 'none';
-  element.style.borderWidth = `${Math.max(0, props.BorderSizePixel)}px`;
-  element.style.borderColor = props.BorderColor3.toCSS();
-  element.style.borderRadius = `${Math.max(0, props.CornerRadius)}px`;
 }

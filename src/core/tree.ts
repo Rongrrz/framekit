@@ -1,8 +1,9 @@
-import { assertNodeActive, nodeState, type Node, type NodeState } from './node';
+import { assertNodeActive, nodeState, renderNode, type Node, type NodeState } from './node';
 
 /**
  * Adds a node to a parent, moving it from its previous parent when necessary.
  * DOM-backed children are appended to the parent's element after the tree is updated.
+ * Both affected parents are rendered again so their decorator children are recomputed.
  * Calling this with an existing parent-child pair has no effect.
  *
  * @throws When either node is destroyed or the operation would create a cycle.
@@ -17,23 +18,29 @@ export function append(parent: Node, child: Node): void {
   const childState = nodeState(child);
   if (childState.parent === parent) return;
 
+  const previous = childState.parent;
   detachFromParent(child, childState);
   childState.parent = parent;
   parentState.children.push(child);
   if (child.element) parent.element?.append(child.element);
+  if (previous) renderNode(previous);
+  renderNode(parent);
 }
 
 /**
  * Removes a node from its parent and from the DOM without destroying it.
  * Its descendants remain attached to the node and it can be appended again later.
+ * The previous parent is rendered again without the detached node's decoration.
  *
  * @throws When the node has been destroyed.
  */
 export function detach(handle: Node): void {
   assertNodeActive(handle);
   const state = nodeState(handle);
+  const previous = state.parent;
   detachFromParent(handle, state);
   handle.element?.remove();
+  if (previous) renderNode(previous);
 }
 
 /**

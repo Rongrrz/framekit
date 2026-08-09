@@ -8,6 +8,8 @@ import {
   createScrollingFrame,
   createTextButton,
   createTextLabel,
+  createUICorner,
+  createUIStroke,
   mount,
   on,
   UDim2,
@@ -30,12 +32,17 @@ const card = createFrame({
   Position: UDim2.fromScale(0.5, 0.5),
   AnchorPoint: new Vector2(0.5, 0.5),
   BackgroundColor3: Color3.fromRGB(30, 41, 59),
-  BorderColor3: Color3.fromRGB(71, 85, 105),
-  BorderSizePixel: 1,
-  CornerRadius: 22,
   ClipsDescendants: true,
 });
 append(background, card);
+append(card, createUICorner({ CornerRadius: 22 }));
+append(
+  card,
+  createUIStroke({
+    Color: Color3.fromRGB(71, 85, 105),
+    Thickness: 1,
+  }),
+);
 
 const icon = createImageLabel({
   Name: 'Icon',
@@ -74,10 +81,10 @@ const items = createScrollingFrame({
   Position: UDim2.fromOffset(28, 116),
   BackgroundColor3: Color3.fromRGB(15, 23, 42),
   BackgroundTransparency: 0.35,
-  CornerRadius: 14,
   ScrollingDirection: 'Y',
 });
 append(card, items);
+append(items, createUICorner({ CornerRadius: 14 }));
 
 const itemNames = [
   'Crystal Compass',
@@ -97,12 +104,12 @@ for (const [index, name] of itemNames.entries()) {
     Size: UDim2.fromOffset(352, 48),
     Position: UDim2.fromOffset(16, 12 + index * 56),
     BackgroundColor3: Color3.fromRGB(51, 65, 85),
-    CornerRadius: 10,
     Text: name,
     TextColor3: Color3.fromRGB(226, 232, 240),
     TextSize: 15,
     TextXAlignment: 'Left',
   });
+  append(item, createUICorner({ CornerRadius: 10 }));
   on(item, 'MouseEnter', () => {
     update(item, { BackgroundColor3: Color3.fromRGB(59, 130, 246) });
   });
@@ -128,12 +135,12 @@ const equip = createTextButton({
   Size: UDim2.fromOffset(130, 48),
   Position: UDim2.fromOffset(282, 444),
   BackgroundColor3: Color3.fromRGB(37, 99, 235),
-  CornerRadius: 12,
   Text: 'Equip item',
   TextColor3: Color3.fromRGB(255, 255, 255),
   TextSize: 15,
   FontWeight: 700,
 });
+append(equip, createUICorner({ CornerRadius: 12 }));
 on(equip, 'MouseButton1Click', () => {
   update(status, {
     Text: 'Item equipped!',

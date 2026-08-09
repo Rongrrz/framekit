@@ -17,6 +17,24 @@ append(gui, frame);
 update(frame, { Visible: false });
 ```
 
+## Decorators
+
+`UICorner` and `UIStroke` are element-less nodes. Append them to a GUI node to decorate its DOM element, update them like any other node, and detach or destroy them to remove their styles.
+
+```ts
+import { append, Color3, createUICorner, createUIStroke } from 'framekit';
+
+append(frame, createUICorner({ CornerRadius: 12 }));
+append(
+  frame,
+  createUIStroke({
+    Color: Color3.fromRGB(59, 130, 246),
+    Thickness: 2,
+    BorderStrokePosition: 'Outer',
+  }),
+);
+```
+
 ## Tree and lifecycle
 
 Nodes are opaque handles managed through small, composable functions:

@@ -8,7 +8,11 @@ import {
   createScrollingFrame,
   createTextButton,
   createTextLabel,
+  createUICorner,
+  createUIStroke,
+  detach,
   destroy,
+  isDestroyed,
   on,
   update,
 } from '..';
@@ -48,6 +52,39 @@ describe('text UI objects', () => {
     expect(callback).toHaveBeenCalledOnce();
     destroy(button);
     expect(() => on(button, 'MouseButton1Click', callback)).toThrow(/destroyed/);
+  });
+});
+
+describe('UI decorators', () => {
+  it('applies, updates, and removes corner and stroke styles through the tree', () => {
+    const frame = createTextLabel();
+    const baseCorner = createUICorner({ CornerRadius: 3 });
+    const corner = createUICorner({ CornerRadius: 12 });
+    const stroke = createUIStroke({
+      Color: Color3.fromRGB(10, 20, 30),
+      Thickness: 2,
+      BorderStrokePosition: 'Inner',
+    });
+    append(frame, baseCorner);
+    append(frame, corner);
+    append(frame, stroke);
+    expect(frame.element.style.borderRadius).toBe('12px');
+    expect(frame.element.style.boxShadow).toContain('inset');
+    expect(frame.element.style.boxShadow).toContain('2px');
+
+    update(corner, { CornerRadius: 18 });
+    update(stroke, { BorderStrokePosition: 'Center', Thickness: 4 });
+    expect(frame.element.style.borderRadius).toBe('18px');
+    expect(frame.element.style.boxShadow).toContain('2px');
+
+    update(corner, { Enabled: false });
+    expect(frame.element.style.borderRadius).toBe('3px');
+    update(corner, { Enabled: true });
+    detach(corner);
+    expect(frame.element.style.borderRadius).toBe('3px');
+    destroy(frame);
+    expect(isDestroyed(baseCorner)).toBe(true);
+    expect(isDestroyed(stroke)).toBe(true);
   });
 });
 
