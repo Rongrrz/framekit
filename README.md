@@ -1,6 +1,6 @@
 # FrameKit
 
-FrameKit is a React-independent TypeScript UI toolkit that brings Roblox-inspired UI concepts to the browser DOM without a class hierarchy.
+FrameKit is a TypeScript/JavaScript UI Library heavily inspired by Roblox and video game UI systems. The core idea here is to adapt the 'video game UI experience' and allow those coming from a game-making background to make games on the web and/or to transition into the frontend smoothly, without being haunted by the scary, scary, CSS.
 
 ```ts
 import {
