@@ -1,88 +1,24 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
   append,
-  children,
   color3,
   createFrame,
-  createNode,
   createScreenGui,
-  createSignal,
   destroy,
-  find,
   isDestroyed,
   isMounted,
   mount,
-  parent,
   props,
   udim2,
   udim2FromScale,
   unmount,
   update,
   vector2,
-} from '..';
+} from '../..';
+import { resetDocumentAfterEach } from '../helpers/reset-document';
 
-afterEach(() => document.body.replaceChildren());
-
-describe('nodes', () => {
-  it('tracks, reparents, finds, and destroys children', () => {
-    const first = createNode({ Name: 'First' });
-    const second = createNode({ Name: 'Second' });
-    const child = createNode({ Name: 'Child' });
-    const grandchild = createNode({ Name: 'Grandchild' });
-    append(first, child);
-    append(child, grandchild);
-    expect(children(first)).toEqual([child]);
-    expect(find(first, 'Grandchild', true)).toBe(grandchild);
-    append(second, child);
-    expect(children(first)).toEqual([]);
-    expect(children(second)).toEqual([child]);
-    expect(parent(child)).toBe(second);
-    destroy(second);
-    expect(isDestroyed(child)).toBe(true);
-    expect(isDestroyed(grandchild)).toBe(true);
-  });
-
-  it('rejects cycles and mutations after destruction', () => {
-    const root = createNode();
-    const child = createNode();
-    append(root, child);
-    expect(() => append(child, root)).toThrow(/descendants/);
-    destroy(child);
-    expect(() => update(child, { Name: 'Too late' })).toThrow(/destroyed/);
-  });
-});
-
-describe('signals', () => {
-  it('subscribes with an idempotent unsubscribe function', () => {
-    const signal = createSignal<[number]>();
-    const listener = vi.fn();
-    const unsubscribe = signal.subscribe(listener);
-    signal.emit(1);
-    unsubscribe();
-    unsubscribe();
-    signal.emit(2);
-    expect(listener).toHaveBeenCalledOnce();
-    expect(listener).toHaveBeenCalledWith(1);
-  });
-
-  it('uses an emission snapshot and can clear every subscriber', () => {
-    const signal = createSignal();
-    const lateSubscriber = vi.fn();
-    const firstSubscriber = vi.fn(() => signal.subscribe(lateSubscriber));
-    signal.subscribe(firstSubscriber);
-
-    signal.emit();
-    expect(lateSubscriber).not.toHaveBeenCalled();
-    signal.emit();
-    expect(lateSubscriber).toHaveBeenCalledOnce();
-
-    signal.clear();
-    signal.emit();
-    expect(firstSubscriber).toHaveBeenCalledTimes(2);
-    expect(lateSubscriber).toHaveBeenCalledOnce();
-  });
-});
+resetDocumentAfterEach();
 
 describe('screen GUIs and frames', () => {
   it('mounts, reparents, unmounts, and synchronizes the DOM tree', () => {

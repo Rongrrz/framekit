@@ -1,5 +1,5 @@
-import type { GuiNode } from '../core/node';
-import { attachButtonBehavior, type ButtonProps } from '../rendering/button-events';
+import type { GuiNode } from '../core/node/variants/gui';
+import { attachButtonBehavior, type ButtonProps } from '../rendering/button-input';
 import { textLabelDefaults, textNode, type TextLabelProps } from './text-label';
 
 export type TextButtonProps = TextLabelProps & ButtonProps;

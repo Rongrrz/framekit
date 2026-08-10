@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { color3, color3FromHex, color3ToCss } from '../primitives/color3';
-import { udim2FromOffset } from '../primitives/udim2';
-import { vector2 } from '../primitives/vector2';
+import { color3, color3FromHex, color3ToCss } from '../../primitives/color3';
+import { udim2FromOffset } from '../../primitives/udim2';
+import { vector2 } from '../../primitives/vector2';
 
 describe('value primitives', () => {
   it('are immutable at runtime', () => {

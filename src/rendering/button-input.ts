@@ -1,7 +1,8 @@
-import { dispatch, subscribe } from '../core/events';
-import { cleanup, type GuiNode } from '../core/node';
-import type { Unsubscribe } from '../core/signals';
-import type { FrameProps } from '../gui/frame-node';
+import { dispatchNodeEvent, subscribeNodeEvent } from '../core/event/node-event';
+import type { Unsubscribe } from '../core/event/signal';
+import { cleanup } from '../core/node/lifecycle';
+import type { GuiNode } from '../core/node/variants/gui';
+import type { FrameProps } from '../gui/frame';
 
 export type ButtonProps = {
   Disabled: boolean;
@@ -28,7 +29,7 @@ export function on(
   event: ButtonEvent,
   listener: (event: MouseEvent) => void,
 ): Unsubscribe {
-  return subscribe<[MouseEvent]>(node, event, listener);
+  return subscribeNodeEvent<[MouseEvent]>(node, event, listener);
 }
 
 export function attachButtonBehavior(node: ButtonNode, button: HTMLButtonElement): void {
@@ -45,10 +46,10 @@ export function attachButtonBehavior(node: ButtonNode, button: HTMLButtonElement
       if (button.disabled) return;
       if (event.button === 0) {
         leftDown = true;
-        dispatch(node, 'MouseButton1Down', event);
+        dispatchNodeEvent(node, 'MouseButton1Down', event);
       } else if (event.button === 2) {
         rightDown = true;
-        dispatch(node, 'MouseButton2Down', event);
+        dispatchNodeEvent(node, 'MouseButton2Down', event);
       }
     },
     options,
@@ -62,24 +63,28 @@ export function attachButtonBehavior(node: ButtonNode, button: HTMLButtonElement
         return;
       }
       if (event.button === 0) {
-        dispatch(node, 'MouseButton1Up', event);
-        if (leftDown) dispatch(node, 'MouseButton1Click', event);
+        dispatchNodeEvent(node, 'MouseButton1Up', event);
+        if (leftDown) dispatchNodeEvent(node, 'MouseButton1Click', event);
         leftDown = false;
       } else if (event.button === 2) {
-        dispatch(node, 'MouseButton2Up', event);
-        if (rightDown) dispatch(node, 'MouseButton2Click', event);
+        dispatchNodeEvent(node, 'MouseButton2Up', event);
+        if (rightDown) dispatchNodeEvent(node, 'MouseButton2Click', event);
         rightDown = false;
       }
     },
     options,
   );
-  button.addEventListener('mouseenter', (event) => dispatch(node, 'MouseEnter', event), options);
+  button.addEventListener(
+    'mouseenter',
+    (event) => dispatchNodeEvent(node, 'MouseEnter', event),
+    options,
+  );
   button.addEventListener(
     'mouseleave',
     (event) => {
       leftDown = false;
       rightDown = false;
-      dispatch(node, 'MouseLeave', event);
+      dispatchNodeEvent(node, 'MouseLeave', event);
     },
     options,
   );

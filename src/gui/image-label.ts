@@ -1,6 +1,6 @@
-import type { GuiNode, Render } from '../core/node';
+import type { GuiNode, Render } from '../core/node/variants/gui';
 import { clamp } from '../utils/math';
-import { frameDefaults, frameNode, type FrameProps } from './frame-node';
+import { frameDefaults, frameNode, type FrameProps } from './frame';
 
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 

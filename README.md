@@ -32,7 +32,7 @@ FrameKit keeps construction separate from behavior. Use `create...` factories to
 | Area       | API                                                                                                                                      |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Factories  | `createScreenGui`, `createFrame`, `createScrollingFrame`, `createTextLabel`, `createTextButton`, `createImageLabel`, `createImageButton` |
-| Decorators | `createUICorner`, `createUIStroke`                                                                                                       |
+| Decorators | `createUICorner`, `createUIStroke`, `createUIListLayout`                                                                                 |
 | Properties | `props`, `update`                                                                                                                        |
 | Tree       | `append`, `detach`, `parent`, `children`, `find`                                                                                         |
 | Lifecycle  | `mount`, `unmount`, `isMounted`, `destroy`, `isDestroyed`                                                                                |
@@ -44,7 +44,7 @@ Factory arguments are partial property objects. Read operations return snapshots
 
 ## Decorators
 
-`UICorner` and `UIStroke` are element-less nodes. Append them to a GUI node to decorate its DOM element, update them like any other node, and detach or destroy them to remove their styles.
+`UICorner` and `UIStroke` are element-less modifier nodes. Append them to a GUI node to decorate its DOM element, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
 
 ```ts
 import { append, color3, createUICorner, createUIStroke } from 'framekit';
@@ -74,6 +74,26 @@ destroy(parent); // recursively destroys its descendants
 isDestroyed(child); // true
 ```
 
+## List layouts
+
+`UIListLayout` is an element-less layout decorator that arranges its parent's direct GUI children in a row or column. While attached, it controls child positioning and ordering; detaching or destroying it restores each child's own `Position` and `AnchorPoint` rendering.
+
+```ts
+import { append, createUIListLayout, udim } from 'framekit';
+
+append(
+  scrollingFrame,
+  createUIListLayout({
+    FillDirection: 'Vertical',
+    Padding: udim(0, 8),
+    HorizontalAlignment: 'Center',
+    SortOrder: 'LayoutOrder',
+  }),
+);
+```
+
+Set `LayoutOrder` on GUI nodes to control their order. `SortOrder: 'Name'` sorts by `Name` instead, and `Wraps` enables additional rows or columns when children exceed the available space.
+
 ## Events
 
 Buttons expose typed events through `on`. Subscribing returns an idempotent unsubscribe function, and destroying the button removes its DOM listeners and subscriptions.
@@ -97,10 +117,11 @@ Primitive values are frozen structural objects rather than class instances. Pasc
 
 Core responsibilities are intentionally split:
 
-- `core/node.ts` stores opaque node state, property updates, rendering, and destruction.
-- `core/tree.ts` owns parent-child relationships and DOM synchronization.
-- `core/signals.ts` provides standalone typed signals; `core/events.ts` binds signals to node lifecycles.
-- GUI modules render their own properties. Decorator nodes describe styles, and their parent recomputes those styles whenever the decorator tree changes.
+- `core/node/base.ts`, `state.ts`, `lifecycle.ts`, and `tree.ts` own shared node infrastructure.
+- `core/node/variants` contains the GUI, decorator, and layout implementations so role-specific behavior stays separate from ordinary tree and lifecycle code.
+- `core/event/signal.ts` provides standalone typed signals, while `core/event/node-event.ts` binds event signals to node lifecycles.
+- `rendering/button-input.ts` translates native mouse input into FrameKit button events.
+- GUI modules render their own properties. Modifier nodes remain ordinary tree children, while their parent maintains a keyed index for fast lookup and uniqueness. Modifiers describe appearance or child layout, and their parent recomputes the result whenever the relevant tree or properties change.
 
 ## Development
 
@@ -109,6 +130,8 @@ Run the complete local validation suite before committing:
 ```sh
 npm run check
 ```
+
+Tests mirror source domains under `src/__tests__/core`, `gui`, `decorators`, `primitives`, and `utils`. Shared test-only constructors and DOM cleanup live under `src/__tests__/helpers`; they are not part of FrameKit's public factories or package exports.
 
 ## Inspiration
 

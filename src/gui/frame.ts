@@ -1,4 +1,5 @@
-import { node, type GuiNode, type NodeProps, type Render } from '../core/node';
+import type { NodeProps } from '../core/node/base';
+import { guiNode, type GuiNode, type Render } from '../core/node/variants/gui';
 import { color3, color3ToCss, type Color3 } from '../primitives/color3';
 import { udim2FromOffset, type UDim2 } from '../primitives/udim2';
 import { vector2, type Vector2 } from '../primitives/vector2';
@@ -14,6 +15,7 @@ export type FrameProps = NodeProps & {
   BackgroundColor3: Color3;
   BackgroundTransparency: number;
   ZIndex: number;
+  LayoutOrder: number;
   AutomaticSize: AutomaticSize;
   ClipsDescendants: boolean;
 };
@@ -30,6 +32,7 @@ export function frameDefaults(): FrameProps {
     BackgroundColor3: color3(200, 200, 200),
     BackgroundTransparency: 0,
     ZIndex: 1,
+    LayoutOrder: 0,
     AutomaticSize: 'None',
     ClipsDescendants: false,
   };
@@ -45,7 +48,7 @@ export function frameNode<Props extends FrameProps>(
 ): GuiNode<Props> {
   element.dataset.framekit = kind;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
-  const handle = node({ ...defaults, ...initial }, element, (props, changed) => {
+  const handle = guiNode({ ...defaults, ...initial }, element, (props, changed) => {
     renderFrame(element, props);
     renderExtra?.(props, changed);
   });
@@ -53,6 +56,7 @@ export function frameNode<Props extends FrameProps>(
 }
 
 function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
+  element.style.position = 'absolute';
   element.style.width =
     props.AutomaticSize === 'X' || props.AutomaticSize === 'XY' ? 'auto' : udimToCss(props.Size.X);
   element.style.height =

@@ -1,4 +1,9 @@
-import { decoratorNode, type DecoratorStyles, type Node, type NodeProps } from '../core/node';
+import type { NodeProps } from '../core/node/base';
+import {
+  decoratorNode,
+  type DecoratorNode,
+  type DecoratorStyles,
+} from '../core/node/variants/decorator';
 import { color3, color3ToCss, type Color3 } from '../primitives/color3';
 
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
@@ -11,10 +16,11 @@ export type UIStrokeProps = NodeProps & {
   BorderStrokePosition: BorderStrokePosition;
 };
 
-export type UIStrokeNode = Node<UIStrokeProps>;
+export type UIStrokeNode = DecoratorNode<UIStrokeProps>;
 
 export function uiStrokeNode(initial: Partial<UIStrokeProps> = {}): UIStrokeNode {
   return decoratorNode(
+    'UIStroke',
     {
       Name: 'UIStroke',
       Enabled: true,

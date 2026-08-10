@@ -1,6 +1,6 @@
-import type { GuiNode, Render } from '../core/node';
+import type { GuiNode, Render } from '../core/node/variants/gui';
 import { color3, color3ToCss, type Color3 } from '../primitives/color3';
-import { frameDefaults, frameNode, type FrameProps } from './frame-node';
+import { frameDefaults, frameNode, type FrameProps } from './frame';
 
 export type TextXAlignment = 'Left' | 'Center' | 'Right';
 export type TextYAlignment = 'Top' | 'Center' | 'Bottom';
