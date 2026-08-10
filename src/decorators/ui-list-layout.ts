@@ -1,11 +1,11 @@
+import type { NodeProps } from '../core/node/base';
+import type { DecoratorStyles } from '../core/node/variants/decorator';
 import {
   layoutNode,
-  type DecoratorStyles,
   type LayoutChild,
+  type LayoutNode,
   type LayoutStyles,
-  type Node,
-  type NodeProps,
-} from '../core/node';
+} from '../core/node/variants/layout';
 import { udim, type UDim } from '../primitives/udim';
 import { udimToCss } from '../rendering/dom';
 
@@ -23,10 +23,11 @@ export type UIListLayoutProps = NodeProps & {
   Wraps: boolean;
 };
 
-export type UIListLayoutNode = Node<UIListLayoutProps>;
+export type UIListLayoutNode = LayoutNode<UIListLayoutProps>;
 
 export function uiListLayoutNode(initial: Partial<UIListLayoutProps> = {}): UIListLayoutNode {
   return layoutNode(
+    'UIListLayout',
     {
       Name: 'UIListLayout',
       FillDirection: 'Vertical',

@@ -1,4 +1,6 @@
-import { assertNodeActive, cleanup, node, type GuiNode, type NodeProps } from '../core/node';
+import type { NodeProps } from '../core/node/base';
+import { assertNodeActive, cleanup } from '../core/node/lifecycle';
+import { guiNode, type GuiNode } from '../core/node/variants/gui';
 
 export type ScreenGuiProps = NodeProps & {
   Enabled: boolean;
@@ -19,7 +21,7 @@ export function screenGuiNode(initial: Partial<ScreenGuiProps> = {}): ScreenGuiN
     overflow: 'hidden',
   });
 
-  const gui = node(
+  const gui = guiNode(
     { Name: 'ScreenGui', Enabled: true, DisplayOrder: 0, ...initial },
     element,
     (props) => {

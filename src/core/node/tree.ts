@@ -1,11 +1,7 @@
-import {
-  assertNodeActive,
-  hasLayout,
-  nodeState,
-  renderNode,
-  type Node,
-  type NodeState,
-} from './node';
+import type { Node } from './base';
+import { assertNodeActive } from './lifecycle';
+import { childNodes, isModifierState, nodeState, type NodeState } from './state';
+import { hasLayout, isGuiNode, renderNode, type ModifierNode } from './variants/gui';
 
 /**
  * Adds a node to a parent, moving it from its previous parent when necessary.
@@ -23,20 +19,33 @@ export function append(parent: Node, child: Node): void {
   }
   const parentState = nodeState(parent);
   const childState = nodeState(child);
-  if ((childState.decorate || childState.layout) && !parent.element) {
+  if (isModifierState(parentState)) {
+    throw new TypeError('UI modifiers cannot contain child nodes.');
+  }
+  if (isModifierState(childState) && parentState.kind !== 'gui') {
     throw new TypeError('UI decorators and layouts must be appended to a DOM-backed node.');
   }
   if (childState.parent === parent) return;
+  if (isModifierState(childState) && parentState.kind === 'gui') {
+    if (parentState.modifiers.has(childState.modifierType)) {
+      throw new Error(
+        `${parentState.props.Name} already has a ${childState.modifierType} modifier.`,
+      );
+    }
+  }
 
   const previous = childState.parent;
   detachFromParent(child, childState);
   childState.parent = parent;
-  parentState.children.push(child);
-  if (child.element) parent.element?.append(child.element);
-  if (previous && (childState.decorate || childState.layout || hasLayout(previous))) {
+  childNodes(parentState).push(child);
+  if (isModifierState(childState) && parentState.kind === 'gui') {
+    parentState.modifiers.set(childState.modifierType, child as ModifierNode);
+  }
+  if (isGuiNode(child) && isGuiNode(parent)) parent.element.append(child.element);
+  if (previous && (isModifierState(childState) || hasLayout(previous))) {
     renderNode(previous);
   }
-  if (childState.decorate || childState.layout || hasLayout(parent)) renderNode(parent);
+  if (isModifierState(childState) || hasLayout(parent)) renderNode(parent);
 }
 
 /**
@@ -51,8 +60,8 @@ export function detach(handle: Node): void {
   const state = nodeState(handle);
   const previous = state.parent;
   detachFromParent(handle, state);
-  handle.element?.remove();
-  if (previous && (state.decorate || state.layout || hasLayout(previous))) renderNode(previous);
+  if (isGuiNode(handle)) handle.element.remove();
+  if (previous && (isModifierState(state) || hasLayout(previous))) renderNode(previous);
 }
 
 /**
@@ -73,7 +82,7 @@ export function parent(handle: Node): Node | undefined {
  */
 export function children(handle: Node): readonly Node[] {
   assertNodeActive(handle);
-  return [...nodeState(handle).children];
+  return [...childNodes(nodeState(handle))];
 }
 
 /**
@@ -87,9 +96,9 @@ export function children(handle: Node): readonly Node[] {
 export function find(handle: Node, name: string, recursive = false): Node | undefined {
   assertNodeActive(handle);
   const state = nodeState(handle);
-  const direct = state.children.find((child) => nodeState(child).props.Name === name);
+  const direct = childNodes(state).find((child) => nodeState(child).props.Name === name);
   if (direct || !recursive) return direct;
-  for (const child of state.children) {
+  for (const child of childNodes(state)) {
     const result = find(child, name, true);
     if (result) return result;
   }
@@ -99,9 +108,13 @@ export function find(handle: Node, name: string, recursive = false): Node | unde
 /** Removes a node from its parent's child list without touching the DOM. */
 function detachFromParent(handle: Node, state: NodeState): void {
   if (!state.parent) return;
-  const siblings = nodeState(state.parent).children;
+  const parentState = nodeState(state.parent);
+  const siblings = childNodes(parentState);
   const index = siblings.indexOf(handle);
   if (index >= 0) siblings.splice(index, 1);
+  if (isModifierState(state) && parentState.kind === 'gui') {
+    parentState.modifiers.delete(state.modifierType);
+  }
   state.parent = undefined;
 }
 

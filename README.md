@@ -44,7 +44,7 @@ Factory arguments are partial property objects. Read operations return snapshots
 
 ## Decorators
 
-`UICorner` and `UIStroke` are element-less nodes. Append them to a GUI node to decorate its DOM element, update them like any other node, and detach or destroy them to remove their styles.
+`UICorner` and `UIStroke` are element-less modifier nodes. Append them to a GUI node to decorate its DOM element, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
 
 ```ts
 import { append, color3, createUICorner, createUIStroke } from 'framekit';
@@ -117,10 +117,11 @@ Primitive values are frozen structural objects rather than class instances. Pasc
 
 Core responsibilities are intentionally split:
 
-- `core/node.ts` stores opaque node state, property updates, rendering, and destruction.
-- `core/tree.ts` owns parent-child relationships and DOM synchronization.
-- `core/signals.ts` provides standalone typed signals; `core/events.ts` binds signals to node lifecycles.
-- GUI modules render their own properties. Decorator nodes describe appearance or child layout, and their parent recomputes the result whenever the relevant tree or properties change.
+- `core/node/base.ts`, `state.ts`, `lifecycle.ts`, and `tree.ts` own shared node infrastructure.
+- `core/node/variants` contains the GUI, decorator, and layout implementations so role-specific behavior stays separate from ordinary tree and lifecycle code.
+- `core/event/signal.ts` provides standalone typed signals, while `core/event/node-event.ts` binds event signals to node lifecycles.
+- `rendering/button-input.ts` translates native mouse input into FrameKit button events.
+- GUI modules render their own properties. Modifier nodes remain ordinary tree children, while their parent maintains a keyed index for fast lookup and uniqueness. Modifiers describe appearance or child layout, and their parent recomputes the result whenever the relevant tree or properties change.
 
 ## Development
 
@@ -129,6 +130,8 @@ Run the complete local validation suite before committing:
 ```sh
 npm run check
 ```
+
+Tests mirror source domains under `src/__tests__/core`, `gui`, `decorators`, `primitives`, and `utils`. Shared test-only constructors and DOM cleanup live under `src/__tests__/helpers`; they are not part of FrameKit's public factories or package exports.
 
 ## Inspiration
 

@@ -1,5 +1,6 @@
-import { assertNodeActive, type GuiNode } from '../core/node';
-import { frameDefaults, frameNode, type FrameProps } from './frame-node';
+import { assertNodeActive } from '../core/node/lifecycle';
+import type { GuiNode } from '../core/node/variants/gui';
+import { frameDefaults, frameNode, type FrameProps } from './frame';
 
 export type ScrollingDirection = 'X' | 'Y' | 'XY';
 

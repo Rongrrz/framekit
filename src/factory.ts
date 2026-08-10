@@ -1,5 +1,4 @@
-import { node, type Node, type NodeProps } from './core/node';
-import { signal, type Signal } from './core/signals';
+import { signal, type Signal } from './core/event/signal';
 import { uiCornerNode, type UICornerNode, type UICornerProps } from './decorators/ui-corner';
 import {
   uiListLayoutNode,
@@ -7,7 +6,7 @@ import {
   type UIListLayoutProps,
 } from './decorators/ui-list-layout';
 import { uiStrokeNode, type UIStrokeNode, type UIStrokeProps } from './decorators/ui-stroke';
-import { frameDefaults, frameNode, type FrameNode, type FrameProps } from './gui/frame-node';
+import { frameDefaults, frameNode, type FrameNode, type FrameProps } from './gui/frame';
 import { imageButtonNode, type ImageButtonNode, type ImageButtonProps } from './gui/image-button';
 import {
   imageLabelDefaults,
@@ -28,11 +27,6 @@ import {
   type TextLabelNode,
   type TextLabelProps,
 } from './gui/text-label';
-
-/** Creates an element-less node for organizing a FrameKit tree. */
-export function createNode(initial: Partial<NodeProps> = {}): Node<NodeProps> {
-  return node({ Name: 'Node', ...initial });
-}
 
 /** Creates a standalone synchronous signal with typed arguments. */
 export function createSignal<Arguments extends unknown[] = []>(): Signal<Arguments> {

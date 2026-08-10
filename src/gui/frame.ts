@@ -1,4 +1,5 @@
-import { node, type GuiNode, type NodeProps, type Render } from '../core/node';
+import type { NodeProps } from '../core/node/base';
+import { guiNode, type GuiNode, type Render } from '../core/node/variants/gui';
 import { color3, color3ToCss, type Color3 } from '../primitives/color3';
 import { udim2FromOffset, type UDim2 } from '../primitives/udim2';
 import { vector2, type Vector2 } from '../primitives/vector2';
@@ -47,7 +48,7 @@ export function frameNode<Props extends FrameProps>(
 ): GuiNode<Props> {
   element.dataset.framekit = kind;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
-  const handle = node({ ...defaults, ...initial }, element, (props, changed) => {
+  const handle = guiNode({ ...defaults, ...initial }, element, (props, changed) => {
     renderFrame(element, props);
     renderExtra?.(props, changed);
   });
