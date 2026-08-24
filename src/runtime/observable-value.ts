@@ -7,9 +7,8 @@ type ValueUpdater<Value> = (currentValue: Value) => Value;
 
 export type ObservableValue<Value> = {
   (): Value;
-  (nextValue: Value): void;
+  (nextValue: Value | ValueUpdater<Value>): void;
   subscribe(listener: ValueListener<Value>): Unsubscribe;
-  update(updater: ValueUpdater<Value>): void;
 };
 
 /** Creates a value that synchronously notifies subscribers when it changes. */
@@ -18,11 +17,15 @@ export function createObservableValue<Value>(initialValue: Value): ObservableVal
   let currentValue = initialValue;
 
   function observable(): Value;
-  function observable(nextValue: Value): void;
-  function observable(nextValue?: Value): Value | void {
+  function observable(nextValue: Value | ValueUpdater<Value>): void;
+  function observable(nextValue?: Value | ValueUpdater<Value>): Value | void {
     if (arguments.length === 0) return currentValue;
-    if (Object.is(currentValue, nextValue)) return;
-    currentValue = nextValue as Value;
+    const resolvedValue =
+      typeof nextValue === 'function'
+        ? (nextValue as ValueUpdater<Value>)(currentValue)
+        : (nextValue as Value);
+    if (Object.is(currentValue, resolvedValue)) return;
+    currentValue = resolvedValue;
     changed.emit(currentValue);
   }
 
@@ -37,11 +40,7 @@ export function createObservableValue<Value>(initialValue: Value): ObservableVal
     return unsubscribe;
   }
 
-  function update(updater: ValueUpdater<Value>): void {
-    observable(updater(currentValue));
-  }
-
-  return Object.freeze(Object.assign(observable, { subscribe, update }));
+  return Object.freeze(Object.assign(observable, { subscribe }));
 }
 
 /** Observes a value until manually stopped or the owning node is destroyed. */

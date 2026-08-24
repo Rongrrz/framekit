@@ -23,7 +23,7 @@ const emptyCart: CartState = {
 const state = fk.state.observable(emptyCart);
 
 function changeQuantity(product: Product, delta: number): void {
-  state.update((current) => {
+  state((current) => {
     const previousQuantity = current.quantities.get(product.sku) ?? 0;
     const nextQuantity = Math.max(0, previousQuantity + delta);
     const appliedDelta = nextQuantity - previousQuantity;

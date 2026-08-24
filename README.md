@@ -130,7 +130,7 @@ import { fk } from 'framekit';
 const quantity = fk.state.observable(0);
 quantity.subscribe((value) => console.log(value)); // 0
 quantity(1); // writes 1
-quantity.update((current) => current + 1); // reads 1, then writes 2
+quantity((current) => current + 1); // reads 1, then writes 2
 ```
 
 Use `observe` for UI subscriptions. It registers the subscription with a node and releases it when that node is destroyed:

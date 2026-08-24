@@ -47,7 +47,7 @@ describe('observable values', () => {
 
     count(2);
     count(2);
-    count.update((current) => current + 3);
+    count((current) => current + 3);
     unsubscribe();
     count(8);
 
@@ -55,12 +55,12 @@ describe('observable values', () => {
     expect(listener.mock.calls).toEqual([[1], [2], [5]]);
   });
 
-  it('stores function values instead of treating them as updater callbacks', () => {
+  it('stores function values returned by updater functions', () => {
     const first = () => 1;
     const second = () => 2;
     const value = observable(first);
 
-    value(second);
+    value(() => second);
 
     expect(value()).toBe(second);
   });
@@ -70,7 +70,7 @@ describe('observable values', () => {
     const listener = vi.fn();
     value.subscribe(listener);
 
-    value.update((current) => current);
+    value((current) => current);
 
     expect(listener).toHaveBeenCalledOnce();
   });
