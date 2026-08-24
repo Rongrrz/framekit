@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
+import { fk } from '../..';
+import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const {
   append,
   createFrame,
   createUIAspectRatioConstraint,
@@ -8,8 +11,7 @@ import {
   props,
   udim2FromOffset,
   update,
-} from '../..';
-import { resetDocumentAfterEach } from '../helpers/reset-document';
+} = fk;
 
 resetDocumentAfterEach();
 

@@ -3,26 +3,18 @@
 FrameKit is a TypeScript/JavaScript UI Library heavily inspired by Roblox and video game UI systems. The core idea here is to adapt the 'video game UI experience' and allow those coming from a game-making background to make games on the web and/or to transition into the frontend smoothly, without being haunted by the scary, scary, CSS.
 
 ```ts
-import {
-  append,
-  color3,
-  createFrame,
-  createScreenGui,
-  mount,
-  udim2FromOffset,
-  update,
-} from 'framekit';
+import { fk } from 'framekit';
 
-const gui = createScreenGui();
-mount(gui, '#app');
+const gui = fk.createScreenGui();
+fk.mount(gui, '#app');
 
-const frame = createFrame({
-  Size: udim2FromOffset(300, 180),
-  BackgroundColor3: color3(37, 99, 235),
+const frame = fk.createFrame({
+  Size: fk.udim2FromOffset(300, 180),
+  BackgroundColor3: fk.color3(37, 99, 235),
 });
-append(gui, frame);
+fk.append(gui, frame);
 
-update(frame, { Visible: false });
+fk.update(frame, { Visible: false });
 ```
 
 `ScreenGui` always covers the browser viewport and does not require a global CSS reset. Its mount target determines where it lives in the DOM, not its dimensions.
@@ -38,7 +30,8 @@ FrameKit keeps construction separate from behavior. Use `create...` factories to
 | Properties | `props`, `update`                                                                                                                        |
 | Tree       | `append`, `detach`, `parent`, `children`, `find`                                                                                         |
 | Lifecycle  | `mount`, `unmount`, `isMounted`, `destroy`, `isDestroyed`                                                                                |
-| Events     | `on`, `createSignal`                                                                                                                     |
+| Events     | `on`                                                                                                                                     |
+| State      | `state.observable`, `state.observe`, `state.signal`                                                                                      |
 | Scrolling  | `canvasPosition`, `scrollTo`                                                                                                             |
 | Values     | `color3`, `color3FromHex`, `udim`, `udim2`, `udim2FromOffset`, `udim2FromScale`, `vector2`                                               |
 
@@ -49,13 +42,13 @@ Factory arguments are partial property objects. Read operations return snapshots
 `UICorner` and `UIStroke` are element-less modifier nodes. Append them to a GUI node, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
 
 ```ts
-import { append, color3, createUICorner, createUIStroke } from 'framekit';
+import { fk } from 'framekit';
 
-append(frame, createUICorner({ CornerRadius: 12 }));
-append(
+fk.append(frame, fk.createUICorner({ CornerRadius: 12 }));
+fk.append(
   frame,
-  createUIStroke({
-    Color: color3(59, 130, 246),
+  fk.createUIStroke({
+    Color: fk.color3(59, 130, 246),
     Thickness: 2,
     BorderStrokePosition: 'Outer',
   }),
@@ -67,13 +60,13 @@ append(
 Nodes are opaque handles managed through small, composable functions:
 
 ```ts
-import { append, children, destroy, find, isDestroyed } from 'framekit';
+import { fk } from 'framekit';
 
-append(parent, child);
-children(parent);
-find(parent, 'Inventory', true);
-destroy(parent); // recursively destroys its descendants
-isDestroyed(child); // true
+fk.append(parent, child);
+fk.children(parent);
+fk.find(parent, 'Inventory', true);
+fk.destroy(parent); // recursively destroys its descendants
+fk.isDestroyed(child); // true
 ```
 
 ## List layouts
@@ -81,13 +74,13 @@ isDestroyed(child); // true
 `UIListLayout` is an element-less modifier that arranges its parent's direct GUI children in a row or column. While attached, it controls child positioning and ordering; detaching or destroying it restores each child's own `Position` and `AnchorPoint` rendering.
 
 ```ts
-import { append, createUIListLayout, udim } from 'framekit';
+import { fk } from 'framekit';
 
-append(
+fk.append(
   scrollingFrame,
-  createUIListLayout({
+  fk.createUIListLayout({
     FillDirection: 'Vertical',
-    Padding: udim(0, 8),
+    Padding: fk.udim(0, 8),
     HorizontalAlignment: 'Center',
     SortOrder: 'LayoutOrder',
   }),
@@ -101,11 +94,11 @@ Set `LayoutOrder` on GUI nodes to control their order. `SortOrder: 'Name'` sorts
 `UIAspectRatioConstraint` maintains a GUI node's width-to-height ratio. Its default ratio is `1`, producing a square bounded by the node's requested size. `DominantAxis` chooses the dimension to preserve, while `AspectType: 'ScaleWithParentSize'` sizes the node against its parent instead.
 
 ```ts
-import { append, createUIAspectRatioConstraint } from 'framekit';
+import { fk } from 'framekit';
 
-append(
+fk.append(
   imageButton,
-  createUIAspectRatioConstraint({
+  fk.createUIAspectRatioConstraint({
     AspectRatio: 16 / 9,
     DominantAxis: 'Width',
   }),
@@ -117,19 +110,44 @@ append(
 Buttons expose typed events through `on`. Subscribing returns an idempotent unsubscribe function, and destroying the button removes its DOM listeners and subscriptions.
 
 ```ts
-import { createTextButton, on } from 'framekit';
+import { fk } from 'framekit';
 
-const button = createTextButton({ Text: 'Equip' });
-const unsubscribe = on(button, 'MouseButton1Click', (event) => {
+const button = fk.createTextButton({ Text: 'Equip' });
+const unsubscribe = fk.on(button, 'MouseButton1Click', (event) => {
   console.log(event);
 });
 
 unsubscribe();
 ```
 
+## Observable values
+
+Callable observable values hold small pieces of shared state without imposing a component or rendering model. Calling without an argument reads the value; calling with an argument writes it. Subscribers receive the current value immediately and then receive each distinct update synchronously.
+
+```ts
+import { fk } from 'framekit';
+
+const quantity = fk.state.observable(0);
+quantity.subscribe((value) => console.log(value)); // 0
+quantity(1); // writes 1
+quantity.update((current) => current + 1); // reads 1, then writes 2
+```
+
+Use `observe` for UI subscriptions. It registers the subscription with a node and releases it when that node is destroyed:
+
+```ts
+fk.state.observe(frame, quantity, (value) => {
+  fk.update(label, { Text: String(value) });
+});
+
+fk.destroy(frame); // also stops the observation
+```
+
+FrameKit uses explicit lifetimes: `detach()` keeps a node reusable, while `destroy()` permanently releases the node and its lifecycle resources. Standalone `subscribe()` calls return an unsubscribe function that the caller owns.
+
 ## Project structure
 
-`src/index.ts` is intentionally only a four-line public entry point. Each source domain owns its public construction functions and exports them through a local `index.ts`:
+`src/index.ts` exposes only the `fk` namespace. Each source domain owns its construction functions and feeds the namespace through a local `index.ts`:
 
 - `elements` contains DOM-backed controls such as `Frame`, `TextButton`, and `ScreenGui`.
 - `modifiers` contains element-less appearance, constraint, and layout nodes.

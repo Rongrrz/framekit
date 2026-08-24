@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createImageLabel, props, update } from '../..';
+import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const { createImageLabel, props, update } = fk;
 
 resetDocumentAfterEach();
 

@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createImageButton, createTextButton, destroy, on, update } from '../..';
+import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const { createImageButton, createTextButton, destroy, on, update } = fk;
 
 resetDocumentAfterEach();
 

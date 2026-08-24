@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { append, color3, createTextLabel, update } from '../..';
+import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const { append, color3, createTextLabel, update } = fk;
 
 resetDocumentAfterEach();
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { append, children, destroy, find, isDestroyed, parent, update } from '../..';
+import { fk } from '../..';
 import { groupNode } from '../helpers/group-node';
+
+const { append, children, destroy, find, isDestroyed, parent, update } = fk;
 
 describe('tree', () => {
   it('tracks, reparents, finds, and destroys children', () => {

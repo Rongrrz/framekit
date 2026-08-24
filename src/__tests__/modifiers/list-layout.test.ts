@@ -1,17 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  append,
-  createFrame,
-  createUIListLayout,
-  detach,
-  parent,
-  udim,
-  udim2FromOffset,
-  update,
-} from '../..';
+import { fk } from '../..';
 import { groupNode } from '../helpers/group-node';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const { append, createFrame, createUIListLayout, detach, parent, udim, udim2FromOffset, update } =
+  fk;
 
 resetDocumentAfterEach();
 

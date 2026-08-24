@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { canvasPosition, createScrollingFrame, destroy, scrollTo, update } from '../..';
+import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const { canvasPosition, createScrollingFrame, destroy, scrollTo, update } = fk;
 
 resetDocumentAfterEach();
 

@@ -73,9 +73,11 @@ export function isDestroyed(node: Node): boolean {
 }
 
 /** Registers a resource to release when the node is destroyed. */
-export function addCleanup(node: Node, callback: () => void): void {
+export function addCleanup(node: Node, callback: () => void): () => void {
   assertNodeActive(node);
-  getNodeState(node).cleanups.add(callback);
+  const cleanups = getNodeState(node).cleanups;
+  cleanups.add(callback);
+  return () => cleanups.delete(callback);
 }
 
 export function assertNodeActive(node: Node): void {

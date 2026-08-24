@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
+import { fk } from '../..';
+import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const {
   append,
   color3,
   createFrame,
@@ -15,8 +18,7 @@ import {
   unmount,
   update,
   vector2,
-} from '../..';
-import { resetDocumentAfterEach } from '../helpers/reset-document';
+} = fk;
 
 resetDocumentAfterEach();
 

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import {
+import { fk } from '../..';
+import { groupNode } from '../helpers/group-node';
+import { resetDocumentAfterEach } from '../helpers/reset-document';
+
+const {
   append,
   color3,
   createFrame,
@@ -12,13 +16,11 @@ import {
   isDestroyed,
   parent,
   update,
-} from '../..';
-import { groupNode } from '../helpers/group-node';
-import { resetDocumentAfterEach } from '../helpers/reset-document';
+} = fk;
 
 resetDocumentAfterEach();
 
-describe('UI decorators', () => {
+describe('UI modifiers', () => {
   it('rejects invalid parent node roles', () => {
     const group = groupNode({ Name: 'Group' });
     const corner = createUICorner({ CornerRadius: 8 });

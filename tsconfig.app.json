@@ -12,6 +12,7 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "paths": { "framekit": ["./src/index.ts"] },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
