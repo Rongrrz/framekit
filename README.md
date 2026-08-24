@@ -26,7 +26,7 @@ FrameKit keeps construction separate from behavior. Use `create...` factories to
 | Area       | API                                                                                                                                      |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Factories  | `createScreenGui`, `createFrame`, `createScrollingFrame`, `createTextLabel`, `createTextButton`, `createImageLabel`, `createImageButton` |
-| Modifiers  | `createUICorner`, `createUIStroke`, `createUIAspectRatioConstraint`, `createUIListLayout`                                                |
+| Modifiers  | `createUICorner`, `createUIStroke`, `createUIPadding`, `createUIAspectRatioConstraint`, `createUIListLayout`                             |
 | Properties | `props`, `update`                                                                                                                        |
 | Tree       | `append`, `detach`, `parent`, `children`, `find`                                                                                         |
 | Lifecycle  | `mount`, `unmount`, `isMounted`, `destroy`, `isDestroyed`                                                                                |
@@ -39,12 +39,21 @@ Factory arguments are partial property objects. Read operations return snapshots
 
 ## Modifiers
 
-`UICorner` and `UIStroke` are element-less modifier nodes. Append them to a GUI node, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
+`UICorner`, `UIStroke`, and `UIPadding` are element-less modifier nodes. Append them to a GUI node, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
 
 ```ts
 import { fk } from 'framekit';
 
 fk.append(frame, fk.createUICorner({ CornerRadius: 12 }));
+fk.append(
+  frame,
+  fk.createUIPadding({
+    PaddingTop: fk.udim(0, 12),
+    PaddingRight: fk.udim(0, 16),
+    PaddingBottom: fk.udim(0, 12),
+    PaddingLeft: fk.udim(0, 16),
+  }),
+);
 fk.append(
   frame,
   fk.createUIStroke({

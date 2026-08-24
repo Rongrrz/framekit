@@ -19,6 +19,7 @@ export function createScreenGui(initial: Partial<ScreenGuiProps> = {}): ScreenGu
     inset: '0',
     width: '100%',
     height: '100%',
+    boxSizing: 'border-box',
     overflow: 'hidden',
     overscrollBehavior: 'none',
   });

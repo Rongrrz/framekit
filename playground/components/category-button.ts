@@ -4,11 +4,13 @@ import type { Category, CategoryId } from '../data/categories';
 import { palette } from '../shared/theme';
 import { selectedCategory } from '../state/catalog';
 
+const categoryListContentWidth = 1018;
+
 export function createCategoryButton(category: Category): fk.TextButtonNode {
   let active = false;
   const button = fk.createTextButton({
     Name: category.id,
-    Size: fk.udim2FromScale(194 / 1038, 1),
+    Size: fk.udim2FromScale(194 / categoryListContentWidth, 1),
     BackgroundColor3: palette.raised,
     BackgroundTransparency: 0.45,
     Text: category.label,

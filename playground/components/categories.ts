@@ -11,6 +11,7 @@ const deckWidth = 1200;
 const deckHeight = 760;
 const panelWidth = 1160;
 const panelHeight = 48;
+const listPadding = 10;
 
 export const categoryBar = createPanel(
   'Categories',
@@ -34,11 +35,15 @@ const list = fk.createFrame({
   Position: scalePosition(104, 6, panelWidth, panelHeight),
   BackgroundTransparency: 1,
 });
+fk.append(
+  list,
+  fk.createUIPadding({
+    PaddingRight: fk.udim(0, listPadding),
+    PaddingLeft: fk.udim(0, listPadding),
+  }),
+);
 for (const category of categories) {
   fk.append(list, createCategoryButton(category));
 }
-fk.append(
-  list,
-  fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(12 / 1038, 0) }),
-);
+fk.append(list, fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(0, 12) }));
 fk.append(categoryBar, list);
