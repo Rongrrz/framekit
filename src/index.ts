@@ -14,10 +14,17 @@ export {
   createSignal,
   createTextButton,
   createTextLabel,
+  createUIAspectRatioConstraint,
   createUICorner,
   createUIListLayout,
   createUIStroke,
 } from './factory';
+export type {
+  AspectType,
+  DominantAxis,
+  UIAspectRatioConstraintNode,
+  UIAspectRatioConstraintProps,
+} from './decorators/ui-aspect-ratio-constraint';
 export type { UICornerNode, UICornerProps } from './decorators/ui-corner';
 export type {
   FillDirection,

@@ -86,7 +86,7 @@ export function renderNode<Props extends NodeProps>(
     if (modifierState.kind === 'decorator') {
       applyStyles(
         element,
-        modifierState.decorate(modifierState.props),
+        modifierState.decorate(modifierState.props, state.props),
         state,
         preserveHiddenDisplay,
       );

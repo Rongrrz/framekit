@@ -10,7 +10,10 @@ export type DecoratorNode<Props extends NodeProps = NodeProps> = Node<Props> & {
 
 export type DecoratorStyles = Readonly<Record<string, string>>;
 
-export type Decorator<Props extends NodeProps> = (props: Readonly<Props>) => DecoratorStyles;
+export type Decorator<Props extends NodeProps> = (
+  props: Readonly<Props>,
+  targetProps: Readonly<NodeProps>,
+) => DecoratorStyles;
 
 export type DecoratorNodeState<Props extends NodeProps = NodeProps> = BaseNodeState<Props> & {
   kind: 'decorator';

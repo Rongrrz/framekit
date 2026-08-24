@@ -1,4 +1,9 @@
 import { signal, type Signal } from './core/event/signal';
+import {
+  uiAspectRatioConstraintNode,
+  type UIAspectRatioConstraintNode,
+  type UIAspectRatioConstraintProps,
+} from './decorators/ui-aspect-ratio-constraint';
 import { uiCornerNode, type UICornerNode, type UICornerProps } from './decorators/ui-corner';
 import {
   uiListLayoutNode,
@@ -31,6 +36,13 @@ import {
 /** Creates a standalone synchronous signal with typed arguments. */
 export function createSignal<Arguments extends unknown[] = []>(): Signal<Arguments> {
   return signal<Arguments>();
+}
+
+/** Creates a constraint that maintains its GUI parent's width-to-height ratio. */
+export function createUIAspectRatioConstraint(
+  initial: Partial<UIAspectRatioConstraintProps> = {},
+): UIAspectRatioConstraintNode {
+  return uiAspectRatioConstraintNode(initial);
 }
 
 /** Creates a corner decorator that applies border radius to its GUI parent. */

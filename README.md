@@ -32,7 +32,7 @@ FrameKit keeps construction separate from behavior. Use `create...` factories to
 | Area       | API                                                                                                                                      |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Factories  | `createScreenGui`, `createFrame`, `createScrollingFrame`, `createTextLabel`, `createTextButton`, `createImageLabel`, `createImageButton` |
-| Decorators | `createUICorner`, `createUIStroke`, `createUIListLayout`                                                                                 |
+| Decorators | `createUICorner`, `createUIStroke`, `createUIAspectRatioConstraint`, `createUIListLayout`                                                |
 | Properties | `props`, `update`                                                                                                                        |
 | Tree       | `append`, `detach`, `parent`, `children`, `find`                                                                                         |
 | Lifecycle  | `mount`, `unmount`, `isMounted`, `destroy`, `isDestroyed`                                                                                |
@@ -93,6 +93,22 @@ append(
 ```
 
 Set `LayoutOrder` on GUI nodes to control their order. `SortOrder: 'Name'` sorts by `Name` instead, and `Wraps` enables additional rows or columns when children exceed the available space.
+
+## Aspect ratio constraints
+
+`UIAspectRatioConstraint` maintains a GUI node's width-to-height ratio. Its default ratio is `1`, producing a square bounded by the node's requested size. `DominantAxis` chooses the dimension to preserve, while `AspectType: 'ScaleWithParentSize'` sizes the node against its parent instead.
+
+```ts
+import { append, createUIAspectRatioConstraint } from 'framekit';
+
+append(
+  imageButton,
+  createUIAspectRatioConstraint({
+    AspectRatio: 16 / 9,
+    DominantAxis: 'Width',
+  }),
+);
+```
 
 ## Events
 
