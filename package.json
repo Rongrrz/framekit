@@ -33,17 +33,16 @@
     "preview": "vite preview",
     "prepare": "husky"
   },
-  "dependencies": {},
   "devDependencies": {
     "@commitlint/cli": "^21.0.0",
     "@commitlint/config-conventional": "^21.0.0",
     "@types/node": "^24.12.2",
-    "happy-dom": "^18.0.1",
+    "happy-dom": "^20.11.6",
     "husky": "^9.1.7",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0",
     "typescript": "~6.0.2",
-    "vite": "^8.0.10",
+    "vite": "^8.2.2",
     "vitest": "^3.2.4"
   }
 }
