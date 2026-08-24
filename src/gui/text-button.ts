@@ -9,7 +9,6 @@ export type TextButtonNode = GuiNode<TextButtonProps> & {
 
 export function textButtonNode(initial: Partial<TextButtonProps> = {}): TextButtonNode {
   const element = document.createElement('button');
-  element.style.font = 'inherit';
   const node = textNode(
     'TextButton',
     element,
@@ -17,6 +16,7 @@ export function textButtonNode(initial: Partial<TextButtonProps> = {}): TextButt
     initial,
     (props) => {
       element.disabled = props.Disabled;
+      element.style.cursor = props.Disabled ? 'not-allowed' : 'pointer';
     },
   );
   const button = node as TextButtonNode;

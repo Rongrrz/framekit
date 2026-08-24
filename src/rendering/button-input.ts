@@ -39,7 +39,15 @@ export function attachButtonBehavior(node: ButtonNode, button: HTMLButtonElement
   let rightDown = false;
 
   button.type = 'button';
-  Object.assign(button.style, { padding: '0', cursor: 'pointer' });
+  Object.assign(button.style, {
+    appearance: 'none',
+    border: '0',
+    margin: '0',
+    padding: '0',
+    font: 'inherit',
+    color: 'inherit',
+    cursor: button.disabled ? 'not-allowed' : 'pointer',
+  });
   button.addEventListener(
     'mousedown',
     (event) => {

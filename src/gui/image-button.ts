@@ -16,6 +16,7 @@ export function imageButtonNode(initial: Partial<ImageButtonProps> = {}): ImageB
     initial,
     (props) => {
       element.disabled = props.Disabled;
+      element.style.cursor = props.Disabled ? 'not-allowed' : 'pointer';
     },
   );
   const button = node as ImageButtonNode;

@@ -11,6 +11,14 @@ describe('buttons', () => {
     const callback = vi.fn();
     const unsubscribe = on(button, 'MouseButton1Click', callback);
     expect(button.element.tagName).toBe('BUTTON');
+    expect(button.element.style.appearance).toBe('none');
+    expect(button.element.style.border).toBe('0px');
+    expect(button.element.style.margin).toBe('0px');
+    expect(button.element.style.padding).toBe('0px');
+    expect(button.element.style.font).toBe('inherit');
+    expect(button.element.style.color).toBe('inherit');
+    expect(button.element.style.outline).toBe('');
+    expect(button.element.style.cursor).toBe('pointer');
     button.element.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
     button.element.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
     expect(callback).toHaveBeenCalledOnce();
@@ -33,13 +41,18 @@ describe('buttons', () => {
     button.element.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
     button.element.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
     expect(callback).not.toHaveBeenCalled();
+    expect(button.element.style.cursor).toBe('not-allowed');
+    update(button, { Disabled: false });
+    expect(button.element.style.cursor).toBe('pointer');
   });
 
   it('uses semantic image buttons and synchronizes their disabled state', () => {
     const button = createImageButton({ Disabled: true });
     expect(button.element.tagName).toBe('BUTTON');
     expect(button.element.disabled).toBe(true);
+    expect(button.element.style.cursor).toBe('not-allowed');
     update(button, { Disabled: false });
     expect(button.element.disabled).toBe(false);
+    expect(button.element.style.cursor).toBe('pointer');
   });
 });
