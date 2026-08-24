@@ -38,6 +38,19 @@ describe('screen GUIs and frames', () => {
     expect(target.childElementCount).toBe(0);
   });
 
+  it('always covers the viewport regardless of its mount target', () => {
+    const gui = createScreenGui();
+    expect(gui.element.style.position).toBe('fixed');
+    expect(gui.element.style.inset).toBe('0');
+    expect(gui.element.style.width).toBe('100%');
+    expect(gui.element.style.height).toBe('100%');
+    expect(gui.element.style.overscrollBehavior).toBe('none');
+
+    const target = document.body.appendChild(document.createElement('main'));
+    mount(gui, target);
+    expect(target.firstElementChild).toBe(gui.element);
+  });
+
   it('updates native styles from a property patch', () => {
     const frame = createFrame();
     update(frame, {

@@ -1,4 +1,3 @@
-import './index.css';
 import {
   append,
   color3,
@@ -118,32 +117,8 @@ const sectors: Sector[] = [
   },
 ];
 
-const svgData = (svg: string): string => `data:image/svg+xml,${encodeURIComponent(svg)}`;
-
-const planetImage = svgData(`
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-    <defs>
-      <radialGradient id="space"><stop stop-color="#273c75"/><stop offset=".62" stop-color="#101b42"/><stop offset="1" stop-color="#070b1d"/></radialGradient>
-      <linearGradient id="planet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#61e7ff"/><stop offset=".45" stop-color="#7558e8"/><stop offset="1" stop-color="#28195d"/></linearGradient>
-      <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    </defs>
-    <circle cx="200" cy="200" r="190" fill="url(#space)"/>
-    <g fill="none" stroke="#6ee7ff" opacity=".22"><ellipse cx="200" cy="200" rx="176" ry="64" transform="rotate(-18 200 200)"/><ellipse cx="200" cy="200" rx="138" ry="48" transform="rotate(52 200 200)"/></g>
-    <circle cx="200" cy="200" r="88" fill="#7055e6" opacity=".28" filter="url(#glow)"/>
-    <circle cx="200" cy="200" r="76" fill="url(#planet)"/>
-    <path d="M136 185c38-26 87-32 137-8M142 222c42 21 82 26 121 11M166 142c18 12 43 18 67 13" fill="none" stroke="#bdf8ff" stroke-width="9" opacity=".3" stroke-linecap="round"/>
-    <circle cx="82" cy="112" r="5" fill="#ffe29a"/><circle cx="320" cy="278" r="7" fill="#8fffd1"/><circle cx="315" cy="96" r="3" fill="white"/>
-  </svg>
-`);
-
-const crestImage = svgData(`
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-    <defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#36d9ff"/><stop offset="1" stop-color="#9d5cff"/></linearGradient></defs>
-    <rect width="64" height="64" rx="18" fill="#111a3a"/>
-    <path d="M32 8l7 16 17 8-17 8-7 16-7-16-17-8 17-8z" fill="url(#g)"/>
-    <circle cx="32" cy="32" r="7" fill="white" opacity=".92"/>
-  </svg>
-`);
+const planetImage = new URL('./assets/planet.jpg', import.meta.url).href;
+const crestImage = new URL('./assets/crest.png', import.meta.url).href;
 
 function decorate(node: GuiNode, radius = 16, stroke = palette.border, thickness = 1): void {
   append(node, createUICorner({ CornerRadius: radius }));

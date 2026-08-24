@@ -15,10 +15,12 @@ export function screenGuiNode(initial: Partial<ScreenGuiProps> = {}): ScreenGuiN
   const element = document.createElement('div');
   element.dataset.framekit = 'ScreenGui';
   Object.assign(element.style, {
-    position: 'relative',
+    position: 'fixed',
+    inset: '0',
     width: '100%',
     height: '100%',
     overflow: 'hidden',
+    overscrollBehavior: 'none',
   });
 
   const gui = guiNode(

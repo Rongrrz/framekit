@@ -25,6 +25,8 @@ append(gui, frame);
 update(frame, { Visible: false });
 ```
 
+`ScreenGui` always covers the browser viewport and does not require a global CSS reset. Its mount target determines where it lives in the DOM, not its dimensions.
+
 ## API overview
 
 FrameKit keeps construction separate from behavior. Use `create...` factories to make nodes, then compose them with standalone functions.
