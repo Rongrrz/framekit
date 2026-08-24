@@ -133,7 +133,7 @@ export function createProductCard(product: Product): ProductCardController {
     fk.update(root, { Visible: visible });
   }
 
-  fk.state.observe(root, cart, renderQuantity);
+  fk.state.observe(root, cart.value, renderQuantity);
   return {
     root,
     setPosition,

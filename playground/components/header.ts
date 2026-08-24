@@ -89,7 +89,7 @@ function renderBag({ itemCount, total }: CartState): void {
   fk.update(bag, { Text: formatBag(total, itemCount) });
 }
 
-fk.state.observe(header, cart, renderBag);
+fk.state.observe(header, cart.value, renderBag);
 
 const avatar = fk.createTextLabel({
   Name: 'Profile',

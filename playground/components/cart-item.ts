@@ -92,7 +92,7 @@ export function createCartItem(product: Product): CartItemController {
   fk.append(root, decrease);
   fk.append(root, quantity);
   fk.append(root, increase);
-  fk.state.observe(root, cart, renderQuantity);
+  fk.state.observe(root, cart.value, renderQuantity);
 
   return { root, setPosition };
 }

@@ -8,11 +8,11 @@ export type CartState = Readonly<{
   total: number;
 }>;
 
-type CartStore = fk.state.ObservableValue<CartState> &
-  Readonly<{
-    add(product: Product): void;
-    remove(product: Product): void;
-  }>;
+type CartStore = Readonly<{
+  value: fk.state.ObservableValue<CartState>;
+  add(product: Product): void;
+  remove(product: Product): void;
+}>;
 
 const emptyCart: CartState = {
   quantities: new Map(),
@@ -20,10 +20,10 @@ const emptyCart: CartState = {
   total: 0,
 };
 
-const state = fk.state.observable(emptyCart);
+const value = fk.state.observable(emptyCart);
 
 function changeQuantity(product: Product, delta: number): void {
-  state((current) => {
+  value((current) => {
     const previousQuantity = current.quantities.get(product.sku) ?? 0;
     const nextQuantity = Math.max(0, previousQuantity + delta);
     const appliedDelta = nextQuantity - previousQuantity;
@@ -49,4 +49,4 @@ function remove(product: Product): void {
   changeQuantity(product, -1);
 }
 
-export const cart: CartStore = Object.freeze(Object.assign(state, { add, remove }));
+export const cart: CartStore = Object.freeze({ value, add, remove });

@@ -144,4 +144,4 @@ function renderCart(state: CartState): void {
   });
 }
 
-fk.state.observe(cartSidebar, cart, renderCart);
+fk.state.observe(cartSidebar, cart.value, renderCart);
