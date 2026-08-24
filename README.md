@@ -34,7 +34,7 @@ FrameKit keeps construction separate from behavior. Use `create...` factories to
 | Area       | API                                                                                                                                      |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Factories  | `createScreenGui`, `createFrame`, `createScrollingFrame`, `createTextLabel`, `createTextButton`, `createImageLabel`, `createImageButton` |
-| Decorators | `createUICorner`, `createUIStroke`, `createUIAspectRatioConstraint`, `createUIListLayout`                                                |
+| Modifiers  | `createUICorner`, `createUIStroke`, `createUIAspectRatioConstraint`, `createUIListLayout`                                                |
 | Properties | `props`, `update`                                                                                                                        |
 | Tree       | `append`, `detach`, `parent`, `children`, `find`                                                                                         |
 | Lifecycle  | `mount`, `unmount`, `isMounted`, `destroy`, `isDestroyed`                                                                                |
@@ -44,9 +44,9 @@ FrameKit keeps construction separate from behavior. Use `create...` factories to
 
 Factory arguments are partial property objects. Read operations return snapshots, so changing a returned property object, child list, or canvas position does not mutate FrameKit state; use the corresponding function instead.
 
-## Decorators
+## Modifiers
 
-`UICorner` and `UIStroke` are element-less modifier nodes. Append them to a GUI node to decorate its DOM element, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
+`UICorner` and `UIStroke` are element-less modifier nodes. Append them to a GUI node, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
 
 ```ts
 import { append, color3, createUICorner, createUIStroke } from 'framekit';
@@ -78,7 +78,7 @@ isDestroyed(child); // true
 
 ## List layouts
 
-`UIListLayout` is an element-less layout decorator that arranges its parent's direct GUI children in a row or column. While attached, it controls child positioning and ordering; detaching or destroying it restores each child's own `Position` and `AnchorPoint` rendering.
+`UIListLayout` is an element-less modifier that arranges its parent's direct GUI children in a row or column. While attached, it controls child positioning and ordering; detaching or destroying it restores each child's own `Position` and `AnchorPoint` rendering.
 
 ```ts
 import { append, createUIListLayout, udim } from 'framekit';
@@ -129,17 +129,24 @@ unsubscribe();
 
 ## Project structure
 
-Public construction functions live together in `src/factory.ts`. Their internal builders use names such as `frameNode`, `textNode`, and `imageNode`; these builders own element setup while the public factories own the `create...` API.
+`src/index.ts` is intentionally only a four-line public entry point. Each source domain owns its public construction functions and exports them through a local `index.ts`:
+
+- `elements` contains DOM-backed controls such as `Frame`, `TextButton`, and `ScreenGui`.
+- `modifiers` contains element-less appearance, constraint, and layout nodes.
+- `runtime` contains the node tree, lifecycle, rendering, events, and the central `update` path.
+- `values` contains immutable Roblox-style values such as `Color3`, `UDim2`, and `Vector2`.
+
+The runtime is the dependency boundary for future capabilities. An animation module can interpolate values and apply them through `update` without knowing how individual elements render, while destruction already owns cancellation cleanup.
 
 Primitive values are frozen structural objects rather than class instances. PascalCase names such as `Color3`, `UDim2`, and `Vector2` are TypeScript types; lowercase functions such as `color3`, `udim2FromOffset`, and `vector2` create their values.
 
-Core responsibilities are intentionally split:
+Internal builders live beside the public controls that use them. For example, `elements/text.ts` owns both text label and text button construction, while their shared button input behavior lives in `elements/button.ts`. Internal helpers are not re-exported from their domain barrels.
 
-- `core/node/base.ts`, `state.ts`, `lifecycle.ts`, and `tree.ts` own shared node infrastructure.
-- `core/node/variants` contains the GUI, decorator, and layout implementations so role-specific behavior stays separate from ordinary tree and lifecycle code.
-- `core/event/signal.ts` provides standalone typed signals, while `core/event/node-event.ts` binds event signals to node lifecycles.
-- `rendering/button-input.ts` translates native mouse input into FrameKit button events.
-- GUI modules render their own properties. Modifier nodes remain ordinary tree children, while their parent maintains a keyed index for fast lookup and uniqueness. Modifiers describe appearance or child layout, and their parent recomputes the result whenever the relevant tree or properties change.
+## Safety boundaries
+
+FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs, and images use a no-referrer policy. Constructors and updates reject unknown property names, numeric value constructors reject non-finite values, tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
+
+`GuiNode.element` remains an intentional low-level escape hatch for integrations FrameKit does not cover yet. Code using it has the same trust and security responsibilities as any direct DOM code; prefer FrameKit properties and operations for ordinary application behavior.
 
 ## Development
 
@@ -149,7 +156,7 @@ Run the complete local validation suite before committing:
 npm run check
 ```
 
-Tests mirror source domains under `src/__tests__/core`, `gui`, `decorators`, `primitives`, and `utils`. Shared test-only constructors and DOM cleanup live under `src/__tests__/helpers`; they are not part of FrameKit's public factories or package exports.
+Tests mirror source domains under `src/__tests__/elements`, `modifiers`, `runtime`, and `values`. Shared test-only constructors and DOM cleanup live under `src/__tests__/helpers`; they are not part of FrameKit's public API or package exports.
 
 ## Inspiration
 
