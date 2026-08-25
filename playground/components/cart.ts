@@ -2,6 +2,7 @@ import { fk } from 'framekit';
 
 import { productsBySku } from '../data/products';
 import { decorate } from '../shared/decorate';
+import { bindHover } from '../shared/hover';
 import { createLabel } from '../shared/label';
 import { scalePosition, scaleSize } from '../shared/layout';
 import { createPanel } from '../shared/panel';
@@ -105,9 +106,13 @@ const checkout = fk.createTextButton({
   Disabled: true,
 });
 decorate(checkout, 14, palette.text);
+bindHover(checkout, palette.text, palette.coral);
 
 function confirmCheckout(): void {
   fk.update(checkout, { Text: 'CHECKOUT READY  ✓', Disabled: true });
+  fk.createTween(checkout, fk.tweenInfo(0.32, 'Back', 'Out'), {
+    BackgroundColor3: palette.mint,
+  }).play();
 }
 
 fk.on(checkout, 'MouseButton1Click', confirmCheckout);

@@ -1,3 +1,4 @@
+export * from './animation';
 export * from './elements';
 export * from './modifiers';
 export * from './values';

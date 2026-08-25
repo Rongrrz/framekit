@@ -2,6 +2,7 @@ import { addCleanup } from '../runtime/node';
 import type { GuiNode } from '../runtime/render';
 import { emitNodeEvent, onNodeEvent, type Unsubscribe } from '../runtime/signal';
 import type { FrameProps } from './frame';
+import type { GuiEvent } from './gui-input';
 
 export type ButtonProps = {
   Disabled: boolean;
@@ -34,7 +35,17 @@ const buttonEvents = new Set<ButtonEvent>([
 
 /** Subscribes to a button event and returns an idempotent unsubscribe function. */
 export function on(
+  node: GuiNode,
+  event: GuiEvent,
+  listener: (event: MouseEvent) => void,
+): Unsubscribe;
+export function on(
   node: ButtonNode,
+  event: ButtonEvent,
+  listener: (event: MouseEvent) => void,
+): Unsubscribe;
+export function on(
+  node: GuiNode,
   event: ButtonEvent,
   listener: (event: MouseEvent) => void,
 ): Unsubscribe {
@@ -92,19 +103,7 @@ export function configureButton(node: ButtonNode, element: HTMLButtonElement): v
     },
     listenerOptions,
   );
-  element.addEventListener(
-    'mouseenter',
-    (event) => emitNodeEvent(node, 'MouseEnter', event),
-    listenerOptions,
-  );
-  element.addEventListener(
-    'mouseleave',
-    (event) => {
-      rightButtonDown = false;
-      emitNodeEvent(node, 'MouseLeave', event);
-    },
-    listenerOptions,
-  );
+  element.addEventListener('mouseleave', () => (rightButtonDown = false), listenerOptions);
   element.addEventListener('contextmenu', (event) => event.preventDefault(), listenerOptions);
   addCleanup(node, () => controller.abort());
 }

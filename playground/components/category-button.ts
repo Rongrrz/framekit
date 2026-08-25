@@ -20,19 +20,25 @@ export function createCategoryButton(category: Category): fk.TextButtonNode {
     TextXAlignment: 'Center',
   });
   fk.append(button, fk.createUICorner({ CornerRadius: 10 }));
+  const motion = fk.createMotion(button, { tension: 240, friction: 24 });
 
   function renderActive(nextActive: boolean): void {
     active = nextActive;
-    fk.update(button, {
+    fk.update(button, { FontWeight: active ? 800 : 650 });
+    motion.spring({
       BackgroundColor3: active ? palette.coral : palette.raised,
       BackgroundTransparency: active ? 0.78 : 0.45,
       TextColor3: active ? palette.coral : palette.muted,
-      FontWeight: active ? 800 : 650,
     });
   }
 
   function showHover(): void {
-    if (!active) fk.update(button, { BackgroundColor3: fk.color3(238, 228, 221) });
+    if (!active) {
+      motion.spring({
+        BackgroundColor3: fk.color3(238, 228, 221),
+        BackgroundTransparency: 0.18,
+      });
+    }
   }
 
   function restoreAppearance(): void {

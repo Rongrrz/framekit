@@ -3,6 +3,7 @@ import { mergeProps, type NodeProps } from '../runtime/state';
 import { color3, color3ToCss, type Color3 } from '../values/color3';
 import { udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
 import { vector2, type Vector2 } from '../values/vector2';
+import { configureGuiInput } from './gui-input';
 
 export type AutomaticSize = 'None' | 'X' | 'Y' | 'XY';
 
@@ -51,10 +52,12 @@ export function createFrameNode<Props extends FrameProps>(
 ): GuiNode<Props> {
   element.dataset.framekit = kind;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
-  return createGuiNode(mergeProps(defaults, initial), element, (props, changed) => {
+  const node = createGuiNode(mergeProps(defaults, initial), element, (props, changed) => {
     renderFrame(element, props);
     renderExtra?.(props, changed);
   });
+  configureGuiInput(node, element);
+  return node;
 }
 
 function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {

@@ -17,6 +17,7 @@ const viewportWidth = 808;
 const viewportHeight = 508;
 const cardHeight = 155;
 const rowGap = 12;
+const gridPadding = 4;
 
 export const productCatalog = createPanel(
   'ProductCatalog',
@@ -65,11 +66,29 @@ const content = fk.createFrame({
   Size: fk.udim2FromScale(1, 1),
   BackgroundTransparency: 1,
 });
+fk.append(
+  content,
+  fk.createUIPadding({
+    PaddingTop: fk.udim(0, gridPadding),
+    PaddingRight: fk.udim(0, gridPadding),
+    PaddingBottom: fk.udim(0, gridPadding),
+    PaddingLeft: fk.udim(0, gridPadding),
+  }),
+);
 const cards = new Map(
   products.map((product) => {
     const card = createProductCard(product);
     fk.append(content, card.root);
     return [product.sku, card] as const;
+  }),
+);
+fk.append(
+  content,
+  fk.createUIListLayout({
+    FillDirection: 'Horizontal',
+    Padding: fk.udim(0, rowGap),
+    SortOrder: 'LayoutOrder',
+    Wraps: true,
   }),
 );
 fk.append(scroller, content);
@@ -81,14 +100,15 @@ function showCategory(category: CategoryId): void {
       ? products
       : products.filter((product) => product.category === category);
   const rowCount = Math.ceil(visibleProducts.length / 4);
-  const contentHeight = Math.max(
-    viewportHeight,
+  const gridHeight = Math.max(
+    viewportHeight - gridPadding * 2,
     rowCount * cardHeight + Math.max(0, rowCount - 1) * rowGap,
   );
+  const contentHeight = gridHeight + gridPadding * 2;
   const visibleSkus = new Set(visibleProducts.map((product) => product.sku));
   for (const product of products) cards.get(product.sku)!.setVisible(visibleSkus.has(product.sku));
   for (const [index, product] of visibleProducts.entries()) {
-    cards.get(product.sku)!.setPosition(index, contentHeight);
+    cards.get(product.sku)!.setPosition(index, gridHeight);
   }
   fk.update(content, { Size: fk.udim2FromScale(1, contentHeight / viewportHeight) });
   fk.update(resultCount, {

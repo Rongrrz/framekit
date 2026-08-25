@@ -26,12 +26,13 @@ FrameKit keeps construction separate from behavior. Use `create...` factories to
 | Area       | API                                                                                                                                      |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Factories  | `createScreenGui`, `createFrame`, `createScrollingFrame`, `createTextLabel`, `createTextButton`, `createImageLabel`, `createImageButton` |
-| Modifiers  | `createUICorner`, `createUIStroke`, `createUIPadding`, `createUIAspectRatioConstraint`, `createUIListLayout`                             |
+| Modifiers  | `createUICorner`, `createUIStroke`, `createUIPadding`, `createUIScale`, `createUIAspectRatioConstraint`, `createUIListLayout`            |
 | Properties | `props`, `update`                                                                                                                        |
 | Tree       | `append`, `detach`, `parent`, `children`, `find`                                                                                         |
 | Lifecycle  | `mount`, `unmount`, `isMounted`, `destroy`, `isDestroyed`                                                                                |
 | Events     | `on`                                                                                                                                     |
 | State      | `state.observable`, `state.observe`, `state.signal`                                                                                      |
+| Animation  | `createMotion`, `tweenInfo`, `createTween`                                                                                               |
 | Scrolling  | `canvasPosition`, `scrollTo`                                                                                                             |
 | Values     | `color3`, `color3FromHex`, `udim`, `udim2`, `udim2FromOffset`, `udim2FromScale`, `vector2`                                               |
 
@@ -39,7 +40,7 @@ Factory arguments are partial property objects. Read operations return snapshots
 
 ## Modifiers
 
-`UICorner`, `UIStroke`, and `UIPadding` are element-less modifier nodes. Append them to a GUI node, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
+`UICorner`, `UIStroke`, `UIPadding`, and `UIScale` are element-less modifier nodes. Append them to a GUI node, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
 
 ```ts
 import { fk } from 'framekit';
@@ -62,6 +63,10 @@ fk.append(
     BorderStrokePosition: 'Outer',
   }),
 );
+
+const scale = fk.createUIScale();
+fk.append(frame, scale);
+fk.createMotion(scale).spring({ Scale: 1.05 });
 ```
 
 ## Tree and lifecycle
@@ -153,6 +158,51 @@ fk.destroy(frame); // also stops the observation
 ```
 
 FrameKit uses explicit lifetimes: `detach()` keeps a node reusable, while `destroy()` permanently releases the node and its lifecycle resources. Standalone `subscribe()` calls return an unsubscribe function that the caller owns.
+
+## Spring motion
+
+For interactions that can change direction at any time, create one retained motion controller and keep giving its spring new goals. The spring preserves its current velocity when retargeted and stops scheduling frames after it settles, so there is no playback state to coordinate.
+
+```ts
+const motion = fk.createMotion(frame);
+
+fk.on(button, 'MouseEnter', () => {
+  motion.spring({
+    Position: fk.udim2FromOffset(220, 40),
+    Size: fk.udim2FromOffset(180, 64),
+    BackgroundColor3: fk.color3(238, 113, 99),
+  });
+});
+
+fk.on(button, 'MouseLeave', () => {
+  motion.spring({
+    Position: fk.udim2FromOffset(200, 48),
+    Size: fk.udim2FromOffset(160, 56),
+    BackgroundColor3: fk.color3(247, 241, 234),
+  });
+});
+```
+
+The default spring is nearly critically damped and works without configuration. Pass `tension`, `friction`, or `precision` to `createMotion` when an interaction needs a firmer or bouncier character. Calling `stop()` is optional; motion controllers stop automatically when settled or when their target node is destroyed.
+
+## Tweens
+
+Tweens animate numeric properties and FrameKit values (`Color3`, `Vector2`, `UDim`, and `UDim2`) through the regular property update path. Times are in seconds, and the defaults use a quadratic ease-out.
+
+```ts
+const tween = fk.createTween(frame, fk.tweenInfo(0.3, 'Quad', 'Out'), {
+  Position: fk.udim2FromOffset(240, 40),
+  BackgroundColor3: fk.color3(34, 197, 94),
+  BackgroundTransparency: 0.15,
+});
+
+tween.completed.subscribe((playbackState) => {
+  console.log(playbackState); // 'Completed' or 'Cancelled'
+});
+tween.play();
+```
+
+Tweens support delay, repeats, reversing, pause, and cancellation. Starting a tween cancels an active tween that controls any of the same properties, while tweens over disjoint properties can run together. Destroying the target node cancels its active tweens automatically.
 
 ## Project structure
 

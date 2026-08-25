@@ -85,8 +85,17 @@ const bag = createStatPill({
 fk.update(bag, { Position: scalePosition(880, 18, headerWidth, headerHeight) });
 fk.append(header, bag);
 
+const bagPulse = fk.createTween(bag, fk.tweenInfo(0.18, 'Back', 'Out', 0, true), {
+  Size: scaleSize(178, 38, headerWidth, headerHeight),
+  Position: scalePosition(876, 16, headerWidth, headerHeight),
+  BackgroundTransparency: 0.66,
+});
+let bagInitialized = false;
+
 function renderBag({ itemCount, total }: CartState): void {
   fk.update(bag, { Text: formatBag(total, itemCount) });
+  if (bagInitialized) bagPulse.play();
+  bagInitialized = true;
 }
 
 fk.state.observe(header, cart.value, renderBag);

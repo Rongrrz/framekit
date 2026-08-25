@@ -2,18 +2,19 @@ import { fk } from 'framekit';
 
 import type { Product } from '../data/products';
 import { decorate } from '../shared/decorate';
+import { bindHover } from '../shared/hover';
 import { createLabel } from '../shared/label';
 import { scalePosition, scaleSize } from '../shared/layout';
 import { palette } from '../shared/theme';
 import { cart, type CartState } from '../state/cart';
 
-const gridWidth = 808;
+const gridWidth = 800;
 const cardWidth = 190;
 const cardHeight = 155;
 
 export type ProductCardController = Readonly<{
   root: fk.FrameNode;
-  setPosition(index: number, contentHeight: number): void;
+  setPosition(index: number, gridHeight: number): void;
   setVisible(visible: boolean): void;
 }>;
 
@@ -23,6 +24,16 @@ export function createProductCard(product: Product): ProductCardController {
     BackgroundColor3: palette.panel,
   });
   decorate(root, 14, palette.border);
+  const scale = fk.createUIScale();
+  const scaleMotion = fk.createMotion(scale, { tension: 300, friction: 22 });
+  fk.append(root, scale);
+
+  fk.on(root, 'MouseEnter', () => {
+    scaleMotion.spring({ Scale: 1.025 });
+  });
+  fk.on(root, 'MouseLeave', () => {
+    scaleMotion.spring({ Scale: 1 });
+  });
 
   const visual = fk.createTextLabel({
     Name: 'ProductVisual',
@@ -105,12 +116,10 @@ export function createProductCard(product: Product): ProductCardController {
   fk.append(root, quantity);
   fk.append(root, increase);
 
-  function setPosition(index: number, contentHeight: number): void {
-    const column = index % 4;
-    const row = Math.floor(index / 4);
+  function setPosition(index: number, gridHeight: number): void {
     fk.update(root, {
-      Size: scaleSize(cardWidth, cardHeight, gridWidth, contentHeight),
-      Position: scalePosition(column * 202, row * 167, gridWidth, contentHeight),
+      Size: scaleSize(cardWidth, cardHeight, gridWidth, gridHeight),
+      LayoutOrder: index,
     });
   }
 
@@ -152,5 +161,6 @@ function createQuantityButton(text: string, position: fk.UDim2): fk.TextButtonNo
     FontWeight: 850,
   });
   decorate(button, 7, palette.border);
+  bindHover(button, palette.raised, palette.coral);
   return button;
 }

@@ -68,6 +68,9 @@ function resolveListLayout(
       'align-items': isHorizontal
         ? resolveVerticalAlignment(props.VerticalAlignment)
         : resolveHorizontalAlignment(props.HorizontalAlignment),
+      'align-content': isHorizontal
+        ? resolveVerticalAlignment(props.VerticalAlignment)
+        : resolveHorizontalAlignment(props.HorizontalAlignment),
     },
     children: children.map(
       (_, index): Styles => ({

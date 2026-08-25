@@ -2,6 +2,7 @@ import { fk } from 'framekit';
 
 import type { Product } from '../data/products';
 import { decorate } from '../shared/decorate';
+import { bindHover } from '../shared/hover';
 import { createLabel } from '../shared/label';
 import { scalePosition, scaleSize } from '../shared/layout';
 import { palette } from '../shared/theme';
@@ -108,5 +109,6 @@ function createQuantityButton(text: string, position: fk.UDim2): fk.TextButtonNo
     FontWeight: 850,
   });
   decorate(button, 7, palette.border);
+  bindHover(button, palette.panel, palette.coral);
   return button;
 }

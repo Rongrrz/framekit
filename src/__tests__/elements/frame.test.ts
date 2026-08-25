@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
@@ -23,6 +23,20 @@ const {
 resetDocumentAfterEach();
 
 describe('screen GUIs and frames', () => {
+  it('exposes hover events on non-button GUI nodes', () => {
+    const frame = createFrame();
+    const entered = vi.fn();
+    const left = vi.fn();
+    fk.on(frame, 'MouseEnter', entered);
+    fk.on(frame, 'MouseLeave', left);
+
+    frame.element.dispatchEvent(new MouseEvent('mouseenter'));
+    frame.element.dispatchEvent(new MouseEvent('mouseleave'));
+
+    expect(entered).toHaveBeenCalledOnce();
+    expect(left).toHaveBeenCalledOnce();
+  });
+
   it('mounts, reparents, unmounts, and synchronizes the DOM tree', () => {
     const target = document.body.appendChild(document.createElement('main'));
     const gui = createScreenGui();
