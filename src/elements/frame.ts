@@ -11,6 +11,7 @@ export type FrameProps = NodeProps & {
   Size: UDim2;
   Position: UDim2;
   AnchorPoint: Vector2;
+  Rotation: number;
   Visible: boolean;
   BackgroundColor3: Color3;
   BackgroundTransparency: number;
@@ -32,6 +33,7 @@ export function defaultFrameProps(): FrameProps {
     Size: udim2FromOffset(100, 100),
     Position: udim2FromOffset(0, 0),
     AnchorPoint: vector2(0, 0),
+    Rotation: 0,
     Visible: true,
     BackgroundColor3: color3(200, 200, 200),
     BackgroundTransparency: 0,
@@ -61,6 +63,9 @@ export function createFrameNode<Props extends FrameProps>(
 }
 
 function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
+  if (!Number.isFinite(props.Rotation)) {
+    throw new TypeError('Rotation must be a finite number.');
+  }
   element.style.position = 'absolute';
   element.style.width =
     props.AutomaticSize === 'X' || props.AutomaticSize === 'XY' ? 'auto' : udimToCss(props.Size.X);
@@ -69,6 +74,7 @@ function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
   element.style.left = udimToCss(props.Position.X);
   element.style.top = udimToCss(props.Position.Y);
   element.style.transform = `translate(${-props.AnchorPoint.X * 100}%, ${-props.AnchorPoint.Y * 100}%)`;
+  element.style.setProperty('rotate', `${props.Rotation}deg`);
   element.style.display = props.Visible ? '' : 'none';
   element.style.backgroundColor = color3ToCss(props.BackgroundColor3, props.BackgroundTransparency);
   element.style.zIndex = String(props.ZIndex);

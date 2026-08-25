@@ -11,6 +11,7 @@ fk.mount(gui, '#app');
 const frame = fk.createFrame({
   Size: fk.udim2FromOffset(300, 180),
   BackgroundColor3: fk.color3(37, 99, 235),
+  Rotation: 8,
 });
 fk.append(gui, frame);
 
@@ -170,6 +171,7 @@ fk.on(button, 'MouseEnter', () => {
   motion.spring({
     Position: fk.udim2FromOffset(220, 40),
     Size: fk.udim2FromOffset(180, 64),
+    Rotation: 3,
     BackgroundColor3: fk.color3(238, 113, 99),
   });
 });
@@ -178,6 +180,7 @@ fk.on(button, 'MouseLeave', () => {
   motion.spring({
     Position: fk.udim2FromOffset(200, 48),
     Size: fk.udim2FromOffset(160, 56),
+    Rotation: 0,
     BackgroundColor3: fk.color3(247, 241, 234),
   });
 });
