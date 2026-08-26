@@ -3,6 +3,7 @@ import { mergeProps, type NodeProps } from '../runtime/state';
 import { color3, color3ToCss, type Color3 } from '../values/color3';
 import { udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
 import { vector2, type Vector2 } from '../values/vector2';
+import { configureGuiInput } from './gui-input';
 
 export type AutomaticSize = 'None' | 'X' | 'Y' | 'XY';
 
@@ -10,6 +11,7 @@ export type FrameProps = NodeProps & {
   Size: UDim2;
   Position: UDim2;
   AnchorPoint: Vector2;
+  Rotation: number;
   Visible: boolean;
   BackgroundColor3: Color3;
   BackgroundTransparency: number;
@@ -31,6 +33,7 @@ export function defaultFrameProps(): FrameProps {
     Size: udim2FromOffset(100, 100),
     Position: udim2FromOffset(0, 0),
     AnchorPoint: vector2(0, 0),
+    Rotation: 0,
     Visible: true,
     BackgroundColor3: color3(200, 200, 200),
     BackgroundTransparency: 0,
@@ -51,13 +54,18 @@ export function createFrameNode<Props extends FrameProps>(
 ): GuiNode<Props> {
   element.dataset.framekit = kind;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
-  return createGuiNode(mergeProps(defaults, initial), element, (props, changed) => {
+  const node = createGuiNode(mergeProps(defaults, initial), element, (props, changed) => {
     renderFrame(element, props);
     renderExtra?.(props, changed);
   });
+  configureGuiInput(node, element);
+  return node;
 }
 
 function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
+  if (!Number.isFinite(props.Rotation)) {
+    throw new TypeError('Rotation must be a finite number.');
+  }
   element.style.position = 'absolute';
   element.style.width =
     props.AutomaticSize === 'X' || props.AutomaticSize === 'XY' ? 'auto' : udimToCss(props.Size.X);
@@ -66,6 +74,7 @@ function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
   element.style.left = udimToCss(props.Position.X);
   element.style.top = udimToCss(props.Position.Y);
   element.style.transform = `translate(${-props.AnchorPoint.X * 100}%, ${-props.AnchorPoint.Y * 100}%)`;
+  element.style.setProperty('rotate', `${props.Rotation}deg`);
   element.style.display = props.Visible ? '' : 'none';
   element.style.backgroundColor = color3ToCss(props.BackgroundColor3, props.BackgroundTransparency);
   element.style.zIndex = String(props.ZIndex);

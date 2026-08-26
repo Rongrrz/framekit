@@ -22,9 +22,6 @@ export type StyleModifierNode<Props extends NodeProps = NodeProps> = Node<Props>
   readonly [styleModifierBrand]: true;
 };
 
-/** Backwards-compatible public name for style modifier nodes. */
-export type DecoratorNode<Props extends NodeProps = NodeProps> = StyleModifierNode<Props>;
-
 /** An element-less node that lays out its GUI parent's direct children. */
 export type LayoutNode<Props extends NodeProps = NodeProps> = Node<Props> & {
   readonly [layoutBrand]: true;

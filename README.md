@@ -1,194 +1,173 @@
 # FrameKit
 
-FrameKit is a TypeScript/JavaScript UI Library heavily inspired by Roblox and video game UI systems. The core idea here is to adapt the 'video game UI experience' and allow those coming from a game-making background to make games on the web and/or to transition into the frontend smoothly, without being haunted by the scary, scary, CSS.
+FrameKit brings Roblox-inspired UI primitives to the browser. Build a typed node tree with familiar values such as `UDim2`, compose behavior with small functions, and render through the DOM without writing a CSS class hierarchy.
+
+```ts
+import { append, color3, createFrame, createScreenGui, mount, udim2FromOffset } from 'framekit';
+
+const gui = createScreenGui();
+const card = createFrame({
+  Size: udim2FromOffset(320, 180),
+  BackgroundColor3: color3(238, 113, 99),
+  Rotation: 2,
+});
+
+append(gui, card);
+mount(gui, '#app');
+```
+
+Prefer a Roblox-like namespace? The same API is available as `fk`:
 
 ```ts
 import { fk } from 'framekit';
 
 const gui = fk.createScreenGui();
+fk.append(gui, fk.createFrame({ Size: fk.udim2FromOffset(320, 180) }));
 fk.mount(gui, '#app');
-
-const frame = fk.createFrame({
-  Size: fk.udim2FromOffset(300, 180),
-  BackgroundColor3: fk.color3(37, 99, 235),
-});
-fk.append(gui, frame);
-
-fk.update(frame, { Visible: false });
 ```
 
-`ScreenGui` always covers the browser viewport and does not require a global CSS reset. Its mount target determines where it lives in the DOM, not its dimensions.
+Named imports are useful in applications and libraries that value discoverability and tree shaking. The `fk` namespace keeps examples compact and offers a familiar single entry point. Both forms are first-class and come from the package root.
 
-## API overview
+## The model
 
-FrameKit keeps construction separate from behavior. Use `create...` factories to make nodes, then compose them with standalone functions.
+FrameKit keeps a small, explicit vocabulary:
 
-| Area       | API                                                                                                                                      |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Factories  | `createScreenGui`, `createFrame`, `createScrollingFrame`, `createTextLabel`, `createTextButton`, `createImageLabel`, `createImageButton` |
-| Modifiers  | `createUICorner`, `createUIStroke`, `createUIPadding`, `createUIAspectRatioConstraint`, `createUIListLayout`                             |
-| Properties | `props`, `update`                                                                                                                        |
-| Tree       | `append`, `detach`, `parent`, `children`, `find`                                                                                         |
-| Lifecycle  | `mount`, `unmount`, `isMounted`, `destroy`, `isDestroyed`                                                                                |
-| Events     | `on`                                                                                                                                     |
-| State      | `state.observable`, `state.observe`, `state.signal`                                                                                      |
-| Scrolling  | `canvasPosition`, `scrollTo`                                                                                                             |
-| Values     | `color3`, `color3FromHex`, `udim`, `udim2`, `udim2FromOffset`, `udim2FromScale`, `vector2`                                               |
+| Area       | What you use                                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------- |
+| Elements   | `createScreenGui`, `createFrame`, `createScrollingFrame`, text and image factories                  |
+| Modifiers  | `createUICorner`, `createUIStroke`, `createUIPadding`, `createUIScale`, constraints and list layout |
+| Tree       | `append`, `detach`, `parent`, `children`, `find`                                                    |
+| Properties | `props`, `update`                                                                                   |
+| Lifecycle  | `mount`, `unmount`, `destroy`, `isDestroyed`                                                        |
+| Input      | `on`                                                                                                |
+| State      | `state.observable`, `state.observe`, `state.signal`                                                 |
+| Motion     | `createMotion`, `createTween`, `tweenInfo`                                                          |
+| Values     | `color3`, `udim`, `udim2`, `vector2` and their convenience constructors                             |
 
-Factory arguments are partial property objects. Read operations return snapshots, so changing a returned property object, child list, or canvas position does not mutate FrameKit state; use the corresponding function instead.
+Factories accept partial property objects. `props()`, `children()`, and `canvasPosition()` return snapshots; mutate FrameKit state through `update()`, tree functions, or `scrollTo()`.
 
-## Modifiers
+## Elements and modifiers
 
-`UICorner`, `UIStroke`, and `UIPadding` are element-less modifier nodes. Append them to a GUI node, update them like any other node, and detach or destroy them to remove their styles. A parent can contain only one modifier of each kind; appending a duplicate throws without disturbing either tree.
+Elements are DOM-backed nodes. Modifiers are element-less nodes that affect their parent and participate in the same tree and lifecycle.
 
 ```ts
-import { fk } from 'framekit';
+const panel = fk.createFrame({
+  Name: 'Inventory',
+  Position: fk.udim2(0.5, -180, 0.5, -120),
+  Size: fk.udim2FromOffset(360, 240),
+  BackgroundColor3: fk.color3FromHex('#171820'),
+});
 
-fk.append(frame, fk.createUICorner({ CornerRadius: 12 }));
+fk.append(panel, fk.createUICorner({ CornerRadius: 18 }));
 fk.append(
-  frame,
-  fk.createUIPadding({
-    PaddingTop: fk.udim(0, 12),
-    PaddingRight: fk.udim(0, 16),
-    PaddingBottom: fk.udim(0, 12),
-    PaddingLeft: fk.udim(0, 16),
-  }),
-);
-fk.append(
-  frame,
+  panel,
   fk.createUIStroke({
-    Color: fk.color3(59, 130, 246),
+    Color: fk.color3FromHex('#9e83ee'),
     Thickness: 2,
     BorderStrokePosition: 'Outer',
   }),
 );
-```
-
-## Tree and lifecycle
-
-Nodes are opaque handles managed through small, composable functions:
-
-```ts
-import { fk } from 'framekit';
-
-fk.append(parent, child);
-fk.children(parent);
-fk.find(parent, 'Inventory', true);
-fk.destroy(parent); // recursively destroys its descendants
-fk.isDestroyed(child); // true
-```
-
-## List layouts
-
-`UIListLayout` is an element-less modifier that arranges its parent's direct GUI children in a row or column. While attached, it controls child positioning and ordering; detaching or destroying it restores each child's own `Position` and `AnchorPoint` rendering.
-
-```ts
-import { fk } from 'framekit';
-
 fk.append(
-  scrollingFrame,
-  fk.createUIListLayout({
-    FillDirection: 'Vertical',
-    Padding: fk.udim(0, 8),
-    HorizontalAlignment: 'Center',
-    SortOrder: 'LayoutOrder',
+  panel,
+  fk.createUIPadding({
+    PaddingTop: fk.udim(0, 16),
+    PaddingRight: fk.udim(0, 16),
+    PaddingBottom: fk.udim(0, 16),
+    PaddingLeft: fk.udim(0, 16),
   }),
 );
 ```
 
-Set `LayoutOrder` on GUI nodes to control their order. `SortOrder: 'Name'` sorts by `Name` instead, and `Wraps` enables additional rows or columns when children exceed the available space.
+A parent accepts one modifier of each kind. Duplicate modifiers throw without disturbing either tree. `UIListLayout` controls the positions of its parent's direct GUI children while attached; detaching it restores their own `Position` and `AnchorPoint` rendering.
 
-## Aspect ratio constraints
+## Tree, input, and state
 
-`UIAspectRatioConstraint` maintains a GUI node's width-to-height ratio. Its default ratio is `1`, producing a square bounded by the node's requested size. `DominantAxis` chooses the dimension to preserve, while `AspectType: 'ScaleWithParentSize'` sizes the node against its parent instead.
-
-```ts
-import { fk } from 'framekit';
-
-fk.append(
-  imageButton,
-  fk.createUIAspectRatioConstraint({
-    AspectRatio: 16 / 9,
-    DominantAxis: 'Width',
-  }),
-);
-```
-
-## Events
-
-Buttons expose typed events through `on`. Subscribing returns an idempotent unsubscribe function, and destroying the button removes its DOM listeners and subscriptions.
+Nodes are opaque handles with explicit lifetimes. `detach()` keeps a node reusable; `destroy()` recursively releases it, its descendants, event listeners, observations, and animations.
 
 ```ts
-import { fk } from 'framekit';
-
+const selected = fk.state.observable(false);
 const button = fk.createTextButton({ Text: 'Equip' });
-const unsubscribe = fk.on(button, 'MouseButton1Click', (event) => {
-  console.log(event);
-});
 
-unsubscribe();
+fk.on(button, 'MouseEnter', () => selected(true));
+fk.on(button, 'MouseLeave', () => selected(false));
+fk.on(button, 'MouseButton1Click', () => console.log('equipped'));
+
+fk.state.observe(button, selected, (active) => {
+  fk.update(button, { Rotation: active ? 2 : 0 });
+});
 ```
 
-## Observable values
+All GUI nodes support hover input. Button nodes add click and press input. `on()` and standalone observable subscriptions return idempotent unsubscribe functions.
 
-Callable observable values hold small pieces of shared state without imposing a component or rendering model. Calling without an argument reads the value; calling with an argument writes it. Subscribers receive the current value immediately and then receive each distinct update synchronously.
+## Spring motion
+
+Use one retained motion controller for interactions that can change direction at any time. Calling `spring()` again retargets from the node's current visual value and preserves that spring's current velocity.
 
 ```ts
-import { fk } from 'framekit';
+const scale = fk.createUIScale();
+fk.append(button, scale);
 
-const quantity = fk.state.observable(0);
-quantity.subscribe((value) => console.log(value)); // 0
-quantity(1); // writes 1
-quantity((current) => current + 1); // reads 1, then writes 2
+const motion = fk.createMotion(scale);
+fk.on(button, 'MouseEnter', () => motion.spring({ Scale: 1.04 }));
+fk.on(button, 'MouseLeave', () => motion.spring({ Scale: 1 }));
 ```
 
-Use `observe` for UI subscriptions. It registers the subscription with a node and releases it when that node is destroyed:
+`createMotion()` animates numeric properties plus `Color3`, `Vector2`, `UDim`, and `UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. Its default spring is close to critically damped; `tension`, `friction`, and `precision` are optional. Use `stop()` only when you need to freeze motion at its current value.
+
+Scaling with `UIScale` is useful for hover effects because it changes visual size without asking a `UIListLayout` to reposition neighboring items.
+
+## Tweens
+
+Tweens are the explicit, timed alternative to springs:
 
 ```ts
-fk.state.observe(frame, quantity, (value) => {
-  fk.update(label, { Text: String(value) });
+const tween = fk.createTween(panel, fk.tweenInfo(0.3, 'Quad', 'Out'), {
+  Position: fk.udim2FromOffset(240, 40),
+  BackgroundTransparency: 0.1,
 });
 
-fk.destroy(frame); // also stops the observation
+tween.completed.subscribe((state) => console.log(state));
+tween.play();
 ```
 
-FrameKit uses explicit lifetimes: `detach()` keeps a node reusable, while `destroy()` permanently releases the node and its lifecycle resources. Standalone `subscribe()` calls return an unsubscribe function that the caller owns.
+Tweens support delay, repeats, reversing, pause, and cancellation. A new animation that claims the same property cancels the previous owner of that property; disjoint properties can animate concurrently. A newly played tween snapshots the property's current value, so interrupting a halfway-complete tween continues from that visible midpoint rather than its original start.
 
-## Project structure
+## Package organization
 
-`src/index.ts` exposes only the `fk` namespace. Each source domain owns its construction functions and feeds the namespace through a local `index.ts`:
+The public contract lives in `src/api.ts`; `src/index.ts` deliberately exposes it both as named exports and as `fk`. Source domains own their implementation and local barrel:
 
-- `elements` contains DOM-backed controls such as `Frame`, `TextButton`, and `ScreenGui`.
-- `modifiers` contains element-less appearance, constraint, and layout nodes.
-- `runtime` contains the node tree, lifecycle, rendering, events, and the central `update` path.
-- `values` contains immutable Roblox-style values such as `Color3`, `UDim2`, and `Vector2`.
+- `elements` — DOM-backed controls and input behavior
+- `modifiers` — element-less style, constraint, and layout nodes
+- `animation` — springs, tweens, ownership, and shared value interpolation
+- `state` — observable values and signals
+- `runtime` — internal tree, rendering, property, event, and lifecycle machinery
+- `values` — immutable Roblox-style structural values
 
-The runtime is the dependency boundary for future capabilities. An animation module can interpolate values and apply them through `update` without knowing how individual elements render, while destruction already owns cancellation cleanup.
+Types such as `Color3`, `UDim2`, `GuiNode`, `StyleModifierNode`, and `LayoutNode` are exported from the root. Lowercase functions create values; PascalCase names describe their TypeScript types.
 
-Primitive values are frozen structural objects rather than class instances. PascalCase names such as `Color3`, `UDim2`, and `Vector2` are TypeScript types; lowercase functions such as `color3`, `udim2FromOffset`, and `vector2` create their values.
-
-Internal builders live beside the public controls that use them. For example, `elements/text.ts` owns both text label and text button construction, while their shared button input behavior lives in `elements/button.ts`. Internal helpers are not re-exported from their domain barrels.
+The runtime remains an implementation boundary rather than a secondary public entry point. Package consumers should import only from `framekit`.
 
 ## Safety boundaries
 
-FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs, and images use a no-referrer policy. Constructors and updates reject unknown property names, numeric value constructors reject non-finite values, tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
+FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, value constructors reject non-finite numbers, tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
 
-`GuiNode.element` remains an intentional low-level escape hatch for integrations FrameKit does not cover yet. Code using it has the same trust and security responsibilities as any direct DOM code; prefer FrameKit properties and operations for ordinary application behavior.
+`GuiNode.element` is an intentional low-level escape hatch for integrations FrameKit does not cover. Prefer FrameKit properties and operations for normal application behavior.
 
-## Development
+## Playground and development
 
-Run the complete local validation suite before committing:
+The playground is a complete, long-form FrameKit product page built with FrameKit itself. It demonstrates composition, scale/offset `UDim2` layout, modifiers, observable state, input, spring motion, tweens, scrolling, and lifecycle patterns.
+
+Its desktop/mobile module boundaries and extension rules are documented in [`playground/README.md`](playground/README.md).
 
 ```sh
-npm run check
+npm run dev                 # playground development server
+npm run build:playground    # production playground build
+npm run build:library       # package bundles and declarations
+npm run check               # formatting, types, lint, tests, and both builds
 ```
 
-Tests mirror source domains under `src/__tests__/elements`, `modifiers`, `runtime`, and `values`. Shared test-only constructors and DOM cleanup live under `src/__tests__/helpers`; they are not part of FrameKit's public API or package exports.
+Tests mirror the source domains under `src/__tests__`. Test helpers are not part of the package API.
 
 ## Inspiration
 
-The inspiration for FrameKit is pretty simple. I come from a Roblox Luau and Roblox-TS background, so Roblox's UI system feels like home to me.
-
-Concepts like `Frame`, `UDim2`, anchor points, and scale/offset positioning make immediate sense in my head. In a way, they are almost ingrained. On the other hand, CSS and variants such as Tailwind have always felt less intuitive to me, especially their syntax and layout rules.
-
-For the longest time, I relied on AI to do all the work for me. That, however, removed all the fun in designing and writing code. Instead of fully escaping my comfort zone, I decided to bring part of that comfort zone with me.
+FrameKit grew from a Roblox Luau and Roblox-TS background, where `Frame`, `UDim2`, anchor points, scale/offset positioning, and explicit UI instances feel natural. Its goal is not to recreate every Roblox API or hide the browser. It is to preserve that productive mental model while providing a small, typed, browser-native toolkit.

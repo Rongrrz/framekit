@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
@@ -23,6 +23,20 @@ const {
 resetDocumentAfterEach();
 
 describe('screen GUIs and frames', () => {
+  it('exposes hover events on non-button GUI nodes', () => {
+    const frame = createFrame();
+    const entered = vi.fn();
+    const left = vi.fn();
+    fk.on(frame, 'MouseEnter', entered);
+    fk.on(frame, 'MouseLeave', left);
+
+    frame.element.dispatchEvent(new MouseEvent('mouseenter'));
+    frame.element.dispatchEvent(new MouseEvent('mouseleave'));
+
+    expect(entered).toHaveBeenCalledOnce();
+    expect(left).toHaveBeenCalledOnce();
+  });
+
   it('mounts, reparents, unmounts, and synchronizes the DOM tree', () => {
     const target = document.body.appendChild(document.createElement('main'));
     const gui = createScreenGui();
@@ -59,6 +73,7 @@ describe('screen GUIs and frames', () => {
       Size: udim2(0.5, -20, 1, -40),
       Position: udim2FromScale(0.5, 0.25),
       AnchorPoint: vector2(0.5, 1),
+      Rotation: 30,
       BackgroundColor3: color3(25, 50, 75),
       BackgroundTransparency: 0.25,
       Visible: false,
@@ -67,10 +82,20 @@ describe('screen GUIs and frames', () => {
     expect(frame.element.style.width).toBe('calc(50% - 20px)');
     expect(frame.element.style.height).toBe('calc(100% - 40px)');
     expect(frame.element.style.transform).toBe('translate(-50%, -100%)');
+    expect(frame.element.style.getPropertyValue('rotate')).toBe('30deg');
     expect(frame.element.style.backgroundColor).toContain('25');
     expect(frame.element.style.display).toBe('none');
     expect(frame.element.style.zIndex).toBe('8');
     expect(props(frame).Visible).toBe(false);
+    expect(props(frame).Rotation).toBe(30);
+  });
+
+  it('rejects non-finite rotations without disturbing the rendered angle', () => {
+    const frame = createFrame({ Rotation: -15 });
+    expect(frame.element.style.getPropertyValue('rotate')).toBe('-15deg');
+    expect(() => update(frame, { Rotation: Number.NaN })).toThrow(/finite/);
+    expect(props(frame).Rotation).toBe(-15);
+    expect(frame.element.style.getPropertyValue('rotate')).toBe('-15deg');
   });
 
   it('renders automatic sizing and descendant clipping', () => {

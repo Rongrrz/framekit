@@ -30,7 +30,11 @@ function synchronizeRendering<Props extends NodeProps>(
 ): void {
   const state = getNodeState(node);
   if (isModifierState(state)) {
-    if (state.parent) renderNode(state.parent);
+    if (state.parent) {
+      renderNode(state.parent);
+      const targetState = getNodeState(state.parent);
+      if (targetState.parent && hasLayout(targetState.parent)) renderNode(targetState.parent);
+    }
     return;
   }
   if (state.kind === 'gui') renderNode(node, new Set(changed));

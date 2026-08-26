@@ -10,11 +10,13 @@ const {
   createFrame,
   createTextLabel,
   createUICorner,
+  createUIScale,
   createUIStroke,
   detach,
   destroy,
   isDestroyed,
   parent,
+  props,
   update,
 } = fk;
 
@@ -82,6 +84,22 @@ describe('UI modifiers', () => {
     append(frame, firstCorner);
     expect(parent(firstCorner)).toBe(frame);
     expect(otherFrame.element.style.borderRadius).toBe('');
+  });
+
+  it('scales visually without changing requested size', () => {
+    const frame = createFrame();
+    const scale = createUIScale({ Scale: 1.1 });
+    append(frame, scale);
+
+    expect(frame.element.style.getPropertyValue('scale')).toBe('1.1');
+    expect(props(frame).Size).toEqual(fk.udim2FromOffset(100, 100));
+
+    update(scale, { Scale: 0.8 });
+    expect(frame.element.style.getPropertyValue('scale')).toBe('0.8');
+    expect(() => update(scale, { Scale: Number.NaN })).toThrow(/non-negative finite/);
+
+    detach(scale);
+    expect(frame.element.style.getPropertyValue('scale')).toBe('');
   });
 
   it('recomputes both parents when a modifier is moved', () => {

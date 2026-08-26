@@ -4,8 +4,17 @@ import { fk } from '../..';
 import { groupNode } from '../helpers/group-node';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
 
-const { append, createFrame, createUIListLayout, detach, parent, udim, udim2FromOffset, update } =
-  fk;
+const {
+  append,
+  createFrame,
+  createUIListLayout,
+  createUIScale,
+  detach,
+  parent,
+  udim,
+  udim2FromOffset,
+  update,
+} = fk;
 
 resetDocumentAfterEach();
 
@@ -67,10 +76,27 @@ describe('UI list layouts', () => {
     expect(frame.element.style.flexWrap).toBe('wrap');
     expect(frame.element.style.justifyContent).toBe('center');
     expect(frame.element.style.alignItems).toBe('flex-end');
+    expect(frame.element.style.alignContent).toBe('flex-end');
 
     update(zebra, { Name: 'Aardvark' });
     expect(zebra.element.style.order).toBe('0');
     expect(alpha.element.style.order).toBe('1');
+  });
+
+  it('preserves layout positioning when a child modifier updates', () => {
+    const container = createFrame();
+    const child = createFrame({ Position: udim2FromOffset(40, 50) });
+    const scale = createUIScale();
+    append(child, scale);
+    append(container, child);
+    append(container, createUIListLayout());
+
+    expect(child.element.style.position).toBe('relative');
+    expect(child.element.style.left).toBe('auto');
+    update(scale, { Scale: 1.05 });
+    expect(child.element.style.position).toBe('relative');
+    expect(child.element.style.left).toBe('auto');
+    expect(child.element.style.getPropertyValue('scale')).toBe('1.05');
   });
 
   it('rejects element-less parents', () => {

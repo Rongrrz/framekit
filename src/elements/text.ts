@@ -83,7 +83,7 @@ function createTextNode<Props extends TextLabelProps>(
     text.textContent = props.Text;
     text.style.color = color3ToCss(props.TextColor3, props.TextTransparency);
     text.style.fontSize = `${Math.max(0, props.TextSize)}px`;
-    text.style.whiteSpace = props.TextWrapped ? 'normal' : 'nowrap';
+    text.style.whiteSpace = props.TextWrapped ? 'pre-wrap' : 'pre';
     text.style.justifyContent = horizontalAlignment[props.TextXAlignment];
     text.style.alignItems = verticalAlignment[props.TextYAlignment];
     text.style.textAlign = props.TextXAlignment.toLowerCase();
