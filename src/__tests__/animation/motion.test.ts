@@ -116,6 +116,6 @@ describe('motion springs', () => {
     expect(() => fk.createMotion(frame, { friction: Number.NaN })).toThrow(/friction/);
     const motion = fk.createMotion(frame);
     expect(() => motion.spring({})).toThrow(/goal property/);
-    expect(() => motion.spring({ BackgroundTransparency: Number.NaN })).toThrow(/springable/);
+    expect(() => motion.spring({ BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
 });

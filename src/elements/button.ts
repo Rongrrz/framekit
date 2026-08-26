@@ -8,15 +8,15 @@ export type ButtonProps = {
   Disabled: boolean;
 };
 
-export type ButtonEvent =
+export type ButtonEvent = GuiEvent | ButtonPressEvent;
+
+export type ButtonPressEvent =
   | 'MouseButton1Click'
   | 'MouseButton1Down'
   | 'MouseButton1Up'
   | 'MouseButton2Click'
   | 'MouseButton2Down'
-  | 'MouseButton2Up'
-  | 'MouseEnter'
-  | 'MouseLeave';
+  | 'MouseButton2Up';
 
 export type ButtonNode = GuiNode<FrameProps & ButtonProps> & {
   readonly element: HTMLButtonElement;
@@ -33,7 +33,7 @@ const buttonEvents = new Set<ButtonEvent>([
   'MouseLeave',
 ]);
 
-/** Subscribes to a button event and returns an idempotent unsubscribe function. */
+/** Subscribes to a typed GUI input event and returns an idempotent unsubscribe function. */
 export function on(
   node: GuiNode,
   event: GuiEvent,

@@ -19,10 +19,10 @@ describe('text labels', () => {
       TextWrapped: true,
       TextXAlignment: 'Left',
     });
-    expect(label.element.querySelector('[data-framekit-text]')?.textContent).toBe('Inventory');
-    expect(label.element.querySelector<HTMLElement>('[data-framekit-text]')?.style.fontSize).toBe(
-      '24px',
-    );
+    const text = label.element.querySelector<HTMLElement>('[data-framekit-text]');
+    expect(text?.textContent).toBe('Inventory');
+    expect(text?.style.fontSize).toBe('24px');
+    expect(text?.style.whiteSpace).toBe('pre-wrap');
     expect(label.element.contains(child.element)).toBe(true);
   });
 });

@@ -22,7 +22,9 @@
   "scripts": {
     "check": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run build",
     "dev": "vite",
-    "build": "tsc -b && vite build && tsc -p tsconfig.build.json",
+    "build": "npm run build:library && npm run build:playground",
+    "build:library": "tsc -b && vite build && tsc -p tsconfig.build.json",
+    "build:playground": "vite build --config vite.playground.config.ts",
     "watch": "tsc -b && vite build --watch",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
@@ -30,7 +32,7 @@
     "format:check": "oxfmt --check",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "preview": "vite preview",
+    "preview": "vite preview --config vite.playground.config.ts",
     "prepare": "husky"
   },
   "devDependencies": {

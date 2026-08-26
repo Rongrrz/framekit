@@ -1,5 +1,5 @@
 export { on } from './button';
-export type { ButtonEvent, ButtonNode, ButtonProps } from './button';
+export type { ButtonEvent, ButtonNode, ButtonPressEvent, ButtonProps } from './button';
 export type { GuiEvent } from './gui-input';
 export { createFrame } from './frame';
 export type { AutomaticSize, FrameNode, FrameProps } from './frame';

@@ -1,15 +1,13 @@
 import { addCleanup, assertNodeActive, isDestroyed, props, update } from '../runtime/node';
 import { createSignal, type Signal } from '../runtime/signal';
 import type { Node, NodeProps } from '../runtime/state';
-import { color3, type Color3 } from '../values/color3';
-import { udim, udim2, type UDim, type UDim2 } from '../values/udim';
-import { vector2, type Vector2 } from '../values/vector2';
 import {
   claimAnimationProperties,
   releaseAnimationProperties,
   type AnimationOwner,
 } from './ownership';
 import type { AnimationGoal } from './types';
+import { interpolateAnimationValue } from './value';
 
 export type EasingStyle =
   | 'Linear'
@@ -209,7 +207,12 @@ export function createTween<Props extends NodeProps>(
     const eased = ease(progress, info.EasingStyle, info.EasingDirection);
     const patch: Partial<Props> = {};
     for (const key of goalKeys) {
-      patch[key] = interpolate(startValues[key], goals[key], eased) as Props[keyof Props];
+      patch[key] = interpolateAnimationValue(
+        startValues[key],
+        goals[key],
+        eased,
+        String(key),
+      ) as Props[keyof Props];
     }
     update(node, patch);
   }
@@ -257,69 +260,12 @@ export function createTween<Props extends NodeProps>(
   return Object.freeze({ play, pause, cancel, playbackState: () => state, completed });
 }
 
-function interpolate(start: unknown, goal: unknown, alpha: number): unknown {
-  if (typeof start === 'number' && typeof goal === 'number') {
-    if (!Number.isFinite(start) || !Number.isFinite(goal)) {
-      throw new TypeError('Tween numbers must be finite.');
-    }
-    return lerp(start, goal, alpha);
-  }
-  if (isColor3(start) && isColor3(goal)) {
-    return color3(
-      lerp(start.R, goal.R, alpha),
-      lerp(start.G, goal.G, alpha),
-      lerp(start.B, goal.B, alpha),
-    );
-  }
-  if (isUDim2(start) && isUDim2(goal)) {
-    return udim2(
-      lerp(start.X.Scale, goal.X.Scale, alpha),
-      lerp(start.X.Offset, goal.X.Offset, alpha),
-      lerp(start.Y.Scale, goal.Y.Scale, alpha),
-      lerp(start.Y.Offset, goal.Y.Offset, alpha),
-    );
-  }
-  if (isUDim(start) && isUDim(goal)) {
-    return udim(lerp(start.Scale, goal.Scale, alpha), lerp(start.Offset, goal.Offset, alpha));
-  }
-  if (isVector2(start) && isVector2(goal)) {
-    return vector2(lerp(start.X, goal.X, alpha), lerp(start.Y, goal.Y, alpha));
-  }
-  throw new TypeError('Tween values changed to incompatible types during playback.');
-}
-
 function assertTweenable(start: unknown, goal: unknown, property: string): void {
   try {
-    interpolate(start, goal, 0);
+    interpolateAnimationValue(start, goal, 0, property);
   } catch {
     throw new TypeError(`Property "${property}" does not contain compatible tweenable values.`);
   }
-}
-
-function isColor3(value: unknown): value is Color3 {
-  return hasOnlyNumericKeys(value, ['R', 'G', 'B']);
-}
-
-function isVector2(value: unknown): value is Vector2 {
-  return hasOnlyNumericKeys(value, ['X', 'Y']);
-}
-
-function isUDim(value: unknown): value is UDim {
-  return hasOnlyNumericKeys(value, ['Scale', 'Offset']);
-}
-
-function isUDim2(value: unknown): value is UDim2 {
-  if (!isRecord(value) || Object.keys(value).length !== 2) return false;
-  return isUDim(value.X) && isUDim(value.Y);
-}
-
-function hasOnlyNumericKeys(value: unknown, keys: readonly string[]): boolean {
-  if (!isRecord(value) || Object.keys(value).length !== keys.length) return false;
-  return keys.every((key) => typeof value[key] === 'number' && Number.isFinite(value[key]));
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 function ease(alpha: number, style: EasingStyle, direction: EasingDirection): number {
@@ -366,10 +312,6 @@ function bounceOut(alpha: number): number {
   if (alpha < 2 / divisor) return scale * (alpha - 1.5 / divisor) ** 2 + 0.75;
   if (alpha < 2.5 / divisor) return scale * (alpha - 2.25 / divisor) ** 2 + 0.9375;
   return scale * (alpha - 2.625 / divisor) ** 2 + 0.984375;
-}
-
-function lerp(start: number, goal: number, alpha: number): number {
-  return start + (goal - start) * alpha;
 }
 
 function now(): number {

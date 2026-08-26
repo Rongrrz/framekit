@@ -27,6 +27,7 @@ describe('scrolling frames', () => {
     scrolling.element.scrollTo = nativeScrollTo;
     scrollTo(scrolling, { X: 56, Y: 78 });
     expect(nativeScrollTo).toHaveBeenCalledWith(56, 78);
+    expect(fk.props(scrolling).CanvasPosition).toEqual(fk.vector2(56, 78));
 
     destroy(scrolling);
     expect(() => canvasPosition(scrolling)).toThrow(/destroyed/);

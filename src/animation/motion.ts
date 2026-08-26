@@ -1,15 +1,18 @@
 import { addCleanup, assertNodeActive, isDestroyed, props, update } from '../runtime/node';
 import { createSignal, type Signal } from '../runtime/signal';
 import type { Node, NodeProps } from '../runtime/state';
-import { color3, type Color3 } from '../values/color3';
-import { udim, udim2, type UDim, type UDim2 } from '../values/udim';
-import { vector2, type Vector2 } from '../values/vector2';
 import {
   claimAnimationProperties,
   releaseAnimationProperties,
   type AnimationOwner,
 } from './ownership';
 import type { AnimationGoal } from './types';
+import {
+  assertCompatibleAnimationValues,
+  composeAnimationValue,
+  decomposeAnimationValue,
+  type AnimationValueKind,
+} from './value';
 
 export type SpringOptions = Readonly<{
   /** Pull toward the goal. Higher values feel faster and firmer. */
@@ -30,9 +33,8 @@ export type Motion<Props extends NodeProps = NodeProps> = {
 };
 
 type ResolvedSpringOptions = Required<SpringOptions>;
-type SpringKind = 'number' | 'Color3' | 'Vector2' | 'UDim' | 'UDim2';
 type PropertySpring = {
-  kind: SpringKind;
+  kind: AnimationValueKind;
   current: number[];
   goal: number[];
   velocity: number[];
@@ -69,19 +71,26 @@ export function createMotion<Props extends NodeProps>(
     if (keys.length === 0) throw new TypeError('A spring needs at least one goal property.');
 
     const currentProps = props(node);
-    const prepared = new Map<keyof Props, { kind: SpringKind; goal: number[]; start?: number[] }>();
+    const prepared = new Map<
+      keyof Props,
+      { kind: AnimationValueKind; goal: number[]; start?: number[] }
+    >();
     for (const key of keys) {
       if (!Object.hasOwn(currentProps, key)) {
         throw new TypeError(`Unknown spring property "${String(key)}" on ${currentProps.Name}.`);
       }
-      const target = decompose(goals[key], String(key));
+      const target = decomposeAnimationValue(goals[key], String(key));
       const existing = springs.get(key);
       if (existing) {
-        assertMatchingKind(existing.kind, target.kind, String(key));
+        assertCompatibleAnimationValues(
+          { kind: existing.kind, numbers: existing.current },
+          target,
+          String(key),
+        );
         prepared.set(key, { kind: target.kind, goal: target.numbers });
       } else {
-        const start = decompose(currentProps[key], String(key));
-        assertMatchingKind(start.kind, target.kind, String(key));
+        const start = decomposeAnimationValue(currentProps[key], String(key));
+        assertCompatibleAnimationValues(start, target, String(key));
         prepared.set(key, { kind: target.kind, goal: target.numbers, start: start.numbers });
       }
     }
@@ -161,7 +170,10 @@ export function createMotion<Props extends NodeProps>(
         propertySpring.velocity.fill(0);
         settled.push(key);
       }
-      patch[key] = compose(propertySpring.kind, propertySpring.current) as Props[keyof Props];
+      patch[key] = composeAnimationValue(
+        propertySpring.kind,
+        propertySpring.current,
+      ) as Props[keyof Props];
     }
 
     update(node, patch);
@@ -241,72 +253,6 @@ function solveSpring(
     value: goal + decay * (displacement + coefficient * deltaTime),
     velocity: decay * (velocity - angularFrequency * coefficient * deltaTime),
   };
-}
-
-function decompose(value: unknown, property: string): { kind: SpringKind; numbers: number[] } {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return { kind: 'number', numbers: [value] };
-  }
-  if (isColor3(value)) return { kind: 'Color3', numbers: [value.R, value.G, value.B] };
-  if (isUDim2(value)) {
-    return {
-      kind: 'UDim2',
-      numbers: [value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset],
-    };
-  }
-  if (isUDim(value)) return { kind: 'UDim', numbers: [value.Scale, value.Offset] };
-  if (isVector2(value)) return { kind: 'Vector2', numbers: [value.X, value.Y] };
-  throw new TypeError(`Property "${property}" does not contain a springable value.`);
-}
-
-function compose(
-  kind: SpringKind,
-  numbers: readonly number[],
-): number | Color3 | Vector2 | UDim | UDim2 {
-  switch (kind) {
-    case 'number':
-      return numbers[0]!;
-    case 'Color3':
-      return color3(numbers[0]!, numbers[1]!, numbers[2]!);
-    case 'Vector2':
-      return vector2(numbers[0]!, numbers[1]!);
-    case 'UDim':
-      return udim(numbers[0]!, numbers[1]!);
-    case 'UDim2':
-      return udim2(numbers[0]!, numbers[1]!, numbers[2]!, numbers[3]!);
-  }
-}
-
-function assertMatchingKind(start: SpringKind, goal: SpringKind, property: string): void {
-  if (start !== goal) {
-    throw new TypeError(`Property "${property}" does not contain compatible springable values.`);
-  }
-}
-
-function isColor3(value: unknown): value is Color3 {
-  return hasOnlyNumericKeys(value, ['R', 'G', 'B']);
-}
-
-function isVector2(value: unknown): value is Vector2 {
-  return hasOnlyNumericKeys(value, ['X', 'Y']);
-}
-
-function isUDim(value: unknown): value is UDim {
-  return hasOnlyNumericKeys(value, ['Scale', 'Offset']);
-}
-
-function isUDim2(value: unknown): value is UDim2 {
-  if (!isRecord(value) || Object.keys(value).length !== 2) return false;
-  return isUDim(value.X) && isUDim(value.Y);
-}
-
-function hasOnlyNumericKeys(value: unknown, keys: readonly string[]): boolean {
-  if (!isRecord(value) || Object.keys(value).length !== keys.length) return false;
-  return keys.every((key) => typeof value[key] === 'number' && Number.isFinite(value[key]));
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 function resolveOptions(options: SpringOptions): ResolvedSpringOptions {
