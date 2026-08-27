@@ -1,7 +1,7 @@
 import { fk } from 'framekit';
 
 import { bindScaleMotion } from '../../shared/interaction';
-import { setModifierAttached } from '../../shared/modifier';
+import { createSpringModifierToggle, setModifierAttached } from '../../shared/modifier';
 import { button, codeLine, decorate, text } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
@@ -21,9 +21,23 @@ export function createComposer(): fk.FrameNode {
     'These controls change real modifier nodes on the preview below.',
     true,
   );
-  const enabled = fk.state.observable({ corner: true, stroke: true, padding: false, layout: true });
+  const enabled = fk.state.observable({
+    corner: true,
+    stroke: true,
+    shadow: true,
+    glow: true,
+    padding: false,
+    layout: true,
+  });
   const controls = new Map<string, fk.TextButtonNode>();
-  for (const [index, key] of ['corner', 'stroke', 'padding', 'layout'].entries()) {
+  for (const [index, key] of [
+    'corner',
+    'stroke',
+    'shadow',
+    'glow',
+    'padding',
+    'layout',
+  ].entries()) {
     const control = button(
       key.toUpperCase(),
       fk.udim2FromOffset(172, 46),
@@ -42,13 +56,25 @@ export function createComposer(): fk.FrameNode {
   }
   const preview = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 480),
-    Position: fk.udim2FromOffset(0, 368),
-    BackgroundColor3: colors.inkRaised,
+    Position: fk.udim2FromOffset(0, 428),
+    BackgroundColor3: colors.paperRaised,
   });
-  decorate(preview, 22, colors.inkSoft, 2);
+  decorate(preview, 22, colors.paperMuted, 2);
+  fk.append(
+    preview,
+    text({
+      text: 'SHADOW ↓ DEPTH   ·   GLOW ✦ LIGHT',
+      size: fk.udim2FromOffset(314, 28),
+      position: fk.udim2FromOffset(22, 18),
+      color: colors.darkMuted,
+      textSize: 9,
+      font: fonts.mono,
+      weight: 750,
+    }),
+  );
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(314, 336),
-    Position: fk.udim2FromOffset(22, 56),
+    Position: fk.udim2FromOffset(22, 76),
     BackgroundColor3: colors.ink,
   });
   const corner = fk.createUICorner({ CornerRadius: 24 });
@@ -57,8 +83,21 @@ export function createComposer(): fk.FrameNode {
     Thickness: 3,
     BorderStrokePosition: 'Outer',
   });
+  const shadow = fk.createUIShadow({
+    Color: colors.ink,
+    Transparency: 0.3,
+    Offset: fk.vector2(10, 16),
+    BlurRadius: 16,
+    SpreadRadius: -2,
+  });
+  const glow = fk.createUIGlow({
+    Color: colors.violet,
+    Transparency: 0.18,
+    Radius: 32,
+  });
   fk.append(card, corner);
   fk.append(card, stroke);
+  fk.append(card, shadow);
   fk.append(
     card,
     text({
@@ -69,18 +108,23 @@ export function createComposer(): fk.FrameNode {
       weight: 900,
     }),
   );
-  fk.append(
-    card,
-    text({
-      text: 'Padding affects the tag container. Layout replaces the tags’ overlapping manual positions.',
-      size: fk.udim2FromOffset(270, 72),
-      position: fk.udim2FromOffset(22, 68),
-      color: colors.textMuted,
-      textSize: 12,
-      wrapped: true,
-      yAlignment: 'Top',
-    }),
-  );
+  const description = fk.createTextBox({
+    Name: 'MobileRichDescription',
+    Size: fk.udim2FromOffset(270, 72),
+    Position: fk.udim2FromOffset(22, 68),
+    BackgroundTransparency: 1,
+    Text: 'This is <b>editable rich text</b>. Padding and layout affect the tags below.',
+    TextColor3: colors.textMuted,
+    TextSize: 12,
+    TextWrapped: true,
+    TextXAlignment: 'Left',
+    TextYAlignment: 'Top',
+    FontFamily: fonts.sans,
+    RichText: true,
+    MultiLine: true,
+    PlaceholderText: 'Type a description…',
+  });
+  fk.append(card, description);
   const tags = fk.createFrame({
     Size: fk.udim2FromOffset(270, 94),
     Position: fk.udim2FromOffset(22, 156),
@@ -88,10 +132,10 @@ export function createComposer(): fk.FrameNode {
   });
   fk.append(tags, fk.createUICorner({ CornerRadius: 14 }));
   const padding = fk.createUIPadding({
-    PaddingTop: fk.udim(0, 10),
-    PaddingRight: fk.udim(0, 10),
-    PaddingBottom: fk.udim(0, 10),
-    PaddingLeft: fk.udim(0, 10),
+    PaddingTop: fk.udim(0, 12),
+    PaddingRight: fk.udim(0, 12),
+    PaddingBottom: fk.udim(0, 12),
+    PaddingLeft: fk.udim(0, 12),
   });
   const list = fk.createUIListLayout({
     FillDirection: 'Horizontal',
@@ -130,7 +174,7 @@ export function createComposer(): fk.FrameNode {
   fk.append(content, preview);
   const explanation = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 340),
-    Position: fk.udim2FromOffset(0, 880),
+    Position: fk.udim2FromOffset(0, 940),
     BackgroundColor3: colors.ink,
   });
   decorate(explanation, 18, colors.inkSoft);
@@ -141,7 +185,7 @@ export function createComposer(): fk.FrameNode {
   fk.append(
     explanation,
     text({
-      text: 'Turn LAYOUT off to restore the intentionally overlapping manual positions. Turn PADDING on to inset the flex layout from every edge.',
+      text: 'Shadow springs toward directional depth. Glow blooms around the visible silhouette. Padding springs every tag inward.',
       size: fk.udim2FromOffset(310, 112),
       position: fk.udim2FromOffset(22, 196),
       color: colors.textMuted,
@@ -151,10 +195,59 @@ export function createComposer(): fk.FrameNode {
     }),
   );
   fk.append(content, explanation);
+  const shadowMotion = fk.createMotion(shadow, { tension: 220, friction: 32 });
+  const glowMotion = fk.createMotion(glow, { tension: 220, friction: 32 });
+  const paddingMotion = fk.createMotion(padding, { tension: 240, friction: 34 });
+  const toggleShadow = createSpringModifierToggle({
+    parent: card,
+    modifier: shadow,
+    motion: shadowMotion,
+    active: {
+      Transparency: 0.3,
+      Offset: fk.vector2(10, 16),
+      BlurRadius: 16,
+      SpreadRadius: -2,
+    },
+    inactive: {
+      Transparency: 1,
+      Offset: fk.vector2(0, 0),
+      BlurRadius: 0,
+      SpreadRadius: -2,
+    },
+    isActive: () => enabled().shadow,
+  });
+  const toggleGlow = createSpringModifierToggle({
+    parent: card,
+    modifier: glow,
+    motion: glowMotion,
+    active: { Transparency: 0.18, Radius: 32 },
+    inactive: { Transparency: 1, Radius: 0 },
+    isActive: () => enabled().glow,
+  });
+  const togglePadding = createSpringModifierToggle({
+    parent: tags,
+    modifier: padding,
+    motion: paddingMotion,
+    active: {
+      PaddingTop: fk.udim(0, 12),
+      PaddingRight: fk.udim(0, 12),
+      PaddingBottom: fk.udim(0, 12),
+      PaddingLeft: fk.udim(0, 12),
+    },
+    inactive: {
+      PaddingTop: fk.udim(0, 0),
+      PaddingRight: fk.udim(0, 0),
+      PaddingBottom: fk.udim(0, 0),
+      PaddingLeft: fk.udim(0, 0),
+    },
+    isActive: () => enabled().padding,
+  });
   fk.state.observe(card, enabled, (value) => {
     setModifierAttached(card, corner, value.corner);
     setModifierAttached(card, stroke, value.stroke);
-    setModifierAttached(tags, padding, value.padding);
+    toggleShadow(value.shadow);
+    toggleGlow(value.glow);
+    togglePadding(value.padding);
     setModifierAttached(tags, list, value.layout);
     for (const [key, control] of controls) {
       const active = value[key as keyof typeof value];
@@ -165,14 +258,16 @@ export function createComposer(): fk.FrameNode {
       });
     }
     fk.update(tree, {
-      Text: `▼ Card\n  ${value.corner ? 'UICorner' : '—'}  ${value.stroke ? 'UIStroke' : '—'}\n  Tags → ${value.padding ? 'UIPadding' : '—'}  ${value.layout ? 'UIListLayout' : '—'}`,
+      Text: `▼ Card\n  ${value.corner ? 'UICorner' : '—'}  ${value.stroke ? 'UIStroke' : '—'}\n  ${value.shadow ? 'UIShadow' : '—'}  ${value.glow ? 'UIGlow' : '—'}\n  Tags → ${value.padding ? 'UIPadding' : '—'}  ${value.layout ? 'UIListLayout' : '—'}`,
     });
-    fk.update(lineOne, { Text: value.corner ? 'fk.append(card, corner);' : 'fk.detach(corner);' });
+    fk.update(lineOne, {
+      Text: `shadow.spring({ Offset: ${value.shadow ? '[10, 16]' : '[0, 0]'} });`,
+    });
     fk.update(lineTwo, {
-      Text: value.padding ? 'fk.append(tags, padding);' : 'fk.detach(padding);',
+      Text: `glow.spring({ Radius: ${value.glow ? '32' : '0'} });`,
     });
     fk.update(lineThree, {
-      Text: value.layout ? 'fk.append(tags, listLayout);' : 'fk.detach(listLayout);',
+      Text: `padding.spring({ all: ${value.padding ? '12' : '0'} });`,
     });
   });
   fk.append(section, content);

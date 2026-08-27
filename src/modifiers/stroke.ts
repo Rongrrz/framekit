@@ -36,9 +36,9 @@ export function createUIStroke(initial: Partial<UIStrokeProps> = {}): UIStrokeNo
 function resolveStrokeShadow(props: Readonly<UIStrokeProps>): string {
   const thickness = Math.max(0, props.Thickness);
   const color = color3ToCss(props.Color, props.Transparency);
-  if (props.BorderStrokePosition === 'Inner') return `inset 0 0 0 ${thickness}px ${color}`;
-  if (props.BorderStrokePosition === 'Outer') return `0 0 0 ${thickness}px ${color}`;
+  if (props.BorderStrokePosition === 'Inner') return `inset 0px 0px 0px ${thickness}px ${color}`;
+  if (props.BorderStrokePosition === 'Outer') return `0px 0px 0px ${thickness}px ${color}`;
 
   const halfThickness = thickness / 2;
-  return `inset 0 0 0 ${halfThickness}px ${color}, 0 0 0 ${halfThickness}px ${color}`;
+  return `inset 0px 0px 0px ${halfThickness}px ${color}, 0px 0px 0px ${halfThickness}px ${color}`;
 }

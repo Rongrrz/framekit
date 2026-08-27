@@ -153,18 +153,33 @@ export function renderNode<Props extends NodeProps>(
   clearStyles(gui.element, state.modifierStyles);
   state.render?.(state.props, changed);
   const isHidden = gui.element.style.display === 'none';
+  const resolvedModifierStyles: Record<string, string> = {};
+  const layouts: LayoutNodeState[] = [];
 
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);
     if (modifierState.kind === 'style') {
-      applyStyles(
-        gui.element,
+      mergeStyles(
+        resolvedModifierStyles,
         modifierState.resolveStyles(modifierState.props, state.props),
-        state.modifierStyles,
-        isHidden,
       );
     } else if (modifierState.kind === 'layout') {
-      applyLayout(gui, modifierState, isHidden);
+      layouts.push(modifierState);
+    }
+  }
+
+  applyStyles(gui.element, resolvedModifierStyles, state.modifierStyles, isHidden);
+  for (const layout of layouts) applyLayout(gui, layout, isHidden);
+}
+
+function mergeStyles(target: Record<string, string>, source: Styles): void {
+  for (const [property, value] of Object.entries(source)) {
+    if (property === 'box-shadow' && target[property] && value) {
+      target[property] = `${target[property]}, ${value}`;
+    } else if (property === 'filter' && target[property] && value) {
+      target[property] = `${target[property]} ${value}`;
+    } else {
+      target[property] = value;
     }
   }
 }

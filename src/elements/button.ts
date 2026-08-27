@@ -3,6 +3,7 @@ import type { GuiNode } from '../runtime/render';
 import { emitNodeEvent, onNodeEvent, type Unsubscribe } from '../runtime/signal';
 import type { FrameProps } from './frame';
 import type { GuiEvent } from './gui-input';
+import type { TextBoxEvent, TextBoxNode } from './text-box';
 
 export type ButtonProps = {
   Disabled: boolean;
@@ -33,6 +34,8 @@ const buttonEvents = new Set<ButtonEvent>([
   'MouseLeave',
 ]);
 
+const textBoxEvents = new Set<TextBoxEvent>(['TextChanged']);
+
 /** Subscribes to a typed GUI input event and returns an idempotent unsubscribe function. */
 export function on(
   node: GuiNode,
@@ -45,12 +48,19 @@ export function on(
   listener: (event: MouseEvent) => void,
 ): Unsubscribe;
 export function on(
+  node: TextBoxNode,
+  event: TextBoxEvent,
+  listener: (text: string, event: InputEvent) => void,
+): Unsubscribe;
+export function on<Arguments extends unknown[]>(
   node: GuiNode,
-  event: ButtonEvent,
-  listener: (event: MouseEvent) => void,
+  event: ButtonEvent | TextBoxEvent,
+  listener: (...args: Arguments) => void,
 ): Unsubscribe {
-  if (!buttonEvents.has(event)) throw new TypeError(`Unsupported button event "${event}".`);
-  return onNodeEvent<[MouseEvent]>(node, event, listener);
+  if (!buttonEvents.has(event as ButtonEvent) && !textBoxEvents.has(event as TextBoxEvent)) {
+    throw new TypeError(`Unsupported GUI event "${event}".`);
+  }
+  return onNodeEvent(node, event, listener);
 }
 
 export function configureButton(node: ButtonNode, element: HTMLButtonElement): void {

@@ -118,4 +118,32 @@ describe('motion springs', () => {
     expect(() => motion.spring({})).toThrow(/goal property/);
     expect(() => motion.spring({ BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
+
+  it('springs shadow and glow properties through the same motion API', () => {
+    const frame = fk.createFrame();
+    const shadow = fk.createUIShadow();
+    const glow = fk.createUIGlow();
+    fk.append(frame, shadow);
+    fk.append(frame, glow);
+
+    fk.createMotion(shadow).spring({
+      Offset: fk.vector2(12, 20),
+      BlurRadius: 28,
+      Transparency: 0.25,
+    });
+    fk.createMotion(glow).spring({ Radius: 32, Color: fk.color3(120, 90, 255) });
+    settle();
+
+    expect(fk.props(shadow)).toMatchObject({
+      Offset: fk.vector2(12, 20),
+      BlurRadius: 28,
+      Transparency: 0.25,
+    });
+    expect(fk.props(glow)).toMatchObject({
+      Radius: 32,
+      Color: fk.color3(120, 90, 255),
+    });
+    expect(frame.element.style.boxShadow).toContain('12px 20px 28px 0px');
+    expect(frame.element.style.filter).toContain('drop-shadow(0px 0px 32px');
+  });
 });

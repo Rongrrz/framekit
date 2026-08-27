@@ -29,3 +29,5 @@ export type {
   TextXAlignment,
   TextYAlignment,
 } from './text';
+export { createTextBox, textBoxText } from './text-box';
+export type { TextBoxEvent, TextBoxNode, TextBoxProps } from './text-box';

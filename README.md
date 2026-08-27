@@ -32,17 +32,17 @@ Named imports are useful in applications and libraries that value discoverabilit
 
 FrameKit keeps a small, explicit vocabulary:
 
-| Area       | What you use                                                                                        |
-| ---------- | --------------------------------------------------------------------------------------------------- |
-| Elements   | `createScreenGui`, `createFrame`, `createScrollingFrame`, text and image factories                  |
-| Modifiers  | `createUICorner`, `createUIStroke`, `createUIPadding`, `createUIScale`, constraints and list layout |
-| Tree       | `append`, `detach`, `parent`, `children`, `find`                                                    |
-| Properties | `props`, `update`                                                                                   |
-| Lifecycle  | `mount`, `unmount`, `destroy`, `isDestroyed`                                                        |
-| Input      | `on`                                                                                                |
-| State      | `state.observable`, `state.observe`, `state.signal`                                                 |
-| Motion     | `createMotion`, `createTween`, `tweenInfo`                                                          |
-| Values     | `color3`, `udim`, `udim2`, `vector2` and their convenience constructors                             |
+| Area       | What you use                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------ |
+| Elements   | `createScreenGui`, `createFrame`, `createScrollingFrame`, text, image, and text-box factories    |
+| Modifiers  | `createUICorner`, `createUIStroke`, `createUIShadow`, `createUIGlow`, padding, scale, and layout |
+| Tree       | `append`, `detach`, `parent`, `children`, `find`                                                 |
+| Properties | `props`, `update`                                                                                |
+| Lifecycle  | `mount`, `unmount`, `destroy`, `isDestroyed`                                                     |
+| Input      | `on`                                                                                             |
+| State      | `state.observable`, `state.observe`, `state.signal`                                              |
+| Motion     | `createMotion`, `createTween`, `tweenInfo`                                                       |
+| Values     | `color3`, `udim`, `udim2`, `vector2` and their convenience constructors                          |
 
 Factories accept partial property objects. `props()`, `children()`, and `canvasPosition()` return snapshots; mutate FrameKit state through `update()`, tree functions, or `scrollTo()`.
 
@@ -99,6 +99,23 @@ fk.state.observe(button, selected, (active) => {
 
 All GUI nodes support hover input. Button nodes add click and press input. `on()` and standalone observable subscriptions return idempotent unsubscribe functions.
 
+Text boxes keep their current string in `Text`, so it is available through either `props(box).Text` or `textBoxText(box)`. `TextChanged` emits that same string as the user edits:
+
+```ts
+const bio = fk.createTextBox({
+  Text: 'Hello <b>FrameKit</b>',
+  RichText: true,
+  MultiLine: true,
+  PlaceholderText: 'Write something…',
+});
+
+fk.on(bio, 'TextChanged', (value) => console.log(value));
+```
+
+Rich text is an explicit opt-in and supports bold, italic, underline, strikethrough, line breaks, and validated `font` color, size, and face attributes. Unsupported or executable elements are discarded rather than mounted.
+
+`UIShadow` models box and surface depth with an animated `Offset`, blur, spread, and optional inset. `UIGlow` is deliberately different: it follows the rendered alpha silhouette and builds a centered colored core plus a wider soft halo from only `Radius`, `Color`, and `Transparency`. Both effects can be attached together.
+
 ## Spring motion
 
 Use one retained motion controller for interactions that can change direction at any time. Calling `spring()` again retargets from the node's current visual value and preserves that spring's current velocity.
@@ -149,7 +166,7 @@ The runtime remains an implementation boundary rather than a secondary public en
 
 ## Safety boundaries
 
-FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, value constructors reject non-finite numbers, tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
+FrameKit treats ordinary caller-provided text as text, never HTML. A text box with `RichText: true` parses only FrameKit's documented, non-executable formatting subset into newly created DOM nodes. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, value constructors reject non-finite numbers, tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
 
 `GuiNode.element` is an intentional low-level escape hatch for integrations FrameKit does not cover. Prefer FrameKit properties and operations for normal application behavior.
 

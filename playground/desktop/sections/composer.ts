@@ -1,19 +1,29 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion, bindScaleMotion } from '../../shared/interaction';
-import { setModifierAttached } from '../../shared/modifier';
+import { createSpringModifierToggle, setModifierAttached } from '../../shared/modifier';
 import { button, codeLine, decorate, pill, text } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
 
-type ModifierKey = 'corner' | 'stroke' | 'padding' | 'layout' | 'scale' | 'rotation';
+type ModifierKey =
+  | 'corner'
+  | 'stroke'
+  | 'shadow'
+  | 'glow'
+  | 'padding'
+  | 'layout'
+  | 'scale'
+  | 'rotation';
 type ComposerState = Readonly<Record<ModifierKey, boolean>>;
 
 const { top, height } = sectionLayout.composer;
 const initialState: ComposerState = {
   corner: true,
   stroke: true,
+  shadow: true,
+  glow: true,
   padding: false,
   layout: true,
   scale: false,
@@ -90,6 +100,8 @@ export function createComposer(): fk.FrameNode {
   const accents: Record<ModifierKey, fk.Color3> = {
     corner: colors.coral,
     stroke: colors.violet,
+    shadow: colors.amber,
+    glow: colors.mint,
     padding: colors.mint,
     layout: colors.amber,
     scale: colors.coral,
@@ -118,16 +130,43 @@ export function createComposer(): fk.FrameNode {
   const randomize = button(
     'RANDOMIZE BUILD  ✦',
     fk.udim2FromOffset(304, 46),
-    fk.udim2FromOffset(28, 284),
+    fk.udim2FromOffset(28, 330),
     colors.coral,
     colors.ink,
   );
   bindButtonMotion(randomize, colors.coral, colors.amber);
   let randomStep = 0;
   const presets: readonly ComposerState[] = [
-    { corner: false, stroke: true, padding: true, layout: false, scale: true, rotation: true },
-    { corner: true, stroke: false, padding: false, layout: true, scale: true, rotation: false },
-    { corner: true, stroke: true, padding: true, layout: true, scale: false, rotation: true },
+    {
+      corner: false,
+      stroke: true,
+      shadow: false,
+      glow: true,
+      padding: true,
+      layout: false,
+      scale: true,
+      rotation: true,
+    },
+    {
+      corner: true,
+      stroke: false,
+      shadow: true,
+      glow: false,
+      padding: false,
+      layout: true,
+      scale: true,
+      rotation: false,
+    },
+    {
+      corner: true,
+      stroke: true,
+      shadow: true,
+      glow: true,
+      padding: true,
+      layout: true,
+      scale: false,
+      rotation: true,
+    },
   ];
   fk.on(randomize, 'MouseButton1Click', () => {
     configuration(presets[randomStep % presets.length]!);
@@ -138,7 +177,7 @@ export function createComposer(): fk.FrameNode {
   const reset = button(
     'RESET DEFAULTS',
     fk.udim2FromOffset(304, 40),
-    fk.udim2FromOffset(28, 342),
+    fk.udim2FromOffset(28, 388),
     colors.ink,
     colors.textMuted,
   );
@@ -149,15 +188,15 @@ export function createComposer(): fk.FrameNode {
 
   const tree = fk.createFrame({
     Name: 'LiveNodeTree',
-    Size: fk.udim2FromOffset(304, 154),
-    Position: fk.udim2FromOffset(28, 408),
+    Size: fk.udim2FromOffset(304, 128),
+    Position: fk.udim2FromOffset(28, 444),
     BackgroundColor3: colors.ink,
   });
   decorate(tree, 14, colors.inkSoft);
   const treeTitle = codeLine(tree, '▼ NotificationCard', 14, colors.coral);
   const modifierLine = codeLine(tree, '', 44, colors.textMuted);
   const layoutLine = codeLine(tree, '', 74, colors.textMuted);
-  const transformLine = codeLine(tree, '', 104, colors.textMuted);
+  const transformLine = codeLine(tree, '', 100, colors.textMuted);
   fk.update(treeTitle, { TextSize: 11 });
   for (const line of [modifierLine, layoutLine, transformLine]) fk.update(line, { TextSize: 10 });
   fk.append(controls, tree);
@@ -182,7 +221,19 @@ export function createComposer(): fk.FrameNode {
       weight: 750,
     }),
   );
-
+  fk.append(
+    stage,
+    text({
+      text: 'SHADOW ↓ DIRECTIONAL DEPTH   ·   GLOW ✦ SILHOUETTE LIGHT',
+      size: fk.udim2FromOffset(430, 28),
+      position: fk.udim2FromOffset(294, 28),
+      color: colors.darkMuted,
+      textSize: 9,
+      font: fonts.mono,
+      weight: 750,
+      xAlignment: 'Right',
+    }),
+  );
   const sample = fk.createFrame({
     Name: 'NotificationCard',
     Size: fk.udim2FromOffset(420, 320),
@@ -195,15 +246,28 @@ export function createComposer(): fk.FrameNode {
     Thickness: 3,
     BorderStrokePosition: 'Outer',
   });
+  const shadow = fk.createUIShadow({
+    Color: colors.ink,
+    Transparency: 0.32,
+    Offset: fk.vector2(12, 18),
+    BlurRadius: 18,
+    SpreadRadius: -2,
+  });
+  const glow = fk.createUIGlow({
+    Color: colors.violet,
+    Transparency: 0.18,
+    Radius: 36,
+  });
   const padding = fk.createUIPadding({
-    PaddingTop: fk.udim(0, 10),
-    PaddingRight: fk.udim(0, 10),
-    PaddingBottom: fk.udim(0, 10),
-    PaddingLeft: fk.udim(0, 10),
+    PaddingTop: fk.udim(0, 16),
+    PaddingRight: fk.udim(0, 16),
+    PaddingBottom: fk.udim(0, 16),
+    PaddingLeft: fk.udim(0, 16),
   });
   const sampleScale = fk.createUIScale();
   fk.append(sample, corner);
   fk.append(sample, stroke);
+  fk.append(sample, shadow);
   fk.append(sample, sampleScale);
 
   const badge = fk.createTextLabel({
@@ -228,18 +292,24 @@ export function createComposer(): fk.FrameNode {
       weight: 900,
     }),
   );
-  fk.append(
-    sample,
-    text({
-      text: 'Every piece of this card is a FrameKit node or modifier.',
-      size: fk.udim2FromOffset(320, 56),
-      position: fk.udim2FromOffset(28, 96),
-      color: colors.textMuted,
-      textSize: 14,
-      wrapped: true,
-      yAlignment: 'Top',
-    }),
-  );
+  const description = fk.createTextBox({
+    Name: 'EditableRichDescription',
+    Size: fk.udim2FromOffset(336, 60),
+    Position: fk.udim2FromOffset(28, 94),
+    BackgroundTransparency: 1,
+    Text: 'Every <b>piece</b> is editable. Try changing this <font color="#ae91ff">rich text</font>.',
+    TextColor3: colors.textMuted,
+    TextSize: 14,
+    TextWrapped: true,
+    TextXAlignment: 'Left',
+    TextYAlignment: 'Top',
+    FontFamily: fonts.sans,
+    FontWeight: 500,
+    RichText: true,
+    MultiLine: true,
+    PlaceholderText: 'Type a card description…',
+  });
+  fk.append(sample, description);
 
   const tags = fk.createFrame({
     Name: 'FeatureTags',
@@ -296,10 +366,70 @@ export function createComposer(): fk.FrameNode {
 
   const sampleMotion = fk.createMotion(sample, { tension: 210, friction: 20 });
   const scaleMotion = fk.createMotion(sampleScale, { tension: 230, friction: 20 });
+  const shadowMotion = fk.createMotion(shadow, { tension: 220, friction: 32 });
+  const glowMotion = fk.createMotion(glow, { tension: 220, friction: 32 });
+  const paddingMotion = fk.createMotion(padding, { tension: 240, friction: 34 });
+  const toggleShadow = createSpringModifierToggle({
+    parent: sample,
+    modifier: shadow,
+    motion: shadowMotion,
+    active: {
+      Transparency: 0.32,
+      Offset: fk.vector2(12, 18),
+      BlurRadius: 18,
+      SpreadRadius: -2,
+    },
+    inactive: {
+      Transparency: 1,
+      Offset: fk.vector2(0, 0),
+      BlurRadius: 0,
+      SpreadRadius: -2,
+    },
+    isActive: () => configuration().shadow,
+  });
+  const toggleGlow = createSpringModifierToggle({
+    parent: sample,
+    modifier: glow,
+    motion: glowMotion,
+    active: { Transparency: 0.18, Radius: 36 },
+    inactive: { Transparency: 1, Radius: 0 },
+    isActive: () => configuration().glow,
+  });
+  const zeroPadding = {
+    PaddingTop: fk.udim(0, 0),
+    PaddingRight: fk.udim(0, 0),
+    PaddingBottom: fk.udim(0, 0),
+    PaddingLeft: fk.udim(0, 0),
+  } as const;
+  const togglePadding = createSpringModifierToggle({
+    parent: tags,
+    modifier: padding,
+    motion: paddingMotion,
+    active: {
+      PaddingTop: fk.udim(0, 16),
+      PaddingRight: fk.udim(0, 16),
+      PaddingBottom: fk.udim(0, 16),
+      PaddingLeft: fk.udim(0, 16),
+    },
+    inactive: zeroPadding,
+    isActive: () => configuration().padding,
+  });
+  fk.on(sample, 'MouseEnter', () => {
+    const current = configuration();
+    if (current.shadow) shadowMotion.spring({ Offset: fk.vector2(16, 24), BlurRadius: 24 });
+    if (current.glow) glowMotion.spring({ Radius: 46, Transparency: 0.12 });
+  });
+  fk.on(sample, 'MouseLeave', () => {
+    const current = configuration();
+    if (current.shadow) shadowMotion.spring({ Offset: fk.vector2(12, 18), BlurRadius: 18 });
+    if (current.glow) glowMotion.spring({ Radius: 36, Transparency: 0.18 });
+  });
   fk.state.observe(sample, configuration, (value) => {
     setModifierAttached(sample, corner, value.corner);
     setModifierAttached(sample, stroke, value.stroke);
-    setModifierAttached(tags, padding, value.padding);
+    toggleShadow(value.shadow);
+    toggleGlow(value.glow);
+    togglePadding(value.padding);
     setModifierAttached(tags, tagLayout, value.layout);
     scaleMotion.spring({ Scale: value.scale ? 1.07 : 1 });
     sampleMotion.spring({ Rotation: value.rotation ? -4 : 0 });
@@ -315,6 +445,8 @@ export function createComposer(): fk.FrameNode {
     const styles = [
       value.corner && 'UICorner',
       value.stroke && 'UIStroke',
+      value.shadow && 'UIShadow',
+      value.glow && 'UIGlow',
       value.padding && 'UIPadding',
     ]
       .filter(Boolean)

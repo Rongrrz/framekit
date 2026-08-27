@@ -10,7 +10,9 @@ const {
   createFrame,
   createTextLabel,
   createUICorner,
+  createUIGlow,
   createUIScale,
+  createUIShadow,
   createUIStroke,
   detach,
   destroy,
@@ -112,5 +114,44 @@ describe('UI modifiers', () => {
     append(second, corner);
     expect(first.element.style.borderRadius).toBe('');
     expect(second.element.style.borderRadius).toBe('10px');
+  });
+
+  it('composes shadows, glows, and strokes without overwriting siblings', () => {
+    const frame = createFrame();
+    const stroke = createUIStroke({ Color: color3(255, 255, 255), Thickness: 2 });
+    const shadow = createUIShadow({
+      Color: color3(10, 20, 30),
+      Offset: fk.vector2(4, 8),
+      BlurRadius: 12,
+    });
+    const glow = createUIGlow({ Color: color3(100, 120, 255), Radius: 20 });
+    append(frame, stroke);
+    append(frame, shadow);
+    append(frame, glow);
+
+    expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
+    expect(frame.element.style.boxShadow).toContain('4px 8px 12px 0px');
+    expect(frame.element.style.filter).toContain('drop-shadow(0px 0px 7px');
+    expect(frame.element.style.filter).toContain('drop-shadow(0px 0px 20px');
+
+    update(shadow, { Offset: fk.vector2(-2, 6), BlurRadius: 18 });
+    expect(frame.element.style.boxShadow).toContain('-2px 6px 18px 0px');
+    detach(glow);
+    expect(frame.element.style.filter).toBe('');
+    expect(frame.element.style.boxShadow).toContain('-2px 6px 18px 0px');
+    expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
+  });
+
+  it('validates shadow and glow geometry', () => {
+    const frame = createFrame();
+    const shadow = createUIShadow();
+    const glow = createUIGlow();
+    append(frame, shadow);
+    append(frame, glow);
+
+    expect(() => update(shadow, { BlurRadius: -1 })).toThrow(/BlurRadius/);
+    expect(() => update(glow, { Radius: Number.NaN })).toThrow(/Radius/);
+    expect(props(shadow).BlurRadius).toBe(16);
+    expect(props(glow).Radius).toBe(18);
   });
 });
