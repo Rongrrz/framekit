@@ -243,7 +243,7 @@ export function createComposer(): fk.FrameNode {
   const corner = fk.createUICorner({ CornerRadius: 28 });
   const stroke = fk.createUIStroke({
     Color: colors.violet,
-    Thickness: 3,
+    Thickness: 4,
     BorderStrokePosition: 'Outer',
   });
   const shadow = fk.createUIShadow({
@@ -356,7 +356,7 @@ export function createComposer(): fk.FrameNode {
     BackgroundColor3: colors.paper,
   });
   decorate(snippet, 16, colors.paperMuted);
-  codeLine(snippet, '// The tree is the styling API', 16, colors.darkMuted);
+  codeLine(snippet, '// Modifiers share the spring API', 16, colors.darkMuted);
   const snippetOne = codeLine(snippet, '', 48, colors.coral);
   const snippetTwo = codeLine(snippet, '', 80, colors.violet);
   fk.update(snippetOne, { TextColor3: colors.darkText });
@@ -364,11 +364,18 @@ export function createComposer(): fk.FrameNode {
   fk.append(stage, snippet);
   fk.append(lab, stage);
 
-  const sampleMotion = fk.createMotion(sample, { tension: 210, friction: 20 });
-  const scaleMotion = fk.createMotion(sampleScale, { tension: 230, friction: 20 });
-  const shadowMotion = fk.createMotion(shadow, { tension: 220, friction: 32 });
-  const glowMotion = fk.createMotion(glow, { tension: 220, friction: 32 });
-  const paddingMotion = fk.createMotion(padding, { tension: 240, friction: 34 });
+  const strokeMotion = fk.createMotion(stroke);
+  const shadowMotion = fk.createMotion(shadow);
+  const glowMotion = fk.createMotion(glow);
+  const paddingMotion = fk.createMotion(padding);
+  const toggleStroke = createSpringModifierToggle({
+    parent: sample,
+    modifier: stroke,
+    motion: strokeMotion,
+    active: { Thickness: 4 },
+    inactive: { Thickness: 0 },
+    isActive: () => configuration().stroke,
+  });
   const toggleShadow = createSpringModifierToggle({
     parent: sample,
     modifier: shadow,
@@ -426,13 +433,13 @@ export function createComposer(): fk.FrameNode {
   });
   fk.state.observe(sample, configuration, (value) => {
     setModifierAttached(sample, corner, value.corner);
-    setModifierAttached(sample, stroke, value.stroke);
+    toggleStroke(value.stroke);
     toggleShadow(value.shadow);
     toggleGlow(value.glow);
     togglePadding(value.padding);
     setModifierAttached(tags, tagLayout, value.layout);
-    scaleMotion.spring({ Scale: value.scale ? 1.07 : 1 });
-    sampleMotion.spring({ Rotation: value.rotation ? -4 : 0 });
+    fk.spring(sampleScale, { Scale: value.scale ? 1.07 : 1 });
+    fk.spring(sample, { Rotation: value.rotation ? -4 : 0 });
 
     for (const [key, control] of toggles) {
       const active = value[key];
@@ -459,10 +466,7 @@ export function createComposer(): fk.FrameNode {
       Text: `  Scale ${value.scale ? '1.07' : '1.00'}  /  Rotation ${value.rotation ? '-4°' : '0°'}`,
     });
     fk.update(snippetOne, {
-      Text:
-        value.corner || value.stroke || value.padding
-          ? 'fk.append(card, activeModifier);'
-          : '// style modifiers detached',
+      Text: `fk.spring(stroke, { Thickness: ${value.stroke ? '4' : '0'} });`,
     });
     fk.update(snippetTwo, {
       Text: value.layout ? 'fk.append(tags, listLayout);' : 'fk.detach(listLayout);',

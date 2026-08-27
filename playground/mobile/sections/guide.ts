@@ -137,11 +137,10 @@ export function createGuide(): fk.FrameNode {
     codeLine(code, '', 234),
   ];
   fk.append(content, code);
-  const scaleMotion = fk.createMotion(cardScale, { tension: 240, friction: 21 });
   fk.on(card, 'MouseEnter', () => {
-    if (selected() === 3) scaleMotion.spring({ Scale: 1.04 });
+    if (selected() === 3) fk.spring(cardScale, { Scale: 1.04 });
   });
-  fk.on(card, 'MouseLeave', () => scaleMotion.spring({ Scale: 1 }));
+  fk.on(card, 'MouseLeave', () => fk.spring(cardScale, { Scale: 1 }));
   fk.state.observe(card, selected, (value) => {
     const data = [
       [
@@ -186,13 +185,13 @@ export function createGuide(): fk.FrameNode {
       [
         '04 / ANIMATE',
         'Add motion.',
-        'The finished card scales on hover through one retained spring controller.',
+        'The finished card scales on hover through one retained spring.',
         [
-          'const motion = fk.createMotion(scale);',
-          '',
           "fk.on(card, 'MouseEnter', () =>",
-          '  motion.spring({ Scale: 1.04 })',
+          '  fk.spring(scale, { Scale: 1.04 })',
           ');',
+          '',
+          '',
           '',
         ],
       ],

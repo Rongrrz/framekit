@@ -19,13 +19,19 @@ export type SpringOptions = Readonly<{
   tension?: number;
   /** Resistance to motion. Lower values allow more overshoot. */
   friction?: number;
+  /** Inertia of the animated value. Higher values respond more slowly. */
+  mass?: number;
   /** Component distance and speed at which the spring snaps exactly to its goal. */
   precision?: number;
+  /** Component speed below which the spring can be considered at rest. */
+  restVelocity?: number;
 }>;
 
 export type Motion<Props extends NodeProps = NodeProps> = {
   /** Retargets properties without discarding their current velocity. */
   spring(goal: AnimationGoal<Props>): void;
+  /** Retargets properties using settings for only the properties in this goal. */
+  spring(goal: AnimationGoal<Props>, settings: SpringOptions): void;
   /** Stops one property, or every property when omitted, at its current value. */
   stop(property?: keyof AnimationGoal<Props>): void;
   isAnimating(): boolean;
@@ -38,13 +44,16 @@ type PropertySpring = {
   current: number[];
   goal: number[];
   velocity: number[];
+  config: ResolvedSpringOptions;
 };
 type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
 
 const defaultOptions: ResolvedSpringOptions = {
   tension: 170,
   friction: 26,
+  mass: 1,
   precision: 0.001,
+  restVelocity: 0.0625,
 };
 
 /** Creates a retained motion controller whose spring can be freely retargeted. */
@@ -53,7 +62,7 @@ export function createMotion<Props extends NodeProps>(
   options: SpringOptions = {},
 ): Motion<Props> {
   assertNodeActive(node);
-  const config = resolveOptions(options);
+  const defaultConfig = resolveOptions(options, defaultOptions);
   const springs = new Map<keyof Props, PropertySpring>();
   const completed = createSignal<[]>();
   let frame: AnimationFrame | undefined;
@@ -64,8 +73,11 @@ export function createMotion<Props extends NodeProps>(
     cancelPropertyFromConflict: (property) => stopProperty(property as keyof Props),
   };
 
-  function spring(goal: AnimationGoal<Props>): void {
+  function spring(goal: AnimationGoal<Props>): void;
+  function spring(goal: AnimationGoal<Props>, settings: SpringOptions): void;
+  function spring(goal: AnimationGoal<Props>, settings?: SpringOptions): void {
     assertUsable();
+    const config = settings ? resolveOptions(settings, defaultConfig) : defaultConfig;
     const goals = goal as unknown as Partial<Props>;
     const keys = Object.keys(goal) as (keyof Props)[];
     if (keys.length === 0) throw new TypeError('A spring needs at least one goal property.');
@@ -100,6 +112,7 @@ export function createMotion<Props extends NodeProps>(
       const existing = springs.get(key);
       if (existing) {
         existing.goal = value.goal;
+        existing.config = config;
       } else {
         const current = value.start!;
         springs.set(key, {
@@ -107,6 +120,7 @@ export function createMotion<Props extends NodeProps>(
           current,
           goal: value.goal,
           velocity: current.map(() => 0),
+          config,
         });
       }
     }
@@ -153,13 +167,13 @@ export function createMotion<Props extends NodeProps>(
           propertySpring.velocity[index]!,
           propertySpring.goal[index]!,
           deltaTime,
-          config,
+          propertySpring.config,
         );
         propertySpring.current[index] = result.value;
         propertySpring.velocity[index] = result.velocity;
         if (
-          Math.abs(result.value - propertySpring.goal[index]!) > config.precision ||
-          Math.abs(result.velocity) > config.precision
+          Math.abs(result.value - propertySpring.goal[index]!) > propertySpring.config.precision ||
+          Math.abs(result.velocity) > propertySpring.config.restVelocity
         ) {
           propertySettled = false;
         }
@@ -213,8 +227,8 @@ function solveSpring(
 ): { value: number; velocity: number } {
   if (deltaTime === 0) return { value, velocity };
   const displacement = value - goal;
-  const angularFrequency = Math.sqrt(options.tension);
-  const dampingRatio = options.friction / (2 * angularFrequency);
+  const angularFrequency = Math.sqrt(options.tension / options.mass);
+  const dampingRatio = options.friction / (2 * Math.sqrt(options.mass * options.tension));
 
   if (dampingRatio < 1 - 1e-4) {
     const dampedFrequency = angularFrequency * Math.sqrt(1 - dampingRatio ** 2);
@@ -255,11 +269,25 @@ function solveSpring(
   };
 }
 
-function resolveOptions(options: SpringOptions): ResolvedSpringOptions {
-  const resolved = { ...defaultOptions, ...options };
+function resolveOptions(
+  options: SpringOptions,
+  fallback: ResolvedSpringOptions,
+): ResolvedSpringOptions {
+  const precision = options.precision ?? fallback.precision;
+  const resolved: ResolvedSpringOptions = {
+    tension: options.tension ?? fallback.tension,
+    friction: options.friction ?? fallback.friction,
+    mass: options.mass ?? fallback.mass,
+    precision,
+    restVelocity:
+      options.restVelocity ??
+      (options.precision === undefined ? fallback.restVelocity : precision * (1000 / 16)),
+  };
   assertPositiveFinite(resolved.tension, 'Spring tension');
   assertPositiveFinite(resolved.friction, 'Spring friction');
+  assertPositiveFinite(resolved.mass, 'Spring mass');
   assertPositiveFinite(resolved.precision, 'Spring precision');
+  assertPositiveFinite(resolved.restVelocity, 'Spring rest velocity');
   return resolved;
 }
 

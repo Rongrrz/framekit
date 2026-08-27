@@ -108,12 +108,12 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.ink,
   });
   decorate(codePanel, 16, colors.inkSoft);
-  codeLine(codePanel, 'const motion = fk.createMotion(card);', 22, colors.violet);
-  codeLine(codePanel, '', 50);
-  codeLine(codePanel, 'motion.spring({', 78, colors.coral);
-  const positionLine = codeLine(codePanel, '  Position: calmPosition,', 106);
-  const rotationLine = codeLine(codePanel, '  Rotation: 0,', 134);
-  codeLine(codePanel, '});', 162, colors.coral);
+  codeLine(codePanel, 'fk.spring(card, {', 22, colors.coral);
+  const positionLine = codeLine(codePanel, '  Position: calmPosition,', 50);
+  const rotationLine = codeLine(codePanel, '  Rotation: 0,', 78);
+  codeLine(codePanel, '  BackgroundColor3: accent,', 106);
+  codeLine(codePanel, '});', 134, colors.coral);
+  codeLine(codePanel, '', 162);
   fk.append(controls, codePanel);
   fk.append(
     controls,
@@ -238,8 +238,7 @@ export function createMotion(): fk.FrameNode {
   fk.append(stage, demoCard);
   fk.append(lab, stage);
 
-  const cardMotion = fk.createMotion(demoCard, { tension: 190, friction: 18 });
-  const scaleMotion = fk.createMotion(demoScale, { tension: 220, friction: 19 });
+  const cardMotion = fk.createMotion(demoCard);
   cardMotion.completed.subscribe(() => fk.update(status, { Text: '● SPRING SETTLED' }));
   fk.state.observe(demoCard, mode, (value) => {
     const goal = goals[value];
@@ -255,7 +254,7 @@ export function createMotion(): fk.FrameNode {
       Rotation: goal.Rotation,
       BackgroundColor3: goal.BackgroundColor3,
     });
-    scaleMotion.spring({ Scale: goal.Scale });
+    fk.spring(demoScale, { Scale: goal.Scale });
     for (const [buttonMode, control] of modeButtons) {
       fk.update(control, {
         TextColor3: buttonMode === value ? goal.BackgroundColor3 : colors.text,

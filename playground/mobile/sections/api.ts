@@ -148,16 +148,8 @@ export function createApi(): fk.FrameNode {
         '04 / MOTION',
         'Animate values.',
         'Springs retarget continuously. Tweens provide explicit playback over the same typed properties.',
-        'createMotion  ·  createTween\ntweenInfo  ·  completed',
-        [
-          'const motion = fk.createMotion(card);',
-          '',
-          'motion.spring({',
-          '  Position: nextPosition,',
-          '  Rotation: 3,',
-          '});',
-          '',
-        ],
+        'spring  ·  createTween\ntweenInfo  ·  createMotion',
+        ['fk.spring(card, {', '  Position: nextPosition,', '  Rotation: 3,', '});', '', '', ''],
       ],
     ] as const;
     const item = data[value]!;

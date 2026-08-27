@@ -40,11 +40,7 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
     BackgroundTransparency: 1,
   });
   const contentScale = fk.createUIScale({ Scale: currentScale });
-  const scrollMotion = fk.createMotion(page, {
-    tension: 170,
-    friction: 26,
-    precision: 0.5,
-  });
+  const scrollMotion = fk.createMotion(page);
 
   fk.append(content, contentScale);
   fk.append(scrollSizer, content);

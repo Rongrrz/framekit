@@ -57,13 +57,13 @@ const groups = {
     title: 'Move any value.',
     body: 'Springs retarget continuously. Tweens offer explicit playback. Property ownership prevents competing animations.',
     accent: colors.amber,
-    tokens: ['createMotion', 'createTween', 'tweenInfo', 'completed'],
+    tokens: ['spring', 'createTween', 'tweenInfo', 'createMotion'],
     lines: [
-      'const motion = fk.createMotion(card);',
-      'motion.spring({',
+      'fk.spring(card, {',
       '  Size: fk.udim2FromOffset(360, 220),',
       '  Rotation: 3,',
       '});',
+      '',
     ],
   },
 } as const;

@@ -56,11 +56,11 @@ const modeContent = {
     accent: colors.mint,
     rotation: 2,
     lines: [
-      'const motion = fk.createMotion(card);',
-      'motion.spring({',
+      'fk.spring(card, {',
       '  Position: nextPosition,',
       '  Rotation: nextRotation,',
       '});',
+      '',
     ],
   },
 } as const;
@@ -166,17 +166,15 @@ export function createHero(onExplore: () => void): fk.FrameNode {
 
   const scale = fk.createUIScale({ Scale: 0.94 });
   fk.append(canvas, scale);
-  const scaleMotion = fk.createMotion(scale, { tension: 180, friction: 20 });
-  const canvasMotion = fk.createMotion(canvas, { tension: 190, friction: 21 });
-  scaleMotion.spring({ Scale: 1 });
-  canvasMotion.spring({ Rotation: 0 });
+  fk.spring(scale, { Scale: 1 });
+  fk.spring(canvas, { Rotation: 0 });
   fk.on(canvas, 'MouseEnter', () => {
-    scaleMotion.spring({ Scale: 1.015 });
-    canvasMotion.spring({ Rotation: 0.7 });
+    fk.spring(scale, { Scale: 1.015 });
+    fk.spring(canvas, { Rotation: 0.7 });
   });
   fk.on(canvas, 'MouseLeave', () => {
-    scaleMotion.spring({ Scale: 1 });
-    canvasMotion.spring({ Rotation: 0 });
+    fk.spring(scale, { Scale: 1 });
+    fk.spring(canvas, { Rotation: 0 });
   });
   return section;
 }
@@ -314,12 +312,11 @@ function createHeroCanvas(): fk.FrameNode {
   ];
   fk.append(canvas, code);
 
-  const previewMotion = fk.createMotion(preview, { tension: 230, friction: 20 });
   fk.state.observe(canvas, mode, (value) => {
     const selected = modeContent[value];
     fk.update(previewTitle, { Text: selected.title });
     fk.update(previewBody, { Text: selected.body });
-    previewMotion.spring({ BackgroundColor3: selected.accent, Rotation: selected.rotation });
+    fk.spring(preview, { BackgroundColor3: selected.accent, Rotation: selected.rotation });
     for (const [index, line] of selected.lines.entries()) {
       fk.update(codeNodes[index]!, { Text: line });
     }

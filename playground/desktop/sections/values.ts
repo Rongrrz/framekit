@@ -244,10 +244,9 @@ export function createValues(): fk.FrameNode {
   fk.append(stage, code);
   fk.append(lab, stage);
 
-  const previewMotion = fk.createMotion(preview, { tension: 210, friction: 21 });
   fk.state.observe(preview, selected, (value) => {
     const example = examples[value];
-    previewMotion.spring({
+    fk.spring(preview, {
       Position: example.position,
       Size: example.size,
       Rotation: example.rotation,

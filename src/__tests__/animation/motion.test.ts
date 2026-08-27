@@ -35,6 +35,40 @@ function settle(maximumFrames = 300): void {
 }
 
 describe('motion springs', () => {
+  it('retains a spring per node through the top-level API', () => {
+    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const settings = { tension: 170, friction: 5 } as const;
+
+    fk.spring(frame, { BackgroundTransparency: 1 }, settings);
+    for (let index = 0; index < 5; index += 1) advance();
+    const beforeRetarget = fk.props(frame).BackgroundTransparency;
+
+    fk.spring(frame, { BackgroundTransparency: 0 }, settings);
+    advance();
+
+    expect(fk.props(frame).BackgroundTransparency).toBeGreaterThan(beforeRetarget);
+    settle();
+    expect(fk.props(frame).BackgroundTransparency).toBe(0);
+  });
+
+  it('applies call settings only to properties in that goal', () => {
+    const frame = fk.createFrame({ BackgroundTransparency: 0, Rotation: 0 });
+    const control = fk.createFrame({ BackgroundTransparency: 0 });
+    const slow = { tension: 40, friction: 12 } as const;
+
+    fk.spring(frame, { BackgroundTransparency: 1 }, slow);
+    fk.spring(control, { BackgroundTransparency: 1 }, slow);
+    advance();
+
+    fk.spring(frame, { Rotation: 90 }, { tension: 400, friction: 40, mass: 2 });
+    advance();
+
+    expect(fk.props(frame).BackgroundTransparency).toBe(fk.props(control).BackgroundTransparency);
+    expect(fk.props(frame).Rotation).toBeGreaterThan(0);
+    settle();
+    expect(fk.props(frame)).toMatchObject({ BackgroundTransparency: 1, Rotation: 90 });
+  });
+
   it('springs numbers and structured values exactly to their goals', () => {
     const frame = fk.createFrame({
       Position: fk.udim2FromOffset(0, 0),
@@ -114,6 +148,8 @@ describe('motion springs', () => {
     const frame = fk.createFrame();
     expect(() => fk.createMotion(frame, { tension: 0 })).toThrow(/tension/);
     expect(() => fk.createMotion(frame, { friction: Number.NaN })).toThrow(/friction/);
+    expect(() => fk.spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
+    expect(() => fk.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
     const motion = fk.createMotion(frame);
     expect(() => motion.spring({})).toThrow(/goal property/);
     expect(() => motion.spring({ BackgroundTransparency: Number.NaN })).toThrow(/animatable/);

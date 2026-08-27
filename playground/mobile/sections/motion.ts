@@ -97,14 +97,14 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.ink,
   });
   decorate(code, 14, colors.inkSoft);
-  codeLine(code, 'const motion = fk.createMotion(card);', 18, colors.violet);
-  codeLine(code, '', 48);
-  codeLine(code, 'motion.spring({', 78, colors.coral);
-  const positionLine = codeLine(code, '  Position: calmPosition,', 108);
-  const rotationLine = codeLine(code, '  Rotation: 0,', 138);
-  codeLine(code, '});', 168, colors.coral);
-  const cardMotion = fk.createMotion(card, { tension: 190, friction: 18 });
-  const scaleMotion = fk.createMotion(scale, { tension: 220, friction: 19 });
+  codeLine(code, 'fk.spring(card, {', 18, colors.coral);
+  const positionLine = codeLine(code, '  Position: calmPosition,', 48);
+  const rotationLine = codeLine(code, '  Rotation: 0,', 78);
+  codeLine(code, '  BackgroundColor3: accent,', 108);
+  codeLine(code, '});', 138, colors.coral);
+  codeLine(code, '', 168);
+  const cardMotion = fk.createMotion(card);
+  const scaleMotion = fk.createMotion(scale);
   cardMotion.completed.subscribe(() => fk.update(status, { Text: '● SPRING SETTLED' }));
   fk.state.observe(card, mode, (value) => {
     const goals = [

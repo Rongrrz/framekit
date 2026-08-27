@@ -67,18 +67,21 @@ describe('spring modifier toggles', () => {
     }
   });
 
-  it('keeps the desktop shadow, glow, and padding controls live across repeated clicks', () => {
+  it('keeps the desktop stroke, shadow, glow, and padding controls live across repeated clicks', () => {
     const section = createComposer();
     const card = fk.find(section, 'NotificationCard', true)!;
     const tags = fk.find(card, 'FeatureTags', true)!;
+    const stroke = fk.find(card, 'UIStroke', true)!;
     const shadow = fk.find(card, 'UIShadow', true)!;
     const glow = fk.find(card, 'UIGlow', true)!;
+    const strokeControl = fk.find(section, 'STROKEButton', true) as fk.TextButtonNode;
     const shadowControl = fk.find(section, 'SHADOWButton', true) as fk.TextButtonNode;
     const glowControl = fk.find(section, 'GLOWButton', true) as fk.TextButtonNode;
     const paddingControl = fk.find(section, 'PADDINGButton', true) as fk.TextButtonNode;
     settle();
 
     for (const [modifier, control] of [
+      [stroke, strokeControl],
       [shadow, shadowControl],
       [glow, glowControl],
     ] as const) {

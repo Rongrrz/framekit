@@ -80,7 +80,7 @@ export function createComposer(): fk.FrameNode {
   const corner = fk.createUICorner({ CornerRadius: 24 });
   const stroke = fk.createUIStroke({
     Color: colors.violet,
-    Thickness: 3,
+    Thickness: 4,
     BorderStrokePosition: 'Outer',
   });
   const shadow = fk.createUIShadow({
@@ -182,12 +182,13 @@ export function createComposer(): fk.FrameNode {
   const lineOne = codeLine(explanation, '', 64, colors.coral);
   const lineTwo = codeLine(explanation, '', 102, colors.violet);
   const lineThree = codeLine(explanation, '', 140, colors.mint);
+  const lineFour = codeLine(explanation, '', 178, colors.amber);
   fk.append(
     explanation,
     text({
-      text: 'Shadow springs toward directional depth. Glow blooms around the visible silhouette. Padding springs every tag inward.',
-      size: fk.udim2FromOffset(310, 112),
-      position: fk.udim2FromOffset(22, 196),
+      text: 'Stroke grows into a stronger edge. Shadow adds directional depth, glow blooms around the silhouette, and padding moves every tag inward.',
+      size: fk.udim2FromOffset(310, 88),
+      position: fk.udim2FromOffset(22, 226),
       color: colors.textMuted,
       textSize: 13,
       wrapped: true,
@@ -195,9 +196,18 @@ export function createComposer(): fk.FrameNode {
     }),
   );
   fk.append(content, explanation);
-  const shadowMotion = fk.createMotion(shadow, { tension: 220, friction: 32 });
-  const glowMotion = fk.createMotion(glow, { tension: 220, friction: 32 });
-  const paddingMotion = fk.createMotion(padding, { tension: 240, friction: 34 });
+  const strokeMotion = fk.createMotion(stroke);
+  const shadowMotion = fk.createMotion(shadow);
+  const glowMotion = fk.createMotion(glow);
+  const paddingMotion = fk.createMotion(padding);
+  const toggleStroke = createSpringModifierToggle({
+    parent: card,
+    modifier: stroke,
+    motion: strokeMotion,
+    active: { Thickness: 4 },
+    inactive: { Thickness: 0 },
+    isActive: () => enabled().stroke,
+  });
   const toggleShadow = createSpringModifierToggle({
     parent: card,
     modifier: shadow,
@@ -244,7 +254,7 @@ export function createComposer(): fk.FrameNode {
   });
   fk.state.observe(card, enabled, (value) => {
     setModifierAttached(card, corner, value.corner);
-    setModifierAttached(card, stroke, value.stroke);
+    toggleStroke(value.stroke);
     toggleShadow(value.shadow);
     toggleGlow(value.glow);
     togglePadding(value.padding);
@@ -261,13 +271,16 @@ export function createComposer(): fk.FrameNode {
       Text: `▼ Card\n  ${value.corner ? 'UICorner' : '—'}  ${value.stroke ? 'UIStroke' : '—'}\n  ${value.shadow ? 'UIShadow' : '—'}  ${value.glow ? 'UIGlow' : '—'}\n  Tags → ${value.padding ? 'UIPadding' : '—'}  ${value.layout ? 'UIListLayout' : '—'}`,
     });
     fk.update(lineOne, {
-      Text: `shadow.spring({ Offset: ${value.shadow ? '[10, 16]' : '[0, 0]'} });`,
+      Text: `fk.spring(stroke, { Thickness: ${value.stroke ? '4' : '0'} });`,
     });
     fk.update(lineTwo, {
-      Text: `glow.spring({ Radius: ${value.glow ? '32' : '0'} });`,
+      Text: `fk.spring(shadow, { Offset: ${value.shadow ? '[10, 16]' : '[0, 0]'} });`,
     });
     fk.update(lineThree, {
-      Text: `padding.spring({ all: ${value.padding ? '12' : '0'} });`,
+      Text: `fk.spring(glow, { Radius: ${value.glow ? '32' : '0'} });`,
+    });
+    fk.update(lineFour, {
+      Text: `fk.spring(padding, { all: ${value.padding ? '12' : '0'} });`,
     });
   });
   fk.append(section, content);

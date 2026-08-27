@@ -118,18 +118,23 @@ Rich text is an explicit opt-in and supports bold, italic, underline, strikethro
 
 ## Spring motion
 
-Use one retained motion controller for interactions that can change direction at any time. Calling `spring()` again retargets from the node's current visual value and preserves that spring's current velocity.
+Call `spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
 
 ```ts
 const scale = fk.createUIScale();
 fk.append(button, scale);
 
-const motion = fk.createMotion(scale);
-fk.on(button, 'MouseEnter', () => motion.spring({ Scale: 1.04 }));
-fk.on(button, 'MouseLeave', () => motion.spring({ Scale: 1 }));
+fk.on(button, 'MouseEnter', () => fk.spring(scale, { Scale: 1.04 }));
+fk.on(button, 'MouseLeave', () => fk.spring(scale, { Scale: 1 }));
 ```
 
-`createMotion()` animates numeric properties plus `Color3`, `Vector2`, `UDim`, and `UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. Its default spring is close to critically damped; `tension`, `friction`, and `precision` are optional. Use `stop()` only when you need to freeze motion at its current value.
+The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mass: 1, precision: 0.001, restVelocity: 0.0625 }`. Most interactions should leave it alone. When a particular motion needs a different feel, pass a separate settings object:
+
+```ts
+fk.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
+```
+
+`spring()` animates numeric properties plus `Color3`, `Vector2`, `UDim`, and `UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. `mass`, `precision`, and `restVelocity` are also available. Use the advanced `createMotion()` controller only when you need its `completed`, `isAnimating()`, or `stop()` controls.
 
 Scaling with `UIScale` is useful for hover effects because it changes visual size without asking a `UIListLayout` to reposition neighboring items.
 

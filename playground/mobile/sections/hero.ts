@@ -126,7 +126,6 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     yAlignment: 'Top',
   });
   fk.append(preview, code);
-  const cardMotion = fk.createMotion(card, { tension: 220, friction: 21 });
   fk.state.observe(preview, selected, (value) => {
     const state = {
       NODE: [
@@ -145,14 +144,14 @@ export function createHero(onExplore: () => void): fk.FrameNode {
         'RETAINED MOTION',
         'A spring keeps current position and velocity when you give it a new goal.',
         colors.violet,
-        'motion.spring({ Rotation: 4 });',
+        'fk.spring(card, { Rotation: 4 });',
       ],
     } as const;
     const current = state[value];
     fk.update(title, { Text: current[0] });
     fk.update(description, { Text: current[1] });
     fk.update(code, { Text: current[3] });
-    cardMotion.spring({ BackgroundColor3: current[2], Rotation: value === 'MOTION' ? 2 : 0 });
+    fk.spring(card, { BackgroundColor3: current[2], Rotation: value === 'MOTION' ? 2 : 0 });
     for (const [label, control] of controls) {
       fk.update(control, { BackgroundColor3: label === value ? current[2] : colors.paperMuted });
     }

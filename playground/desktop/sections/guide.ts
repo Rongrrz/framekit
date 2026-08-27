@@ -57,15 +57,9 @@ const guide = {
     number: '04',
     label: 'ADD MOTION',
     heading: 'Retarget the same properties on input.',
-    body: 'Hover the finished preview. One retained controller carries scale and rotation smoothly between goals.',
+    body: 'Hover the finished preview. FrameKit retains scale and rotation springs between goals.',
     accent: colors.amber,
-    lines: [
-      'const motion = fk.createMotion(scale);',
-      '',
-      "fk.on(card, 'MouseEnter', () =>",
-      '  motion.spring({ Scale: 1.04 })',
-      ');',
-    ],
+    lines: ["fk.on(card, 'MouseEnter', () =>", '  fk.spring(scale, { Scale: 1.04 })', ');', '', ''],
   },
 } as const;
 
@@ -335,16 +329,14 @@ export function createGuide(): fk.FrameNode {
   fk.append(stage, code);
   fk.append(lab, stage);
 
-  const scaleMotion = fk.createMotion(cardScale, { tension: 250, friction: 21 });
-  const cardMotion = fk.createMotion(card, { tension: 240, friction: 22 });
   fk.on(card, 'MouseEnter', () => {
     if (step() !== 'animate') return;
-    scaleMotion.spring({ Scale: 1.04 });
-    cardMotion.spring({ Rotation: -1.5 });
+    fk.spring(cardScale, { Scale: 1.04 });
+    fk.spring(card, { Rotation: -1.5 });
   });
   fk.on(card, 'MouseLeave', () => {
-    scaleMotion.spring({ Scale: 1 });
-    cardMotion.spring({ Rotation: 0 });
+    fk.spring(cardScale, { Scale: 1 });
+    fk.spring(card, { Rotation: 0 });
   });
   fk.state.observe(card, online, (value) => {
     fk.update(stateButton, {

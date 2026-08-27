@@ -72,7 +72,6 @@ export function createValues(): fk.FrameNode {
     codeLine(code, '', 182, colors.mint),
   ];
   fk.append(content, code);
-  const motion = fk.createMotion(shape, { tension: 210, friction: 21 });
   fk.state.observe(shape, selected, (value) => {
     const data = [
       [
@@ -124,7 +123,7 @@ export function createValues(): fk.FrameNode {
     ] as const;
     const item = data[value]!;
     fk.update(shapeTitle, { Text: item[0] });
-    motion.spring({ BackgroundColor3: item[1], Position: item[2], Rotation: item[3] });
+    fk.spring(shape, { BackgroundColor3: item[1], Position: item[2], Rotation: item[3] });
     for (const [index, line] of lines.entries()) fk.update(line, { Text: item[4][index]! });
   });
   fk.append(section, content);
