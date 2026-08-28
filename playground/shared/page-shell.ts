@@ -46,7 +46,7 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
 
   const contentScale = fk.createUIScale({ Scale: currentScale });
 
-  const scrollMotion = fka.createMotion(page);
+  const scrollController = fka.spring(page);
 
   content.addChild(contentScale);
 
@@ -62,8 +62,8 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
     return fk.udim2(0.5, 0, 0, -((1 - scale) * options.pageHeight) / 2);
   }
   function navigate(offset: number): void {
-    scrollMotion.stop('CanvasPosition');
-    scrollMotion.spring({ CanvasPosition: fk.vector2(0, offset * currentScale) });
+    scrollController.stop('CanvasPosition');
+    fka.spring(page, { CanvasPosition: fk.vector2(0, offset * currentScale) });
   }
   function updateScale(): void {
     currentScale = calculateScale();

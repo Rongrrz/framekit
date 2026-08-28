@@ -1,5 +1,5 @@
+import type { Node } from './node';
 import { addCleanup, assertNodeActive, isDestroyed } from './node-lifecycle';
-import type { Node } from './node-state';
 import { createSignal, type Unsubscribe } from './signal';
 
 type ValueListener<T> = (value: T) => void;

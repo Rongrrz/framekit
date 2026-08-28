@@ -3,9 +3,9 @@ import {
   releaseAnimationProperties,
   type AnimationOwner,
 } from '../shared/runtime/animation-ownership';
+import type { Node, NodeProperties } from '../shared/runtime/node';
 import { addCleanup, assertNodeActive, isDestroyed } from '../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
-import type { Node, NodeProperties } from '../shared/runtime/node-state';
 import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
 import { assertNonNegativeFinite } from '../shared/runtime/validation';
 import {
@@ -20,21 +20,23 @@ import { interpolateAnimationValue } from './value';
 
 export type { EasingDirection, EasingStyle } from './easing';
 
-/** Immutable timing and playback settings for a tween. */
-export type TweenInfo = Readonly<{
+/** Timing and playback settings for a tween. */
+export type TweenOptions = Readonly<{
   /** Duration of one traversal in seconds. */
-  Time: number;
+  Duration: number;
   /** Curve used to transform progress. */
-  EasingStyle: EasingStyle;
+  EasingStyle?: EasingStyle;
   /** Portion of the easing curve to apply. */
-  EasingDirection: EasingDirection;
+  EasingDirection?: EasingDirection;
   /** Additional playthroughs, or -1 to repeat forever. */
-  RepeatCount: number;
+  RepeatCount?: number;
   /** Whether each playthrough returns to its starting values. */
-  Reverses: boolean;
+  Reverses?: boolean;
   /** Delay before playback begins, in seconds. */
-  DelayTime: number;
+  Delay?: number;
 }>;
+
+type ResolvedTweenOptions = Required<TweenOptions>;
 
 /** Current lifecycle state of a tween. */
 export type TweenPlaybackState =
@@ -64,40 +66,14 @@ export type Tween = {
 
 type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
 
-/** Creates immutable playback settings for a tween. Times are measured in seconds. */
-export function tweenInfo(
-  time: number,
-  easingStyle: EasingStyle = 'Quad',
-  easingDirection: EasingDirection = 'Out',
-  repeatCount = 0,
-  reverses = false,
-  delayTime = 0,
-): TweenInfo {
-  assertNonNegativeFinite(time, 'Tween time');
-  assertNonNegativeFinite(delayTime, 'Tween delay');
-  if (!Number.isInteger(repeatCount) || repeatCount < -1) {
-    throw new TypeError('Tween repeat count must be -1 or a non-negative integer.');
-  }
-  const info: TweenInfo = {
-    Time: time,
-    EasingStyle: easingStyle,
-    EasingDirection: easingDirection,
-    RepeatCount: repeatCount,
-    Reverses: reverses,
-    DelayTime: delayTime,
-  };
-  validateInfo(info);
-  return Object.freeze(info);
-}
-
 /** Creates a controllable tween that applies interpolated property values. */
 export function createTween<Properties extends NodeProperties>(
   node: Node<Properties>,
-  info: TweenInfo,
+  options: TweenOptions,
   goal: TweenGoal<Properties>,
 ): Tween {
   assertNodeActive(node);
-  validateInfo(info);
+  const resolvedOptions = resolveOptions(options);
 
   const goalEntries = Object.entries(goal) as [keyof Properties, unknown][];
   if (goalEntries.length === 0) throw new TypeError('A tween needs at least one goal property.');
@@ -140,8 +116,8 @@ export function createTween<Properties extends NodeProperties>(
     }
 
     claimGoalProperties();
-    playbackState = elapsedBeforePauseMs < info.DelayTime * 1000 ? 'Delayed' : 'Playing';
-    if (info.Time === 0 && info.DelayTime === 0) {
+    playbackState = elapsedBeforePauseMs < resolvedOptions.Delay * 1000 ? 'Delayed' : 'Playing';
+    if (resolvedOptions.Duration === 0 && resolvedOptions.Delay === 0) {
       applyProgressOrCancel(finalProgress());
       finish('Completed');
       return;
@@ -175,7 +151,7 @@ export function createTween<Properties extends NodeProperties>(
 
     const elapsedMs = Math.max(0, timestamp - startedAtMs);
     elapsedBeforePauseMs = elapsedMs;
-    const delayMs = info.DelayTime * 1000;
+    const delayMs = resolvedOptions.Delay * 1000;
     if (elapsedMs < delayMs) {
       playbackState = 'Delayed';
       animationFrame = requestAnimationFrame(step);
@@ -183,7 +159,7 @@ export function createTween<Properties extends NodeProperties>(
     }
 
     playbackState = 'Playing';
-    const durationMs = info.Time * 1000;
+    const durationMs = resolvedOptions.Duration * 1000;
     const activeElapsedMs = elapsedMs - delayMs;
     if (durationMs === 0) {
       applyProgressOrCancel(finalProgress());
@@ -191,11 +167,11 @@ export function createTween<Properties extends NodeProperties>(
       return;
     }
     const traversalIndex = Math.floor(activeElapsedMs / durationMs);
-    const traversalsPerIteration = info.Reverses ? 2 : 1;
+    const traversalsPerIteration = resolvedOptions.Reverses ? 2 : 1;
     const maximumTraversals =
-      info.RepeatCount === -1
+      resolvedOptions.RepeatCount === -1
         ? Number.POSITIVE_INFINITY
-        : (info.RepeatCount + 1) * traversalsPerIteration;
+        : (resolvedOptions.RepeatCount + 1) * traversalsPerIteration;
     if (traversalIndex >= maximumTraversals) {
       applyProgressOrCancel(finalProgress());
       finish('Completed');
@@ -203,7 +179,7 @@ export function createTween<Properties extends NodeProperties>(
     }
 
     const traversalProgress = (activeElapsedMs % durationMs) / durationMs;
-    const isReverseTraversal = info.Reverses && traversalIndex % 2 === 1;
+    const isReverseTraversal = resolvedOptions.Reverses && traversalIndex % 2 === 1;
     applyProgressOrCancel(isReverseTraversal ? 1 - traversalProgress : traversalProgress);
     animationFrame = requestAnimationFrame(step);
   }
@@ -226,7 +202,7 @@ export function createTween<Properties extends NodeProperties>(
 
   function applyProgress(progress: number): void {
     if (isDestroyed(node)) return;
-    const eased = ease(progress, info.EasingStyle, info.EasingDirection);
+    const eased = ease(progress, resolvedOptions.EasingStyle, resolvedOptions.EasingDirection);
     const patch: Partial<Properties> = {};
     for (const key of goalKeys) {
       patch[key] = interpolateAnimationValue(
@@ -240,7 +216,7 @@ export function createTween<Properties extends NodeProperties>(
   }
 
   function finalProgress(): number {
-    return info.Reverses ? 0 : 1;
+    return resolvedOptions.Reverses ? 0 : 1;
   }
 
   function claimGoalProperties(): void {
@@ -304,13 +280,25 @@ function now(): number {
   return performance.now();
 }
 
-function validateInfo(info: TweenInfo): void {
-  assertNonNegativeFinite(info.Time, 'Tween time');
-  assertNonNegativeFinite(info.DelayTime, 'Tween delay');
-  if (!Number.isInteger(info.RepeatCount) || info.RepeatCount < -1) {
+function resolveOptions(options: TweenOptions): ResolvedTweenOptions {
+  const resolved: ResolvedTweenOptions = {
+    Duration: options.Duration,
+    EasingStyle: options.EasingStyle ?? 'Quad',
+    EasingDirection: options.EasingDirection ?? 'Out',
+    RepeatCount: options.RepeatCount ?? 0,
+    Reverses: options.Reverses ?? false,
+    Delay: options.Delay ?? 0,
+  };
+
+  assertNonNegativeFinite(resolved.Duration, 'Tween duration');
+  assertNonNegativeFinite(resolved.Delay, 'Tween delay');
+  if (!Number.isInteger(resolved.RepeatCount) || resolved.RepeatCount < -1) {
     throw new TypeError('Tween repeat count must be -1 or a non-negative integer.');
   }
-  assertEasingStyle(info.EasingStyle);
-  assertEasingDirection(info.EasingDirection);
-  if (typeof info.Reverses !== 'boolean') throw new TypeError('Tween reverses must be a boolean.');
+  assertEasingStyle(resolved.EasingStyle);
+  assertEasingDirection(resolved.EasingDirection);
+  if (typeof resolved.Reverses !== 'boolean') {
+    throw new TypeError('Tween reverses must be a boolean.');
+  }
+  return resolved;
 }

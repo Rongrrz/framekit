@@ -1,4 +1,4 @@
-import type { Node } from './node-state';
+import type { Node } from './node';
 import { subscribeToNodeEvent, type Unsubscribe } from './signal';
 
 /** Mouse events available on every DOM-backed GUI node. */

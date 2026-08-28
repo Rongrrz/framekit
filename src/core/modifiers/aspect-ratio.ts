@@ -3,7 +3,8 @@ import {
   type StyleModifierNode,
   type Styles,
 } from '../../shared/runtime/modifier';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
+import type { NodeProperties } from '../../shared/runtime/node';
+import { mergeProperties } from '../../shared/runtime/node-state';
 import { assertAllowedValue, assertFiniteNumber } from '../../shared/runtime/validation';
 import type { GuiObjectProperties } from '../gui-object';
 import { udimToCss } from '../values/udim';
@@ -46,6 +47,7 @@ export function createUIAspectRatioConstraint(
       initial,
     ),
     resolveAspectRatio,
+    validateAspectRatioProperties,
   );
 }
 
@@ -53,9 +55,6 @@ function resolveAspectRatio(
   properties: Readonly<UIAspectRatioConstraintProperties>,
   parentProperties: Readonly<NodeProperties>,
 ): Styles {
-  assertAllowedValue(properties.AspectType, aspectTypes, 'AspectType');
-  assertAllowedValue(properties.DominantAxis, dominantAxes, 'DominantAxis');
-  assertFiniteNumber(properties.AspectRatio, 'AspectRatio');
   const aspectRatio =
     Number.isFinite(properties.AspectRatio) && properties.AspectRatio > 0
       ? properties.AspectRatio
@@ -82,6 +81,14 @@ function resolveAspectRatio(
     width: properties.DominantAxis === 'Width' ? width : 'auto',
     height: properties.DominantAxis === 'Height' ? height : 'auto',
   };
+}
+
+function validateAspectRatioProperties(
+  properties: Readonly<UIAspectRatioConstraintProperties>,
+): void {
+  assertAllowedValue(properties.AspectType, aspectTypes, 'AspectType');
+  assertAllowedValue(properties.DominantAxis, dominantAxes, 'DominantAxis');
+  assertFiniteNumber(properties.AspectRatio, 'AspectRatio');
 }
 
 function hasSize(

@@ -1,4 +1,5 @@
-import { getNodeState, type Node } from './node-state';
+import type { Node } from './node';
+import { getNodeState } from './node-state';
 
 /** Stops a subscription or unregisters cleanup work. Safe to call repeatedly. */
 export type Unsubscribe = () => void;

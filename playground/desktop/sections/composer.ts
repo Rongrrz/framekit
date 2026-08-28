@@ -12,15 +12,7 @@ import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
 
-type ModifierKey =
-  | 'corner'
-  | 'stroke'
-  | 'shadow'
-  | 'glow'
-  | 'padding'
-  | 'layout'
-  | 'scale'
-  | 'rotation';
+type ModifierKey = 'corner' | 'stroke' | 'shadow' | 'padding' | 'layout' | 'scale' | 'rotation';
 
 type ComposerState = Readonly<Record<ModifierKey, boolean>>;
 
@@ -30,7 +22,6 @@ const modifierKeys: readonly ModifierKey[] = [
   'corner',
   'stroke',
   'shadow',
-  'glow',
   'padding',
   'layout',
   'scale',
@@ -41,7 +32,6 @@ const initialState: ComposerState = {
   corner: true,
   stroke: true,
   shadow: true,
-  glow: true,
   padding: false,
   layout: true,
   scale: false,
@@ -120,7 +110,6 @@ export function createComposer(): fk.FrameNode {
     corner: colors.coral,
     stroke: colors.violet,
     shadow: colors.amber,
-    glow: colors.mint,
     padding: colors.mint,
     layout: colors.amber,
     scale: colors.coral,
@@ -160,7 +149,6 @@ export function createComposer(): fk.FrameNode {
       corner: false,
       stroke: true,
       shadow: false,
-      glow: true,
       padding: true,
       layout: false,
       scale: true,
@@ -170,7 +158,6 @@ export function createComposer(): fk.FrameNode {
       corner: true,
       stroke: false,
       shadow: true,
-      glow: false,
       padding: false,
       layout: true,
       scale: true,
@@ -180,7 +167,6 @@ export function createComposer(): fk.FrameNode {
       corner: true,
       stroke: true,
       shadow: true,
-      glow: true,
       padding: true,
       layout: true,
       scale: false,
@@ -253,7 +239,7 @@ export function createComposer(): fk.FrameNode {
 
   stage.addChild(
     createText({
-      text: 'SHADOW ↓ DIRECTIONAL DEPTH   ·   GLOW ✦ SILHOUETTE LIGHT',
+      text: 'SHADOW ↓ DIRECTIONAL DEPTH',
       size: fk.udim2FromOffset(430, 28),
       position: fk.udim2FromOffset(294, 28),
       color: colors.darkMuted,
@@ -285,12 +271,6 @@ export function createComposer(): fk.FrameNode {
     Offset: fk.vector2(12, 18),
     BlurRadius: 18,
     SpreadRadius: -2,
-  });
-
-  const glow = fk.createUIGlow({
-    Color: colors.violet,
-    Transparency: 0.18,
-    Radius: 36,
   });
 
   const padding = fk.createUIPadding({
@@ -336,11 +316,11 @@ export function createComposer(): fk.FrameNode {
   );
 
   const description = fk.createTextBox({
-    Name: 'EditableRichDescription',
+    Name: 'EditableDescription',
     Size: fk.udim2FromOffset(336, 60),
     Position: fk.udim2FromOffset(28, 94),
     BackgroundTransparency: 1,
-    Text: 'Every <b>piece</b> is editable. Try changing this <font color="#ae91ff">rich text</font>.',
+    Text: 'Every piece is editable. Try changing this description.',
     TextColor3: colors.textMuted,
     TextSize: 14,
     TextWrapped: true,
@@ -348,7 +328,6 @@ export function createComposer(): fk.FrameNode {
     TextYAlignment: 'Top',
     FontFamily: fonts.sans,
     FontWeight: 500,
-    RichText: true,
     MultiLine: true,
     PlaceholderText: 'Type a card description…',
   });
@@ -422,51 +401,6 @@ export function createComposer(): fk.FrameNode {
 
   lab.addChild(stage);
 
-  const strokeMotion = fka.createMotion(stroke);
-
-  const shadowMotion = fka.createMotion(shadow);
-
-  const glowMotion = fka.createMotion(glow);
-
-  const paddingMotion = fka.createMotion(padding);
-
-  const toggleStroke = fkh.createSpringModifierToggle({
-    parent: sample,
-    modifier: stroke,
-    motion: strokeMotion,
-    active: { Thickness: 4 },
-    inactive: { Thickness: 0 },
-    isActive: () => configuration.get().stroke,
-  });
-
-  const toggleShadow = fkh.createSpringModifierToggle({
-    parent: sample,
-    modifier: shadow,
-    motion: shadowMotion,
-    active: {
-      Transparency: 0.32,
-      Offset: fk.vector2(12, 18),
-      BlurRadius: 18,
-      SpreadRadius: -2,
-    },
-    inactive: {
-      Transparency: 1,
-      Offset: fk.vector2(0, 0),
-      BlurRadius: 0,
-      SpreadRadius: -2,
-    },
-    isActive: () => configuration.get().shadow,
-  });
-
-  const toggleGlow = fkh.createSpringModifierToggle({
-    parent: sample,
-    modifier: glow,
-    motion: glowMotion,
-    active: { Transparency: 0.18, Radius: 36 },
-    inactive: { Transparency: 1, Radius: 0 },
-    isActive: () => configuration.get().glow,
-  });
-
   const zeroPadding = {
     PaddingTop: fk.udim(0, 0),
     PaddingRight: fk.udim(0, 0),
@@ -474,35 +408,55 @@ export function createComposer(): fk.FrameNode {
     PaddingLeft: fk.udim(0, 0),
   } as const;
 
-  const togglePadding = fkh.createSpringModifierToggle({
-    parent: tags,
-    modifier: padding,
-    motion: paddingMotion,
-    active: {
-      PaddingTop: fk.udim(0, 16),
-      PaddingRight: fk.udim(0, 16),
-      PaddingBottom: fk.udim(0, 16),
-      PaddingLeft: fk.udim(0, 16),
-    },
-    inactive: zeroPadding,
-    isActive: () => configuration.get().padding,
-  });
   sample.onMouseEnter(() => {
     const current = configuration.get();
-    if (current.shadow) shadowMotion.spring({ Offset: fk.vector2(16, 24), BlurRadius: 24 });
-    if (current.glow) glowMotion.spring({ Radius: 46, Transparency: 0.12 });
+    if (current.shadow) fka.spring(shadow, { Offset: fk.vector2(16, 24), BlurRadius: 24 });
   });
   sample.onMouseLeave(() => {
     const current = configuration.get();
-    if (current.shadow) shadowMotion.spring({ Offset: fk.vector2(12, 18), BlurRadius: 18 });
-    if (current.glow) glowMotion.spring({ Radius: 36, Transparency: 0.18 });
+    if (current.shadow) fka.spring(shadow, { Offset: fk.vector2(12, 18), BlurRadius: 18 });
   });
   sample.watch(configuration, (value) => {
     fkh.setModifierAttached(sample, corner, value.corner);
-    toggleStroke(value.stroke);
-    toggleShadow(value.shadow);
-    toggleGlow(value.glow);
-    togglePadding(value.padding);
+    if (value.stroke) {
+      if (stroke.Parent !== sample) stroke.setProperties({ Thickness: 0 });
+      fkh.setModifierAttached(sample, stroke, true);
+      fka.spring(stroke, { Thickness: 4 });
+    } else {
+      fka.spring(stroke).stop();
+      fkh.setModifierAttached(sample, stroke, false);
+    }
+    if (value.shadow) {
+      if (shadow.Parent !== sample) {
+        shadow.setProperties({
+          Transparency: 1,
+          Offset: fk.vector2(0, 0),
+          BlurRadius: 0,
+        });
+      }
+      fkh.setModifierAttached(sample, shadow, true);
+      fka.spring(shadow, {
+        Transparency: 0.32,
+        Offset: fk.vector2(12, 18),
+        BlurRadius: 18,
+      });
+    } else {
+      fka.spring(shadow).stop();
+      fkh.setModifierAttached(sample, shadow, false);
+    }
+    if (value.padding) {
+      if (padding.Parent !== tags) padding.setProperties(zeroPadding);
+      fkh.setModifierAttached(tags, padding, true);
+      fka.spring(padding, {
+        PaddingTop: fk.udim(0, 16),
+        PaddingRight: fk.udim(0, 16),
+        PaddingBottom: fk.udim(0, 16),
+        PaddingLeft: fk.udim(0, 16),
+      });
+    } else {
+      fka.spring(padding).stop();
+      fkh.setModifierAttached(tags, padding, false);
+    }
     fkh.setModifierAttached(tags, tagLayout, value.layout);
     fka.spring(sampleScale, { Scale: value.scale ? 1.07 : 1 });
     fka.spring(sample, { Rotation: value.rotation ? -4 : 0 });
@@ -518,7 +472,6 @@ export function createComposer(): fk.FrameNode {
       value.corner && 'UICorner',
       value.stroke && 'UIStroke',
       value.shadow && 'UIShadow',
-      value.glow && 'UIGlow',
       value.padding && 'UIPadding',
     ]
       .filter(Boolean)

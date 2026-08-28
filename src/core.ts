@@ -36,7 +36,6 @@ export type { TextBoxNode, TextBoxProperties } from './core/elements/text-box';
 
 export * from './core/modifiers/aspect-ratio';
 export * from './core/modifiers/corner';
-export * from './core/modifiers/glow';
 export * from './core/modifiers/list-layout';
 export * from './core/modifiers/padding';
 export * from './core/modifiers/scale';
@@ -57,4 +56,4 @@ export type { Vector2 } from './core/values/vector2';
 
 export type { LayoutNode, StyleModifierNode } from './shared/runtime/modifier';
 export type { GuiNode } from './shared/runtime/render';
-export type { Node, NodeProperties } from './shared/runtime/node-state';
+export type { Node, NodeProperties } from './shared/runtime/node';

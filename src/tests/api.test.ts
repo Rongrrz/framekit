@@ -13,10 +13,13 @@ describe('package API', () => {
 
     expect(typeof fka.spring).toBe('function');
     expect(typeof fka.createTween).toBe('function');
+    expect(fka).not.toHaveProperty('createMotion');
+    expect(fka).not.toHaveProperty('tweenInfo');
 
     expect(typeof fkh.bindHoverScale).toBe('function');
     expect(typeof fkh.setModifierAttached).toBe('function');
-    expect(typeof fkh.createSpringModifierToggle).toBe('function');
+    expect(fkh).not.toHaveProperty('createSpringModifierToggle');
+    expect(fk).not.toHaveProperty('createUIGlow');
 
     expect(fk).not.toHaveProperty('spring');
     expect(fka).not.toHaveProperty('createFrame');

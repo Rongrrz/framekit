@@ -3,13 +3,14 @@ import {
   type StyleModifierNode,
   type Styles,
 } from '../../shared/runtime/modifier';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
+import type { NodeProperties } from '../../shared/runtime/node';
+import { mergeProperties } from '../../shared/runtime/node-state';
 import {
   assertBoolean,
   assertFiniteNumber,
   assertNonNegativeFinite,
 } from '../../shared/runtime/validation';
-import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
 /** Properties for an outer or inset surface shadow. */
@@ -33,7 +34,7 @@ export type UIShadowProperties = NodeProperties & {
 /** An element-less box-shadow modifier. */
 export type UIShadowNode = StyleModifierNode<UIShadowProperties>;
 
-/** Creates a drop-shadow modifier that composes with strokes and glows. */
+/** Creates a shadow modifier that composes with strokes and other style modifiers. */
 export function createUIShadow(initial: Partial<UIShadowProperties> = {}): UIShadowNode {
   return createStyleModifier(
     'UIShadow',
@@ -51,19 +52,25 @@ export function createUIShadow(initial: Partial<UIShadowProperties> = {}): UISha
       initial,
     ),
     resolveShadowStyles,
+    validateShadowProperties,
   );
 }
 
 function resolveShadowStyles(properties: Readonly<UIShadowProperties>): Styles {
-  assertBoolean(properties.Enabled, 'Enabled');
-  assertBoolean(properties.Inset, 'Inset');
   return properties.Enabled ? { 'box-shadow': resolveShadow(properties) } : {};
 }
 
 function resolveShadow(properties: Readonly<UIShadowProperties>): string {
+  const inset = properties.Inset ? 'inset ' : '';
+  return `${inset}${properties.Offset.X}px ${properties.Offset.Y}px ${properties.BlurRadius}px ${properties.SpreadRadius}px ${color3ToCss(properties.Color, properties.Transparency)}`;
+}
+
+function validateShadowProperties(properties: Readonly<UIShadowProperties>): void {
+  assertBoolean(properties.Enabled, 'Enabled');
+  assertBoolean(properties.Inset, 'Inset');
   assertVector2(properties.Offset, 'Offset');
   assertNonNegativeFinite(properties.BlurRadius, 'BlurRadius');
   assertFiniteNumber(properties.SpreadRadius, 'SpreadRadius');
-  const inset = properties.Inset ? 'inset ' : '';
-  return `${inset}${properties.Offset.X}px ${properties.Offset.Y}px ${properties.BlurRadius}px ${properties.SpreadRadius}px ${color3ToCss(properties.Color, properties.Transparency)}`;
+  assertColor3(properties.Color, 'Color');
+  assertFiniteNumber(properties.Transparency, 'Transparency');
 }

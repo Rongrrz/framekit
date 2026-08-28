@@ -11,11 +11,15 @@ describe('tweens', () => {
       Position: fk.udim2FromOffset(0, 10),
       BackgroundColor3: fk.color3FromRGB(0, 50, 100),
     });
-    const tween = fka.createTween(frame, fka.tweenInfo(1, 'Linear'), {
-      Position: fk.udim2FromOffset(100, 30),
-      BackgroundColor3: fk.color3FromRGB(100, 100, 200),
-      BackgroundTransparency: 1,
-    });
+    const tween = fka.createTween(
+      frame,
+      { Duration: 1, EasingStyle: 'Linear' },
+      {
+        Position: fk.udim2FromOffset(100, 30),
+        BackgroundColor3: fk.color3FromRGB(100, 100, 200),
+        BackgroundTransparency: 1,
+      },
+    );
 
     tween.play();
     advance(500);
@@ -35,9 +39,13 @@ describe('tweens', () => {
 
   it('supports delay, pause, resume, and cancellation', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const tween = fka.createTween(frame, fka.tweenInfo(1, 'Linear', 'In', 0, false, 0.25), {
-      BackgroundTransparency: 1,
-    });
+    const tween = fka.createTween(
+      frame,
+      { Duration: 1, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.25 },
+      {
+        BackgroundTransparency: 1,
+      },
+    );
     const completed = vi.fn();
 
     tween.completed.subscribe(completed);
@@ -62,7 +70,7 @@ describe('tweens', () => {
 
   it('lets a direct assignment cancel a paused tween', () => {
     const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.createTween(frame, fka.tweenInfo(1), { Rotation: 90 });
+    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
 
     tween.play();
     advance(250);
@@ -76,9 +84,19 @@ describe('tweens', () => {
 
   it('returns to the start when reversing and completes repeats', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const tween = fka.createTween(frame, fka.tweenInfo(0.1, 'Linear', 'In', 1, true), {
-      BackgroundTransparency: 1,
-    });
+    const tween = fka.createTween(
+      frame,
+      {
+        Duration: 0.1,
+        EasingStyle: 'Linear',
+        EasingDirection: 'In',
+        RepeatCount: 1,
+        Reverses: true,
+      },
+      {
+        BackgroundTransparency: 1,
+      },
+    );
 
     tween.play();
     advance(100);
@@ -101,11 +119,15 @@ describe('tweens', () => {
 
   it('cancels conflicting tweens but allows disjoint properties', () => {
     const frame = fk.createFrame();
-    const first = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 1 });
-    const second = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 0.5 });
-    const position = fka.createTween(frame, fka.tweenInfo(1), {
-      Position: fk.udim2FromOffset(100, 100),
-    });
+    const first = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const second = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
+    const position = fka.createTween(
+      frame,
+      { Duration: 1 },
+      {
+        Position: fk.udim2FromOffset(100, 100),
+      },
+    );
 
     first.play();
     position.play();
@@ -118,15 +140,27 @@ describe('tweens', () => {
 
   it('keeps ownership consistent when cancellation listeners start another tween', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const first = fka.createTween(frame, fka.tweenInfo(1, 'Linear'), {
-      BackgroundTransparency: 1,
-    });
-    const reentrant = fka.createTween(frame, fka.tweenInfo(1, 'Linear'), {
-      BackgroundTransparency: 0.75,
-    });
-    const latest = fka.createTween(frame, fka.tweenInfo(1, 'Linear'), {
-      BackgroundTransparency: 0.5,
-    });
+    const first = fka.createTween(
+      frame,
+      { Duration: 1, EasingStyle: 'Linear' },
+      {
+        BackgroundTransparency: 1,
+      },
+    );
+    const reentrant = fka.createTween(
+      frame,
+      { Duration: 1, EasingStyle: 'Linear' },
+      {
+        BackgroundTransparency: 0.75,
+      },
+    );
+    const latest = fka.createTween(
+      frame,
+      { Duration: 1, EasingStyle: 'Linear' },
+      {
+        BackgroundTransparency: 0.5,
+      },
+    );
 
     first.completed.subscribe(() => reentrant.play());
     first.play();
@@ -143,16 +177,20 @@ describe('tweens', () => {
 
   it('finishes zero-duration tweens and cancels playback with node destruction', () => {
     const frame = fk.createFrame();
-    const instant = fka.createTween(frame, fka.tweenInfo(0), { BackgroundTransparency: 1 });
+    const instant = fka.createTween(frame, { Duration: 0 }, { BackgroundTransparency: 1 });
 
     instant.play();
 
     expect(frame.BackgroundTransparency).toBe(1);
     expect(instant.playbackState()).toBe('Completed');
 
-    const delayed = fka.createTween(frame, fka.tweenInfo(0, 'Linear', 'In', 0, false, 0.1), {
-      BackgroundTransparency: 0.5,
-    });
+    const delayed = fka.createTween(
+      frame,
+      { Duration: 0, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.1 },
+      {
+        BackgroundTransparency: 0.5,
+      },
+    );
 
     delayed.play();
     advance(100);
@@ -160,7 +198,7 @@ describe('tweens', () => {
     expect(frame.BackgroundTransparency).toBe(0.5);
     expect(delayed.playbackState()).toBe('Completed');
 
-    const running = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 0 });
+    const running = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0 });
 
     running.play();
     frame.destroy();
@@ -171,7 +209,7 @@ describe('tweens', () => {
 
   it('finishes tween cleanup when a cancellation listener throws during destruction', () => {
     const frame = fk.createFrame();
-    const tween = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 1 });
+    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const listener = vi.fn(() => {
       throw new Error('listener failed');
     });
@@ -189,13 +227,19 @@ describe('tweens', () => {
   it('validates tween configuration and goal values', () => {
     const frame = fk.createFrame();
 
-    expect(() => fka.tweenInfo(-1)).toThrow(/time/);
-    expect(() => fka.tweenInfo(1, 'Linear', 'In', -2)).toThrow(/repeat count/);
-    expect(() => fka.createTween(frame, fka.tweenInfo(1), {})).toThrow(/goal property/);
+    expect(() => fka.createTween(frame, { Duration: -1 }, { Rotation: 1 })).toThrow(/duration/);
+    expect(() => fka.createTween(frame, { Duration: 1, RepeatCount: -2 }, { Rotation: 1 })).toThrow(
+      /repeat count/,
+    );
+    expect(() => fka.createTween(frame, { Duration: 1 }, {})).toThrow(/goal property/);
     expect(() =>
-      fka.createTween(frame, fka.tweenInfo(1), {
-        BackgroundTransparency: Number.NaN,
-      }),
+      fka.createTween(
+        frame,
+        { Duration: 1 },
+        {
+          BackgroundTransparency: Number.NaN,
+        },
+      ),
     ).toThrow(/compatible tweenable/);
   });
 
@@ -205,12 +249,12 @@ describe('tweens', () => {
 
     frame.addChild(scale);
 
-    const invalid = fka.createTween(scale, fka.tweenInfo(0), { Scale: -1 });
+    const invalid = fka.createTween(scale, { Duration: 0 }, { Scale: -1 });
 
     expect(() => invalid.play()).toThrow(/non-negative finite/);
     expect(invalid.playbackState()).toBe('Cancelled');
 
-    const valid = fka.createTween(scale, fka.tweenInfo(0), { Scale: 0.5 });
+    const valid = fka.createTween(scale, { Duration: 0 }, { Scale: 0.5 });
 
     valid.play();
 

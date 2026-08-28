@@ -1,10 +1,9 @@
-import { createNodeHandle } from './node-handle';
+import { createNodeHandle, type Node, type NodeProperties } from './node';
 import {
   createBaseState,
   registerNode,
   type BaseNodeState,
-  type Node,
-  type NodeProperties,
+  type PropertyValidator,
 } from './node-state';
 
 declare const styleModifierBrand: unique symbol;
@@ -64,15 +63,15 @@ export function createStyleModifier<Properties extends NodeProperties>(
   modifierKey: string,
   properties: Properties,
   resolveStyles: ResolveStyles<Properties>,
+  validateProperties?: PropertyValidator<Properties>,
 ): StyleModifierNode<Properties> {
   const node = createNodeHandle(properties) as StyleModifierNode<Properties>;
   const state: StyleModifierState<Properties> = {
-    ...createBaseState(modifierKey, properties),
+    ...createBaseState(modifierKey, properties, validateProperties),
     kind: 'style',
     modifierKey,
     resolveStyles,
   };
-  validateModifierWithoutParent(state);
   registerNode(node, state);
   return node;
 }
@@ -82,23 +81,15 @@ export function createLayoutModifier<Properties extends NodeProperties>(
   modifierKey: string,
   properties: Properties,
   resolveLayout: ResolveLayout<Properties>,
+  validateProperties?: PropertyValidator<Properties>,
 ): LayoutNode<Properties> {
   const node = createNodeHandle(properties) as LayoutNode<Properties>;
   const state: LayoutNodeState<Properties> = {
-    ...createBaseState(modifierKey, properties),
+    ...createBaseState(modifierKey, properties, validateProperties),
     kind: 'layout',
     modifierKey,
     resolveLayout,
   };
-  validateModifierWithoutParent(state);
   registerNode(node, state);
   return node;
-}
-
-/** Validates modifier properties that do not require a live parent or child list. */
-export function validateModifierWithoutParent<Properties extends NodeProperties>(
-  state: StyleModifierState<Properties> | LayoutNodeState<Properties>,
-): void {
-  if (state.kind === 'style') state.resolveStyles(state.properties, { Name: 'DetachedTarget' });
-  else state.resolveLayout(state.properties, []);
 }

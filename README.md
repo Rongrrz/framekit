@@ -34,18 +34,18 @@ FrameKit has no components, render functions, hooks, throwaway virtual trees, de
 
 The common vocabulary is deliberately small:
 
-| Area          | What you use                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------------ |
-| Elements      | `createScreenGui`, `createFrame`, `createScrollingFrame`, text, image, and text-box factories    |
-| Modifiers     | `createUICorner`, `createUIStroke`, `createUIShadow`, `createUIGlow`, padding, scale, and layout |
-| Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`             |
-| Properties    | `node.Text`, `node.Position`; `node.setProperties({...})` for a batch                            |
-| Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                            |
-| Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                       |
-| Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                            |
-| Motion        | `fka.spring`, `fka.createMotion`, `fka.createTween`, `fka.tweenInfo`                             |
-| Helpers       | `fkh.bindHoverScale`, `fkh.setModifierAttached`, `fkh.createSpringModifierToggle`                |
-| Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors                   |
+| Area          | What you use                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| Elements      | `createScreenGui`, `createFrame`, `createScrollingFrame`, text, image, and text-box factories |
+| Modifiers     | `createUICorner`, `createUIStroke`, `createUIShadow`, padding, scale, and layout              |
+| Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`          |
+| Properties    | `node.Text`, `node.Position`; `node.setProperties({...})` for a batch                         |
+| Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                         |
+| Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                    |
+| Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                         |
+| Motion        | `fka.spring`, `fka.createTween`                                                               |
+| Helpers       | `fkh.bindHoverScale`, `fkh.setModifierAttached`                                               |
+| Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors                |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
 
@@ -93,7 +93,7 @@ panel.addChild(
 
 A parent accepts one modifier of each kind. Duplicate modifiers throw without disturbing either tree. `UIListLayout` controls the positions of its parent's direct GUI children while attached; detaching it restores their own `Position` and `AnchorPoint` rendering.
 
-Use `fkh` when its optional interaction conventions fit your UI. `bindHoverScale()` adds a retained `UIScale`; `setModifierAttached()` toggles a modifier without recreating it; and `createSpringModifierToggle()` animates a modifier out before detaching it.
+Use `fkh` when its optional interaction conventions fit your UI. `bindHoverScale()` adds a retained `UIScale`, while `setModifierAttached()` toggles a modifier without recreating it.
 
 ## Hierarchy and input
 
@@ -161,8 +161,7 @@ Text boxes keep their current string in `Text`, available through `box.Text`. `o
 
 ```ts
 const bio = fk.createTextBox({
-  Text: 'Hello <b>FrameKit</b>',
-  RichText: true,
+  Text: 'Hello FrameKit',
   MultiLine: true,
   PlaceholderText: 'Write something…',
 });
@@ -170,9 +169,7 @@ const bio = fk.createTextBox({
 bio.onTextChanged((value) => console.log(value));
 ```
 
-Rich text is an explicit opt-in and supports bold, italic, underline, strikethrough, line breaks, and validated `font` color, size, and face attributes. Unsupported or executable elements are discarded rather than mounted.
-
-`UIShadow` models box and surface depth with an animated `Offset`, blur, spread, and optional inset. `UIGlow` is deliberately different: it follows the rendered alpha silhouette and builds a centered colored core plus a wider soft halo from only `Radius`, `Color`, and `Transparency`. Both effects can be attached together.
+Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
 
 ## Spring motion
 
@@ -192,7 +189,7 @@ The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mas
 fka.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
 ```
 
-`fka.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. `mass`, `precision`, and `restVelocity` are also available. Use the advanced `fka.createMotion()` controller only when you need its `completed`, `isAnimating()`, or `stop()` controls.
+`fka.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
 
 Assigning a property or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue. A direct write always wins; there is no hidden animation priority to remember.
 
@@ -205,10 +202,14 @@ Scaling with `UIScale` is useful for hover effects because it changes visual siz
 Tweens are the explicit, timed alternative to springs:
 
 ```ts
-const tween = fka.createTween(panel, fka.tweenInfo(0.3, 'Quad', 'Out'), {
-  Position: fk.udim2FromOffset(240, 40),
-  BackgroundTransparency: 0.1,
-});
+const tween = fka.createTween(
+  panel,
+  { Duration: 0.3, EasingStyle: 'Quad' },
+  {
+    Position: fk.udim2FromOffset(240, 40),
+    BackgroundTransparency: 0.1,
+  },
+);
 
 tween.completed.subscribe((state) => console.log(state));
 tween.play();
@@ -230,8 +231,8 @@ The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree fol
 Core types are available through `fk`, while animation types are available through `fka`:
 
 ```ts
-function show(panel: fk.FrameNode, motion: fka.Motion<fk.FrameProperties>): void {
-  motion.spring({ BackgroundTransparency: 0 });
+function show(panel: fk.FrameNode): void {
+  fka.spring(panel, { BackgroundTransparency: 0 });
 }
 ```
 
@@ -239,7 +240,7 @@ The runtime remains an implementation boundary rather than a secondary public en
 
 ## Safety boundaries
 
-FrameKit treats ordinary caller-provided text as text, never HTML. A text box with `RichText: true` parses only FrameKit's documented, non-executable formatting subset into newly created DOM nodes. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, missing values, non-finite numbers, and invalid runtime enum members. Tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
+FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, missing values, non-finite numbers, and invalid runtime enum members. Tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
 
 `GuiNode.element` is an intentional low-level escape hatch for integrations FrameKit does not cover. Prefer FrameKit properties and operations for normal application behavior.
 

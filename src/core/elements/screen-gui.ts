@@ -1,7 +1,8 @@
 import { connectHoverEvents } from '../../shared/dom/hover-events';
 import { guiEventMethods } from '../../shared/runtime/gui-events';
+import type { NodeProperties } from '../../shared/runtime/node';
 import { addCleanup, assertNodeActive } from '../../shared/runtime/node-lifecycle';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
+import { mergeProperties } from '../../shared/runtime/node-state';
 import { createGuiNode, type GuiNode } from '../../shared/runtime/render';
 import { assertBoolean, assertInteger } from '../../shared/runtime/validation';
 
@@ -60,17 +61,21 @@ export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): Scr
     mergeProperties({ Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 }, initial),
     element,
     (properties) => {
-      assertBoolean(properties.Enabled, 'Enabled');
-      assertInteger(properties.DisplayOrder, 'DisplayOrder');
       element.style.display = properties.Enabled ? '' : 'none';
       element.style.zIndex = String(properties.DisplayOrder);
     },
+    validateScreenGuiProperties,
     screenGuiMethods,
   ) as ScreenGuiNode;
 
   connectHoverEvents(gui, element);
   addCleanup(gui, () => mountTargets.delete(gui));
   return gui;
+}
+
+function validateScreenGuiProperties(properties: Readonly<ScreenGuiProperties>): void {
+  assertBoolean(properties.Enabled, 'Enabled');
+  assertInteger(properties.DisplayOrder, 'DisplayOrder');
 }
 
 /** Mounts a full-viewport ScreenGui beneath the supplied DOM owner. */

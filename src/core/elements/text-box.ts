@@ -1,8 +1,8 @@
-import { readPlainText, renderRichText, serializeRichText } from '../../shared/dom/rich-text';
 import {
   createDefaultTextStyleProperties,
   renderTextStyle,
   type TextStyleProperties,
+  validateTextStyleProperties,
 } from '../../shared/dom/text-style';
 import {
   guiEventKeys,
@@ -13,19 +13,17 @@ import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/node-properties';
 import type { GuiNode } from '../../shared/runtime/render';
 import { emitNodeEvent } from '../../shared/runtime/signal';
-import { assertBoolean, assertString } from '../../shared/runtime/validation';
+import { assertBoolean, assertFiniteNumber, assertString } from '../../shared/runtime/validation';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
-import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
-/** Properties for editable plain or rich text. */
+/** Properties for editable text. */
 export type TextBoxProperties = GuiObjectProperties &
   TextStyleProperties & {
-    /** Enables FrameKit's sanitized rich-text subset. */
-    RichText: boolean;
     /** Allows line breaks when true. */
     MultiLine: boolean;
     /** Prevents editing and keyboard focus when true. */
@@ -81,7 +79,6 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
       ...createDefaultTextStyleProperties(),
       Name: 'TextBox',
       BackgroundColor3: color3FromRGB(255, 255, 255),
-      RichText: false,
       MultiLine: false,
       Disabled: false,
       PlaceholderText: '',
@@ -90,10 +87,6 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
     },
     initial,
     (current) => {
-      assertBoolean(current.RichText, 'RichText');
-      assertBoolean(current.MultiLine, 'MultiLine');
-      assertBoolean(current.Disabled, 'Disabled');
-      assertString(current.PlaceholderText, 'PlaceholderText');
       renderTextStyle(editor, current);
       renderTextStyle(placeholder, { ...current, Text: current.PlaceholderText });
       editor.style.alignContent = textAlignment(current.TextYAlignment);
@@ -110,12 +103,10 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
       editor.style.cursor = current.Disabled ? 'not-allowed' : 'text';
       placeholder.textContent = current.PlaceholderText;
       placeholder.style.display = current.Text.length === 0 ? '' : 'none';
-      if (!applyingEditorInput) {
-        if (current.RichText) renderRichText(editor, current.Text);
-        else editor.textContent = current.Text;
-      }
+      if (!applyingEditorInput) editor.textContent = current.Text;
     },
     textBoxEventMethods,
+    validateTextBoxProperties,
   ) as TextBoxNode;
 
   const listenerController = new AbortController();
@@ -124,8 +115,8 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
     'input',
     (event) => {
       const current = getPropertiesSnapshot(node);
-      const editorText = current.RichText ? serializeRichText(editor) : readPlainText(editor);
-      const text = current.MultiLine ? editorText : removeLineBreaks(editorText, current.RichText);
+      const editorText = readEditableText(editor);
+      const text = current.MultiLine ? editorText : removeLineBreaks(editorText);
 
       applyingEditorInput = true;
       try {
@@ -133,10 +124,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
       } finally {
         applyingEditorInput = false;
       }
-      if (text !== editorText) {
-        if (current.RichText) renderRichText(editor, text);
-        else editor.textContent = text;
-      }
+      if (text !== editorText) editor.textContent = text;
 
       emitNodeEvent(node, guiEventKeys.textChanged, getPropertiesSnapshot(node).Text, event);
     },
@@ -164,15 +152,36 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
   return node;
 }
 
+function validateTextBoxProperties(properties: Readonly<TextBoxProperties>): void {
+  validateTextStyleProperties(properties);
+  assertBoolean(properties.MultiLine, 'MultiLine');
+  assertBoolean(properties.Disabled, 'Disabled');
+  assertString(properties.PlaceholderText, 'PlaceholderText');
+  assertColor3(properties.PlaceholderColor3, 'PlaceholderColor3');
+  assertFiniteNumber(properties.PlaceholderTransparency, 'PlaceholderTransparency');
+}
+
 function textAlignment(alignment: TextBoxProperties['TextYAlignment']): string {
   if (alignment === 'Center') return 'center';
   if (alignment === 'Bottom') return 'end';
   return 'start';
 }
 
-function removeLineBreaks(value: string, richText: boolean): string {
-  const withoutTextBreaks = value.replaceAll(/\r\n?|\n/g, '');
-  return richText ? withoutTextBreaks.replaceAll(/<br>/gi, '') : withoutTextBreaks;
+function removeLineBreaks(value: string): string {
+  return value.replaceAll(/\r\n?|\n/g, '');
+}
+
+function readEditableText(container: HTMLElement): string {
+  return Array.from(container.childNodes, readEditableNode).join('');
+}
+
+function readEditableNode(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
+  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+  const element = node as HTMLElement;
+  if (element.tagName === 'BR') return '\n';
+  const contents = Array.from(element.childNodes, readEditableNode).join('');
+  return element.tagName === 'DIV' || element.tagName === 'P' ? `${contents}\n` : contents;
 }
 
 function insertPlainText(editor: HTMLElement, value: string): void {

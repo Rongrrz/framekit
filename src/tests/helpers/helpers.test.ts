@@ -15,20 +15,20 @@ describe('public helpers', () => {
   it('attaches and detaches a retained modifier from the requested parent', () => {
     const first = fk.createFrame({ Name: 'First' });
     const second = fk.createFrame({ Name: 'Second' });
-    const glow = fk.createUIGlow();
+    const shadow = fk.createUIShadow();
 
-    fkh.setModifierAttached(first, glow, true);
+    fkh.setModifierAttached(first, shadow, true);
 
-    expect(glow.Parent).toBe(first);
+    expect(shadow.Parent).toBe(first);
 
-    fkh.setModifierAttached(first, glow, false);
+    fkh.setModifierAttached(first, shadow, false);
 
-    expect(glow.Parent).toBeUndefined();
-    expect(() => fkh.setModifierAttached(first, glow, 'yes' as never)).toThrow(/Attached/);
+    expect(shadow.Parent).toBeUndefined();
+    expect(() => fkh.setModifierAttached(first, shadow, 'yes' as never)).toThrow(/Attached/);
 
-    glow.Parent = second;
-    fkh.setModifierAttached(first, glow, false);
+    shadow.Parent = second;
+    fkh.setModifierAttached(first, shadow, false);
 
-    expect(glow.Parent).toBe(second);
+    expect(shadow.Parent).toBe(second);
   });
 });

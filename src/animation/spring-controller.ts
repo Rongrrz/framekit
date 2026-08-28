@@ -3,9 +3,9 @@ import {
   releaseAnimationProperties,
   type AnimationOwner,
 } from '../shared/runtime/animation-ownership';
+import type { Node, NodeProperties } from '../shared/runtime/node';
 import { addCleanup, assertNodeActive, isDestroyed } from '../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
-import type { Node, NodeProperties } from '../shared/runtime/node-state';
 import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
 import {
   defaultSpringOptions,
@@ -24,18 +24,19 @@ import {
 
 export type { SpringOptions } from './spring-physics';
 
-/** A retained spring controller for one node. */
-export type Motion<Properties extends NodeProperties = NodeProperties> = {
-  /** Retargets properties without discarding their current velocity. */
-  spring(goal: AnimationGoal<Properties>): void;
-  /** Retargets properties using settings for only the properties in this goal. */
-  spring(goal: AnimationGoal<Properties>, settings: SpringOptions): void;
+/** Playback controls for the spring retained by one node. */
+export type SpringController<Properties extends NodeProperties = NodeProperties> = {
   /** Stops one property, or every property when omitted, at its current value. */
   stop(property?: keyof AnimationGoal<Properties>): void;
   /** Reports whether any property is currently moving. */
   isAnimating(): boolean;
   /** Emits after every active property settles. */
   readonly completed: Signal<[]>;
+};
+
+export type SpringBinding<Properties extends NodeProperties> = {
+  controller: SpringController<Properties>;
+  animate(goal: AnimationGoal<Properties>, options?: SpringOptions): void;
 };
 
 type PropertySpringState = {
@@ -47,13 +48,11 @@ type PropertySpringState = {
 };
 type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
 
-/** Creates a retained motion controller whose spring can be freely retargeted. */
-export function createMotion<Properties extends NodeProperties>(
+/** Creates the internal retained spring state for a node. */
+export function createSpringBinding<Properties extends NodeProperties>(
   node: Node<Properties>,
-  options: SpringOptions = {},
-): Motion<Properties> {
+): SpringBinding<Properties> {
   assertNodeActive(node);
-  const controllerOptions = resolveSpringOptions(options, defaultSpringOptions);
   const springsByProperty = new Map<keyof Properties, PropertySpringState>();
   const completedEmitter = createSignal<[]>();
   const completed = readonlySignal(completedEmitter);
@@ -65,13 +64,9 @@ export function createMotion<Properties extends NodeProperties>(
     cancelPropertyFromConflict: (property) => stopProperty(property as keyof Properties),
   };
 
-  function spring(goal: AnimationGoal<Properties>): void;
-  function spring(goal: AnimationGoal<Properties>, settings: SpringOptions): void;
-  function spring(goal: AnimationGoal<Properties>, settings?: SpringOptions): void {
+  function animate(goal: AnimationGoal<Properties>, options?: SpringOptions): void {
     assertUsable();
-    const springOptions = settings
-      ? resolveSpringOptions(settings, controllerOptions)
-      : controllerOptions;
+    const springOptions = resolveSpringOptions(options ?? {}, defaultSpringOptions);
     const goalEntries = Object.entries(goal) as [keyof Properties, unknown][];
     if (goalEntries.length === 0) throw new TypeError('A spring needs at least one goal property.');
 
@@ -229,12 +224,13 @@ export function createMotion<Properties extends NodeProperties>(
     completedEmitter.clear();
   });
 
-  return Object.freeze({
-    spring,
+  const controller = Object.freeze({
     stop,
     isAnimating: () => springsByProperty.size > 0,
     completed,
   });
+
+  return { controller, animate };
 }
 
 function nodeName(node: Node): string {

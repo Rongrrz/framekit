@@ -31,36 +31,15 @@ describe('text boxes', () => {
     expect(changed).toHaveBeenCalledWith('Hello FrameKit', expect.any(InputEvent));
   });
 
-  it('renders safe rich text and returns its source string', () => {
-    const source =
-      '<b>Bold</b> <i>italic</i> <font color="#ff6f5f" size="18">coral</font><script>bad()</script>';
-    const box = fk.createTextBox({ Text: source, RichText: true, MultiLine: true });
+  it('always treats markup as ordinary text', () => {
+    const source = '<b>Hello</b><script>bad()</script>';
+    const box = fk.createTextBox({ Text: source });
     const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
-
-    expect(editor.querySelector('b')?.textContent).toBe('Bold');
-    expect(editor.querySelector('i')?.textContent).toBe('italic');
-    expect(editor.querySelector('[data-framekit-rich-font]')?.textContent).toBe('coral');
-    expect(editor.querySelector('script')).toBeNull();
-    expect(editor.textContent).not.toContain('bad()');
-    expect(box.Text).toBe(source);
-
-    editor.append(document.createTextNode(' updated'));
-    editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-
-    expect(box.Text).toContain('<b>Bold</b>');
-    expect(box.Text).toContain(' updated');
-  });
-
-  it('can switch between rich and ordinary text without interpreting markup', () => {
-    const box = fk.createTextBox({ Text: '<b>Hello</b>', RichText: true });
-    const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
-
-    expect(editor.querySelector('b')).not.toBeNull();
-
-    box.setProperties({ RichText: false });
 
     expect(editor.querySelector('b')).toBeNull();
-    expect(editor.textContent).toBe('<b>Hello</b>');
+    expect(editor.querySelector('script')).toBeNull();
+    expect(editor.textContent).toBe(source);
+    expect(box.Text).toBe(source);
   });
 
   it('removes disallowed line breaks from both state and the single-line editor', () => {

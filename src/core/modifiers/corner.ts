@@ -3,7 +3,8 @@ import {
   type StyleModifierNode,
   type Styles,
 } from '../../shared/runtime/modifier';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
+import type { NodeProperties } from '../../shared/runtime/node';
+import { mergeProperties } from '../../shared/runtime/node-state';
 import { assertBoolean, assertFiniteNumber } from '../../shared/runtime/validation';
 
 /** Properties for rounding a GUI parent's corners. */
@@ -23,11 +24,15 @@ export function createUICorner(initial: Partial<UICornerProperties> = {}): UICor
     'UICorner',
     mergeProperties({ Name: 'UICorner', Enabled: true, CornerRadius: 0 }, initial),
     resolveCornerStyles,
+    validateCornerProperties,
   );
 }
 
 function resolveCornerStyles(properties: Readonly<UICornerProperties>): Styles {
+  return properties.Enabled ? { 'border-radius': `${Math.max(0, properties.CornerRadius)}px` } : {};
+}
+
+function validateCornerProperties(properties: Readonly<UICornerProperties>): void {
   assertBoolean(properties.Enabled, 'Enabled');
   assertFiniteNumber(properties.CornerRadius, 'CornerRadius');
-  return properties.Enabled ? { 'border-radius': `${Math.max(0, properties.CornerRadius)}px` } : {};
 }

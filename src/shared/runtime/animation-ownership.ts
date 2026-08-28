@@ -1,4 +1,4 @@
-import type { Node } from './node-state';
+import type { Node } from './node';
 
 export type AnimationOwner = {
   cancelPropertyFromConflict(property: PropertyKey): void;

@@ -1,15 +1,13 @@
-export { createMotion } from './animation/motion';
-export type { Motion, SpringOptions } from './animation/motion';
-
 export { spring } from './animation/spring';
+export type { SpringController, SpringOptions } from './animation/spring-controller';
 export type { AnimationGoal } from './animation/types';
 
-export { createTween, tweenInfo } from './animation/tween';
+export { createTween } from './animation/tween';
 export type {
   EasingDirection,
   EasingStyle,
   Tween,
   TweenGoal,
-  TweenInfo,
+  TweenOptions,
   TweenPlaybackState,
 } from './animation/tween';

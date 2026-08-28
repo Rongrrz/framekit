@@ -10,18 +10,11 @@ import {
   appendSectionHeading,
 } from '../primitives';
 
-type ModifierKey = 'corner' | 'stroke' | 'shadow' | 'glow' | 'padding' | 'layout';
+type ModifierKey = 'corner' | 'stroke' | 'shadow' | 'padding' | 'layout';
 
 type ComposerState = Readonly<Record<ModifierKey, boolean>>;
 
-const modifierKeys: readonly ModifierKey[] = [
-  'corner',
-  'stroke',
-  'shadow',
-  'glow',
-  'padding',
-  'layout',
-];
+const modifierKeys: readonly ModifierKey[] = ['corner', 'stroke', 'shadow', 'padding', 'layout'];
 
 export function createComposer(): fk.FrameNode {
   const section = createSection('MobileComposer', sectionLayout.composer, colors.paper);
@@ -38,7 +31,6 @@ export function createComposer(): fk.FrameNode {
     corner: true,
     stroke: true,
     shadow: true,
-    glow: true,
     padding: false,
     layout: true,
   });
@@ -70,7 +62,7 @@ export function createComposer(): fk.FrameNode {
 
   preview.addChild(
     createText({
-      text: 'SHADOW ↓ DEPTH   ·   GLOW ✦ LIGHT',
+      text: 'SHADOW ↓ DIRECTIONAL DEPTH',
       size: fk.udim2FromOffset(314, 28),
       position: fk.udim2FromOffset(22, 18),
       color: colors.darkMuted,
@@ -102,12 +94,6 @@ export function createComposer(): fk.FrameNode {
     SpreadRadius: -2,
   });
 
-  const glow = fk.createUIGlow({
-    Color: colors.violet,
-    Transparency: 0.18,
-    Radius: 32,
-  });
-
   card.addChild(corner);
 
   card.addChild(stroke);
@@ -125,18 +111,17 @@ export function createComposer(): fk.FrameNode {
   );
 
   const description = fk.createTextBox({
-    Name: 'MobileRichDescription',
+    Name: 'MobileDescription',
     Size: fk.udim2FromOffset(270, 72),
     Position: fk.udim2FromOffset(22, 68),
     BackgroundTransparency: 1,
-    Text: 'This is <b>editable rich text</b>. Padding and layout affect the tags below.',
+    Text: 'This text is editable. Padding and layout affect the tags below.',
     TextColor3: colors.textMuted,
     TextSize: 12,
     TextWrapped: true,
     TextXAlignment: 'Left',
     TextYAlignment: 'Top',
     FontFamily: fonts.sans,
-    RichText: true,
     MultiLine: true,
     PlaceholderText: 'Type a description…',
   });
@@ -223,7 +208,7 @@ export function createComposer(): fk.FrameNode {
 
   explanation.addChild(
     createText({
-      text: 'Stroke grows into a stronger edge. Shadow adds directional depth, glow blooms around the silhouette, and padding moves every tag inward.',
+      text: 'Stroke creates a stronger edge, shadow adds directional depth, and padding moves every tag inward.',
       size: fk.udim2FromOffset(310, 88),
       position: fk.udim2FromOffset(22, 226),
       color: colors.textMuted,
@@ -235,75 +220,54 @@ export function createComposer(): fk.FrameNode {
 
   content.addChild(explanation);
 
-  const strokeMotion = fka.createMotion(stroke);
-
-  const shadowMotion = fka.createMotion(shadow);
-
-  const glowMotion = fka.createMotion(glow);
-
-  const paddingMotion = fka.createMotion(padding);
-
-  const toggleStroke = fkh.createSpringModifierToggle({
-    parent: card,
-    modifier: stroke,
-    motion: strokeMotion,
-    active: { Thickness: 4 },
-    inactive: { Thickness: 0 },
-    isActive: () => enabled.get().stroke,
-  });
-
-  const toggleShadow = fkh.createSpringModifierToggle({
-    parent: card,
-    modifier: shadow,
-    motion: shadowMotion,
-    active: {
-      Transparency: 0.3,
-      Offset: fk.vector2(10, 16),
-      BlurRadius: 16,
-      SpreadRadius: -2,
-    },
-    inactive: {
-      Transparency: 1,
-      Offset: fk.vector2(0, 0),
-      BlurRadius: 0,
-      SpreadRadius: -2,
-    },
-    isActive: () => enabled.get().shadow,
-  });
-
-  const toggleGlow = fkh.createSpringModifierToggle({
-    parent: card,
-    modifier: glow,
-    motion: glowMotion,
-    active: { Transparency: 0.18, Radius: 32 },
-    inactive: { Transparency: 1, Radius: 0 },
-    isActive: () => enabled.get().glow,
-  });
-
-  const togglePadding = fkh.createSpringModifierToggle({
-    parent: tags,
-    modifier: padding,
-    motion: paddingMotion,
-    active: {
-      PaddingTop: fk.udim(0, 12),
-      PaddingRight: fk.udim(0, 12),
-      PaddingBottom: fk.udim(0, 12),
-      PaddingLeft: fk.udim(0, 12),
-    },
-    inactive: {
-      PaddingTop: fk.udim(0, 0),
-      PaddingRight: fk.udim(0, 0),
-      PaddingBottom: fk.udim(0, 0),
-      PaddingLeft: fk.udim(0, 0),
-    },
-    isActive: () => enabled.get().padding,
-  });
   card.watch(enabled, (value) => {
     fkh.setModifierAttached(card, corner, value.corner);
-    toggleStroke(value.stroke);
-    toggleShadow(value.shadow);
-    toggleGlow(value.glow);
-    togglePadding(value.padding);
+    if (value.stroke) {
+      if (stroke.Parent !== card) stroke.setProperties({ Thickness: 0 });
+      fkh.setModifierAttached(card, stroke, true);
+      fka.spring(stroke, { Thickness: 4 });
+    } else {
+      fka.spring(stroke).stop();
+      fkh.setModifierAttached(card, stroke, false);
+    }
+    if (value.shadow) {
+      if (shadow.Parent !== card) {
+        shadow.setProperties({
+          Transparency: 1,
+          Offset: fk.vector2(0, 0),
+          BlurRadius: 0,
+        });
+      }
+      fkh.setModifierAttached(card, shadow, true);
+      fka.spring(shadow, {
+        Transparency: 0.3,
+        Offset: fk.vector2(10, 16),
+        BlurRadius: 16,
+      });
+    } else {
+      fka.spring(shadow).stop();
+      fkh.setModifierAttached(card, shadow, false);
+    }
+    if (value.padding) {
+      if (padding.Parent !== tags) {
+        padding.setProperties({
+          PaddingTop: fk.udim(0, 0),
+          PaddingRight: fk.udim(0, 0),
+          PaddingBottom: fk.udim(0, 0),
+          PaddingLeft: fk.udim(0, 0),
+        });
+      }
+      fkh.setModifierAttached(tags, padding, true);
+      fka.spring(padding, {
+        PaddingTop: fk.udim(0, 12),
+        PaddingRight: fk.udim(0, 12),
+        PaddingBottom: fk.udim(0, 12),
+        PaddingLeft: fk.udim(0, 12),
+      });
+    } else {
+      fka.spring(padding).stop();
+      fkh.setModifierAttached(tags, padding, false);
+    }
     fkh.setModifierAttached(tags, list, value.layout);
     for (const [key, control] of controls) {
       const active = value[key];
@@ -320,9 +284,7 @@ export function createComposer(): fk.FrameNode {
     lineTwo.setProperties({
       Text: `fka.spring(shadow, { Offset: ${value.shadow ? '[10, 16]' : '[0, 0]'} });`,
     });
-    lineThree.setProperties({
-      Text: `fka.spring(glow, { Radius: ${value.glow ? '32' : '0'} });`,
-    });
+    lineThree.setProperties({ Text: `shadow.Parent = ${value.shadow ? 'card' : 'undefined'};` });
     lineFour.setProperties({
       Text: `fka.spring(padding, { all: ${value.padding ? '12' : '0'} });`,
     });
@@ -338,10 +300,7 @@ function describeModifierTree(state: ComposerState): string {
     modifierLabel(state.stroke, 'UIStroke'),
   ].join('  ');
 
-  const cardEffects = [
-    modifierLabel(state.shadow, 'UIShadow'),
-    modifierLabel(state.glow, 'UIGlow'),
-  ].join('  ');
+  const cardEffects = modifierLabel(state.shadow, 'UIShadow');
 
   const tagModifiers = [
     modifierLabel(state.padding, 'UIPadding'),

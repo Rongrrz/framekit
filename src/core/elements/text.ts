@@ -7,6 +7,7 @@ import {
   createDefaultTextStyleProperties,
   horizontalFlexAlignment,
   renderTextStyle,
+  validateTextStyleProperties,
   verticalFlexAlignment,
   type TextStyleProperties,
 } from '../../shared/dom/text-style';
@@ -52,7 +53,6 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
     { ...createDefaultTextProps(), Name: 'TextButton', Disabled: false },
     initial,
     (properties) => {
-      assertBoolean(properties.Disabled, 'Disabled');
       element.disabled = properties.Disabled;
       element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
     },
@@ -103,5 +103,13 @@ function createTextNode<Properties extends TextLabelProperties>(
       renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
+    validateTextProperties,
   );
+}
+
+function validateTextProperties(
+  properties: Readonly<TextLabelProperties | TextButtonProperties>,
+): void {
+  validateTextStyleProperties(properties);
+  if ('Disabled' in properties) assertBoolean(properties.Disabled, 'Disabled');
 }

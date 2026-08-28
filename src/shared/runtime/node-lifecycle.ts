@@ -1,4 +1,5 @@
-import { getChildren, getNodeState, isModifierState, type Node } from './node-state';
+import type { Node } from './node';
+import { getChildren, getNodeState, isModifierState } from './node-state';
 import { hasLayoutModifier, renderNode, type GuiNode } from './render';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */

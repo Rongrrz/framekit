@@ -36,15 +36,15 @@ const groups = {
   modifiers: {
     index: '02 / MODIFIERS',
     title: 'Style by composition.',
-    body: 'Corners, strokes, shadows, glows, padding, scale, constraints, and layout are element-less nodes with ordinary lifetimes.',
+    body: 'Corners, strokes, shadows, padding, scale, constraints, and layout are element-less nodes with ordinary lifetimes.',
     accent: colors.violet,
-    tokens: ['fk.createUICorner', 'fk.createUIStroke', 'fk.createUIShadow', 'fk.createUIGlow'],
+    tokens: ['fk.createUICorner', 'fk.createUIStroke', 'fk.createUIShadow', 'fk.createUIPadding'],
     lines: [
-      'const glow = fk.createUIGlow({',
-      '  Color: fk.color3FromRGB(174, 145, 255),',
-      '  Radius: 24,',
+      'const shadow = fk.createUIShadow({',
+      '  Offset: fk.vector2(0, 8),',
+      '  BlurRadius: 24,',
       '});',
-      'panel.addChild(glow);',
+      'panel.addChild(shadow);',
     ],
   },
   state: {
@@ -66,7 +66,7 @@ const groups = {
     title: 'Move any value.',
     body: 'Springs retarget continuously. Tweens offer explicit playback. Property ownership prevents competing animations.',
     accent: colors.amber,
-    tokens: ['fka.spring', 'fka.createTween', 'fka.tweenInfo', 'fka.createMotion'],
+    tokens: ['fka.spring', 'fka.createTween', 'SpringController', 'TweenOptions'],
     lines: [
       'fka.spring(card, {',
       '  Size: fk.udim2FromOffset(360, 220),',

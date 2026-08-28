@@ -42,7 +42,7 @@ const motionGoals = [
   },
 ] as const;
 
-export function createMotion(): fk.FrameNode {
+export function createMotionSection(): fk.FrameNode {
   const section = createSection('MobileMotion', sectionLayout.motion, colors.ink);
 
   const content = createSectionContent();
@@ -149,10 +149,8 @@ export function createMotion(): fk.FrameNode {
   appendCodeLine(code, '});', 138, colors.coral);
   appendCodeLine(code, '', 168);
 
-  const cardMotion = fka.createMotion(card);
-
-  const scaleMotion = fka.createMotion(scale);
-  cardMotion.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
+  const springController = fka.spring(card);
+  springController.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
   card.watch(mode, (value) => {
     const goal = motionGoals[value];
     if (!goal) return;
@@ -160,12 +158,12 @@ export function createMotion(): fk.FrameNode {
     stateLabel.setProperties({ Text: goal.label });
     positionLine.setProperties({ Text: `  Position: ${goal.label.toLowerCase()}Position,` });
     rotationLine.setProperties({ Text: `  Rotation: ${goal.rotation},` });
-    cardMotion.spring({
+    fka.spring(card, {
       Position: goal.position,
       Rotation: goal.rotation,
       BackgroundColor3: goal.accent,
     });
-    scaleMotion.spring({ Scale: goal.scale });
+    fka.spring(scale, { Scale: goal.scale });
   });
 
   content.addChild(lab);

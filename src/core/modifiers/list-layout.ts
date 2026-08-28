@@ -5,9 +5,10 @@ import {
   type LayoutStyles,
   type Styles,
 } from '../../shared/runtime/modifier';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
+import type { NodeProperties } from '../../shared/runtime/node';
+import { mergeProperties } from '../../shared/runtime/node-state';
 import { assertAllowedValue, assertBoolean } from '../../shared/runtime/validation';
-import { udim, udimToCss, type UDim } from '../values/udim';
+import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
 
 /** Primary axis used to arrange children. */
 export type FillDirection = 'Horizontal' | 'Vertical';
@@ -64,6 +65,7 @@ export function createUIListLayout(
       initial,
     ),
     resolveListLayout,
+    validateListLayoutProperties,
   );
 }
 
@@ -71,11 +73,6 @@ function resolveListLayout(
   properties: Readonly<UIListLayoutProperties>,
   children: readonly LayoutChild[],
 ): LayoutStyles {
-  assertAllowedValue(properties.FillDirection, fillDirections, 'FillDirection');
-  assertAllowedValue(properties.HorizontalAlignment, horizontalAlignments, 'HorizontalAlignment');
-  assertAllowedValue(properties.VerticalAlignment, verticalAlignments, 'VerticalAlignment');
-  assertAllowedValue(properties.SortOrder, sortOrders, 'SortOrder');
-  assertBoolean(properties.Wraps, 'Wraps');
   const isHorizontal = properties.FillDirection === 'Horizontal';
   const orderedChildren = children
     .map((child, originalIndex) => ({ child, originalIndex }))
@@ -111,6 +108,15 @@ function resolveListLayout(
       }),
     ),
   };
+}
+
+function validateListLayoutProperties(properties: Readonly<UIListLayoutProperties>): void {
+  assertAllowedValue(properties.FillDirection, fillDirections, 'FillDirection');
+  assertAllowedValue(properties.HorizontalAlignment, horizontalAlignments, 'HorizontalAlignment');
+  assertAllowedValue(properties.VerticalAlignment, verticalAlignments, 'VerticalAlignment');
+  assertAllowedValue(properties.SortOrder, sortOrders, 'SortOrder');
+  assertBoolean(properties.Wraps, 'Wraps');
+  assertUDim(properties.Padding, 'Padding');
 }
 
 function compareChildren(

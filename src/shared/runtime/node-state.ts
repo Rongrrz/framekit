@@ -1,29 +1,16 @@
 import type { LayoutNodeState, StyleModifierState } from './modifier';
-import type { NodeMethods } from './node-methods';
+import type { Node, NodeProperties } from './node';
 import type { GuiNodeState } from './render';
 import { assertString } from './validation';
 
-/** Properties shared by every FrameKit node. */
-export type NodeProperties = {
-  /** The editable hierarchy name used by lookup and debug paths. */
-  Name: string;
-};
-
-declare const nodeProperties: unique symbol;
-
-/** A persistent typed object in the FrameKit hierarchy. */
-export type Node<Properties extends NodeProperties = NodeProperties> = {
-  readonly [nodeProperties]: Properties;
-  /** The concrete FrameKit node type, such as `Frame` or `TextButton`. */
-  readonly ClassName: string;
-  /** This node's hierarchy parent. Assigning it reparents or detaches the node. */
-  Parent: Node | undefined;
-} & Properties &
-  NodeMethods<Properties>;
+export type PropertyValidator<Properties extends NodeProperties> = (
+  properties: Readonly<Properties>,
+) => void;
 
 export type BaseNodeState<Properties extends NodeProperties = NodeProperties> = {
   className: string;
   properties: Properties;
+  validateProperties: PropertyValidator<Properties> | undefined;
   parent: Node | undefined;
   destroyed: boolean;
   cleanups: Set<() => void>;
@@ -47,8 +34,17 @@ const states = new WeakMap<Node, NodeState>();
 export function createBaseState<Properties extends NodeProperties>(
   className: string,
   properties: Properties,
+  validateProperties?: PropertyValidator<Properties>,
 ): BaseNodeState<Properties> {
-  return { className, properties, parent: undefined, destroyed: false, cleanups: new Set() };
+  validateProperties?.(properties);
+  return {
+    className,
+    properties,
+    validateProperties,
+    parent: undefined,
+    destroyed: false,
+    cleanups: new Set(),
+  };
 }
 
 /** Merges constructor properties while rejecting misspelled or unsupported keys. */

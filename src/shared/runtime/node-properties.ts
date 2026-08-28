@@ -1,13 +1,7 @@
 import { cancelAnimationProperties } from './animation-ownership';
-import { validateModifierWithoutParent } from './modifier';
+import type { Node, NodeProperties } from './node';
 import { assertNodeActive } from './node-lifecycle';
-import {
-  getNodeState,
-  isModifierState,
-  validatePropertyPatch,
-  type Node,
-  type NodeProperties,
-} from './node-state';
+import { getNodeState, isModifierState, validatePropertyPatch } from './node-state';
 import { hasLayoutModifier, renderNode } from './render';
 
 /** Applies a user-requested property change, taking control from active animations. */
@@ -32,7 +26,9 @@ export function applyPropertyPatch<Properties extends NodeProperties>(
   validatePropertyPatch(state.properties, patch);
 
   const previousProperties = state.properties;
-  state.properties = { ...state.properties, ...patch };
+  const nextProperties = { ...state.properties, ...patch };
+  state.validateProperties?.(nextProperties);
+  state.properties = nextProperties;
   try {
     renderPropertyChanges(node, changedProperties);
   } catch (error) {
@@ -65,10 +61,7 @@ function renderPropertyChanges<Properties extends NodeProperties>(
 ): void {
   const state = getNodeState(node);
   if (isModifierState(state)) {
-    if (!state.parent) {
-      validateModifierWithoutParent(state);
-      return;
-    }
+    if (!state.parent) return;
     renderNode(state.parent);
     const modifierTargetState = getNodeState(state.parent);
     if (modifierTargetState.parent && hasLayoutModifier(modifierTargetState.parent)) {

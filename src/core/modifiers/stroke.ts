@@ -3,13 +3,14 @@ import {
   type StyleModifierNode,
   type Styles,
 } from '../../shared/runtime/modifier';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
+import type { NodeProperties } from '../../shared/runtime/node';
+import { mergeProperties } from '../../shared/runtime/node-state';
 import {
   assertAllowedValue,
   assertBoolean,
   assertFiniteNumber,
 } from '../../shared/runtime/validation';
-import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Where a stroke is drawn relative to its GUI parent's edge. */
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
@@ -49,21 +50,15 @@ export function createUIStroke(initial: Partial<UIStrokeProperties> = {}): UIStr
       initial,
     ),
     resolveStrokeStyles,
+    validateStrokeProperties,
   );
 }
 
 function resolveStrokeStyles(properties: Readonly<UIStrokeProperties>): Styles {
-  assertBoolean(properties.Enabled, 'Enabled');
   return properties.Enabled ? { 'box-shadow': resolveStrokeShadow(properties) } : {};
 }
 
 function resolveStrokeShadow(properties: Readonly<UIStrokeProperties>): string {
-  assertAllowedValue(
-    properties.BorderStrokePosition,
-    borderStrokePositions,
-    'BorderStrokePosition',
-  );
-  assertFiniteNumber(properties.Thickness, 'Thickness');
   const thickness = Math.max(0, properties.Thickness);
   const color = color3ToCss(properties.Color, properties.Transparency);
   if (properties.BorderStrokePosition === 'Inner')
@@ -72,4 +67,16 @@ function resolveStrokeShadow(properties: Readonly<UIStrokeProperties>): string {
 
   const halfThickness = thickness / 2;
   return `inset 0px 0px 0px ${halfThickness}px ${color}, 0px 0px 0px ${halfThickness}px ${color}`;
+}
+
+function validateStrokeProperties(properties: Readonly<UIStrokeProperties>): void {
+  assertBoolean(properties.Enabled, 'Enabled');
+  assertAllowedValue(
+    properties.BorderStrokePosition,
+    borderStrokePositions,
+    'BorderStrokePosition',
+  );
+  assertFiniteNumber(properties.Thickness, 'Thickness');
+  assertColor3(properties.Color, 'Color');
+  assertFiniteNumber(properties.Transparency, 'Transparency');
 }

@@ -3,8 +3,9 @@ import {
   type StyleModifierNode,
   type Styles,
 } from '../../shared/runtime/modifier';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
-import { udim, udimToCss, type UDim } from '../values/udim';
+import type { NodeProperties } from '../../shared/runtime/node';
+import { mergeProperties } from '../../shared/runtime/node-state';
+import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
 
 /** Inner padding applied independently on each edge. */
 export type UIPaddingProperties = NodeProperties & {
@@ -36,7 +37,15 @@ export function createUIPadding(initial: Partial<UIPaddingProperties> = {}): UIP
       initial,
     ),
     resolvePadding,
+    validatePaddingProperties,
   );
+}
+
+function validatePaddingProperties(properties: Readonly<UIPaddingProperties>): void {
+  assertUDim(properties.PaddingTop, 'PaddingTop');
+  assertUDim(properties.PaddingRight, 'PaddingRight');
+  assertUDim(properties.PaddingBottom, 'PaddingBottom');
+  assertUDim(properties.PaddingLeft, 'PaddingLeft');
 }
 
 function resolvePadding(properties: Readonly<UIPaddingProperties>): Styles {

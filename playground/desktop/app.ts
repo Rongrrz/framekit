@@ -9,7 +9,7 @@ import { createFooter } from './sections/footer';
 import { createGuide } from './sections/guide';
 import { createHero } from './sections/hero';
 import { createLifecycle } from './sections/lifecycle';
-import { createMotion } from './sections/motion';
+import { createMotionSection } from './sections/motion';
 import { createNavigation } from './sections/navigation';
 import { createPrinciples } from './sections/principles';
 import { createValues } from './sections/values';
@@ -27,7 +27,7 @@ export function createDesktopApp(): fk.ScreenGuiNode {
 
   content.addChild(createPrinciples());
 
-  content.addChild(createMotion());
+  content.addChild(createMotionSection());
 
   content.addChild(createComposer());
 

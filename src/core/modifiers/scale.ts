@@ -3,7 +3,8 @@ import {
   type StyleModifierNode,
   type Styles,
 } from '../../shared/runtime/modifier';
-import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
+import type { NodeProperties } from '../../shared/runtime/node';
+import { mergeProperties } from '../../shared/runtime/node-state';
 import { assertNonNegativeFinite } from '../../shared/runtime/validation';
 
 /** Properties for visual scaling without changing layout size. */
@@ -21,10 +22,14 @@ export function createUIScale(initial: Partial<UIScaleProperties> = {}): UIScale
     'UIScale',
     mergeProperties({ Name: 'UIScale', Scale: 1 }, initial),
     resolveScale,
+    validateScaleProperties,
   );
 }
 
 function resolveScale(properties: Readonly<UIScaleProperties>): Styles {
-  assertNonNegativeFinite(properties.Scale, 'UIScale Scale');
   return { scale: String(properties.Scale), 'transform-origin': 'center' };
+}
+
+function validateScaleProperties(properties: Readonly<UIScaleProperties>): void {
+  assertNonNegativeFinite(properties.Scale, 'UIScale Scale');
 }

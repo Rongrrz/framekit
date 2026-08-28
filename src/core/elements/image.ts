@@ -64,7 +64,6 @@ export function createImageButton(initial: Partial<ImageButtonProperties> = {}):
     { ...createDefaultImageProps(), Name: 'ImageButton', Disabled: false },
     initial,
     (properties) => {
-      assertBoolean(properties.Disabled, 'Disabled');
       element.disabled = properties.Disabled;
       element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
     },
@@ -116,26 +115,34 @@ function createImageNode<Properties extends ImageLabelProperties>(
     initial,
     (properties, changed) => {
       if (changed.has('Image')) {
-        assertString(properties.Image, 'Image');
         setImageSource(image, properties.Image);
       }
       if (changed.has('AltText')) {
-        assertString(properties.AltText, 'AltText');
         image.alt = properties.AltText;
       }
       if (changed.has('ImageTransparency')) {
-        assertFiniteNumber(properties.ImageTransparency, 'ImageTransparency');
         image.style.opacity = String(1 - clamp(properties.ImageTransparency, 0, 1));
       }
       if (changed.has('ScaleType')) {
-        assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
         image.style.objectFit = objectFit[properties.ScaleType];
       }
 
       renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
+    validateImageProperties,
   );
+}
+
+function validateImageProperties(
+  properties: Readonly<ImageLabelProperties | ImageButtonProperties>,
+): void {
+  assertString(properties.Image, 'Image');
+  assertString(properties.AltText, 'AltText');
+  assertFiniteNumber(properties.ImageTransparency, 'ImageTransparency');
+  assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
+  if ('Disabled' in properties) assertBoolean(properties.Disabled, 'Disabled');
+  validateImageSource(properties.Image);
 }
 
 function setImageSource(element: HTMLImageElement, source: string): void {
@@ -143,13 +150,16 @@ function setImageSource(element: HTMLImageElement, source: string): void {
     element.removeAttribute('src');
     return;
   }
+  element.src = source;
+}
+
+function validateImageSource(source: string): void {
+  if (!source) return;
   const url = new URL(source, document.baseURI);
   const allowedDataImage = url.protocol === 'data:' && /^data:image\//i.test(source);
   if (!allowedImageProtocols.has(url.protocol) && !allowedDataImage) {
     throw new TypeError(`Unsupported image URL protocol "${url.protocol}".`);
   }
-
-  element.src = source;
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {

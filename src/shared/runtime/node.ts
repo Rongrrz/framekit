@@ -1,6 +1,5 @@
 import { destroy, isDestroyed, onDestroy } from './node-lifecycle';
-import { setNodeProperties } from './node-properties';
-import type { Node, NodeProperties } from './node-state';
+import { getNodeProperty, setNodeProperties } from './node-properties';
 import type { Unsubscribe } from './signal';
 import {
   append,
@@ -16,6 +15,25 @@ import {
   toTreeString,
 } from './tree';
 import { watchValue, type Value } from './value';
+
+/** Properties shared by every FrameKit node. */
+export type NodeProperties = {
+  /** The editable hierarchy name used by lookup and debug paths. */
+  Name: string;
+};
+
+declare const nodeProperties: unique symbol;
+const propertyTablesByMethodTable = new WeakMap<object, Map<string, object>>();
+
+/** A persistent typed object in the FrameKit hierarchy. */
+export type Node<Properties extends NodeProperties = NodeProperties> = {
+  readonly [nodeProperties]: Properties;
+  /** The concrete FrameKit node type, such as `Frame` or `TextButton`. */
+  readonly ClassName: string;
+  /** This node's hierarchy parent. Assigning it reparents or detaches the node. */
+  Parent: Node | undefined;
+} & Properties &
+  NodeMethods<Properties>;
 
 /** Operations shared by every FrameKit node. */
 export type NodeMethods<Properties extends NodeProperties = NodeProperties> = {
@@ -46,6 +64,60 @@ export type NodeMethods<Properties extends NodeProperties = NodeProperties> = {
   /** Watches a value immediately and until this node is destroyed. */
   watch<T>(value: Value<T>, listener: (value: T) => void): Unsubscribe;
 };
+
+/** Creates a node handle with direct property access. */
+export function createNodeHandle<Properties extends NodeProperties>(
+  initialProperties: Readonly<Properties>,
+  methods: object = nodeMethods,
+  fields: object = {},
+): Node<Properties> {
+  const propertyTable = createNodeHandlePropertyTable(initialProperties, methods);
+  const handle = Object.assign(Object.create(propertyTable) as object, fields);
+  return Object.freeze(handle) as Node<Properties>;
+}
+
+function createNodeHandlePropertyTable<Properties extends NodeProperties>(
+  properties: Readonly<Properties>,
+  methodTable: object,
+): object {
+  let tablesByShape = propertyTablesByMethodTable.get(methodTable);
+  if (!tablesByShape) {
+    tablesByShape = new Map();
+    propertyTablesByMethodTable.set(methodTable, tablesByShape);
+  }
+
+  const propertyNames = Object.keys(properties).sort();
+  const shape = propertyNames.join('\0');
+  const existingTable = tablesByShape.get(shape);
+  if (existingTable) return existingTable;
+
+  const propertyTable = Object.create(methodTable) as object;
+  for (const propertyName of propertyNames) {
+    Object.defineProperty(propertyTable, propertyName, {
+      enumerable: true,
+      get(this: Node<Properties>) {
+        return getNodeProperty(this, propertyName as keyof Properties);
+      },
+      set(this: Node<Properties>, value: Properties[keyof Properties]) {
+        setNodeProperties(this, { [propertyName]: value } as Partial<Properties>);
+      },
+    });
+  }
+
+  Object.freeze(propertyTable);
+  tablesByShape.set(shape, propertyTable);
+  return propertyTable;
+}
+
+/** Creates a frozen method table that inherits another capability table. */
+export function extendMethodTable<Base extends object, Extension extends object>(
+  base: Base,
+  extension: Extension,
+): Readonly<Base & Extension> {
+  return Object.freeze(Object.assign(Object.create(base) as object, extension)) as Readonly<
+    Base & Extension
+  >;
+}
 
 /** Shared prototype for node handles, keeping methods out of each instance allocation. */
 const methodTable = {

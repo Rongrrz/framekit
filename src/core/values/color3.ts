@@ -29,19 +29,17 @@ export function color3FromHex(hex: string): Color3 {
 
 /** Converts a color and Roblox-style transparency to a CSS color string. */
 export function color3ToCss(value: Color3, transparency = 0): string {
-  assertColor3(value);
-  assertFiniteNumber(transparency, 'Color transparency');
   const alpha = 1 - clamp(transparency, 0, 1);
   return `rgb(${value.R} ${value.G} ${value.B} / ${alpha})`;
 }
 
-function assertColor3(value: Color3): void {
+export function assertColor3(value: Color3, name = 'Color3'): void {
   if (typeof value !== 'object' || value === null) {
-    throw new TypeError('Color3 must contain valid R, G, and B channels.');
+    throw new TypeError(`${name} must contain valid R, G, and B channels.`);
   }
   for (const channel of [value.R, value.G, value.B]) {
     if (!Number.isInteger(channel) || channel < 0 || channel > 255) {
-      throw new TypeError('Color3 channels must be integers from 0 to 255.');
+      throw new TypeError(`${name} channels must be integers from 0 to 255.`);
     }
   }
 }

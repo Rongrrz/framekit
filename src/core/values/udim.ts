@@ -40,16 +40,27 @@ export function udim2FromOffset(xOffset: number, yOffset: number): UDim2 {
 
 /** Converts a UDim to a safe CSS length. */
 export function udimToCss(value: UDim): string {
-  if (typeof value !== 'object' || value === null) {
-    throw new TypeError('UDim must contain finite Scale and Offset values.');
-  }
-  assertFinite(value.Scale, 'scale');
-  assertFinite(value.Offset, 'offset');
   const percent = value.Scale * 100;
   if (value.Offset === 0) return `${percent}%`;
   if (value.Scale === 0) return `${value.Offset}px`;
   const operator = value.Offset < 0 ? '-' : '+';
   return `calc(${percent}% ${operator} ${Math.abs(value.Offset)}px)`;
+}
+
+export function assertUDim(value: UDim, name = 'UDim'): void {
+  if (typeof value !== 'object' || value === null) {
+    throw new TypeError(`${name} must contain finite Scale and Offset values.`);
+  }
+  assertFinite(value.Scale, 'scale');
+  assertFinite(value.Offset, 'offset');
+}
+
+export function assertUDim2(value: UDim2, name = 'UDim2'): void {
+  if (typeof value !== 'object' || value === null) {
+    throw new TypeError(`${name} must contain X and Y UDim values.`);
+  }
+  assertUDim(value.X, `${name}.X`);
+  assertUDim(value.Y, `${name}.Y`);
 }
 
 function assertFinite(value: number, name: string): void {

@@ -5,7 +5,7 @@ import { setupAnimationClock } from '../shared/animation-clock';
 
 const { advance, settle } = setupAnimationClock();
 
-describe('motion springs', () => {
+describe('springs', () => {
   it('retains a spring per node through the top-level API', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
     const settings = { tension: 170, friction: 5 } as const;
@@ -50,21 +50,21 @@ describe('motion springs', () => {
       Size: fk.udim2FromOffset(100, 100),
       BackgroundColor3: fk.color3FromRGB(0, 0, 0),
     });
-    const motion = fka.createMotion(frame);
+    const controller = fka.spring(frame);
     const completed = vi.fn();
 
-    expect(motion.completed).not.toHaveProperty('emit');
-    expect(motion.completed).not.toHaveProperty('clear');
+    expect(controller.completed).not.toHaveProperty('emit');
+    expect(controller.completed).not.toHaveProperty('clear');
 
-    motion.completed.subscribe(completed);
-    motion.spring({
+    controller.completed.subscribe(completed);
+    fka.spring(frame, {
       Position: fk.udim2(0.5, 20, 0.25, -10),
       Size: fk.udim2FromOffset(240, 160),
       BackgroundColor3: fk.color3FromRGB(120, 80, 200),
       BackgroundTransparency: 0.6,
     });
 
-    expect(motion.isAnimating()).toBe(true);
+    expect(controller.isAnimating()).toBe(true);
 
     settle();
 
@@ -74,20 +74,20 @@ describe('motion springs', () => {
       BackgroundColor3: fk.color3FromRGB(120, 80, 200),
       BackgroundTransparency: 0.6,
     });
-    expect(motion.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(false);
     expect(completed).toHaveBeenCalledOnce();
   });
 
   it('preserves velocity when retargeted', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const motion = fka.createMotion(frame, { tension: 170, friction: 5 });
+    const settings = { tension: 170, friction: 5 } as const;
 
-    motion.spring({ BackgroundTransparency: 1 });
+    fka.spring(frame, { BackgroundTransparency: 1 }, settings);
     for (let index = 0; index < 5; index += 1) advance();
 
     const beforeRetarget = frame.BackgroundTransparency;
 
-    motion.spring({ BackgroundTransparency: 0 });
+    fka.spring(frame, { BackgroundTransparency: 0 }, settings);
     advance();
 
     expect(frame.BackgroundTransparency).toBeGreaterThan(beforeRetarget);
@@ -99,18 +99,18 @@ describe('motion springs', () => {
 
   it('arbitrates property ownership with tweens in both directions', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const motion = fka.createMotion(frame);
+    const controller = fka.spring(frame);
 
-    motion.spring({ BackgroundTransparency: 1 });
+    fka.spring(frame, { BackgroundTransparency: 1 });
     advance();
 
-    const tween = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 0.5 });
+    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
 
     tween.play();
 
-    expect(motion.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(false);
 
-    motion.spring({ BackgroundTransparency: 0.25 });
+    fka.spring(frame, { BackgroundTransparency: 0.25 });
 
     expect(tween.playbackState()).toBe('Cancelled');
 
@@ -121,20 +121,20 @@ describe('motion springs', () => {
 
   it('lets direct property changes take control from active animations', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const motion = fka.createMotion(frame);
+    const controller = fka.spring(frame);
 
-    motion.spring({ Rotation: 90 });
+    fka.spring(frame, { Rotation: 90 });
     advance();
 
     frame.Rotation = 12;
 
-    expect(motion.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(false);
 
     advance();
 
     expect(frame.Rotation).toBe(12);
 
-    const tween = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 1 });
+    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
 
     tween.play();
     advance();
@@ -146,12 +146,12 @@ describe('motion springs', () => {
 
   it('keeps an animation when a rejected assignment never takes effect', () => {
     const scale = fk.createUIScale();
-    const motion = fka.createMotion(scale);
+    const controller = fka.spring(scale);
 
-    motion.spring({ Scale: 2 });
+    fka.spring(scale, { Scale: 2 });
 
     expect(() => (scale.Scale = -1)).toThrow(/non-negative finite/);
-    expect(motion.isAnimating()).toBe(true);
+    expect(controller.isAnimating()).toBe(true);
 
     settle();
 
@@ -160,34 +160,32 @@ describe('motion springs', () => {
 
   it('stops individual properties and releases everything on destruction', () => {
     const frame = fk.createFrame();
-    const motion = fka.createMotion(frame);
+    const controller = fka.spring(frame);
 
-    motion.spring({
+    fka.spring(frame, {
       BackgroundTransparency: 1,
       Position: fk.udim2FromOffset(100, 100),
     });
-    motion.stop('Position');
+    controller.stop('Position');
 
-    expect(motion.isAnimating()).toBe(true);
+    expect(controller.isAnimating()).toBe(true);
 
     frame.destroy();
 
-    expect(motion.isAnimating()).toBe(false);
-    expect(() => motion.spring({ BackgroundTransparency: 0 })).toThrow(/destroyed/);
+    expect(controller.isAnimating()).toBe(false);
+    expect(() => fka.spring(frame, { BackgroundTransparency: 0 })).toThrow(/destroyed/);
   });
 
   it('validates options and spring goals', () => {
     const frame = fk.createFrame();
 
-    expect(() => fka.createMotion(frame, { tension: 0 })).toThrow(/tension/);
-    expect(() => fka.createMotion(frame, { friction: Number.NaN })).toThrow(/friction/);
+    expect(() => fka.spring(frame, { Rotation: 1 }, { tension: 0 })).toThrow(/tension/);
+    expect(() => fka.spring(frame, { Rotation: 1 }, { friction: Number.NaN })).toThrow(/friction/);
     expect(() => fka.spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
     expect(() => fka.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
 
-    const motion = fka.createMotion(frame);
-
-    expect(() => motion.spring({})).toThrow(/goal property/);
-    expect(() => motion.spring({ BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
+    expect(() => fka.spring(frame, {})).toThrow(/goal property/);
+    expect(() => fka.spring(frame, { BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
 
   it('releases property ownership when a spring update cannot render', () => {
@@ -196,33 +194,30 @@ describe('motion springs', () => {
 
     frame.addChild(scale);
 
-    const motion = fka.createMotion(scale, { tension: 170, friction: 5 });
+    const controller = fka.spring(scale);
 
-    motion.spring({ Scale: -1 });
+    fka.spring(scale, { Scale: -1 }, { tension: 170, friction: 5 });
 
     expect(() => settle()).toThrow(/non-negative finite/);
-    expect(motion.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(false);
 
-    const replacement = fka.createTween(scale, fka.tweenInfo(0), { Scale: 0.5 });
+    const replacement = fka.createTween(scale, { Duration: 0 }, { Scale: 0.5 });
 
     replacement.play();
 
     expect(scale.Scale).toBe(0.5);
   });
 
-  it('springs shadow and glow properties through the same motion API', () => {
+  it('springs shadow properties through the same API', () => {
     const frame = fk.createFrame();
     const shadow = fk.createUIShadow();
-    const glow = fk.createUIGlow();
 
     frame.addChild(shadow);
-    frame.addChild(glow);
-    fka.createMotion(shadow).spring({
+    fka.spring(shadow, {
       Offset: fk.vector2(12, 20),
       BlurRadius: 28,
       Transparency: 0.25,
     });
-    fka.createMotion(glow).spring({ Radius: 32, Color: fk.color3FromRGB(120, 90, 255) });
     settle();
 
     expect(shadow).toMatchObject({
@@ -230,11 +225,6 @@ describe('motion springs', () => {
       BlurRadius: 28,
       Transparency: 0.25,
     });
-    expect(glow).toMatchObject({
-      Radius: 32,
-      Color: fk.color3FromRGB(120, 90, 255),
-    });
     expect(frame.element.style.boxShadow).toContain('12px 20px 28px 0px');
-    expect(frame.element.style.filter).toContain('drop-shadow(0px 0px 32px');
   });
 });

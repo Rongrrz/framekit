@@ -1,12 +1,7 @@
 import type { ModifierNode } from './modifier';
+import type { Node } from './node';
 import { assertNodeActive } from './node-lifecycle';
-import {
-  getChildren,
-  getNodeState,
-  isModifierState,
-  type Node,
-  type NodeState,
-} from './node-state';
+import { getChildren, getNodeState, isModifierState, type NodeState } from './node-state';
 import { hasLayoutModifier, isGuiNode, renderNode } from './render';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */

@@ -59,9 +59,6 @@ export function createScrollingFrame(
     },
     initial,
     (current, changed) => {
-      assertAllowedValue(current.ScrollingDirection, scrollingDirections, 'ScrollingDirection');
-      assertVector2(current.CanvasPosition, 'CanvasPosition');
-
       const scrollX = current.ScrollingDirection === 'X' || current.ScrollingDirection === 'XY';
       const scrollY = current.ScrollingDirection === 'Y' || current.ScrollingDirection === 'XY';
       element.style.overflowX = scrollX ? 'auto' : 'hidden';
@@ -73,6 +70,8 @@ export function createScrollingFrame(
         lastRenderedCanvasPosition = readCanvasPosition(element);
       }
     },
+    undefined,
+    validateScrollingFrameProperties,
   ) as ScrollingFrameNode;
 
   const syncCanvasPositionFromBrowser = (): void => {
@@ -107,6 +106,11 @@ export function createScrollingFrame(
 
   addCleanup(node, () => listenerController.abort());
   return node;
+}
+
+function validateScrollingFrameProperties(properties: Readonly<ScrollingFrameProperties>): void {
+  assertAllowedValue(properties.ScrollingDirection, scrollingDirections, 'ScrollingDirection');
+  assertVector2(properties.CanvasPosition, 'CanvasPosition');
 }
 
 function readCanvasPosition(element: HTMLElement): Vector2 {

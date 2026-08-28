@@ -43,7 +43,7 @@ const goals = {
   },
 } as const;
 
-export function createMotion(): fk.FrameNode {
+export function createMotionSection(): fk.FrameNode {
   const section = pageSection('Motion', top, height, colors.ink);
 
   const content = sectionContent();
@@ -259,8 +259,8 @@ export function createMotion(): fk.FrameNode {
 
   lab.addChild(stage);
 
-  const cardMotion = fka.createMotion(demoCard);
-  cardMotion.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
+  const springController = fka.spring(demoCard);
+  springController.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
   demoCard.watch(mode, (value) => {
     const goal = goals[value];
     status.setProperties({
@@ -272,7 +272,7 @@ export function createMotion(): fk.FrameNode {
     cardStatus.setProperties({
       Text: `${value.toUpperCase()}  •  Position  •  Rotation  •  Scale`,
     });
-    cardMotion.spring({
+    fka.spring(demoCard, {
       Position: goal.Position,
       Rotation: goal.Rotation,
       BackgroundColor3: goal.BackgroundColor3,

@@ -55,16 +55,16 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const springTarget = createScrollingFrame();
-    const motion = fka.createMotion(springTarget);
+    const controller = fka.spring(springTarget);
 
-    motion.spring({ CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
     springTarget.element.dispatchEvent(new Event('scroll'));
 
-    expect(motion.isAnimating()).toBe(true);
+    expect(controller.isAnimating()).toBe(true);
 
     springTarget.element.dispatchEvent(new WheelEvent('wheel', { deltaY: -10 }));
 
-    expect(motion.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(false);
 
     springTarget.element.scrollTop = 40;
     springTarget.element.dispatchEvent(new Event('scroll'));
@@ -72,9 +72,13 @@ describe('scrolling frames', () => {
     expect(springTarget.CanvasPosition).toEqual(fk.vector2(0, 40));
 
     const tweenTarget = createScrollingFrame();
-    const tween = fka.createTween(tweenTarget, fka.tweenInfo(1), {
-      CanvasPosition: fk.vector2(200, 0),
-    });
+    const tween = fka.createTween(
+      tweenTarget,
+      { Duration: 1 },
+      {
+        CanvasPosition: fk.vector2(200, 0),
+      },
+    );
 
     tween.play();
     tweenTarget.element.scrollLeft = 30;
@@ -96,13 +100,13 @@ describe('scrolling frames', () => {
 
     scrolling.element.append(child);
 
-    const motion = fka.createMotion(scrolling);
+    const controller = fka.spring(scrolling);
 
-    motion.spring({ CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
 
     expect(scrolling.element.tabIndex).toBe(0);
-    expect(motion.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(false);
   });
 
   it('does not cancel an animation when the browser rounds its own scroll write', () => {
@@ -123,16 +127,16 @@ describe('scrolling frames', () => {
       scrolling.element.scrollTop = Math.round(top);
     });
 
-    const motion = fka.createMotion(scrolling);
+    const controller = fka.spring(scrolling);
 
-    motion.spring({ CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     frame?.(1000 / 60);
 
     expect(scrolling.CanvasPosition.Y).not.toBe(scrolling.element.scrollTop);
 
     scrolling.element.dispatchEvent(new Event('scroll'));
 
-    expect(motion.isAnimating()).toBe(true);
+    expect(controller.isAnimating()).toBe(true);
   });
 
   it('treats a CanvasPosition assignment as an explicit animation interruption', () => {
@@ -143,12 +147,12 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const scrolling = createScrollingFrame();
-    const motion = fka.createMotion(scrolling);
+    const controller = fka.spring(scrolling);
 
-    motion.spring({ CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     scrolling.CanvasPosition = fk.vector2(0, 80);
 
-    expect(motion.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(false);
     expect(scrolling.CanvasPosition).toEqual(fk.vector2(0, 80));
   });
 });

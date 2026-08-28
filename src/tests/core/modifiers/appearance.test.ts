@@ -10,7 +10,6 @@ const {
   createFrame,
   createTextLabel,
   createUICorner,
-  createUIGlow,
   createUIScale,
   createUIShadow,
   createUIStroke,
@@ -130,7 +129,7 @@ describe('UI modifiers', () => {
     expect(second.element.style.borderRadius).toBe('10px');
   });
 
-  it('composes shadows, glows, and strokes without overwriting siblings', () => {
+  it('composes shadows and strokes without overwriting siblings', () => {
     const frame = createFrame();
     const stroke = createUIStroke({ Color: color3FromRGB(255, 255, 255), Thickness: 2 });
     const shadow = createUIShadow({
@@ -138,40 +137,29 @@ describe('UI modifiers', () => {
       Offset: fk.vector2(4, 8),
       BlurRadius: 12,
     });
-    const glow = createUIGlow({ Color: color3FromRGB(100, 120, 255), Radius: 20 });
 
     frame.addChild(stroke);
     frame.addChild(shadow);
-    frame.addChild(glow);
 
     expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
     expect(frame.element.style.boxShadow).toContain('4px 8px 12px 0px');
-    expect(frame.element.style.filter).toContain('drop-shadow(0px 0px 7px');
-    expect(frame.element.style.filter).toContain('drop-shadow(0px 0px 20px');
 
     shadow.setProperties({ Offset: fk.vector2(-2, 6), BlurRadius: 18 });
 
     expect(frame.element.style.boxShadow).toContain('-2px 6px 18px 0px');
 
-    glow.removeFromParent();
-
-    expect(frame.element.style.filter).toBe('');
     expect(frame.element.style.boxShadow).toContain('-2px 6px 18px 0px');
     expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
   });
 
-  it('validates shadow and glow geometry', () => {
+  it('validates shadow geometry', () => {
     const frame = createFrame();
     const shadow = createUIShadow();
-    const glow = createUIGlow();
 
     frame.addChild(shadow);
-    frame.addChild(glow);
 
     expect(() => shadow.setProperties({ BlurRadius: -1 })).toThrow(/BlurRadius/);
-    expect(() => glow.setProperties({ Radius: Number.NaN })).toThrow(/Radius/);
     expect(shadow.BlurRadius).toBe(16);
-    expect(glow.Radius).toBe(18);
   });
 
   it('rolls back a failed modifier append without corrupting its target', () => {

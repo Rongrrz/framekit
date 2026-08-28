@@ -1,14 +1,18 @@
 import { guiEventMethods, type GuiEventMethodTable, type GuiEventMethods } from './gui-events';
 import type { LayoutChild, LayoutNodeState, ModifierNode, Styles } from './modifier';
-import { createNodeHandle, extendMethodTable } from './node-handle';
-import { nodeMethods } from './node-methods';
+import {
+  createNodeHandle,
+  extendMethodTable,
+  nodeMethods,
+  type Node,
+  type NodeProperties,
+} from './node';
 import {
   createBaseState,
   getNodeState,
   registerNode,
   type BaseNodeState,
-  type Node,
-  type NodeProperties,
+  type PropertyValidator,
 } from './node-state';
 
 /** A FrameKit node backed by a browser HTMLElement. */
@@ -39,6 +43,7 @@ export function createGuiNode<Properties extends NodeProperties>(
   properties: Properties,
   element: HTMLElement,
   renderProperties?: PropertyRenderer<Properties>,
+  validateProperties?: PropertyValidator<Properties>,
   eventMethods?: GuiEventMethodTable,
 ): GuiNode<Properties> {
   const node = createGuiNodeHandle<Properties>(
@@ -47,7 +52,7 @@ export function createGuiNode<Properties extends NodeProperties>(
     eventMethods ?? guiEventMethods,
   );
   registerNode(node, {
-    ...createBaseState(className, properties),
+    ...createBaseState(className, properties, validateProperties),
     kind: 'gui',
     children: [],
     renderProperties,

@@ -1,6 +1,7 @@
 import { connectHoverEvents } from '../shared/dom/hover-events';
 import type { GuiEventMethodTable } from '../shared/runtime/gui-events';
-import { mergeProperties, type NodeProperties } from '../shared/runtime/node-state';
+import type { NodeProperties } from '../shared/runtime/node';
+import { mergeProperties, type PropertyValidator } from '../shared/runtime/node-state';
 import { createGuiNode, type GuiNode, type PropertyRenderer } from '../shared/runtime/render';
 import {
   assertAllowedValue,
@@ -8,8 +9,8 @@ import {
   assertFiniteNumber,
   assertInteger,
 } from '../shared/runtime/validation';
-import { color3FromRGB, color3ToCss, type Color3 } from './values/color3';
-import { udim2FromOffset, udimToCss, type UDim2 } from './values/udim';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from './values/color3';
+import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from './values/udim';
 import { assertVector2, vector2, type Vector2 } from './values/vector2';
 
 /** Axes whose size should follow the rendered content. */
@@ -73,6 +74,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>(
   initial: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
+  validateAdditionalProperties?: PropertyValidator<Properties>,
 ): GuiObjectNode<Properties> {
   element.dataset.framekit = className;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
@@ -85,6 +87,10 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>(
       renderGuiObject(element, properties);
       renderAdditionalProperties?.(properties, changed);
     },
+    (properties) => {
+      validateGuiObjectProperties(properties);
+      validateAdditionalProperties?.(properties);
+    },
     eventMethods,
   );
 
@@ -93,13 +99,6 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>(
 }
 
 function renderGuiObject(element: HTMLElement, properties: Readonly<GuiObjectProperties>): void {
-  assertAllowedValue(properties.AutomaticSize, automaticSizes, 'AutomaticSize');
-  assertVector2(properties.AnchorPoint, 'AnchorPoint');
-  assertFiniteNumber(properties.Rotation, 'Rotation');
-  assertBoolean(properties.Visible, 'Visible');
-  assertInteger(properties.ZIndex, 'ZIndex');
-  assertBoolean(properties.ClipsDescendants, 'ClipsDescendants');
-
   element.style.position = 'absolute';
   element.style.width =
     properties.AutomaticSize === 'X' || properties.AutomaticSize === 'XY'
@@ -120,4 +119,18 @@ function renderGuiObject(element: HTMLElement, properties: Readonly<GuiObjectPro
   );
   element.style.zIndex = String(properties.ZIndex);
   element.style.overflow = properties.ClipsDescendants ? 'hidden' : 'visible';
+}
+
+function validateGuiObjectProperties(properties: Readonly<GuiObjectProperties>): void {
+  assertAllowedValue(properties.AutomaticSize, automaticSizes, 'AutomaticSize');
+  assertUDim2(properties.Size, 'Size');
+  assertUDim2(properties.Position, 'Position');
+  assertVector2(properties.AnchorPoint, 'AnchorPoint');
+  assertFiniteNumber(properties.Rotation, 'Rotation');
+  assertBoolean(properties.Visible, 'Visible');
+  assertColor3(properties.BackgroundColor3, 'BackgroundColor3');
+  assertFiniteNumber(properties.BackgroundTransparency, 'BackgroundTransparency');
+  assertInteger(properties.ZIndex, 'ZIndex');
+  assertInteger(properties.LayoutOrder, 'LayoutOrder');
+  assertBoolean(properties.ClipsDescendants, 'ClipsDescendants');
 }

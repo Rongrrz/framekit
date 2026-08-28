@@ -1,4 +1,4 @@
-import { color3FromRGB, color3ToCss, type Color3 } from '../../core/values/color3';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../../core/values/color3';
 import {
   assertAllowedValue,
   assertBoolean,
@@ -67,20 +67,24 @@ export function renderTextStyle(
   element: HTMLElement,
   properties: Readonly<TextStyleProperties>,
 ): void {
-  assertAllowedValue(properties.TextXAlignment, horizontalAlignments, 'TextXAlignment');
-  assertAllowedValue(properties.TextYAlignment, verticalAlignments, 'TextYAlignment');
-  assertString(properties.Text, 'Text');
-  assertNonNegativeFinite(properties.TextSize, 'TextSize');
-  assertBoolean(properties.TextWrapped, 'TextWrapped');
-  assertString(properties.FontFamily, 'FontFamily');
-  if (typeof properties.FontWeight !== 'string') {
-    assertNonNegativeFinite(properties.FontWeight, 'FontWeight');
-  }
-
   element.style.color = color3ToCss(properties.TextColor3, properties.TextTransparency);
   element.style.fontSize = `${properties.TextSize}px`;
   element.style.whiteSpace = properties.TextWrapped ? 'pre-wrap' : 'pre';
   element.style.textAlign = properties.TextXAlignment.toLowerCase();
   element.style.fontFamily = properties.FontFamily;
   element.style.fontWeight = String(properties.FontWeight);
+}
+
+export function validateTextStyleProperties(properties: Readonly<TextStyleProperties>): void {
+  assertAllowedValue(properties.TextXAlignment, horizontalAlignments, 'TextXAlignment');
+  assertAllowedValue(properties.TextYAlignment, verticalAlignments, 'TextYAlignment');
+  assertString(properties.Text, 'Text');
+  assertColor3(properties.TextColor3, 'TextColor3');
+  assertNonNegativeFinite(properties.TextTransparency, 'TextTransparency');
+  assertNonNegativeFinite(properties.TextSize, 'TextSize');
+  assertBoolean(properties.TextWrapped, 'TextWrapped');
+  assertString(properties.FontFamily, 'FontFamily');
+  if (typeof properties.FontWeight !== 'string') {
+    assertNonNegativeFinite(properties.FontWeight, 'FontWeight');
+  }
 }
