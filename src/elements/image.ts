@@ -9,23 +9,35 @@ import {
 import { initializeButtonElement, type ButtonNode, type ButtonProperties } from './button';
 import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
 
+/** How an image is fitted within its node bounds. */
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 
+/** Properties shared by image labels and image buttons. */
 export type ImageLabelProperties = FrameProperties & {
+  /** Image URL. Supports HTTP(S), blob, and image data URLs. */
   Image: string;
+  /** Image transparency from 0 (opaque) to 1 (invisible). */
   ImageTransparency: number;
+  /** How the image fits within this node's bounds. */
   ScaleType: ScaleType;
+  /** Accessible description passed to the underlying image. */
   AltText: string;
 };
 
+/** A non-interactive image node. */
 export type ImageLabelNode = GuiNode<ImageLabelProperties>;
+
+/** Properties for an interactive image button. */
 export type ImageButtonProperties = ImageLabelProperties & ButtonProperties;
+
+/** An image node with typed button events. */
 export type ImageButtonNode = ButtonNode<ImageButtonProperties>;
 
 const objectFit = { Stretch: 'fill', Fit: 'contain', Crop: 'cover' } as const;
 const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
+/** Creates a non-interactive image node. */
 export function createImageLabel(initial: Partial<ImageLabelProperties> = {}): ImageLabelNode {
   return createImageNode(
     'ImageLabel',
@@ -35,6 +47,7 @@ export function createImageLabel(initial: Partial<ImageLabelProperties> = {}): I
   );
 }
 
+/** Creates an image node with button events. */
 export function createImageButton(initial: Partial<ImageButtonProperties> = {}): ImageButtonNode {
   const element = document.createElement('button');
   const node = createImageNode(
@@ -49,6 +62,7 @@ export function createImageButton(initial: Partial<ImageButtonProperties> = {}):
     },
     buttonEventMethods,
   ) as ImageButtonNode;
+
   initializeButtonElement(node, element);
   return node;
 }
@@ -109,6 +123,7 @@ function createImageNode<Properties extends ImageLabelProperties>(
         assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
         image.style.objectFit = objectFit[properties.ScaleType];
       }
+
       renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
@@ -125,6 +140,7 @@ function setImageSource(element: HTMLImageElement, source: string): void {
   if (!allowedImageProtocols.has(url.protocol) && !allowedDataImage) {
     throw new TypeError(`Unsupported image URL protocol "${url.protocol}".`);
   }
+
   element.src = source;
 }
 

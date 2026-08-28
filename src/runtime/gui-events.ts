@@ -1,21 +1,33 @@
 import type { Node } from './node-state';
 import { subscribeToNodeEvent, type Unsubscribe } from './signal';
 
+/** Mouse events available on every DOM-backed GUI node. */
 export type GuiEventMethods = {
+  /** Subscribes to pointer entry and returns an unsubscribe function. */
   onMouseEnter(listener: (event: MouseEvent) => void): Unsubscribe;
+  /** Subscribes to pointer exit and returns an unsubscribe function. */
   onMouseLeave(listener: (event: MouseEvent) => void): Unsubscribe;
 };
 
+/** Mouse-button events available on button nodes. */
 export type ButtonEventMethods = {
+  /** Subscribes to browser click activation. */
   onClick(listener: (event: MouseEvent) => void): Unsubscribe;
+  /** Subscribes when the primary mouse button is pressed. */
   onPrimaryButtonDown(listener: (event: MouseEvent) => void): Unsubscribe;
+  /** Subscribes when the primary mouse button is released. */
   onPrimaryButtonUp(listener: (event: MouseEvent) => void): Unsubscribe;
+  /** Subscribes to a completed secondary-button click. */
   onSecondaryClick(listener: (event: MouseEvent) => void): Unsubscribe;
+  /** Subscribes when the secondary mouse button is pressed. */
   onSecondaryButtonDown(listener: (event: MouseEvent) => void): Unsubscribe;
+  /** Subscribes when the secondary mouse button is released. */
   onSecondaryButtonUp(listener: (event: MouseEvent) => void): Unsubscribe;
 };
 
+/** Text editing events available on TextBox nodes. */
 export type TextBoxEventMethods = {
+  /** Subscribes to user edits after Text has been synchronized. */
   onTextChanged(listener: (text: string, event: InputEvent) => void): Unsubscribe;
 };
 

@@ -11,9 +11,10 @@ import {
   type NodeProperties,
 } from './node-state';
 
-/** A node backed by an HTML element. */
+/** A FrameKit node backed by a browser HTMLElement. */
 export type GuiNode<Properties extends NodeProperties = NodeProperties> = Node<Properties> &
   GuiEventMethods & {
+    /** The low-level DOM escape hatch for browser integrations. */
     readonly element: HTMLElement;
   };
 

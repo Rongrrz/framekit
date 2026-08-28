@@ -6,11 +6,18 @@ import { assertAllowedValue } from '../runtime/validation';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
 
+/** Axes on which a scrolling frame accepts native scrolling. */
 export type ScrollingDirection = 'X' | 'Y' | 'XY';
+
+/** Frame properties plus controlled scroll position and direction. */
 export type ScrollingFrameProperties = FrameProperties & {
+  /** Axes that accept native scrolling. */
   ScrollingDirection: ScrollingDirection;
+  /** Current scroll offset in pixels. Assigning it scrolls immediately. */
   CanvasPosition: Vector2;
 };
+
+/** A native scrolling container synchronized through CanvasPosition. */
 export type ScrollingFrameNode = GuiNode<ScrollingFrameProperties>;
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
@@ -26,6 +33,8 @@ const keyboardScrollKeys = new Set([
   ' ',
 ]);
 const canvasPositionProperty = ['CanvasPosition'] as const;
+
+/** Creates a native scrolling container with an animatable CanvasPosition. */
 export function createScrollingFrame(
   initial: Partial<ScrollingFrameProperties> = {},
 ): ScrollingFrameNode {
@@ -48,6 +57,7 @@ export function createScrollingFrame(
     (current, changed) => {
       assertAllowedValue(current.ScrollingDirection, scrollingDirections, 'ScrollingDirection');
       assertVector2(current.CanvasPosition, 'CanvasPosition');
+
       const scrollX = current.ScrollingDirection === 'X' || current.ScrollingDirection === 'XY';
       const scrollY = current.ScrollingDirection === 'Y' || current.ScrollingDirection === 'XY';
       element.style.overflowX = scrollX ? 'auto' : 'hidden';
@@ -72,12 +82,15 @@ export function createScrollingFrame(
     cancelAnimationProperties(node, canvasPositionProperty);
     applyPropertyPatch(node, { CanvasPosition: browserPosition });
   };
+
   const stopCanvasPositionAnimation = (): void => {
     cancelAnimationProperties(node, canvasPositionProperty);
   };
+
   const stopAnimationForScrollKey = (event: KeyboardEvent): void => {
     if (keyboardScrollKeys.has(event.key)) stopCanvasPositionAnimation();
   };
+
   const listenerController = new AbortController();
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
   element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
@@ -87,6 +100,7 @@ export function createScrollingFrame(
   element.addEventListener('keydown', stopAnimationForScrollKey, {
     signal: listenerController.signal,
   });
+
   addCleanup(node, () => listenerController.abort());
   return node;
 }

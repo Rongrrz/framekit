@@ -6,18 +6,31 @@ import {
 } from '../runtime/validation';
 import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
+/** Horizontal alignment of text within its node. */
 export type TextXAlignment = 'Left' | 'Center' | 'Right';
+
+/** Vertical alignment of text within its node. */
 export type TextYAlignment = 'Top' | 'Center' | 'Bottom';
 
+/** Typography properties shared by text-capable nodes. */
 export type TextStyleProperties = {
+  /** Displayed text. */
   Text: string;
+  /** Text color before transparency is applied. */
   TextColor3: Color3;
+  /** Text transparency from 0 (opaque) to 1 (invisible). */
   TextTransparency: number;
+  /** Font size in pixels. */
   TextSize: number;
+  /** Whether text wraps within its bounds. */
   TextWrapped: boolean;
+  /** Horizontal alignment within the node. */
   TextXAlignment: TextXAlignment;
+  /** Vertical alignment within the node. */
   TextYAlignment: TextYAlignment;
+  /** CSS font-family value. */
   FontFamily: string;
+  /** CSS font-weight name or number. */
   FontWeight: string | number;
 };
 
@@ -63,6 +76,7 @@ export function renderTextStyle(
   if (typeof properties.FontWeight !== 'string') {
     assertNonNegativeFinite(properties.FontWeight, 'FontWeight');
   }
+
   element.style.color = color3ToCss(properties.TextColor3, properties.TextTransparency);
   element.style.fontSize = `${properties.TextSize}px`;
   element.style.whiteSpace = properties.TextWrapped ? 'pre-wrap' : 'pre';

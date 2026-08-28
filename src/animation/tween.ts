@@ -20,15 +20,23 @@ import { interpolateAnimationValue } from './value';
 
 export type { EasingDirection, EasingStyle } from './easing';
 
+/** Immutable timing and playback settings for a tween. */
 export type TweenInfo = Readonly<{
+  /** Duration of one traversal in seconds. */
   Time: number;
+  /** Curve used to transform progress. */
   EasingStyle: EasingStyle;
+  /** Portion of the easing curve to apply. */
   EasingDirection: EasingDirection;
+  /** Additional playthroughs, or -1 to repeat forever. */
   RepeatCount: number;
+  /** Whether each playthrough returns to its starting values. */
   Reverses: boolean;
+  /** Delay before playback begins, in seconds. */
   DelayTime: number;
 }>;
 
+/** Current lifecycle state of a tween. */
 export type TweenPlaybackState =
   | 'Idle'
   | 'Delayed'
@@ -37,13 +45,20 @@ export type TweenPlaybackState =
   | 'Completed'
   | 'Cancelled';
 
+/** Animatable property targets for a tween. */
 export type TweenGoal<Properties extends NodeProperties> = AnimationGoal<Properties>;
 
+/** Explicit playback controls for a tween. */
 export type Tween = {
+  /** Starts, resumes, or restarts playback from current property values. */
   play(): void;
+  /** Pauses playback while retaining property ownership. */
   pause(): void;
+  /** Stops playback and emits the Cancelled state. */
   cancel(): void;
+  /** Returns the current playback state. */
   playbackState(): TweenPlaybackState;
+  /** Emits when playback completes or is cancelled. */
   readonly completed: Signal<[TweenPlaybackState]>;
 };
 

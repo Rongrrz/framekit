@@ -4,16 +4,25 @@ import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../r
 import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
+/** Properties for an outer or inset surface shadow. */
 export type UIShadowProperties = NodeProperties & {
+  /** Whether the modifier currently affects its parent. */
   Enabled: boolean;
+  /** Shadow color before transparency is applied. */
   Color: Color3;
+  /** Shadow transparency from 0 (opaque) to 1 (invisible). */
   Transparency: number;
+  /** Horizontal and vertical shadow displacement in pixels. */
   Offset: Vector2;
+  /** Blur radius in pixels. */
   BlurRadius: number;
+  /** Signed expansion radius in pixels. */
   SpreadRadius: number;
+  /** Draws the shadow inside the parent when true. */
   Inset: boolean;
 };
 
+/** An element-less box-shadow modifier. */
 export type UIShadowNode = StyleModifierNode<UIShadowProperties>;
 
 /** Creates a drop-shadow modifier that composes with strokes and glows. */

@@ -5,13 +5,16 @@ import { emitNodeEvent } from '../runtime/signal';
 import type { FrameProperties } from './frame';
 
 export type ButtonProperties = {
+  /** Disables interaction and keyboard activation. */
   Disabled: boolean;
 };
 
+/** Shared node shape for text and image buttons. */
 export type ButtonNode<
   Properties extends FrameProperties & ButtonProperties = FrameProperties & ButtonProperties,
 > = GuiNode<Properties> &
   ButtonEventMethods & {
+    /** The underlying browser button element. */
     readonly element: HTMLButtonElement;
   };
 
@@ -33,6 +36,7 @@ export function initializeButtonElement<Properties extends FrameProperties & But
     color: 'inherit',
     cursor: element.disabled ? 'not-allowed' : 'pointer',
   });
+
   element.addEventListener(
     'click',
     (event) => {
@@ -40,6 +44,7 @@ export function initializeButtonElement<Properties extends FrameProperties & But
     },
     listenerOptions,
   );
+
   element.addEventListener(
     'mousedown',
     (event) => {
@@ -52,6 +57,7 @@ export function initializeButtonElement<Properties extends FrameProperties & But
     },
     listenerOptions,
   );
+
   element.addEventListener(
     'mouseup',
     (event) => {
@@ -68,6 +74,7 @@ export function initializeButtonElement<Properties extends FrameProperties & But
     },
     listenerOptions,
   );
+
   element.addEventListener(
     'mouseleave',
     () => {
@@ -75,6 +82,8 @@ export function initializeButtonElement<Properties extends FrameProperties & But
     },
     listenerOptions,
   );
+
   element.addEventListener('contextmenu', (event) => event.preventDefault(), listenerOptions);
+
   addCleanup(node, () => listenerController.abort());
 }

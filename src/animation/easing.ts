@@ -1,3 +1,4 @@
+/** Curve used to transform tween progress. */
 export type EasingStyle =
   | 'Linear'
   | 'Sine'
@@ -11,6 +12,7 @@ export type EasingStyle =
   | 'Bounce'
   | 'Elastic';
 
+/** Portion of an easing curve applied by a tween. */
 export type EasingDirection = 'In' | 'Out' | 'InOut';
 
 const easingStyles: readonly EasingStyle[] = [

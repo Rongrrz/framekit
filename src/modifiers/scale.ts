@@ -2,10 +2,13 @@ import { createStyleModifier, type StyleModifierNode, type Styles } from '../run
 import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertNonNegativeFinite } from '../runtime/validation';
 
+/** Properties for visual scaling without changing layout size. */
 export type UIScaleProperties = NodeProperties & {
+  /** Visual scale multiplier. */
   Scale: number;
 };
 
+/** An element-less visual-scale modifier. */
 export type UIScaleNode = StyleModifierNode<UIScaleProperties>;
 
 /** Visually scales a GUI node and its descendants without changing its layout footprint. */

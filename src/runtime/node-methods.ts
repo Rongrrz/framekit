@@ -19,18 +19,31 @@ import { watchValue, type Value } from './value';
 
 /** Operations shared by every FrameKit node. */
 export type NodeMethods<Properties extends NodeProperties = NodeProperties> = {
+  /** Validates and applies several properties in one render pass. */
   setProperties(patch: Partial<Properties>): void;
+  /** Reparents a child beneath this node. */
   addChild(child: Node): void;
+  /** Detaches this node without destroying it. */
   removeFromParent(): void;
+  /** Returns a snapshot of the direct children. */
   getChildren(): readonly Node[];
+  /** Returns a depth-first snapshot of every nested child. */
   getDescendants(): readonly Node[];
+  /** Finds a direct child by Name, or any descendant when recursive is true. */
   findFirstChild(name: string, recursive?: boolean): Node | undefined;
+  /** Returns the dot-separated Name path from the hierarchy root. */
   getFullName(): string;
+  /** Formats this node and its descendants as a readable tree. */
   toTreeString(): string;
+  /** Prints `toTreeString()` to the console. */
   printTree(): void;
+  /** Permanently destroys this node and its descendants. */
   destroy(): void;
+  /** Reports whether this node has been destroyed. */
   isDestroyed(): boolean;
+  /** Registers cleanup work and returns a function that unregisters it. */
   onDestroy(callback: () => void): Unsubscribe;
+  /** Watches a value immediately and until this node is destroyed. */
   watch<T>(value: Value<T>, listener: (value: T) => void): Unsubscribe;
 };
 

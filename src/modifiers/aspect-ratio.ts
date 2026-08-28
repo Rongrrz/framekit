@@ -4,15 +4,23 @@ import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertAllowedValue, assertFiniteNumber } from '../runtime/validation';
 import { udimToCss } from '../values/udim';
 
+/** How an aspect-ratio constraint uses its parent's available size. */
 export type AspectType = 'FitWithinMaxSize' | 'ScaleWithParentSize';
+
+/** Axis used to derive the constrained size. */
 export type DominantAxis = 'Width' | 'Height';
 
+/** Properties for maintaining a fixed width-to-height ratio. */
 export type UIAspectRatioConstraintProperties = NodeProperties & {
+  /** Required width divided by height. */
   AspectRatio: number;
+  /** How the constraint uses the parent's available size. */
   AspectType: AspectType;
+  /** Axis used to derive the other dimension. */
   DominantAxis: DominantAxis;
 };
 
+/** An element-less aspect-ratio constraint. */
 export type UIAspectRatioConstraintNode = StyleModifierNode<UIAspectRatioConstraintProperties>;
 
 const aspectTypes: readonly AspectType[] = ['FitWithinMaxSize', 'ScaleWithParentSize'];

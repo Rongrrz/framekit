@@ -3,16 +3,24 @@ import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../runtime/validation';
 import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
+/** Where a stroke is drawn relative to its GUI parent's edge. */
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
 
+/** Properties for a border stroke around a GUI parent. */
 export type UIStrokeProperties = NodeProperties & {
+  /** Whether the modifier currently affects its parent. */
   Enabled: boolean;
+  /** Stroke color before transparency is applied. */
   Color: Color3;
+  /** Stroke transparency from 0 (opaque) to 1 (invisible). */
   Transparency: number;
+  /** Stroke thickness in pixels. */
   Thickness: number;
+  /** Placement relative to the parent's edge. */
   BorderStrokePosition: BorderStrokePosition;
 };
 
+/** An element-less border-stroke modifier. */
 export type UIStrokeNode = StyleModifierNode<UIStrokeProperties>;
 
 const borderStrokePositions: readonly BorderStrokePosition[] = ['Inner', 'Center', 'Outer'];

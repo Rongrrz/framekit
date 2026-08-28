@@ -3,13 +3,19 @@ import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertBoolean, assertNonNegativeFinite } from '../runtime/validation';
 import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
+/** Properties for a centered glow around a GUI parent. */
 export type UIGlowProperties = NodeProperties & {
+  /** Whether the modifier currently affects its parent. */
   Enabled: boolean;
+  /** Glow color before transparency is applied. */
   Color: Color3;
+  /** Glow transparency from 0 (opaque) to 1 (invisible). */
   Transparency: number;
+  /** Radius of the soft outer halo in pixels. */
   Radius: number;
 };
 
+/** An element-less glow modifier. */
 export type UIGlowNode = StyleModifierNode<UIGlowProperties>;
 
 /** Creates an even glow around its GUI parent. */

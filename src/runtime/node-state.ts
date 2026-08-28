@@ -3,13 +3,15 @@ import type { NodeMethods } from './node-methods';
 import type { GuiNodeState } from './render';
 import { assertString } from './validation';
 
+/** Properties shared by every FrameKit node. */
 export type NodeProperties = {
+  /** The editable hierarchy name used by lookup and debug paths. */
   Name: string;
 };
 
 declare const nodeProperties: unique symbol;
 
-/** A persistent typed node managed by FrameKit. */
+/** A persistent typed object in the FrameKit hierarchy. */
 export type Node<Properties extends NodeProperties = NodeProperties> = {
   readonly [nodeProperties]: Properties;
   /** The concrete FrameKit node type, such as `Frame` or `TextButton`. */

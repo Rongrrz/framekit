@@ -1,5 +1,6 @@
 export { createFrame } from './frame';
 export type { AutomaticSize, FrameNode, FrameProperties } from './frame';
+
 export { createImageButton, createImageLabel } from './image';
 export type {
   ImageButtonNode,
@@ -8,14 +9,17 @@ export type {
   ImageLabelProperties,
   ScaleType,
 } from './image';
+
 export { createScreenGui } from './screen-gui';
 export type { ScreenGuiNode, ScreenGuiProperties } from './screen-gui';
+
 export { createScrollingFrame } from './scrolling-frame';
 export type {
   ScrollingDirection,
   ScrollingFrameNode,
   ScrollingFrameProperties,
 } from './scrolling-frame';
+
 export { createTextButton, createTextLabel } from './text';
 export type {
   TextButtonNode,
@@ -25,5 +29,6 @@ export type {
   TextXAlignment,
   TextYAlignment,
 } from './text';
+
 export { createTextBox } from './text-box';
 export type { TextBoxNode, TextBoxProperties } from './text-box';

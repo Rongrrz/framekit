@@ -24,6 +24,7 @@ import {
 
 export type { SpringOptions } from './spring-physics';
 
+/** A retained spring controller for one node. */
 export type Motion<Properties extends NodeProperties = NodeProperties> = {
   /** Retargets properties without discarding their current velocity. */
   spring(goal: AnimationGoal<Properties>): void;
@@ -31,7 +32,9 @@ export type Motion<Properties extends NodeProperties = NodeProperties> = {
   spring(goal: AnimationGoal<Properties>, settings: SpringOptions): void;
   /** Stops one property, or every property when omitted, at its current value. */
   stop(property?: keyof AnimationGoal<Properties>): void;
+  /** Reports whether any property is currently moving. */
   isAnimating(): boolean;
+  /** Emits after every active property settles. */
   readonly completed: Signal<[]>;
 };
 

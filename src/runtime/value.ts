@@ -5,10 +5,15 @@ import { createSignal, type Unsubscribe } from './signal';
 type ValueListener<T> = (value: T) => void;
 type ValueUpdater<T> = (currentValue: T) => T;
 
+/** A small synchronous container for explicitly shared state. */
 export type Value<T> = {
+  /** Returns the current value. */
   get(): T;
+  /** Replaces the value and notifies listeners when it changed. */
   set(nextValue: T): void;
+  /** Replaces the value using its current value. */
   update(updater: ValueUpdater<T>): void;
+  /** Subscribes to later changes and returns an unsubscribe function. */
   onChange(listener: ValueListener<T>): Unsubscribe;
 };
 

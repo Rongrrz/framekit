@@ -1,7 +1,12 @@
+import { assertFiniteNumber } from '../runtime/validation';
+
 /** An immutable RGB color whose components are integers from 0 to 255. */
 export type Color3 = Readonly<{
+  /** Red channel from 0 to 255. */
   R: number;
+  /** Green channel from 0 to 255. */
   G: number;
+  /** Blue channel from 0 to 255. */
   B: number;
 }>;
 
@@ -49,4 +54,3 @@ function colorChannel(value: number): number {
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
-import { assertFiniteNumber } from '../runtime/validation';

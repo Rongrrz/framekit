@@ -2,13 +2,19 @@ import { createStyleModifier, type StyleModifierNode, type Styles } from '../run
 import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { udim, udimToCss, type UDim } from '../values/udim';
 
+/** Inner padding applied independently on each edge. */
 export type UIPaddingProperties = NodeProperties & {
+  /** Inner spacing on the top edge. */
   PaddingTop: UDim;
+  /** Inner spacing on the right edge. */
   PaddingRight: UDim;
+  /** Inner spacing on the bottom edge. */
   PaddingBottom: UDim;
+  /** Inner spacing on the left edge. */
   PaddingLeft: UDim;
 };
 
+/** An element-less inner-padding modifier. */
 export type UIPaddingNode = StyleModifierNode<UIPaddingProperties>;
 
 /** Creates padding inside its GUI parent. */

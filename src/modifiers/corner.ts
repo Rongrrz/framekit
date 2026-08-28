@@ -2,11 +2,15 @@ import { createStyleModifier, type StyleModifierNode, type Styles } from '../run
 import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertBoolean, assertFiniteNumber } from '../runtime/validation';
 
+/** Properties for rounding a GUI parent's corners. */
 export type UICornerProperties = NodeProperties & {
+  /** Whether the modifier currently affects its parent. */
   Enabled: boolean;
+  /** Corner radius in pixels. */
   CornerRadius: number;
 };
 
+/** An element-less corner-radius modifier. */
 export type UICornerNode = StyleModifierNode<UICornerProperties>;
 
 /** Creates a corner modifier that applies border radius to its GUI parent. */

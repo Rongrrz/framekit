@@ -1,10 +1,18 @@
+import { assertFiniteNumber } from '../runtime/validation';
+
+/** An immutable scale and pixel-offset pair for one axis. */
 export type UDim = Readonly<{
+  /** Fraction of the parent axis. */
   Scale: number;
+  /** Pixel adjustment after scaling. */
   Offset: number;
 }>;
 
+/** An immutable two-axis position or size. */
 export type UDim2 = Readonly<{
+  /** Horizontal scale-and-offset value. */
   X: UDim;
+  /** Vertical scale-and-offset value. */
   Y: UDim;
 }>;
 
@@ -20,10 +28,12 @@ export function udim2(xScale: number, xOffset: number, yScale: number, yOffset: 
   return Object.freeze({ X: udim(xScale, xOffset), Y: udim(yScale, yOffset) });
 }
 
+/** Creates a UDim2 using only relative scale values. */
 export function udim2FromScale(xScale: number, yScale: number): UDim2 {
   return udim2(xScale, 0, yScale, 0);
 }
 
+/** Creates a UDim2 using only pixel offsets. */
 export function udim2FromOffset(xOffset: number, yOffset: number): UDim2 {
   return udim2(0, xOffset, 0, yOffset);
 }
@@ -45,4 +55,3 @@ export function udimToCss(value: UDim): string {
 function assertFinite(value: number, name: string): void {
   assertFiniteNumber(value, `UDim ${name}`);
 }
-import { assertFiniteNumber } from '../runtime/validation';

@@ -1,5 +1,6 @@
 import { assertPositiveFinite } from '../runtime/validation';
 
+/** Optional physical and settling behavior for a spring. */
 export type SpringOptions = Readonly<{
   /** Pull toward the goal. Higher values feel faster and firmer. */
   tension?: number;

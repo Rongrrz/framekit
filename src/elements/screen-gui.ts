@@ -5,17 +5,25 @@ import { createGuiNode, type GuiNode } from '../runtime/render';
 import { assertBoolean, assertInteger } from '../runtime/validation';
 import { connectHoverEvents } from './hover-events';
 
+/** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = NodeProperties & {
+  /** Whether this GUI is rendered while mounted. */
   Enabled: boolean;
+  /** Stacking order relative to other mounted ScreenGuis. */
   DisplayOrder: number;
 };
 
+/** Mounting operations unique to ScreenGui roots. */
 export type ScreenGuiMethods = {
+  /** Mounts this GUI beneath a DOM element or selector. */
   mount(target: string | HTMLElement): void;
+  /** Removes this GUI from the DOM without destroying it. */
   unmount(): void;
+  /** Reports whether this GUI is mounted to its current target. */
   isMounted(): boolean;
 };
 
+/** A mountable full-viewport hierarchy root. */
 export type ScreenGuiNode = GuiNode<ScreenGuiProperties> & ScreenGuiMethods;
 
 const screenGuiMethods = Object.freeze({
@@ -33,6 +41,7 @@ const screenGuiMethods = Object.freeze({
 
 const mountTargets = new WeakMap<ScreenGuiNode, HTMLElement>();
 
+/** Creates an unmounted full-viewport GUI root. */
 export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): ScreenGuiNode {
   const element = document.createElement('div');
   element.dataset.framekit = 'ScreenGui';
@@ -45,6 +54,7 @@ export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): Scr
     overflow: 'hidden',
     overscrollBehavior: 'none',
   });
+
   const gui = createGuiNode(
     'ScreenGui',
     mergeProperties({ Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 }, initial),
@@ -57,6 +67,7 @@ export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): Scr
     },
     screenGuiMethods,
   ) as ScreenGuiNode;
+
   connectHoverEvents(gui, element);
   addCleanup(gui, () => mountTargets.delete(gui));
   return gui;
@@ -67,6 +78,7 @@ function mountScreenGui(gui: ScreenGuiNode, target: string | HTMLElement): void 
   assertNodeActive(gui);
   const element = resolveMountTarget(target);
   if (mountTargets.get(gui) === element && gui.element.parentElement === element) return;
+
   unmountScreenGui(gui);
   mountTargets.set(gui, element);
   element.append(gui.element);
@@ -96,6 +108,7 @@ function resolveMountTarget(target: string | HTMLElement): HTMLElement {
   } catch {
     throw new TypeError(`Unable to mount ScreenGui: "${target}" is not a valid selector.`);
   }
+
   if (!element) throw new Error(`Unable to mount ScreenGui: target "${target}" was not found.`);
   return element;
 }

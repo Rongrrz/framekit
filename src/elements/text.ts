@@ -13,12 +13,19 @@ import {
 
 export type { TextXAlignment, TextYAlignment } from './text-style';
 
+/** Properties shared by text labels and text buttons. */
 export type TextLabelProperties = FrameProperties & TextStyleProperties;
 
+/** A non-interactive text node. */
 export type TextLabelNode = GuiNode<TextLabelProperties>;
+
+/** Properties for an interactive text button. */
 export type TextButtonProperties = TextLabelProperties & ButtonProperties;
+
+/** A text node with typed button events. */
 export type TextButtonNode = ButtonNode<TextButtonProperties>;
 
+/** Creates a non-interactive text node. */
 export function createTextLabel(initial: Partial<TextLabelProperties> = {}): TextLabelNode {
   return createTextNode(
     'TextLabel',
@@ -28,6 +35,7 @@ export function createTextLabel(initial: Partial<TextLabelProperties> = {}): Tex
   );
 }
 
+/** Creates a text node with button events. */
 export function createTextButton(initial: Partial<TextButtonProperties> = {}): TextButtonNode {
   const element = document.createElement('button');
   const node = createTextNode(
@@ -42,6 +50,7 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
     },
     buttonEventMethods,
   ) as TextButtonNode;
+
   initializeButtonElement(node, element);
   return node;
 }

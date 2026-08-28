@@ -13,18 +13,27 @@ import {
   type TextStyleProperties,
 } from './text-style';
 
+/** Properties for editable plain or rich text. */
 export type TextBoxProperties = FrameProperties &
   TextStyleProperties & {
+    /** Enables FrameKit's sanitized rich-text subset. */
     RichText: boolean;
+    /** Allows line breaks when true. */
     MultiLine: boolean;
+    /** Prevents editing and keyboard focus when true. */
     Disabled: boolean;
+    /** Text shown while Text is empty. */
     PlaceholderText: string;
+    /** Placeholder color before transparency is applied. */
     PlaceholderColor3: Color3;
+    /** Placeholder transparency from 0 (opaque) to 1 (invisible). */
     PlaceholderTransparency: number;
   };
 
+/** An editable text node with typed change events. */
 export type TextBoxNode = GuiNode<TextBoxProperties> &
   TextBoxEventMethods & {
+    /** The outer browser element containing the editable surface. */
     readonly element: HTMLDivElement;
   };
 
@@ -33,6 +42,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
   const element = document.createElement('div');
   const editor = document.createElement('div');
   const placeholder = document.createElement('span');
+
   editor.dataset.framekitTextBox = '';
   placeholder.dataset.framekitTextBoxPlaceholder = '';
   editor.setAttribute('role', 'textbox');
@@ -45,6 +55,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
     background: 'transparent',
     lineHeight: '1.2',
   });
+
   Object.assign(placeholder.style, {
     position: 'absolute',
     inset: '0',
@@ -107,6 +118,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
       const current = getPropertiesSnapshot(node);
       const editorText = current.RichText ? serializeRichText(editor) : readPlainText(editor);
       const text = current.MultiLine ? editorText : removeLineBreaks(editorText, current.RichText);
+
       applyingEditorInput = true;
       try {
         applyPropertyPatch(node, { Text: text });
@@ -117,10 +129,12 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
         if (current.RichText) renderRichText(editor, text);
         else editor.textContent = text;
       }
+
       emitNodeEvent(node, guiEventKeys.textChanged, getPropertiesSnapshot(node).Text, event);
     },
     listenerOptions,
   );
+
   editor.addEventListener(
     'keydown',
     (event) => {
@@ -128,6 +142,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
     },
     listenerOptions,
   );
+
   editor.addEventListener(
     'paste',
     (event) => {
@@ -136,6 +151,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
     },
     listenerOptions,
   );
+
   addCleanup(node, () => listenerController.abort());
   return node;
 }

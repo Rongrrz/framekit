@@ -12,26 +12,41 @@ import { udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 import { connectHoverEvents } from './hover-events';
 
+/** Axes whose size should follow the rendered content. */
 export type AutomaticSize = 'None' | 'X' | 'Y' | 'XY';
 
+/** Layout and appearance properties shared by rectangular GUI nodes. */
 export type FrameProperties = NodeProperties & {
+  /** Width and height relative to the parent. */
   Size: UDim2;
+  /** Position relative to the parent. */
   Position: UDim2;
+  /** Normalized point on this node placed at Position. */
   AnchorPoint: Vector2;
+  /** Clockwise rotation in degrees. */
   Rotation: number;
+  /** Whether the node participates in rendering. */
   Visible: boolean;
+  /** Background color before transparency is applied. */
   BackgroundColor3: Color3;
+  /** Background transparency from 0 (opaque) to 1 (invisible). */
   BackgroundTransparency: number;
+  /** Stacking order among overlapping GUI nodes. */
   ZIndex: number;
+  /** Ordering value used by attached layout modifiers. */
   LayoutOrder: number;
+  /** Axes that derive their size from rendered content. */
   AutomaticSize: AutomaticSize;
+  /** Whether visual content is clipped to this node's bounds. */
   ClipsDescendants: boolean;
 };
 
+/** A rectangular DOM-backed GUI container. */
 export type FrameNode = GuiNode<FrameProperties>;
 
 const automaticSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
 
+/** Creates a rectangular GUI container. */
 export function createFrame(initial: Partial<FrameProperties> = {}): FrameNode {
   return createFrameBasedNode(
     'Frame',
@@ -90,6 +105,7 @@ function renderFrame(element: HTMLElement, properties: Readonly<FrameProperties>
   assertBoolean(properties.Visible, 'Visible');
   assertInteger(properties.ZIndex, 'ZIndex');
   assertBoolean(properties.ClipsDescendants, 'ClipsDescendants');
+
   element.style.position = 'absolute';
   element.style.width =
     properties.AutomaticSize === 'X' || properties.AutomaticSize === 'XY'

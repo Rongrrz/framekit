@@ -9,20 +9,35 @@ import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertAllowedValue, assertBoolean } from '../runtime/validation';
 import { udim, udimToCss, type UDim } from '../values/udim';
 
+/** Primary axis used to arrange children. */
 export type FillDirection = 'Horizontal' | 'Vertical';
+
+/** Horizontal alignment of arranged children. */
 export type HorizontalAlignment = 'Left' | 'Center' | 'Right';
+
+/** Vertical alignment of arranged children. */
 export type VerticalAlignment = 'Top' | 'Center' | 'Bottom';
+
+/** Property used to sort children before layout. */
 export type SortOrder = 'LayoutOrder' | 'Name';
 
+/** Properties controlling automatic list layout. */
 export type UIListLayoutProperties = NodeProperties & {
+  /** Primary axis used to arrange children. */
   FillDirection: FillDirection;
+  /** Horizontal alignment of the arranged group. */
   HorizontalAlignment: HorizontalAlignment;
+  /** Vertical alignment of the arranged group. */
   VerticalAlignment: VerticalAlignment;
+  /** Gap between adjacent children. */
   Padding: UDim;
+  /** Property used to sort children before layout. */
   SortOrder: SortOrder;
+  /** Whether children continue on another row or column when needed. */
   Wraps: boolean;
 };
 
+/** An element-less layout node for direct GUI children. */
 export type UIListLayoutNode = LayoutNode<UIListLayoutProperties>;
 
 const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
