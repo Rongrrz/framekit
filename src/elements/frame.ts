@@ -56,6 +56,22 @@ export function createFrame(initial: Partial<FrameProperties> = {}): FrameNode {
   );
 }
 
+/** Creates a frame carrying immutable prefab-specific fields. */
+export function createFrameWithFields<Fields extends object>(
+  initial: Partial<FrameProperties>,
+  fields: Fields,
+): FrameNode & Readonly<Fields> {
+  return createFrameBasedNode(
+    'Frame',
+    document.createElement('div'),
+    createDefaultFrameProperties(),
+    initial,
+    undefined,
+    undefined,
+    fields,
+  );
+}
+
 export function createDefaultFrameProperties(): FrameProperties {
   return {
     Name: 'Frame',
@@ -74,14 +90,18 @@ export function createDefaultFrameProperties(): FrameProperties {
 }
 
 /** Builds controls that share Frame's positioning and appearance properties. */
-export function createFrameBasedNode<Properties extends FrameProperties>(
+export function createFrameBasedNode<
+  Properties extends FrameProperties,
+  Fields extends object = object,
+>(
   nodeType: string,
   element: HTMLElement,
   defaultProperties: Properties,
   initial: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Properties> {
+  fields?: Fields,
+): GuiNode<Properties> & Readonly<Fields> {
   element.dataset.framekit = nodeType;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
   const node = createGuiNode(
@@ -93,6 +113,7 @@ export function createFrameBasedNode<Properties extends FrameProperties>(
       renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
+    fields,
   );
   connectHoverEvents(node, element);
   return node;

@@ -37,6 +37,14 @@ export function createTextLabel(initial: Partial<TextLabelProperties> = {}): Tex
 
 /** Creates a text node with button events. */
 export function createTextButton(initial: Partial<TextButtonProperties> = {}): TextButtonNode {
+  return createTextButtonWithFields(initial, {});
+}
+
+/** Creates a text button carrying immutable prefab-specific fields. */
+export function createTextButtonWithFields<Fields extends object>(
+  initial: Partial<TextButtonProperties>,
+  fields: Fields,
+): TextButtonNode & Readonly<Fields> {
   const element = document.createElement('button');
   const node = createTextNode(
     'TextButton',
@@ -49,7 +57,8 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
       element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
     },
     buttonEventMethods,
-  ) as TextButtonNode;
+    fields,
+  ) as TextButtonNode & Readonly<Fields>;
 
   initializeButtonElement(node, element);
   return node;
@@ -63,14 +72,15 @@ function createDefaultTextProps(): TextLabelProperties {
   };
 }
 
-function createTextNode<Properties extends TextLabelProperties>(
+function createTextNode<Properties extends TextLabelProperties, Fields extends object = object>(
   nodeType: string,
   element: HTMLElement,
   defaultProperties: Properties,
   initial: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Properties> {
+  fields?: Fields,
+): GuiNode<Properties> & Readonly<Fields> {
   const text = document.createElement('span');
   text.dataset.framekitText = '';
   Object.assign(text.style, {
@@ -95,5 +105,6 @@ function createTextNode<Properties extends TextLabelProperties>(
       renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
+    fields,
   );
 }

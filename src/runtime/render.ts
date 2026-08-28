@@ -34,17 +34,19 @@ export type GuiNodeState<Properties extends NodeProperties = NodeProperties> =
   };
 
 /** Creates a DOM-backed node and renders its initial properties. */
-export function createGuiNode<Properties extends NodeProperties>(
+export function createGuiNode<Properties extends NodeProperties, Fields extends object = object>(
   className: string,
   properties: Properties,
   element: HTMLElement,
   renderProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Properties> {
-  const node = createGuiNodeHandle<Properties>(
+  fields?: Fields,
+): GuiNode<Properties> & Readonly<Fields> {
+  const node = createGuiNodeHandle<Properties, Fields>(
     properties,
     element,
     eventMethods ?? guiEventMethods,
+    fields,
   );
   registerNode(node, {
     ...createBaseState(className, properties),
@@ -59,13 +61,15 @@ export function createGuiNode<Properties extends NodeProperties>(
   return node;
 }
 
-function createGuiNodeHandle<Properties extends NodeProperties>(
+function createGuiNodeHandle<Properties extends NodeProperties, Fields extends object>(
   properties: Readonly<Properties>,
   element: HTMLElement,
   eventMethods: GuiEventMethodTable,
-): GuiNode<Properties> {
+  fields?: Fields,
+): GuiNode<Properties> & Readonly<Fields> {
   const methodTable = getGuiMethodTable(eventMethods);
-  return createNodeHandle(properties, methodTable, { element }) as GuiNode<Properties>;
+  return createNodeHandle(properties, methodTable, { element, ...fields }) as GuiNode<Properties> &
+    Readonly<Fields>;
 }
 
 const guiMethodTables = new WeakMap<object, object>();

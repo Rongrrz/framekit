@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import * as framekit from '..';
-import { fk, fka, fkh } from '..';
+import { fk, fka, fkh, fkp } from '..';
 
 describe('package API', () => {
   it('separates core, animation, and helper APIs', () => {
-    expect(Object.keys(framekit).sort()).toEqual(['fk', 'fka', 'fkh']);
+    expect(Object.keys(framekit).sort()).toEqual(['fk', 'fka', 'fkh', 'fkp']);
     expect(typeof fk.createFrame).toBe('function');
     expect(typeof fk.color3FromRGB).toBe('function');
     expect(typeof fk.createValue).toBe('function');
@@ -14,8 +14,12 @@ describe('package API', () => {
     expect(typeof fkh.bindHoverScale).toBe('function');
     expect(typeof fkh.setModifierAttached).toBe('function');
     expect(typeof fkh.createSpringModifierToggle).toBe('function');
+    expect(typeof fkp.createModal).toBe('function');
+    expect(typeof fkp.createToggle).toBe('function');
+    expect(typeof fkp.createProgressBar).toBe('function');
     expect(fk).not.toHaveProperty('spring');
     expect(fka).not.toHaveProperty('createFrame');
+    expect(fkp).not.toHaveProperty('createFrame');
   });
 
   it('keeps the core API object-centric', () => {
