@@ -48,7 +48,7 @@ describe('package API', () => {
     expect(fk).not.toHaveProperty('state');
     expect(fk).not.toHaveProperty('color3');
     expect(fk).not.toHaveProperty('color3ToCss');
-    expect(fk.createScrollingFrame()).not.toHaveProperty('scrollTo');
+    expect(typeof fk.createScrollingFrame().scrollTo).toBe('function');
     expect(fk.createScrollingFrame()).not.toHaveProperty('getCanvasPosition');
   });
 });

@@ -119,9 +119,9 @@ export function extendMethodTable<Base extends object, Extension extends object>
   base: Base,
   extension: Extension,
 ): Readonly<Base & Extension> {
-  return Object.freeze(Object.assign(Object.create(base) as object, extension)) as Readonly<
-    Base & Extension
-  >;
+  const methodTable = Object.create(base) as object;
+  Object.defineProperties(methodTable, Object.getOwnPropertyDescriptors(extension));
+  return Object.freeze(methodTable) as Readonly<Base & Extension>;
 }
 
 /** Shared prototype for node handles, keeping methods out of each instance allocation. */

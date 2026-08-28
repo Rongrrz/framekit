@@ -40,7 +40,7 @@ The common vocabulary is deliberately small:
 | Modifiers     | `createUICorner`, `createUIStroke`, `createUIShadow`, padding, scale, and layout              |
 | Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`          |
 | Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`             |
-| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`                                                |
+| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry          |
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                         |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                    |
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                         |
@@ -182,7 +182,7 @@ bio.onTextChanged((value) => console.log(value));
 
 Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
 
-## Computed geometry
+## Geometry and scrolling
 
 Every GUI node exposes browser-computed geometry as readonly `Vector2` values:
 
@@ -190,6 +190,24 @@ Every GUI node exposes browser-computed geometry as readonly `Vector2` values:
 panel.AbsolutePosition;
 panel.AbsoluteSize;
 ```
+
+Scrolling frames use the same direct property model. `CanvasSize` sets explicit bounds, `AutomaticCanvasSize` grows selected axes around descendants, and `CanvasPosition` stays synchronized with native scrolling:
+
+```ts
+const list = fk.createScrollingFrame({
+  ScrollingDirection: 'Y',
+  CanvasSize: fk.udim2FromOffset(0, 1200),
+  AutomaticCanvasSize: 'X',
+  ScrollBarThickness: 8,
+});
+
+list.scrollTo(fk.vector2(0, 240));
+list.scrollBy(fk.vector2(0, 80));
+list.AbsoluteCanvasSize;
+list.MaxCanvasPosition;
+```
+
+Set `ScrollingEnabled` to `false` to temporarily disable native mouse, touch, and keyboard scrolling without discarding the current canvas position.
 
 ## Spring motion
 

@@ -17,6 +17,7 @@ export type { ScreenGuiNode, ScreenGuiProperties } from './core/elements/screen-
 export { createScrollingFrame } from './core/elements/scrolling-frame';
 export type {
   ScrollingDirection,
+  ScrollingFrameMethods,
   ScrollingFrameNode,
   ScrollingFrameProperties,
 } from './core/elements/scrolling-frame';

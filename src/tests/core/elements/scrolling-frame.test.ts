@@ -21,6 +21,45 @@ describe('scrolling frames', () => {
     expect(scrolling.element.style.overflowY).toBe('hidden');
   });
 
+  it('configures canvas sizing, native scrolling, and scrollbar thickness', () => {
+    const scrolling = createScrollingFrame({
+      CanvasSize: fk.udim2FromOffset(600, 900),
+      AutomaticCanvasSize: 'X',
+      ScrollBarThickness: 6,
+    });
+    const canvasBounds = scrolling.element.querySelector<HTMLElement>(
+      '[data-framekit-canvas-bounds]',
+    );
+
+    expect(canvasBounds?.style.width).toBe('0px');
+    expect(canvasBounds?.style.height).toBe('900px');
+    expect(scrolling.element.style.getPropertyValue('--framekit-scrollbar-thickness')).toBe('6px');
+    expect(scrolling.element.style.getPropertyValue('scrollbar-width')).toBe('thin');
+
+    scrolling.ScrollingEnabled = false;
+
+    expect(scrolling.element.style.overflowX).toBe('hidden');
+    expect(scrolling.element.style.overflowY).toBe('hidden');
+  });
+
+  it('exposes canvas geometry and direct scroll helpers', () => {
+    const scrolling = createScrollingFrame();
+
+    Object.defineProperties(scrolling.element, {
+      scrollWidth: { configurable: true, value: 640 },
+      scrollHeight: { configurable: true, value: 480 },
+      clientWidth: { configurable: true, value: 240 },
+      clientHeight: { configurable: true, value: 180 },
+    });
+
+    scrolling.scrollTo(fk.vector2(20, 30));
+    scrolling.scrollBy(fk.vector2(5, -10));
+
+    expect(scrolling.CanvasPosition).toEqual(fk.vector2(25, 20));
+    expect(scrolling.AbsoluteCanvasSize).toEqual(fk.vector2(640, 480));
+    expect(scrolling.MaxCanvasPosition).toEqual(fk.vector2(400, 300));
+  });
+
   it('reads and writes its canvas position as an ordinary property', () => {
     const scrolling = createScrollingFrame();
 
