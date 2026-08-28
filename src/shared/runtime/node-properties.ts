@@ -3,6 +3,7 @@ import type { Node, NodeProperties } from './node';
 import { assertNodeActive } from './node-lifecycle';
 import { getNodeState, isModifierState, validatePropertyPatch } from './node-state';
 import { hasLayoutModifier, renderNode } from './render';
+import { emitNodeEvent, subscribeToNodeEvent, type Unsubscribe } from './signal';
 
 /** Applies a user-requested property change, taking control from active animations. */
 export function setNodeProperties<Properties extends NodeProperties>(
@@ -21,11 +22,14 @@ export function applyPropertyPatch<Properties extends NodeProperties>(
 ): void {
   assertNodeActive(node);
   const state = getNodeState(node);
-  const changedProperties = Object.keys(patch) as (keyof Properties)[];
-  if (changedProperties.length === 0) return;
   validatePropertyPatch(state.properties, patch);
 
   const previousProperties = state.properties;
+  const changedProperties = (Object.keys(patch) as (keyof Properties)[]).filter(
+    (property) => !Object.is(previousProperties[property], patch[property]),
+  );
+  if (changedProperties.length === 0) return;
+
   const nextProperties = { ...state.properties, ...patch };
   state.validateProperties?.(nextProperties);
   state.properties = nextProperties;
@@ -36,6 +40,26 @@ export function applyPropertyPatch<Properties extends NodeProperties>(
     renderPropertyChanges(node, changedProperties);
     throw error;
   }
+
+  for (const property of changedProperties) {
+    emitNodeEvent(node, property, nextProperties[property], previousProperties[property]);
+  }
+}
+
+/** Subscribes to one property and returns an idempotent unsubscribe function. */
+export function subscribeToPropertyChange<
+  Properties extends NodeProperties,
+  Property extends keyof Properties,
+>(
+  node: Node<Properties>,
+  property: Property,
+  listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
+): Unsubscribe {
+  const properties = getNodeState(node).properties;
+  if (!Object.hasOwn(properties, property)) {
+    throw new TypeError(`Unknown property "${String(property)}" on ${properties.Name}.`);
+  }
+  return subscribeToNodeEvent(node, property, listener);
 }
 
 /** Returns a readonly snapshot used by rendering and animation internals. */

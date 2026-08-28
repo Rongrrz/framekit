@@ -39,7 +39,7 @@ The common vocabulary is deliberately small:
 | Elements      | `createScreenGui`, `createFrame`, `createScrollingFrame`, text, image, and text-box factories |
 | Modifiers     | `createUICorner`, `createUIStroke`, `createUIShadow`, padding, scale, and layout              |
 | Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`          |
-| Properties    | `node.Text`, `node.Position`; `node.setProperties({...})` for a batch                         |
+| Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`             |
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                         |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                    |
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                         |
@@ -143,6 +143,16 @@ button.onClick(() => console.log('equipped'));
 ```
 
 Event connections belong to the node and are released when it is destroyed. Each event method also returns an unsubscribe function for stopping it earlier.
+
+Subscribe to a particular property when another object needs to react to it. Property names are autocomplete-safe, and the callback receives correctly typed new and previous values:
+
+```ts
+panel.onPropertyChanged('Position', (position, previousPosition) => {
+  console.log(previousPosition, position);
+});
+```
+
+The event fires for direct assignments, `setProperties()`, animations, and browser-driven synchronization. Assigning the current value again does not fire it.
 
 Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createValue()` provides explicit `get()`, `set()`, and `update()` methods. `node.watch()` runs once immediately, runs again when the value changes, and stops automatically when that node is destroyed:
 

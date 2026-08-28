@@ -110,6 +110,26 @@ describe('screen GUIs and frames', () => {
     expect(frame.Rotation).toBe(30);
   });
 
+  it('reports typed property changes after successful updates', () => {
+    const frame = createFrame();
+    const listener = vi.fn();
+    const unsubscribe = frame.onPropertyChanged('Position', listener);
+    const firstPosition = fk.udim2FromOffset(20, 30);
+    const secondPosition = fk.udim2FromOffset(40, 50);
+
+    frame.Position = firstPosition;
+    frame.setProperties({ Position: secondPosition });
+    frame.Position = secondPosition;
+
+    expect(listener).toHaveBeenNthCalledWith(1, firstPosition, fk.udim2FromOffset(0, 0));
+    expect(listener).toHaveBeenNthCalledWith(2, secondPosition, firstPosition);
+
+    unsubscribe();
+    frame.Position = fk.udim2FromOffset(60, 70);
+
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
   it('rejects non-finite rotations without disturbing the rendered angle', () => {
     const frame = createFrame({ Rotation: -15 });
 

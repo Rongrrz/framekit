@@ -1,5 +1,5 @@
 import { destroy, isDestroyed, onDestroy } from './node-lifecycle';
-import { getNodeProperty, setNodeProperties } from './node-properties';
+import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './node-properties';
 import type { Unsubscribe } from './signal';
 import {
   append,
@@ -39,6 +39,11 @@ export type Node<Properties extends NodeProperties = NodeProperties> = {
 export type NodeMethods<Properties extends NodeProperties = NodeProperties> = {
   /** Validates and applies several properties in one render pass. */
   setProperties(patch: Partial<Properties>): void;
+  /** Subscribes to one property and reports its new and previous values. */
+  onPropertyChanged<Property extends keyof Properties>(
+    property: Property,
+    listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
+  ): Unsubscribe;
   /** Reparents a child beneath this node. */
   addChild(child: Node): void;
   /** Detaches this node without destroying it. */
@@ -126,6 +131,13 @@ const methodTable = {
     patch: Partial<Properties>,
   ): void {
     setNodeProperties(this, patch);
+  },
+  onPropertyChanged<Properties extends NodeProperties, Property extends keyof Properties>(
+    this: Node<Properties>,
+    property: Property,
+    listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
+  ): Unsubscribe {
+    return subscribeToPropertyChange(this, property, listener);
   },
   addChild(this: Node, child: Node): void {
     append(this, child);
