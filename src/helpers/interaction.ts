@@ -1,5 +1,5 @@
-import { spring } from '../animation';
-import { createUIScale, type UIScaleNode } from '../core/modifiers';
+import { spring } from '../animation/spring';
+import { createUIScale, type UIScaleNode } from '../core/modifiers/scale';
 import type { GuiNode } from '../shared/runtime/render';
 import { assertNonNegativeFinite } from '../shared/runtime/validation';
 

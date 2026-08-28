@@ -1,4 +1,4 @@
-import type { Motion } from '../animation';
+import type { Motion } from '../animation/motion';
 import type { AnimationGoal } from '../animation/types';
 import type { LayoutNode, StyleModifierNode } from '../shared/runtime/modifier';
 import type { NodeProperties } from '../shared/runtime/node-state';
