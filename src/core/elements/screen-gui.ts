@@ -1,9 +1,9 @@
+import { connectHoverEvents } from '../../shared/dom/hover-events';
 import { guiEventMethods } from '../../shared/runtime/gui-events';
 import { addCleanup, assertNodeActive } from '../../shared/runtime/node-lifecycle';
 import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
 import { createGuiNode, type GuiNode } from '../../shared/runtime/render';
 import { assertBoolean, assertInteger } from '../../shared/runtime/validation';
-import { connectHoverEvents } from './hover-events';
 
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = NodeProperties & {

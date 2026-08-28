@@ -1,8 +1,8 @@
-import { guiEventKeys, type ButtonEventMethods } from '../../shared/runtime/gui-events';
-import { addCleanup } from '../../shared/runtime/node-lifecycle';
-import type { GuiNode } from '../../shared/runtime/render';
-import { emitNodeEvent } from '../../shared/runtime/signal';
-import type { FrameProperties } from './frame';
+import type { GuiObjectProperties } from '../../core/gui-object';
+import { guiEventKeys, type ButtonEventMethods } from '../runtime/gui-events';
+import { addCleanup } from '../runtime/node-lifecycle';
+import type { GuiNode } from '../runtime/render';
+import { emitNodeEvent } from '../runtime/signal';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */
@@ -11,14 +11,15 @@ export type ButtonProperties = {
 
 /** Shared node shape for text and image buttons. */
 export type ButtonNode<
-  Properties extends FrameProperties & ButtonProperties = FrameProperties & ButtonProperties,
+  Properties extends GuiObjectProperties & ButtonProperties = GuiObjectProperties &
+    ButtonProperties,
 > = GuiNode<Properties> &
   ButtonEventMethods & {
     /** The underlying browser button element. */
     readonly element: HTMLButtonElement;
   };
 
-export function initializeButtonElement<Properties extends FrameProperties & ButtonProperties>(
+export function initializeButtonElement<Properties extends GuiObjectProperties & ButtonProperties>(
   node: ButtonNode<Properties>,
   element: HTMLButtonElement,
 ): void {

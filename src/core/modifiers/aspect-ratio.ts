@@ -5,7 +5,7 @@ import {
 } from '../../shared/runtime/modifier';
 import { mergeProperties, type NodeProperties } from '../../shared/runtime/node-state';
 import { assertAllowedValue, assertFiniteNumber } from '../../shared/runtime/validation';
-import type { FrameProperties } from '../elements/frame';
+import type { GuiObjectProperties } from '../gui-object';
 import { udimToCss } from '../values/udim';
 
 /** How an aspect-ratio constraint uses its parent's available size. */
@@ -84,6 +84,8 @@ function resolveAspectRatio(
   };
 }
 
-function hasSize(properties: Readonly<NodeProperties>): properties is Readonly<FrameProperties> {
+function hasSize(
+  properties: Readonly<NodeProperties>,
+): properties is Readonly<GuiObjectProperties> {
   return 'Size' in properties;
 }

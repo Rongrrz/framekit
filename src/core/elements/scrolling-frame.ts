@@ -3,14 +3,18 @@ import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/node-properties';
 import type { GuiNode } from '../../shared/runtime/render';
 import { assertAllowedValue } from '../../shared/runtime/validation';
+import {
+  createDefaultGuiObjectProperties,
+  createGuiObjectNode,
+  type GuiObjectProperties,
+} from '../gui-object';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
-import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
 
 /** Axes on which a scrolling frame accepts native scrolling. */
 export type ScrollingDirection = 'X' | 'Y' | 'XY';
 
 /** Frame properties plus controlled scroll position and direction. */
-export type ScrollingFrameProperties = FrameProperties & {
+export type ScrollingFrameProperties = GuiObjectProperties & {
   /** Axes that accept native scrolling. */
   ScrollingDirection: ScrollingDirection;
   /** Current scroll offset in pixels. Assigning it scrolls immediately. */
@@ -44,11 +48,11 @@ export function createScrollingFrame(
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
   // position accepted by the browser after each FrameKit write so those events can be ignored.
   let lastRenderedCanvasPosition = readCanvasPosition(element);
-  const node = createFrameBasedNode<ScrollingFrameProperties>(
+  const node = createGuiObjectNode<ScrollingFrameProperties>(
     'ScrollingFrame',
     element,
     {
-      ...createDefaultFrameProperties(),
+      ...createDefaultGuiObjectProperties(),
       Name: 'ScrollingFrame',
       ScrollingDirection: 'XY',
       CanvasPosition: vector2(0, 0),

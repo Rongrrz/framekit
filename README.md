@@ -220,9 +220,10 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree follows those same boundaries:
 
-- `core.ts` and `core/` — the `fk` surface and its elements, modifiers, state, and values
+- `core.ts` and `core/` — the `fk` surface; `core/elements` contains only user-creatable GUI objects
 - `animation.ts` and `animation/` — springs, tweens, easing, and controllers exposed through `fka`
 - `helpers.ts` and `helpers/` — optional composed behavior exposed through `fkh`
+- `shared/dom` — browser event wiring, text rendering, and other DOM-specific implementation details
 - `shared/runtime` — node state, trees, rendering, property ownership, events, and cleanup used across domains
 - `tests` — mirrors the source domains and keeps reusable test infrastructure under `tests/shared`
 

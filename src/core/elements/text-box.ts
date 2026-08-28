@@ -1,3 +1,9 @@
+import { readPlainText, renderRichText, serializeRichText } from '../../shared/dom/rich-text';
+import {
+  createDefaultTextStyleProperties,
+  renderTextStyle,
+  type TextStyleProperties,
+} from '../../shared/dom/text-style';
 import {
   guiEventKeys,
   textBoxEventMethods,
@@ -8,17 +14,15 @@ import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/
 import type { GuiNode } from '../../shared/runtime/render';
 import { emitNodeEvent } from '../../shared/runtime/signal';
 import { assertBoolean, assertString } from '../../shared/runtime/validation';
-import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
-import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
-import { readPlainText, renderRichText, serializeRichText } from './rich-text';
 import {
-  createDefaultTextStyleProperties,
-  renderTextStyle,
-  type TextStyleProperties,
-} from './text-style';
+  createDefaultGuiObjectProperties,
+  createGuiObjectNode,
+  type GuiObjectProperties,
+} from '../gui-object';
+import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Properties for editable plain or rich text. */
-export type TextBoxProperties = FrameProperties &
+export type TextBoxProperties = GuiObjectProperties &
   TextStyleProperties & {
     /** Enables FrameKit's sanitized rich-text subset. */
     RichText: boolean;
@@ -69,11 +73,11 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
   element.append(editor, placeholder);
 
   let applyingEditorInput = false;
-  const node = createFrameBasedNode(
+  const node = createGuiObjectNode(
     'TextBox',
     element,
     {
-      ...createDefaultFrameProperties(),
+      ...createDefaultGuiObjectProperties(),
       ...createDefaultTextStyleProperties(),
       Name: 'TextBox',
       BackgroundColor3: color3FromRGB(255, 255, 255),

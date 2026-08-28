@@ -1,20 +1,28 @@
-import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
-import { type GuiNode, type PropertyRenderer } from '../../shared/runtime/render';
-import { assertBoolean } from '../../shared/runtime/validation';
-import { initializeButtonElement, type ButtonNode, type ButtonProperties } from './button';
-import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
+import {
+  initializeButtonElement,
+  type ButtonNode,
+  type ButtonProperties,
+} from '../../shared/dom/button';
 import {
   createDefaultTextStyleProperties,
   horizontalFlexAlignment,
   renderTextStyle,
   verticalFlexAlignment,
   type TextStyleProperties,
-} from './text-style';
+} from '../../shared/dom/text-style';
+import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
+import { type GuiNode, type PropertyRenderer } from '../../shared/runtime/render';
+import { assertBoolean } from '../../shared/runtime/validation';
+import {
+  createDefaultGuiObjectProperties,
+  createGuiObjectNode,
+  type GuiObjectProperties,
+} from '../gui-object';
 
-export type { TextXAlignment, TextYAlignment } from './text-style';
+export type { TextXAlignment, TextYAlignment } from '../../shared/dom/text-style';
 
 /** Properties shared by text labels and text buttons. */
-export type TextLabelProperties = FrameProperties & TextStyleProperties;
+export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
 
 /** A non-interactive text node. */
 export type TextLabelNode = GuiNode<TextLabelProperties>;
@@ -57,7 +65,7 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
 
 function createDefaultTextProps(): TextLabelProperties {
   return {
-    ...createDefaultFrameProperties(),
+    ...createDefaultGuiObjectProperties(),
     Name: 'TextLabel',
     ...createDefaultTextStyleProperties(),
   };
@@ -82,7 +90,7 @@ function createTextNode<Properties extends TextLabelProperties>(
   });
   element.prepend(text);
 
-  return createFrameBasedNode(
+  return createGuiObjectNode(
     nodeType,
     element,
     defaultProperties,

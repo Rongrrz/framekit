@@ -1,3 +1,8 @@
+import {
+  initializeButtonElement,
+  type ButtonNode,
+  type ButtonProperties,
+} from '../../shared/dom/button';
 import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
 import { type GuiNode, type PropertyRenderer } from '../../shared/runtime/render';
 import {
@@ -6,14 +11,17 @@ import {
   assertFiniteNumber,
   assertString,
 } from '../../shared/runtime/validation';
-import { initializeButtonElement, type ButtonNode, type ButtonProperties } from './button';
-import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
+import {
+  createDefaultGuiObjectProperties,
+  createGuiObjectNode,
+  type GuiObjectProperties,
+} from '../gui-object';
 
 /** How an image is fitted within its node bounds. */
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 
 /** Properties shared by image labels and image buttons. */
-export type ImageLabelProperties = FrameProperties & {
+export type ImageLabelProperties = GuiObjectProperties & {
   /** Image URL. Supports HTTP(S), blob, and image data URLs. */
   Image: string;
   /** Image transparency from 0 (opaque) to 1 (invisible). */
@@ -69,7 +77,7 @@ export function createImageButton(initial: Partial<ImageButtonProperties> = {}):
 
 function createDefaultImageProps(): ImageLabelProperties {
   return {
-    ...createDefaultFrameProperties(),
+    ...createDefaultGuiObjectProperties(),
     Name: 'ImageLabel',
     BackgroundTransparency: 1,
     Image: '',
@@ -101,7 +109,7 @@ function createImageNode<Properties extends ImageLabelProperties>(
   });
   element.prepend(image);
 
-  return createFrameBasedNode(
+  return createGuiObjectNode(
     nodeType,
     element,
     defaultProperties,

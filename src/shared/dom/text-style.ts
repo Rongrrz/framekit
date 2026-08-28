@@ -1,10 +1,10 @@
+import { color3FromRGB, color3ToCss, type Color3 } from '../../core/values/color3';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
   assertString,
-} from '../../shared/runtime/validation';
-import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
+} from '../runtime/validation';
 
 /** Horizontal alignment of text within its node. */
 export type TextXAlignment = 'Left' | 'Center' | 'Right';
