@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { fk, fkh } from '../..';
 
 describe('public helpers', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('binds a retained hover scale', () => {
     const frame = fk.createFrame();
     const scale = fkh.bindHoverScale(frame, 1.05);
@@ -30,5 +34,34 @@ describe('public helpers', () => {
     fkh.setModifierAttached(first, shadow, false);
 
     expect(shadow.Parent).toBe(second);
+  });
+
+  it('switches responsive layouts only when the breakpoint is crossed', () => {
+    const owner = fk.createFrame();
+    const mobile = vi.fn();
+    const desktop = vi.fn();
+
+    vi.stubGlobal('innerWidth', 640);
+    fkh.bindResponsiveLayout(owner, {
+      breakpoint: 700,
+      mobile,
+      desktop,
+    });
+
+    expect(mobile).toHaveBeenCalledOnce();
+    expect(desktop).not.toHaveBeenCalled();
+
+    vi.stubGlobal('innerWidth', 680);
+    window.dispatchEvent(new Event('resize'));
+    expect(mobile).toHaveBeenCalledOnce();
+
+    vi.stubGlobal('innerWidth', 900);
+    window.dispatchEvent(new Event('resize'));
+    expect(desktop).toHaveBeenCalledOnce();
+
+    owner.destroy();
+    vi.stubGlobal('innerWidth', 500);
+    window.dispatchEvent(new Event('resize'));
+    expect(mobile).toHaveBeenCalledOnce();
   });
 });

@@ -45,7 +45,7 @@ The common vocabulary is deliberately small:
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                    |
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                         |
 | Motion        | `fka.spring`, `fka.createTween`                                                               |
-| Helpers       | `fkh.bindHoverScale`, `fkh.setModifierAttached`                                               |
+| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`, `fkh.setModifierAttached`                   |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors                |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
@@ -101,6 +101,16 @@ panel.addChild(
 A parent accepts one modifier of each kind. Duplicate modifiers throw without disturbing either tree. `UIListLayout` controls the positions of its parent's direct GUI children while attached; detaching it restores their own `Position` and `AnchorPoint` rendering.
 
 Use `fkh` when its optional interaction conventions fit your UI. `bindHoverScale()` adds a retained `UIScale`, while `setModifierAttached()` toggles a modifier without recreating it.
+
+`bindResponsiveLayout()` applies one layout immediately, then switches only when the viewport crosses its breakpoint. Its resize listener is removed when the owner is destroyed.
+
+```ts
+fkh.bindResponsiveLayout(panel, {
+  breakpoint: 700,
+  mobile: applyMobileLayout,
+  desktop: applyDesktopLayout,
+});
+```
 
 ## Hierarchy and input
 
