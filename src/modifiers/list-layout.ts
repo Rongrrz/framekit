@@ -5,7 +5,7 @@ import {
   type LayoutStyles,
   type Styles,
 } from '../runtime/modifier';
-import { mergeProps, type NodeProps } from '../runtime/state';
+import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertAllowedValue, assertBoolean } from '../runtime/validation';
 import { udim, udimToCss, type UDim } from '../values/udim';
 
@@ -14,7 +14,7 @@ export type HorizontalAlignment = 'Left' | 'Center' | 'Right';
 export type VerticalAlignment = 'Top' | 'Center' | 'Bottom';
 export type SortOrder = 'LayoutOrder' | 'Name';
 
-export type UIListLayoutProps = NodeProps & {
+export type UIListLayoutProperties = NodeProperties & {
   FillDirection: FillDirection;
   HorizontalAlignment: HorizontalAlignment;
   VerticalAlignment: VerticalAlignment;
@@ -23,7 +23,7 @@ export type UIListLayoutProps = NodeProps & {
   Wraps: boolean;
 };
 
-export type UIListLayoutNode = LayoutNode<UIListLayoutProps>;
+export type UIListLayoutNode = LayoutNode<UIListLayoutProperties>;
 
 const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
 const horizontalAlignments: readonly HorizontalAlignment[] = ['Left', 'Center', 'Right'];
@@ -31,10 +31,12 @@ const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bott
 const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a list layout that arranges its parent's direct GUI children. */
-export function createUIListLayout(initial: Partial<UIListLayoutProps> = {}): UIListLayoutNode {
+export function createUIListLayout(
+  initial: Partial<UIListLayoutProperties> = {},
+): UIListLayoutNode {
   return createLayoutModifier(
     'UIListLayout',
-    mergeProps(
+    mergeProperties(
       {
         Name: 'UIListLayout',
         FillDirection: 'Vertical',
@@ -51,18 +53,18 @@ export function createUIListLayout(initial: Partial<UIListLayoutProps> = {}): UI
 }
 
 function resolveListLayout(
-  props: Readonly<UIListLayoutProps>,
+  properties: Readonly<UIListLayoutProperties>,
   children: readonly LayoutChild[],
 ): LayoutStyles {
-  assertAllowedValue(props.FillDirection, fillDirections, 'FillDirection');
-  assertAllowedValue(props.HorizontalAlignment, horizontalAlignments, 'HorizontalAlignment');
-  assertAllowedValue(props.VerticalAlignment, verticalAlignments, 'VerticalAlignment');
-  assertAllowedValue(props.SortOrder, sortOrders, 'SortOrder');
-  assertBoolean(props.Wraps, 'Wraps');
-  const isHorizontal = props.FillDirection === 'Horizontal';
+  assertAllowedValue(properties.FillDirection, fillDirections, 'FillDirection');
+  assertAllowedValue(properties.HorizontalAlignment, horizontalAlignments, 'HorizontalAlignment');
+  assertAllowedValue(properties.VerticalAlignment, verticalAlignments, 'VerticalAlignment');
+  assertAllowedValue(properties.SortOrder, sortOrders, 'SortOrder');
+  assertBoolean(properties.Wraps, 'Wraps');
+  const isHorizontal = properties.FillDirection === 'Horizontal';
   const orderedChildren = children
     .map((child, originalIndex) => ({ child, originalIndex }))
-    .sort((left, right) => compareChildren(left, right, props.SortOrder));
+    .sort((left, right) => compareChildren(left, right, properties.SortOrder));
   const displayOrder = new Map(
     orderedChildren.map(({ originalIndex }, order) => [originalIndex, order]),
   );
@@ -71,17 +73,17 @@ function resolveListLayout(
     parent: {
       display: 'flex',
       'flex-direction': isHorizontal ? 'row' : 'column',
-      'flex-wrap': props.Wraps ? 'wrap' : 'nowrap',
-      gap: udimToCss(props.Padding),
+      'flex-wrap': properties.Wraps ? 'wrap' : 'nowrap',
+      gap: udimToCss(properties.Padding),
       'justify-content': isHorizontal
-        ? resolveHorizontalAlignment(props.HorizontalAlignment)
-        : resolveVerticalAlignment(props.VerticalAlignment),
+        ? resolveHorizontalAlignment(properties.HorizontalAlignment)
+        : resolveVerticalAlignment(properties.VerticalAlignment),
       'align-items': isHorizontal
-        ? resolveVerticalAlignment(props.VerticalAlignment)
-        : resolveHorizontalAlignment(props.HorizontalAlignment),
+        ? resolveVerticalAlignment(properties.VerticalAlignment)
+        : resolveHorizontalAlignment(properties.HorizontalAlignment),
       'align-content': isHorizontal
-        ? resolveVerticalAlignment(props.VerticalAlignment)
-        : resolveHorizontalAlignment(props.HorizontalAlignment),
+        ? resolveVerticalAlignment(properties.VerticalAlignment)
+        : resolveHorizontalAlignment(properties.HorizontalAlignment),
     },
     children: children.map(
       (_, index): Styles => ({

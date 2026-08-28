@@ -32,21 +32,21 @@ const guideSteps = [
     title: 'Attach modifiers.',
     body: 'A corner and outer stroke become inspectable child nodes instead of hidden style rules.',
     lines: [
-      'fk.append(card, corner);',
-      'fk.append(card, stroke);',
+      'card.addChild(corner);',
+      'card.addChild(stroke);',
       '',
-      '// Both can be detached later.',
+      '// Both can be removed and reused later.',
     ],
   },
   {
     tab: '3  CONNECT',
     index: '03 / CONNECT',
     title: 'Connect state.',
-    body: 'The button writes an observable value. An owned observation updates the same card.',
+    body: 'The button writes a shared value. The card watches it with an ordinary synchronous callback.',
     lines: [
-      'const online = fk.state.observable(false);',
+      'const online = fk.createValue(false);',
       'online.set(true);',
-      'fk.state.observe(card, online,',
+      'card.watch(online,',
       '  value => updateStatus(value)',
       ');',
     ],
@@ -62,6 +62,7 @@ const guideSteps = [
 
 export function createGuide(): fk.FrameNode {
   const section = createSection('MobileGuide', sectionLayout.guide, colors.paper);
+
   const content = createSectionContent();
   appendSectionHeading(
     content,
@@ -69,8 +70,10 @@ export function createGuide(): fk.FrameNode {
     'The preview and code change together so every step has a visible purpose.',
     true,
   );
-  const selected = fk.state.observable(0);
-  const online = fk.state.observable(false);
+
+  const selected = fk.createValue(0);
+
+  const online = fk.createValue(false);
   for (const [index, guideStep] of guideSteps.entries()) {
     const control = createButton(
       guideStep.tab,
@@ -79,17 +82,19 @@ export function createGuide(): fk.FrameNode {
       colors.ink,
       colors.text,
     );
-    fk.update(control, { TextSize: 9, FontFamily: fonts.mono });
+    control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
     bindScaleMotion(control, 1.035);
     control.onClick(() => selected.set(index));
-    fk.append(content, control);
+    content.addChild(control);
   }
+
   const explanation = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 230),
     Position: fk.udim2FromOffset(0, 366),
     BackgroundColor3: colors.paperRaised,
   });
   addRoundedBorder(explanation, 18, colors.paperMuted, 2);
+
   const stepLabel = createText({
     text: '',
     size: fk.udim2FromOffset(310, 28),
@@ -98,6 +103,7 @@ export function createGuide(): fk.FrameNode {
     textSize: 10,
     font: fonts.mono,
   });
+
   const title = createText({
     text: '',
     size: fk.udim2FromOffset(310, 48),
@@ -106,6 +112,7 @@ export function createGuide(): fk.FrameNode {
     textSize: 23,
     weight: 900,
   });
+
   const body = createText({
     text: '',
     size: fk.udim2FromOffset(310, 92),
@@ -115,31 +122,41 @@ export function createGuide(): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(explanation, stepLabel);
-  fk.append(explanation, title);
-  fk.append(explanation, body);
-  fk.append(content, explanation);
+
+  explanation.addChild(stepLabel);
+
+  explanation.addChild(title);
+
+  explanation.addChild(body);
+
+  content.addChild(explanation);
+
   const preview = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 292),
     Position: fk.udim2FromOffset(0, 626),
     BackgroundColor3: colors.inkRaised,
   });
   addRoundedBorder(preview, 20, colors.inkSoft);
+
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(298, 202),
     Position: fk.udim2FromOffset(30, 44),
     BackgroundColor3: colors.paperMuted,
   });
+
   const corner = fk.createUICorner({ CornerRadius: 22 });
+
   const stroke = fk.createUIStroke({
     Color: colors.violet,
     Thickness: 3,
     BorderStrokePosition: 'Outer',
   });
+
   const cardScale = fk.createUIScale();
-  fk.append(card, cardScale);
-  fk.append(
-    card,
+
+  card.addChild(cardScale);
+
+  card.addChild(
     createText({
       text: 'PROFILE CARD',
       size: fk.udim2FromOffset(250, 42),
@@ -149,6 +166,7 @@ export function createGuide(): fk.FrameNode {
       weight: 900,
     }),
   );
+
   const stateButton = createButton(
     'SET ONLINE',
     fk.udim2FromOffset(250, 46),
@@ -158,7 +176,9 @@ export function createGuide(): fk.FrameNode {
   );
   bindButtonMotion(stateButton, colors.ink, colors.mint);
   stateButton.onClick(() => online.update((current) => !current));
-  fk.append(card, stateButton);
+
+  card.addChild(stateButton);
+
   const hint = createText({
     text: 'HOVER ENABLED',
     size: fk.udim2FromOffset(250, 26),
@@ -168,15 +188,20 @@ export function createGuide(): fk.FrameNode {
     font: fonts.mono,
     xAlignment: 'Center',
   });
-  fk.append(card, hint);
-  fk.append(preview, card);
-  fk.append(content, preview);
+
+  card.addChild(hint);
+
+  preview.addChild(card);
+
+  content.addChild(preview);
+
   const code = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 320),
     Position: fk.udim2FromOffset(0, 948),
     BackgroundColor3: colors.ink,
   });
   addRoundedBorder(code, 16, colors.inkSoft);
+
   const lines = [
     appendCodeLine(code, '', 24, colors.violet),
     appendCodeLine(code, '', 66),
@@ -185,30 +210,31 @@ export function createGuide(): fk.FrameNode {
     appendCodeLine(code, '', 192, colors.mint),
     appendCodeLine(code, '', 234),
   ];
-  fk.append(content, code);
+  content.addChild(code);
   card.onMouseEnter(() => {
     if (selected.get() === 3) fk.spring(cardScale, { Scale: 1.04 });
   });
   card.onMouseLeave(() => fk.spring(cardScale, { Scale: 1 }));
-  fk.state.observe(card, online, (isOnline) => {
-    fk.update(stateButton, {
+  card.watch(online, (isOnline) => {
+    stateButton.setProperties({
       Text: isOnline ? 'ONLINE  ●' : 'SET ONLINE',
       BackgroundColor3: isOnline ? colors.mint : colors.ink,
       TextColor3: isOnline ? colors.ink : colors.text,
     });
   });
-  fk.state.observe(card, selected, (value) => {
+  card.watch(selected, (value) => {
     const guideStep = guideSteps[value];
     if (!guideStep) return;
     setModifierAttached(card, corner, value >= 1);
     setModifierAttached(card, stroke, value >= 1);
-    fk.update(stateButton, { Visible: value >= 2 });
-    fk.update(hint, { Visible: value >= 3 });
-    fk.update(stepLabel, { Text: guideStep.index });
-    fk.update(title, { Text: guideStep.title });
-    fk.update(body, { Text: guideStep.body });
+    stateButton.setProperties({ Visible: value >= 2 });
+    hint.setProperties({ Visible: value >= 3 });
+    stepLabel.setProperties({ Text: guideStep.index });
+    title.setProperties({ Text: guideStep.title });
+    body.setProperties({ Text: guideStep.body });
     updateTextLines(lines, guideStep.lines);
   });
-  fk.append(section, content);
+
+  section.addChild(content);
   return section;
 }

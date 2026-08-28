@@ -1,11 +1,12 @@
-import { addCleanup, assertNodeActive, isDestroyed, props, update } from '../runtime/node';
-import { createSignal, type Signal } from '../runtime/signal';
-import type { Node, NodeProps } from '../runtime/state';
 import {
   claimAnimationProperties,
   releaseAnimationProperties,
   type AnimationOwner,
-} from './ownership';
+} from '../runtime/animation-ownership';
+import { addCleanup, assertNodeActive, isDestroyed } from '../runtime/node-lifecycle';
+import { applyPropertyPatch, getPropertiesSnapshot } from '../runtime/node-properties';
+import type { Node, NodeProperties } from '../runtime/node-state';
+import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
 import {
   defaultSpringOptions,
   resolveSpringOptions,
@@ -23,13 +24,13 @@ import {
 
 export type { SpringOptions } from './spring-physics';
 
-export type Motion<Props extends NodeProps = NodeProps> = {
+export type Motion<Properties extends NodeProperties = NodeProperties> = {
   /** Retargets properties without discarding their current velocity. */
-  spring(goal: AnimationGoal<Props>): void;
+  spring(goal: AnimationGoal<Properties>): void;
   /** Retargets properties using settings for only the properties in this goal. */
-  spring(goal: AnimationGoal<Props>, settings: SpringOptions): void;
+  spring(goal: AnimationGoal<Properties>, settings: SpringOptions): void;
   /** Stops one property, or every property when omitted, at its current value. */
-  stop(property?: keyof AnimationGoal<Props>): void;
+  stop(property?: keyof AnimationGoal<Properties>): void;
   isAnimating(): boolean;
   readonly completed: Signal<[]>;
 };
@@ -44,41 +45,42 @@ type PropertySpringState = {
 type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
 
 /** Creates a retained motion controller whose spring can be freely retargeted. */
-export function createMotion<Props extends NodeProps>(
-  node: Node<Props>,
+export function createMotion<Properties extends NodeProperties>(
+  node: Node<Properties>,
   options: SpringOptions = {},
-): Motion<Props> {
+): Motion<Properties> {
   assertNodeActive(node);
   const controllerOptions = resolveSpringOptions(options, defaultSpringOptions);
-  const springsByProperty = new Map<keyof Props, PropertySpringState>();
-  const completed = createSignal<[]>();
+  const springsByProperty = new Map<keyof Properties, PropertySpringState>();
+  const completedEmitter = createSignal<[]>();
+  const completed = readonlySignal(completedEmitter);
   let animationFrame: AnimationFrame | undefined;
   let previousTimestampMs = 0;
   let disposed = false;
 
   const animationOwner: AnimationOwner = {
-    cancelPropertyFromConflict: (property) => stopProperty(property as keyof Props),
+    cancelPropertyFromConflict: (property) => stopProperty(property as keyof Properties),
   };
 
-  function spring(goal: AnimationGoal<Props>): void;
-  function spring(goal: AnimationGoal<Props>, settings: SpringOptions): void;
-  function spring(goal: AnimationGoal<Props>, settings?: SpringOptions): void {
+  function spring(goal: AnimationGoal<Properties>): void;
+  function spring(goal: AnimationGoal<Properties>, settings: SpringOptions): void;
+  function spring(goal: AnimationGoal<Properties>, settings?: SpringOptions): void {
     assertUsable();
     const springOptions = settings
       ? resolveSpringOptions(settings, controllerOptions)
       : controllerOptions;
-    const goalEntries = Object.entries(goal) as [keyof Props, unknown][];
+    const goalEntries = Object.entries(goal) as [keyof Properties, unknown][];
     if (goalEntries.length === 0) throw new TypeError('A spring needs at least one goal property.');
 
-    const currentProps = props(node);
+    const currentProperties = getPropertiesSnapshot(node);
     const preparedSprings = new Map<
-      keyof Props,
+      keyof Properties,
       { kind: AnimationValueKind; goalComponents: number[]; startComponents: number[] }
     >();
     for (const [property, goalValue] of goalEntries) {
-      if (!Object.hasOwn(currentProps, property)) {
+      if (!Object.hasOwn(currentProperties, property)) {
         throw new TypeError(
-          `Unknown spring property "${String(property)}" on ${currentProps.Name}.`,
+          `Unknown spring property "${String(property)}" on ${currentProperties.Name}.`,
         );
       }
       const decomposedGoal = decomposeAnimationValue(goalValue, String(property));
@@ -95,7 +97,10 @@ export function createMotion<Props extends NodeProps>(
           startComponents: existingSpring.currentComponents,
         });
       } else {
-        const decomposedStart = decomposeAnimationValue(currentProps[property], String(property));
+        const decomposedStart = decomposeAnimationValue(
+          currentProperties[property],
+          String(property),
+        );
         assertCompatibleAnimationValues(decomposedStart, decomposedGoal, String(property));
         preparedSprings.set(property, {
           kind: decomposedGoal.kind,
@@ -125,10 +130,10 @@ export function createMotion<Props extends NodeProps>(
     scheduleNextFrame();
   }
 
-  function stop(property?: keyof AnimationGoal<Props>): void {
+  function stop(property?: keyof AnimationGoal<Properties>): void {
     assertUsable();
     if (property !== undefined) {
-      stopProperty(property as keyof Props);
+      stopProperty(property as keyof Properties);
       return;
     }
     stopAllProperties();
@@ -141,7 +146,7 @@ export function createMotion<Props extends NodeProps>(
     cancelFrame();
   }
 
-  function stopProperty(property: keyof Props): void {
+  function stopProperty(property: keyof Properties): void {
     if (!springsByProperty.delete(property)) return;
     releaseAnimationProperties(node, [property], animationOwner);
     if (springsByProperty.size === 0) cancelFrame();
@@ -158,8 +163,8 @@ export function createMotion<Props extends NodeProps>(
     if (springsByProperty.size === 0 || isDestroyed(node)) return;
     const deltaTimeSeconds = Math.max(0, (timestampMs - previousTimestampMs) / 1000);
     previousTimestampMs = timestampMs;
-    const patch: Partial<Props> = {};
-    const settledProperties: (keyof Props)[] = [];
+    const patch: Partial<Properties> = {};
+    const settledProperties: (keyof Properties)[] = [];
 
     for (const [property, springState] of springsByProperty) {
       let propertySettled = true;
@@ -190,18 +195,18 @@ export function createMotion<Props extends NodeProps>(
       patch[property] = composeAnimationValue(
         springState.kind,
         springState.currentComponents,
-      ) as Props[keyof Props];
+      ) as Properties[keyof Properties];
     }
 
     try {
-      update(node, patch);
+      applyPropertyPatch(node, patch);
     } catch (error) {
       stopAllProperties();
       throw error;
     }
     for (const property of settledProperties) springsByProperty.delete(property);
     releaseAnimationProperties(node, settledProperties, animationOwner);
-    if (springsByProperty.size === 0) completed.emit();
+    if (springsByProperty.size === 0) completedEmitter.emit();
     else animationFrame = requestAnimationFrame(advanceSprings);
   }
 
@@ -218,7 +223,7 @@ export function createMotion<Props extends NodeProps>(
   addCleanup(node, () => {
     stopAllProperties();
     disposed = true;
-    completed.clear();
+    completedEmitter.clear();
   });
 
   return Object.freeze({
@@ -231,5 +236,5 @@ export function createMotion<Props extends NodeProps>(
 
 function nodeName(node: Node): string {
   if (isDestroyed(node)) return 'Node';
-  return props(node).Name;
+  return getPropertiesSnapshot(node).Name;
 }

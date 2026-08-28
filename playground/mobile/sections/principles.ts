@@ -22,21 +22,22 @@ const principles = [
   {
     number: '02',
     title: 'Composable modifiers',
-    body: 'Append corners, strokes, padding, scale, constraints, and layouts as element-less nodes.',
-    snippet: 'fk.append(card, corner)',
+    body: 'Add corners, strokes, padding, scale, constraints, and layouts as element-less child nodes.',
+    snippet: 'card.addChild(corner)',
     accent: colors.mint,
   },
   {
     number: '03',
     title: 'Owned behavior',
-    body: 'Events, observations, springs, and tweens release automatically when their node is destroyed.',
-    snippet: 'fk.destroy(card)',
+    body: 'Events, value watchers, springs, and tweens release automatically when their node is destroyed.',
+    snippet: 'card.destroy()',
     accent: colors.violet,
   },
 ] as const;
 
 export function createPrinciples(): fk.FrameNode {
   const section = createSection('MobilePrinciples', sectionLayout.principles, colors.paper);
+
   const content = createSectionContent();
   appendSectionHeading(
     content,
@@ -52,8 +53,7 @@ export function createPrinciples(): fk.FrameNode {
     });
     addRoundedBorder(card, 20, colors.paperMuted, 2);
     bindCardMotion(card, index % 2 === 0 ? -0.8 : 0.8, 1.02);
-    fk.append(
-      card,
+    card.addChild(
       createText({
         text: principle.number,
         size: fk.udim2FromOffset(54, 32),
@@ -64,8 +64,7 @@ export function createPrinciples(): fk.FrameNode {
         weight: 800,
       }),
     );
-    fk.append(
-      card,
+    card.addChild(
       createText({
         text: principle.title,
         size: fk.udim2FromOffset(310, 42),
@@ -75,8 +74,7 @@ export function createPrinciples(): fk.FrameNode {
         weight: 850,
       }),
     );
-    fk.append(
-      card,
+    card.addChild(
       createText({
         text: principle.body,
         size: fk.udim2FromOffset(318, 84),
@@ -94,14 +92,14 @@ export function createPrinciples(): fk.FrameNode {
       colors.ink,
       principle.accent,
     );
-    fk.update(copy, { TextSize: 10, FontFamily: fonts.mono });
+    copy.setProperties({ TextSize: 10, FontFamily: fonts.mono });
     copy.onClick(
       () =>
         void copyCommand(copy, principle.snippet, principle.snippet, colors.ink, principle.accent),
     );
-    fk.append(card, copy);
-    fk.append(content, card);
+    card.addChild(copy);
+    content.addChild(card);
   }
-  fk.append(section, content);
+  section.addChild(content);
   return section;
 }

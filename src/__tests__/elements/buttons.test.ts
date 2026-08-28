@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
 
-const { createImageButton, createTextButton, destroy, update } = fk;
-
+const { createImageButton, createTextButton } = fk;
 resetDocumentAfterEach();
 
 describe('buttons', () => {
@@ -27,10 +26,9 @@ describe('buttons', () => {
     unsubscribe();
     button.element.click();
     expect(callback).toHaveBeenCalledOnce();
-    destroy(button);
+    button.destroy();
     expect(() => button.onClick(callback)).toThrow(/destroyed/);
   });
-
   it('does not fire button press events while disabled', () => {
     const button = createTextButton({ Disabled: true });
     const callback = vi.fn();
@@ -38,10 +36,9 @@ describe('buttons', () => {
     button.element.click();
     expect(callback).not.toHaveBeenCalled();
     expect(button.element.style.cursor).toBe('not-allowed');
-    update(button, { Disabled: false });
+    button.setProperties({ Disabled: false });
     expect(button.element.style.cursor).toBe('pointer');
   });
-
   it('exposes primary and secondary button events as discoverable methods', () => {
     const button = createTextButton();
     const primaryDown = vi.fn();
@@ -54,25 +51,22 @@ describe('buttons', () => {
     button.onSecondaryButtonDown(secondaryDown);
     button.onSecondaryButtonUp(secondaryUp);
     button.onSecondaryClick(secondaryClick);
-
     button.element.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
     button.element.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
     button.element.dispatchEvent(new MouseEvent('mousedown', { button: 2 }));
     button.element.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));
-
     expect(primaryDown).toHaveBeenCalledOnce();
     expect(primaryUp).toHaveBeenCalledOnce();
     expect(secondaryDown).toHaveBeenCalledOnce();
     expect(secondaryUp).toHaveBeenCalledOnce();
     expect(secondaryClick).toHaveBeenCalledOnce();
   });
-
   it('uses semantic image buttons and synchronizes their disabled state', () => {
     const button = createImageButton({ Disabled: true });
     expect(button.element.tagName).toBe('BUTTON');
     expect(button.element.disabled).toBe(true);
     expect(button.element.style.cursor).toBe('not-allowed');
-    update(button, { Disabled: false });
+    button.setProperties({ Disabled: false });
     expect(button.element.disabled).toBe(false);
     expect(button.element.style.cursor).toBe('pointer');
   });

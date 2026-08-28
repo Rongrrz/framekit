@@ -1,10 +1,11 @@
+import { createNodeHandle } from './node-handle';
 import {
   createBaseState,
   registerNode,
   type BaseNodeState,
   type Node,
-  type NodeProps,
-} from './state';
+  type NodeProperties,
+} from './node-state';
 
 declare const styleModifierBrand: unique symbol;
 declare const layoutBrand: unique symbol;
@@ -12,18 +13,19 @@ declare const layoutBrand: unique symbol;
 export type Styles = Readonly<Record<string, string>>;
 
 /** An element-less node that styles its GUI parent. */
-export type StyleModifierNode<Props extends NodeProps = NodeProps> = Node<Props> & {
-  readonly [styleModifierBrand]: true;
-};
+export type StyleModifierNode<Properties extends NodeProperties = NodeProperties> =
+  Node<Properties> & {
+    readonly [styleModifierBrand]: true;
+  };
 
 /** An element-less node that lays out its GUI parent's direct children. */
-export type LayoutNode<Props extends NodeProps = NodeProps> = Node<Props> & {
+export type LayoutNode<Properties extends NodeProperties = NodeProperties> = Node<Properties> & {
   readonly [layoutBrand]: true;
 };
 
-export type ResolveStyles<Props extends NodeProps> = (
-  props: Readonly<Props>,
-  targetProps: Readonly<NodeProps>,
+export type ResolveStyles<Properties extends NodeProperties> = (
+  properties: Readonly<Properties>,
+  targetProperties: Readonly<NodeProperties>,
 ) => Styles;
 
 export type LayoutChild = Readonly<{
@@ -36,34 +38,36 @@ export type LayoutStyles = Readonly<{
   children: readonly Styles[];
 }>;
 
-export type ResolveLayout<Props extends NodeProps> = (
-  props: Readonly<Props>,
+export type ResolveLayout<Properties extends NodeProperties> = (
+  properties: Readonly<Properties>,
   children: readonly LayoutChild[],
 ) => LayoutStyles;
 
-export type StyleModifierState<Props extends NodeProps = NodeProps> = BaseNodeState<Props> & {
-  kind: 'style';
-  modifierKey: string;
-  resolveStyles: ResolveStyles<Props>;
-};
+export type StyleModifierState<Properties extends NodeProperties = NodeProperties> =
+  BaseNodeState<Properties> & {
+    kind: 'style';
+    modifierKey: string;
+    resolveStyles: ResolveStyles<Properties>;
+  };
 
-export type LayoutNodeState<Props extends NodeProps = NodeProps> = BaseNodeState<Props> & {
-  kind: 'layout';
-  modifierKey: string;
-  resolveLayout: ResolveLayout<Props>;
-};
+export type LayoutNodeState<Properties extends NodeProperties = NodeProperties> =
+  BaseNodeState<Properties> & {
+    kind: 'layout';
+    modifierKey: string;
+    resolveLayout: ResolveLayout<Properties>;
+  };
 
 export type ModifierNode = StyleModifierNode | LayoutNode;
 
 /** Creates an element-less modifier that styles its parent. */
-export function createStyleModifier<Props extends NodeProps>(
+export function createStyleModifier<Properties extends NodeProperties>(
   modifierKey: string,
-  props: Props,
-  resolveStyles: ResolveStyles<Props>,
-): StyleModifierNode<Props> {
-  const node = Object.freeze({}) as StyleModifierNode<Props>;
-  const state: StyleModifierState<Props> = {
-    ...createBaseState(props),
+  properties: Properties,
+  resolveStyles: ResolveStyles<Properties>,
+): StyleModifierNode<Properties> {
+  const node = createNodeHandle(properties) as StyleModifierNode<Properties>;
+  const state: StyleModifierState<Properties> = {
+    ...createBaseState(modifierKey, properties),
     kind: 'style',
     modifierKey,
     resolveStyles,
@@ -74,14 +78,14 @@ export function createStyleModifier<Props extends NodeProps>(
 }
 
 /** Creates an element-less modifier that lays out its parent's children. */
-export function createLayoutModifier<Props extends NodeProps>(
+export function createLayoutModifier<Properties extends NodeProperties>(
   modifierKey: string,
-  props: Props,
-  resolveLayout: ResolveLayout<Props>,
-): LayoutNode<Props> {
-  const node = Object.freeze({}) as LayoutNode<Props>;
-  const state: LayoutNodeState<Props> = {
-    ...createBaseState(props),
+  properties: Properties,
+  resolveLayout: ResolveLayout<Properties>,
+): LayoutNode<Properties> {
+  const node = createNodeHandle(properties) as LayoutNode<Properties>;
+  const state: LayoutNodeState<Properties> = {
+    ...createBaseState(modifierKey, properties),
     kind: 'layout',
     modifierKey,
     resolveLayout,
@@ -92,9 +96,9 @@ export function createLayoutModifier<Props extends NodeProps>(
 }
 
 /** Validates modifier properties that do not require a live parent or child list. */
-export function validateModifierWithoutParent<Props extends NodeProps>(
-  state: StyleModifierState<Props> | LayoutNodeState<Props>,
+export function validateModifierWithoutParent<Properties extends NodeProperties>(
+  state: StyleModifierState<Properties> | LayoutNodeState<Properties>,
 ): void {
-  if (state.kind === 'style') state.resolveStyles(state.props, { Name: 'DetachedTarget' });
-  else state.resolveLayout(state.props, []);
+  if (state.kind === 'style') state.resolveStyles(state.properties, { Name: 'DetachedTarget' });
+  else state.resolveLayout(state.properties, []);
 }

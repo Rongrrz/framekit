@@ -39,8 +39,9 @@ export function addRoundedBorder(
   strokeColor: fk.Color3,
   thickness = 1,
 ): void {
-  fk.append(node, fk.createUICorner({ CornerRadius: radius }));
-  fk.append(node, fk.createUIStroke({ Color: strokeColor, Thickness: thickness }));
+  node.addChild(fk.createUICorner({ CornerRadius: radius }));
+
+  node.addChild(fk.createUIStroke({ Color: strokeColor, Thickness: thickness }));
 }
 
 export function createPill(
@@ -101,7 +102,8 @@ export function appendCodeLine(
     textSize: 13,
     font: fonts.mono,
   });
-  fk.append(parent, node);
+
+  parent.addChild(node);
   return node;
 }
 
@@ -110,6 +112,6 @@ export function updateTextLines(
   lines: readonly string[],
 ): void {
   for (const [index, node] of nodes.entries()) {
-    fk.update(node, { Text: lines[index] ?? '' });
+    node.setProperties({ Text: lines[index] ?? '' });
   }
 }

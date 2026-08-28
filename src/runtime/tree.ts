@@ -1,7 +1,13 @@
 import type { ModifierNode } from './modifier';
-import { assertNodeActive } from './node';
+import { assertNodeActive } from './node-lifecycle';
+import {
+  getChildren,
+  getNodeState,
+  isModifierState,
+  type Node,
+  type NodeState,
+} from './node-state';
 import { hasLayoutModifier, isGuiNode, renderNode } from './render';
-import { getChildren, getNodeState, isModifierState, type Node, type NodeState } from './state';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
 export function append(parent: Node, child: Node): void {
@@ -28,7 +34,9 @@ export function append(parent: Node, child: Node): void {
     parentState.kind === 'gui' &&
     parentState.modifiers.has(childState.modifierKey)
   ) {
-    throw new Error(`${parentState.props.Name} already has a ${childState.modifierKey} modifier.`);
+    throw new Error(
+      `${parentState.properties.Name} already has a ${childState.modifierKey} modifier.`,
+    );
   }
 
   const previousParent = childState.parent;
@@ -65,9 +73,20 @@ export function detach(node: Node): void {
   }
 }
 
-export function parent(node: Node): Node | undefined {
+export function getParent(node: Node): Node | undefined {
   assertNodeActive(node);
   return getNodeState(node).parent;
+}
+
+export function getClassName(node: Node): string {
+  assertNodeActive(node);
+  return getNodeState(node).className;
+}
+
+/** Reparents a node, or detaches it when `newParent` is undefined. */
+export function setParent(node: Node, newParent: Node | undefined): void {
+  if (newParent) append(newParent, node);
+  else detach(node);
 }
 
 /** Returns a snapshot of the node's direct children. */
@@ -76,18 +95,75 @@ export function children(node: Node): readonly Node[] {
   return [...getChildren(getNodeState(node))];
 }
 
-/** Finds a child by name, optionally searching descendants depth-first. */
-export function find(node: Node, name: string, recursive = false): Node | undefined {
+/** Returns every descendant in depth-first hierarchy order. */
+export function descendants(node: Node): readonly Node[] {
+  assertNodeActive(node);
+  const result: Node[] = [];
+  const pending = [...getChildren(getNodeState(node))].reverse();
+  while (pending.length > 0) {
+    const descendant = pending.pop()!;
+    result.push(descendant);
+    const descendantChildren = getChildren(getNodeState(descendant));
+    for (let index = descendantChildren.length - 1; index >= 0; index -= 1) {
+      pending.push(descendantChildren[index]!);
+    }
+  }
+  return result;
+}
+
+/** Finds the first child with a matching name, optionally searching all descendants. */
+export function findFirstChild(node: Node, name: string, recursive = false): Node | undefined {
   assertNodeActive(node);
   const direct = getChildren(getNodeState(node)).find(
-    (child) => getNodeState(child).props.Name === name,
+    (child) => getNodeState(child).properties.Name === name,
   );
   if (direct || !recursive) return direct;
-  for (const child of getChildren(getNodeState(node))) {
-    const result = find(child, name, true);
-    if (result) return result;
+  return descendants(node).find((child) => getNodeState(child).properties.Name === name);
+}
+
+/** Returns the dot-separated hierarchy path from the root to this node. */
+export function getFullName(node: Node): string {
+  assertNodeActive(node);
+  const names: string[] = [];
+  for (let current: Node | undefined = node; current; current = getNodeState(current).parent) {
+    names.push(getNodeState(current).properties.Name);
   }
-  return undefined;
+  return names.reverse().join('.');
+}
+
+/** Formats a stable, human-readable snapshot of a node hierarchy. */
+export function toTreeString(node: Node): string {
+  assertNodeActive(node);
+  const lines = [formatNode(node)];
+  const rootChildren = getChildren(getNodeState(node));
+  const pending: TreeLine[] = [];
+  pushTreeLines(pending, rootChildren, '');
+
+  while (pending.length > 0) {
+    const { current, prefix, isLast } = pending.pop()!;
+    lines.push(`${prefix}${isLast ? '└─ ' : '├─ '}${formatNode(current)}`);
+    const childPrefix = `${prefix}${isLast ? '   ' : '│  '}`;
+    pushTreeLines(pending, getChildren(getNodeState(current)), childPrefix);
+  }
+  return lines.join('\n');
+}
+
+/** Prints the current hierarchy snapshot to the console. */
+export function printTree(node: Node): void {
+  console.log(toTreeString(node));
+}
+
+type TreeLine = { current: Node; prefix: string; isLast: boolean };
+
+function pushTreeLines(pending: TreeLine[], nodes: readonly Node[], prefix: string): void {
+  for (let index = nodes.length - 1; index >= 0; index -= 1) {
+    pending.push({ current: nodes[index]!, prefix, isLast: index === nodes.length - 1 });
+  }
+}
+
+function formatNode(node: Node): string {
+  const state = getNodeState(node);
+  return `${state.properties.Name} [${state.className}]`;
 }
 
 function unlinkFromParent(node: Node, state: NodeState): void {

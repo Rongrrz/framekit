@@ -31,7 +31,8 @@ export function createNavigation(
     BackgroundTransparency: 0.04,
     ZIndex: 100,
   });
-  fk.append(navigation, fk.createUIStroke({ Color: colors.inkSoft, Thickness: 1 }));
+
+  navigation.addChild(fk.createUIStroke({ Color: colors.inkSoft, Thickness: 1 }));
 
   const content = fk.createFrame({
     Name: 'NavigationContent',
@@ -40,6 +41,7 @@ export function createNavigation(
     AnchorPoint: fk.vector2(0.5, 0),
     BackgroundTransparency: 1,
   });
+
   const mark = createButton(
     'F',
     fk.udim2FromOffset(38, 38),
@@ -47,12 +49,13 @@ export function createNavigation(
     colors.coral,
     colors.ink,
   );
-  fk.update(mark, { TextSize: 20, FontWeight: 900 });
+  mark.setProperties({ TextSize: 20, FontWeight: 900 });
   bindButtonMotion(mark, colors.coral, colors.amber);
   mark.onClick(() => navigate(0));
-  fk.append(content, mark);
-  fk.append(
-    content,
+
+  content.addChild(mark);
+
+  content.addChild(
     createText({
       text: 'FRAMEKIT',
       size: fk.udim2FromOffset(170, 38),
@@ -61,8 +64,8 @@ export function createNavigation(
       weight: 850,
     }),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       text: '0.1  /  ALPHA',
       size: fk.udim2FromOffset(130, 24),
@@ -82,11 +85,11 @@ export function createNavigation(
       colors.ink,
       colors.textMuted,
     );
-    fk.update(link, { TextSize: 10, FontFamily: fonts.mono });
+    link.setProperties({ TextSize: 10, FontFamily: fonts.mono });
     bindScaleMotion(link, 1.045);
     link.onClick(() => navigate(offset));
     linkButtons.set(key, link);
-    fk.append(content, link);
+    content.addChild(link);
   }
 
   const source = createButton(
@@ -100,8 +103,10 @@ export function createNavigation(
   source.onClick(() => {
     window.open('https://github.com/Rongrrz/framekit', '_blank', 'noopener,noreferrer');
   });
-  fk.append(content, source);
-  fk.append(navigation, content);
+
+  content.addChild(source);
+
+  navigation.addChild(content);
 
   const progressTrack = fk.createFrame({
     Name: 'ScrollProgressTrack',
@@ -110,38 +115,39 @@ export function createNavigation(
     BackgroundColor3: colors.inkSoft,
     ZIndex: 102,
   });
+
   const progress = fk.createFrame({
     Name: 'ScrollProgress',
     Size: fk.udim2FromScale(0, 1),
     BackgroundColor3: colors.coral,
     ZIndex: 103,
   });
-  fk.append(progressTrack, progress);
-  fk.append(navigation, progressTrack);
 
+  progressTrack.addChild(progress);
+
+  navigation.addChild(progressTrack);
   function updateScrollState(): void {
     const maximum = Math.max(1, page.element.scrollHeight - page.element.clientHeight);
     const y = page.element.scrollTop;
     const scale = pageScale();
-    fk.update(progress, { Size: fk.udim2FromScale(Math.min(1, Math.max(0, y / maximum)), 1) });
+    progress.setProperties({ Size: fk.udim2FromScale(Math.min(1, Math.max(0, y / maximum)), 1) });
     const active = activeNavigationSection(y, scale);
     for (const [key, link] of linkButtons) {
       const selected = key === active;
-      fk.update(link, {
+      link.setProperties({
         BackgroundColor3: selected ? colors.inkSoft : colors.ink,
         TextColor3: selected ? colors.text : colors.textMuted,
       });
     }
   }
-
   function updateNavigationLayout(): void {
     const compact = window.innerWidth < 920;
     const narrow = window.innerWidth < 520;
-    fk.update(content, {
+    content.setProperties({
       Size: compact ? fk.udim2(1, -32, 1, 0) : fk.udim2FromScale(contentWidth / designWidth, 1),
     });
-    for (const link of linkButtons.values()) fk.update(link, { Visible: !compact });
-    fk.update(source, {
+    for (const link of linkButtons.values()) link.setProperties({ Visible: !compact });
+    source.setProperties({
       Size: narrow ? fk.udim2FromOffset(112, 42) : fk.udim2FromOffset(150, 42),
       Position: narrow ? fk.udim2(1, -112, 0, 17) : fk.udim2(1, -150, 0, 17),
       Text: narrow ? 'SOURCE  ↗' : 'VIEW SOURCE  ↗',
@@ -154,7 +160,7 @@ export function createNavigation(
     signal: listenerController.signal,
   });
   window.addEventListener('resize', updateNavigationLayout, { signal: listenerController.signal });
-  fk.onDestroy(navigation, () => listenerController.abort());
+  navigation.onDestroy(() => listenerController.abort());
   updateNavigationLayout();
   updateScrollState();
   return navigation;

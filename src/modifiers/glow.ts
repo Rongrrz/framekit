@@ -1,26 +1,26 @@
 import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
-import { mergeProps, type NodeProps } from '../runtime/state';
+import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertBoolean, assertNonNegativeFinite } from '../runtime/validation';
-import { color3, color3ToCss, type Color3 } from '../values/color3';
+import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
-export type UIGlowProps = NodeProps & {
+export type UIGlowProperties = NodeProperties & {
   Enabled: boolean;
   Color: Color3;
   Transparency: number;
   Radius: number;
 };
 
-export type UIGlowNode = StyleModifierNode<UIGlowProps>;
+export type UIGlowNode = StyleModifierNode<UIGlowProperties>;
 
 /** Creates an even glow around its GUI parent. */
-export function createUIGlow(initial: Partial<UIGlowProps> = {}): UIGlowNode {
+export function createUIGlow(initial: Partial<UIGlowProperties> = {}): UIGlowNode {
   return createStyleModifier(
     'UIGlow',
-    mergeProps(
+    mergeProperties(
       {
         Name: 'UIGlow',
         Enabled: true,
-        Color: color3(255, 255, 255),
+        Color: color3FromRGB(255, 255, 255),
         Transparency: 0.35,
         Radius: 18,
       },
@@ -30,20 +30,20 @@ export function createUIGlow(initial: Partial<UIGlowProps> = {}): UIGlowNode {
   );
 }
 
-function resolveGlowStyles(props: Readonly<UIGlowProps>): Styles {
-  assertBoolean(props.Enabled, 'Enabled');
-  return props.Enabled ? { filter: resolveGlow(props) } : {};
+function resolveGlowStyles(properties: Readonly<UIGlowProperties>): Styles {
+  assertBoolean(properties.Enabled, 'Enabled');
+  return properties.Enabled ? { filter: resolveGlow(properties) } : {};
 }
 
-function resolveGlow(props: Readonly<UIGlowProps>): string {
-  assertNonNegativeFinite(props.Radius, 'Radius');
-  const opacity = 1 - clamp(props.Transparency, 0, 1);
+function resolveGlow(properties: Readonly<UIGlowProperties>): string {
+  assertNonNegativeFinite(properties.Radius, 'Radius');
+  const opacity = 1 - clamp(properties.Transparency, 0, 1);
   const coreTransparency = 1 - Math.min(1, opacity * 1.25);
   const haloTransparency = 1 - opacity * 0.5;
-  const coreRadius = props.Radius * 0.35;
+  const coreRadius = properties.Radius * 0.35;
   return [
-    `drop-shadow(0px 0px ${coreRadius}px ${color3ToCss(props.Color, coreTransparency)})`,
-    `drop-shadow(0px 0px ${props.Radius}px ${color3ToCss(props.Color, haloTransparency)})`,
+    `drop-shadow(0px 0px ${coreRadius}px ${color3ToCss(properties.Color, coreTransparency)})`,
+    `drop-shadow(0px 0px ${properties.Radius}px ${color3ToCss(properties.Color, haloTransparency)})`,
   ].join(' ');
 }
 

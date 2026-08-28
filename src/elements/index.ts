@@ -1,31 +1,29 @@
-export type { ButtonNode, ButtonProps } from './button';
 export { createFrame } from './frame';
-export type { AutomaticSize, FrameNode, FrameProps } from './frame';
+export type { AutomaticSize, FrameNode, FrameProperties } from './frame';
 export { createImageButton, createImageLabel } from './image';
 export type {
   ImageButtonNode,
-  ImageButtonProps,
+  ImageButtonProperties,
   ImageLabelNode,
-  ImageLabelProps,
+  ImageLabelProperties,
   ScaleType,
 } from './image';
-export { createScreenGui, isMounted, mount, unmount } from './screen-gui';
-export type { ScreenGuiNode, ScreenGuiProps } from './screen-gui';
-export { canvasPosition, createScrollingFrame, scrollTo } from './scrolling-frame';
+export { createScreenGui } from './screen-gui';
+export type { ScreenGuiNode, ScreenGuiProperties } from './screen-gui';
+export { createScrollingFrame } from './scrolling-frame';
 export type {
-  CanvasPosition,
   ScrollingDirection,
   ScrollingFrameNode,
-  ScrollingFrameProps,
+  ScrollingFrameProperties,
 } from './scrolling-frame';
 export { createTextButton, createTextLabel } from './text';
 export type {
   TextButtonNode,
-  TextButtonProps,
+  TextButtonProperties,
   TextLabelNode,
-  TextLabelProps,
+  TextLabelProperties,
   TextXAlignment,
   TextYAlignment,
 } from './text';
 export { createTextBox } from './text-box';
-export type { TextBoxNode, TextBoxProps } from './text-box';
+export type { TextBoxNode, TextBoxProperties } from './text-box';

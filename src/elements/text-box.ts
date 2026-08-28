@@ -1,15 +1,20 @@
 import { guiEventKeys, textBoxEventMethods, type TextBoxEventMethods } from '../runtime/gui-events';
-import { addCleanup, props, update } from '../runtime/node';
+import { addCleanup } from '../runtime/node-lifecycle';
+import { applyPropertyPatch, getPropertiesSnapshot } from '../runtime/node-properties';
 import type { GuiNode } from '../runtime/render';
 import { emitNodeEvent } from '../runtime/signal';
 import { assertBoolean, assertString } from '../runtime/validation';
-import { color3, color3ToCss, type Color3 } from '../values/color3';
-import { createDefaultFrameProps, createFrameBasedNode, type FrameProps } from './frame';
+import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
+import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
 import { readPlainText, renderRichText, serializeRichText } from './rich-text';
-import { createDefaultTextStyleProps, renderTextStyle, type TextStyleProps } from './text-style';
+import {
+  createDefaultTextStyleProperties,
+  renderTextStyle,
+  type TextStyleProperties,
+} from './text-style';
 
-export type TextBoxProps = FrameProps &
-  TextStyleProps & {
+export type TextBoxProperties = FrameProperties &
+  TextStyleProperties & {
     RichText: boolean;
     MultiLine: boolean;
     Disabled: boolean;
@@ -18,13 +23,13 @@ export type TextBoxProps = FrameProps &
     PlaceholderTransparency: number;
   };
 
-export type TextBoxNode = GuiNode<TextBoxProps> &
+export type TextBoxNode = GuiNode<TextBoxProperties> &
   TextBoxEventMethods & {
     readonly element: HTMLDivElement;
   };
 
 /** Creates an editable text node whose Text property stays synchronized with the DOM. */
-export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode {
+export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBoxNode {
   const element = document.createElement('div');
   const editor = document.createElement('div');
   const placeholder = document.createElement('span');
@@ -53,15 +58,15 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
     'TextBox',
     element,
     {
-      ...createDefaultFrameProps(),
-      ...createDefaultTextStyleProps(),
+      ...createDefaultFrameProperties(),
+      ...createDefaultTextStyleProperties(),
       Name: 'TextBox',
-      BackgroundColor3: color3(255, 255, 255),
+      BackgroundColor3: color3FromRGB(255, 255, 255),
       RichText: false,
       MultiLine: false,
       Disabled: false,
       PlaceholderText: '',
-      PlaceholderColor3: color3(120, 120, 120),
+      PlaceholderColor3: color3FromRGB(120, 120, 120),
       PlaceholderTransparency: 0,
     },
     initial,
@@ -99,12 +104,12 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
   editor.addEventListener(
     'input',
     (event) => {
-      const current = props(node);
+      const current = getPropertiesSnapshot(node);
       const editorText = current.RichText ? serializeRichText(editor) : readPlainText(editor);
       const text = current.MultiLine ? editorText : removeLineBreaks(editorText, current.RichText);
       applyingEditorInput = true;
       try {
-        update(node, { Text: text });
+        applyPropertyPatch(node, { Text: text });
       } finally {
         applyingEditorInput = false;
       }
@@ -112,14 +117,14 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
         if (current.RichText) renderRichText(editor, text);
         else editor.textContent = text;
       }
-      emitNodeEvent(node, guiEventKeys.textChanged, props(node).Text, event);
+      emitNodeEvent(node, guiEventKeys.textChanged, getPropertiesSnapshot(node).Text, event);
     },
     listenerOptions,
   );
   editor.addEventListener(
     'keydown',
     (event) => {
-      if (event.key === 'Enter' && !props(node).MultiLine) event.preventDefault();
+      if (event.key === 'Enter' && !getPropertiesSnapshot(node).MultiLine) event.preventDefault();
     },
     listenerOptions,
   );
@@ -135,7 +140,7 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
   return node;
 }
 
-function textAlignment(alignment: TextBoxProps['TextYAlignment']): string {
+function textAlignment(alignment: TextBoxProperties['TextYAlignment']): string {
   if (alignment === 'Center') return 'center';
   if (alignment === 'Bottom') return 'end';
   return 'start';

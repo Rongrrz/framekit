@@ -1,6 +1,12 @@
-import { addCleanup, assertNodeActive, isDestroyed, props, update } from '../runtime/node';
-import { createSignal, type Signal } from '../runtime/signal';
-import type { Node, NodeProps } from '../runtime/state';
+import {
+  claimAnimationProperties,
+  releaseAnimationProperties,
+  type AnimationOwner,
+} from '../runtime/animation-ownership';
+import { addCleanup, assertNodeActive, isDestroyed } from '../runtime/node-lifecycle';
+import { applyPropertyPatch, getPropertiesSnapshot } from '../runtime/node-properties';
+import type { Node, NodeProperties } from '../runtime/node-state';
+import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
 import { assertNonNegativeFinite } from '../runtime/validation';
 import {
   assertEasingDirection,
@@ -9,11 +15,6 @@ import {
   type EasingDirection,
   type EasingStyle,
 } from './easing';
-import {
-  claimAnimationProperties,
-  releaseAnimationProperties,
-  type AnimationOwner,
-} from './ownership';
 import type { AnimationGoal } from './types';
 import { interpolateAnimationValue } from './value';
 
@@ -36,7 +37,7 @@ export type TweenPlaybackState =
   | 'Completed'
   | 'Cancelled';
 
-export type TweenGoal<Props extends NodeProps> = AnimationGoal<Props>;
+export type TweenGoal<Properties extends NodeProperties> = AnimationGoal<Properties>;
 
 export type Tween = {
   play(): void;
@@ -74,34 +75,35 @@ export function tweenInfo(
   return Object.freeze(info);
 }
 
-/** Creates a controllable tween that applies interpolated values through update(). */
-export function createTween<Props extends NodeProps>(
-  node: Node<Props>,
+/** Creates a controllable tween that applies interpolated property values. */
+export function createTween<Properties extends NodeProperties>(
+  node: Node<Properties>,
   info: TweenInfo,
-  goal: TweenGoal<Props>,
+  goal: TweenGoal<Properties>,
 ): Tween {
   assertNodeActive(node);
   validateInfo(info);
 
-  const goalEntries = Object.entries(goal) as [keyof Props, unknown][];
+  const goalEntries = Object.entries(goal) as [keyof Properties, unknown][];
   if (goalEntries.length === 0) throw new TypeError('A tween needs at least one goal property.');
   const goalKeys = goalEntries.map(([key]) => key);
   const goalValuesByProperty = new Map(goalEntries);
-  const initialProps = props(node);
+  const initialProperties = getPropertiesSnapshot(node);
   for (const key of goalKeys) {
-    if (!Object.hasOwn(initialProps, key)) {
-      throw new TypeError(`Unknown tween property "${String(key)}" on ${initialProps.Name}.`);
+    if (!Object.hasOwn(initialProperties, key)) {
+      throw new TypeError(`Unknown tween property "${String(key)}" on ${initialProperties.Name}.`);
     }
-    assertTweenable(initialProps[key], goalValuesByProperty.get(key), String(key));
+    assertTweenable(initialProperties[key], goalValuesByProperty.get(key), String(key));
   }
 
-  const completed = createSignal<[TweenPlaybackState]>();
+  const completedEmitter = createSignal<[TweenPlaybackState]>();
+  const completed = readonlySignal(completedEmitter);
   let playbackState: TweenPlaybackState = 'Idle';
   let animationFrame: AnimationFrame | undefined;
   let startedAtMs = 0;
   let elapsedBeforePauseMs = 0;
-  let startValues: Partial<Props> = {};
-  let ownedProperties: (keyof Props)[] = [];
+  let startValues: Partial<Properties> = {};
+  let ownedProperties: (keyof Properties)[] = [];
   let disposed = false;
 
   const animationOwner: AnimationOwner = {
@@ -116,7 +118,7 @@ export function createTween<Props extends NodeProps>(
       startedAtMs = now() - elapsedBeforePauseMs;
     } else {
       startValues = {};
-      const latest = props(node);
+      const latest = getPropertiesSnapshot(node);
       for (const key of goalKeys) startValues[key] = latest[key];
       elapsedBeforePauseMs = 0;
       startedAtMs = now();
@@ -137,7 +139,6 @@ export function createTween<Props extends NodeProps>(
     if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
     elapsedBeforePauseMs = Math.max(0, now() - startedAtMs);
     cancelFrame();
-    releaseGoalProperties();
     playbackState = 'Paused';
   }
 
@@ -211,16 +212,16 @@ export function createTween<Props extends NodeProps>(
   function applyProgress(progress: number): void {
     if (isDestroyed(node)) return;
     const eased = ease(progress, info.EasingStyle, info.EasingDirection);
-    const patch: Partial<Props> = {};
+    const patch: Partial<Properties> = {};
     for (const key of goalKeys) {
       patch[key] = interpolateAnimationValue(
         startValues[key],
         goalValuesByProperty.get(key),
         eased,
         String(key),
-      ) as Props[keyof Props];
+      ) as Properties[keyof Properties];
     }
-    update(node, patch);
+    applyPropertyPatch(node, patch);
   }
 
   function finalProgress(): number {
@@ -242,7 +243,7 @@ export function createTween<Props extends NodeProps>(
     cancelFrame();
     releaseGoalProperties();
     playbackState = nextState;
-    completed.emit(nextState);
+    completedEmitter.emit(nextState);
   }
 
   function cancelFrame(): void {
@@ -252,7 +253,8 @@ export function createTween<Props extends NodeProps>(
   }
 
   function assertUsable(): void {
-    if (disposed || isDestroyed(node)) throw new Error(`${initialProps.Name} has been destroyed.`);
+    if (disposed || isDestroyed(node))
+      throw new Error(`${initialProperties.Name} has been destroyed.`);
   }
 
   addCleanup(node, () => {
@@ -268,7 +270,7 @@ export function createTween<Props extends NodeProps>(
       cancelFrame();
       releaseGoalProperties();
       disposed = true;
-      completed.clear();
+      completedEmitter.clear();
     }
   });
 

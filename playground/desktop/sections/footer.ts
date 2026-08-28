@@ -10,7 +10,9 @@ const { top, height } = sectionLayout.footer;
 
 export function createFooter(onBackToTop: () => void): fk.FrameNode {
   const section = pageSection('Footer', top, height, colors.coral);
+
   const content = sectionContent();
+
   const callout = fk.createFrame({
     Name: 'FinalCallout',
     Size: scaledSize(contentWidth, 410, contentWidth, height),
@@ -19,8 +21,8 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
     Rotation: -1,
   });
   addRoundedBorder(callout, 28, colors.ink, 3);
-  fk.append(
-    callout,
+
+  callout.addChild(
     createText({
       text: 'STOP TRANSLATING\nYOUR IDEAS INTO CSS.',
       size: fk.udim2FromOffset(650, 164),
@@ -32,8 +34,8 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    callout,
+
+  callout.addChild(
     createText({
       text: 'Build with the layout values, node tree, and motion model you already understand.',
       size: fk.udim2FromOffset(590, 84),
@@ -44,6 +46,7 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
+
   const start = createButton(
     'START WITH FRAMEKIT  ↗',
     fk.udim2FromOffset(282, 58),
@@ -55,7 +58,9 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
   start.onClick(() => {
     window.open('https://github.com/Rongrrz/framekit', '_blank', 'noopener,noreferrer');
   });
-  fk.append(callout, start);
+
+  callout.addChild(start);
+
   const install = createButton(
     'COPY INSTALL COMMAND',
     fk.udim2FromOffset(282, 46),
@@ -63,7 +68,7 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
     colors.paperMuted,
     colors.darkText,
   );
-  fk.update(install, { TextSize: 10, FontFamily: fonts.mono });
+  install.setProperties({ TextSize: 10, FontFamily: fonts.mono });
   bindButtonMotion(install, colors.paperMuted, colors.mint);
   install.onClick(() => {
     void copyCommand(
@@ -74,9 +79,10 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       colors.darkText,
     );
   });
-  fk.append(callout, install);
-  fk.append(
-    callout,
+
+  callout.addChild(install);
+
+  callout.addChild(
     createText({
       text: 'TypeScript  •  Browser DOM  •  Zero runtime dependencies',
       size: fk.udim2FromOffset(330, 64),
@@ -88,10 +94,10 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       xAlignment: 'Center',
     }),
   );
-  fk.append(content, callout);
 
-  fk.append(
-    content,
+  content.addChild(callout);
+
+  content.addChild(
     createText({
       text: 'FRAMEKIT  /  2026',
       size: scaledSize(300, 40, contentWidth, height),
@@ -102,6 +108,7 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       weight: 800,
     }),
   );
+
   const back = createButton(
     'BACK TO TOP  ↑',
     scaledSize(170, 40, contentWidth, height),
@@ -111,8 +118,9 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
   );
   bindButtonMotion(back, colors.coral, colors.amber);
   back.onClick(onBackToTop);
-  fk.append(content, back);
 
-  fk.append(section, content);
+  content.addChild(back);
+
+  section.addChild(content);
   return section;
 }

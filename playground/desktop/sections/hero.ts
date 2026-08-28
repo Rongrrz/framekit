@@ -16,7 +16,9 @@ import { sectionLayout } from '../layout';
 type CanvasMode = 'frame' | 'text' | 'layout' | 'motion';
 
 const { top, height } = sectionLayout.hero;
+
 const modeOrder: readonly CanvasMode[] = ['frame', 'text', 'layout', 'motion'];
+
 const modeContent = {
   frame: {
     title: 'READY PLAYER',
@@ -28,7 +30,7 @@ const modeContent = {
       '  Size: fk.udim2FromOffset(320, 180),',
       '  BackgroundColor3: coral,',
       '});',
-      'fk.append(screen, card);',
+      'screen.addChild(card);',
     ],
   },
   text: {
@@ -74,10 +76,10 @@ const modeContent = {
 
 export function createHero(onExplore: () => void): fk.FrameNode {
   const section = pageSection('Hero', top, height, colors.ink);
+
   const content = sectionContent();
 
-  fk.append(
-    content,
+  content.addChild(
     createPill(
       'ROBLOX-INSPIRED  ·  BROWSER-NATIVE',
       scaledSize(306, 38, contentWidth, height),
@@ -85,8 +87,8 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       colors.mint,
     ),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       name: 'HeroHeadline',
       text: 'Build browser interfaces like a game UI.',
@@ -98,8 +100,8 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       wrapped: true,
     }),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       text: 'Typed nodes, familiar UDim2 layout, explicit state, and motion that stays out of your way. FrameKit brings the Roblox UI mental model to the DOM.',
       size: scaledSize(536, 112, contentWidth, height),
@@ -120,7 +122,8 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   bindButtonMotion(explore, colors.coral, colors.amber);
   explore.onClick(onExplore);
-  fk.append(content, explore);
+
+  content.addChild(explore);
 
   const install = createButton(
     'COPY  npm i framekit',
@@ -129,12 +132,13 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     colors.inkRaised,
     colors.text,
   );
-  fk.update(install, { FontFamily: fonts.mono, TextSize: 12 });
+  install.setProperties({ FontFamily: fonts.mono, TextSize: 12 });
   bindButtonMotion(install, colors.inkRaised, colors.inkSoft);
   install.onClick(() => {
     void copyCommand(install, 'npm i framekit', 'COPY  npm i framekit');
   });
-  fk.append(content, install);
+
+  content.addChild(install);
 
   const metrics = [
     { value: '0', label: 'CSS CLASSES', accent: colors.coral },
@@ -143,8 +147,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   ] as const;
   for (const [index, metric] of metrics.entries()) {
     const x = index * 174;
-    fk.append(
-      content,
+    content.addChild(
       createText({
         text: metric.value,
         size: scaledSize(54, 28, contentWidth, height),
@@ -154,8 +157,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
         weight: 850,
       }),
     );
-    fk.append(
-      content,
+    content.addChild(
       createText({
         text: metric.label,
         size: scaledSize(120, 28, contentWidth, height),
@@ -168,11 +170,14 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   }
 
   const canvas = createHeroCanvas();
-  fk.append(content, canvas);
-  fk.append(section, content);
+
+  content.addChild(canvas);
+
+  section.addChild(content);
 
   const scale = fk.createUIScale({ Scale: 0.94 });
-  fk.append(canvas, scale);
+
+  canvas.addChild(scale);
   fk.spring(scale, { Scale: 1 });
   fk.spring(canvas, { Rotation: 0 });
   canvas.onMouseEnter(() => {
@@ -187,7 +192,8 @@ export function createHero(onExplore: () => void): fk.FrameNode {
 }
 
 function createHeroCanvas(): fk.FrameNode {
-  const mode = fk.state.observable<CanvasMode>('frame');
+  const mode = fk.createValue<CanvasMode>('frame');
+
   const canvas = fk.createFrame({
     Name: 'InteractiveInterfacePreview',
     Size: scaledSize(500, 580, contentWidth, height),
@@ -203,18 +209,18 @@ function createHeroCanvas(): fk.FrameNode {
     Size: fk.udim2(1, 0, 0, 58),
     BackgroundColor3: colors.paperRaised,
   });
-  fk.append(topbar, fk.createUIStroke({ Color: colors.paperMuted, Thickness: 1 }));
+
+  topbar.addChild(fk.createUIStroke({ Color: colors.paperMuted, Thickness: 1 }));
   for (const [index, color] of [colors.coral, colors.amber, colors.mint].entries()) {
     const dot = fk.createFrame({
       Size: fk.udim2FromOffset(10, 10),
       Position: fk.udim2FromOffset(20 + index * 18, 24),
       BackgroundColor3: color,
     });
-    fk.append(dot, fk.createUICorner({ CornerRadius: 5 }));
-    fk.append(topbar, dot);
+    dot.addChild(fk.createUICorner({ CornerRadius: 5 }));
+    topbar.addChild(dot);
   }
-  fk.append(
-    topbar,
+  topbar.addChild(
     createText({
       text: 'Interface.framekit',
       size: fk.udim2FromOffset(230, 30),
@@ -225,7 +231,8 @@ function createHeroCanvas(): fk.FrameNode {
       xAlignment: 'Center',
     }),
   );
-  fk.append(canvas, topbar);
+
+  canvas.addChild(topbar);
 
   const sidebar = fk.createFrame({
     Name: 'PreviewModePicker',
@@ -233,6 +240,7 @@ function createHeroCanvas(): fk.FrameNode {
     Position: fk.udim2FromOffset(0, 58),
     BackgroundColor3: colors.inkRaised,
   });
+
   const modeButtons = new Map<CanvasMode, fk.TextButtonNode>();
   for (const [index, value] of modeOrder.entries()) {
     const control = createButton(
@@ -242,14 +250,13 @@ function createHeroCanvas(): fk.FrameNode {
       colors.inkRaised,
       colors.textMuted,
     );
-    fk.update(control, { TextSize: 10, FontFamily: fonts.mono, TextXAlignment: 'Left' });
+    control.setProperties({ TextSize: 10, FontFamily: fonts.mono, TextXAlignment: 'Left' });
     bindButtonMotion(control, colors.inkRaised, colors.inkSoft);
     control.onClick(() => mode.set(value));
     modeButtons.set(value, control);
-    fk.append(sidebar, control);
+    sidebar.addChild(control);
   }
-  fk.append(
-    sidebar,
+  sidebar.addChild(
     createText({
       text: 'CLICK A LAYER',
       size: fk.udim2FromOffset(102, 36),
@@ -260,7 +267,8 @@ function createHeroCanvas(): fk.FrameNode {
       wrapped: true,
     }),
   );
-  fk.append(canvas, sidebar);
+
+  canvas.addChild(sidebar);
 
   const preview = fk.createFrame({
     Name: 'LivePreviewCard',
@@ -270,6 +278,7 @@ function createHeroCanvas(): fk.FrameNode {
     BackgroundTransparency: 0.06,
   });
   addRoundedBorder(preview, 22, colors.darkText, 2);
+
   const previewTitle = createText({
     text: '',
     size: fk.udim2FromOffset(280, 54),
@@ -278,6 +287,7 @@ function createHeroCanvas(): fk.FrameNode {
     textSize: 26,
     weight: 900,
   });
+
   const previewBody = createText({
     text: '',
     size: fk.udim2FromOffset(270, 54),
@@ -286,8 +296,11 @@ function createHeroCanvas(): fk.FrameNode {
     textSize: 13,
     wrapped: true,
   });
-  fk.append(preview, previewTitle);
-  fk.append(preview, previewBody);
+
+  preview.addChild(previewTitle);
+
+  preview.addChild(previewBody);
+
   const launch = createButton(
     'NEXT LAYER  →',
     fk.udim2FromOffset(142, 42),
@@ -301,8 +314,10 @@ function createHeroCanvas(): fk.FrameNode {
     const nextMode = modeOrder[(index + 1) % modeOrder.length];
     if (nextMode) mode.set(nextMode);
   });
-  fk.append(preview, launch);
-  fk.append(canvas, preview);
+
+  preview.addChild(launch);
+
+  canvas.addChild(preview);
 
   const code = fk.createFrame({
     Name: 'LiveCode',
@@ -311,6 +326,7 @@ function createHeroCanvas(): fk.FrameNode {
     BackgroundColor3: colors.ink,
   });
   addRoundedBorder(code, 18, colors.inkSoft);
+
   const codeNodes = [
     appendCodeLine(code, '', 22, colors.violet),
     appendCodeLine(code, '', 54),
@@ -318,17 +334,16 @@ function createHeroCanvas(): fk.FrameNode {
     appendCodeLine(code, '', 118, colors.violet),
     appendCodeLine(code, '', 168, colors.mint),
   ];
-  fk.append(canvas, code);
-
-  fk.state.observe(canvas, mode, (value) => {
+  canvas.addChild(code);
+  canvas.watch(mode, (value) => {
     const selected = modeContent[value];
-    fk.update(previewTitle, { Text: selected.title });
-    fk.update(previewBody, { Text: selected.body });
+    previewTitle.setProperties({ Text: selected.title });
+    previewBody.setProperties({ Text: selected.body });
     fk.spring(preview, { BackgroundColor3: selected.accent, Rotation: selected.rotation });
     updateTextLines(codeNodes, selected.lines);
     for (const [buttonMode, control] of modeButtons) {
       const active = buttonMode === value;
-      fk.update(control, {
+      control.setProperties({
         Text: `${active ? '●' : '○'}  ${buttonMode.toUpperCase()}`,
         TextColor3: active ? selected.accent : colors.textMuted,
       });

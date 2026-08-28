@@ -4,18 +4,7 @@ import { fk } from '../..';
 import { groupNode } from '../helpers/group-node';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
 
-const {
-  append,
-  createFrame,
-  createUIListLayout,
-  createUIScale,
-  detach,
-  parent,
-  udim,
-  udim2FromOffset,
-  update,
-} = fk;
-
+const { createFrame, createUIListLayout, createUIScale, udim, udim2FromOffset } = fk;
 resetDocumentAfterEach();
 
 describe('UI list layouts', () => {
@@ -28,10 +17,9 @@ describe('UI list layouts', () => {
     });
     const second = createFrame({ Name: 'Second', LayoutOrder: 1 });
     const layout = createUIListLayout({ Padding: udim(0, 8) });
-    append(frame, first);
-    append(frame, second);
-    append(frame, layout);
-
+    frame.addChild(first);
+    frame.addChild(second);
+    frame.addChild(layout);
     expect(frame.element.style.display).toBe('flex');
     expect(frame.element.style.flexDirection).toBe('column');
     expect(frame.element.style.gap).toBe('8px');
@@ -39,33 +27,29 @@ describe('UI list layouts', () => {
     expect(first.element.style.left).toBe('auto');
     expect(first.element.style.order).toBe('1');
     expect(second.element.style.order).toBe('0');
-
-    update(first, { Position: udim2FromOffset(25, 30), LayoutOrder: 0 });
+    first.setProperties({ Position: udim2FromOffset(25, 30), LayoutOrder: 0 });
     expect(first.element.style.left).toBe('auto');
     expect(first.element.style.order).toBe('0');
     expect(second.element.style.order).toBe('1');
-
-    detach(layout);
+    layout.removeFromParent();
     expect(frame.element.style.display).toBe('');
     expect(first.element.style.position).toBe('absolute');
     expect(first.element.style.left).toBe('25px');
     expect(first.element.style.top).toBe('30px');
   });
-
   it('updates direction, alignment, wrapping, and name sorting', () => {
     const frame = createFrame({ Visible: false });
     const zebra = createFrame({ Name: 'Zebra' });
     const alpha = createFrame({ Name: 'Alpha' });
     const layout = createUIListLayout({ SortOrder: 'Name' });
-    append(frame, zebra);
-    append(frame, alpha);
-    append(frame, layout);
+    frame.addChild(zebra);
+    frame.addChild(alpha);
+    frame.addChild(layout);
     expect(frame.element.style.display).toBe('none');
     expect(zebra.element.style.order).toBe('1');
     expect(alpha.element.style.order).toBe('0');
-
-    update(frame, { Visible: true });
-    update(layout, {
+    frame.setProperties({ Visible: true });
+    layout.setProperties({
       FillDirection: 'Horizontal',
       HorizontalAlignment: 'Center',
       VerticalAlignment: 'Bottom',
@@ -77,32 +61,28 @@ describe('UI list layouts', () => {
     expect(frame.element.style.justifyContent).toBe('center');
     expect(frame.element.style.alignItems).toBe('flex-end');
     expect(frame.element.style.alignContent).toBe('flex-end');
-
-    update(zebra, { Name: 'Aardvark' });
+    zebra.setProperties({ Name: 'Aardvark' });
     expect(zebra.element.style.order).toBe('0');
     expect(alpha.element.style.order).toBe('1');
   });
-
   it('preserves layout positioning when a child modifier updates', () => {
     const container = createFrame();
     const child = createFrame({ Position: udim2FromOffset(40, 50) });
     const scale = createUIScale();
-    append(child, scale);
-    append(container, child);
-    append(container, createUIListLayout());
-
+    child.addChild(scale);
+    container.addChild(child);
+    container.addChild(createUIListLayout());
     expect(child.element.style.position).toBe('relative');
     expect(child.element.style.left).toBe('auto');
-    update(scale, { Scale: 1.05 });
+    scale.setProperties({ Scale: 1.05 });
     expect(child.element.style.position).toBe('relative');
     expect(child.element.style.left).toBe('auto');
     expect(child.element.style.getPropertyValue('scale')).toBe('1.05');
   });
-
   it('rejects element-less parents', () => {
     const group = groupNode({ Name: 'Group' });
     const layout = createUIListLayout();
-    expect(() => append(group, layout)).toThrow(/DOM-backed/);
-    expect(parent(layout)).toBeUndefined();
+    expect(() => group.addChild(layout)).toThrow(/DOM-backed/);
+    expect(layout.Parent).toBeUndefined();
   });
 });

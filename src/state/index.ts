@@ -1,4 +1,4 @@
-export { createObservableValue as observable, observe } from '../runtime/observable-value';
-export type { ObservableValue } from '../runtime/observable-value';
-export { createSignal as signal } from '../runtime/signal';
-export type { Signal, Unsubscribe } from '../runtime/signal';
+export { createValue } from '../runtime/value';
+export type { Value } from '../runtime/value';
+export { createSignal } from '../runtime/signal';
+export type { Signal, SignalEmitter, Unsubscribe } from '../runtime/signal';

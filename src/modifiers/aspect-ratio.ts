@@ -1,30 +1,30 @@
-import type { FrameProps } from '../elements/frame';
+import type { FrameProperties } from '../elements/frame';
 import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
-import { mergeProps, type NodeProps } from '../runtime/state';
+import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertAllowedValue, assertFiniteNumber } from '../runtime/validation';
 import { udimToCss } from '../values/udim';
 
 export type AspectType = 'FitWithinMaxSize' | 'ScaleWithParentSize';
 export type DominantAxis = 'Width' | 'Height';
 
-export type UIAspectRatioConstraintProps = NodeProps & {
+export type UIAspectRatioConstraintProperties = NodeProperties & {
   AspectRatio: number;
   AspectType: AspectType;
   DominantAxis: DominantAxis;
 };
 
-export type UIAspectRatioConstraintNode = StyleModifierNode<UIAspectRatioConstraintProps>;
+export type UIAspectRatioConstraintNode = StyleModifierNode<UIAspectRatioConstraintProperties>;
 
 const aspectTypes: readonly AspectType[] = ['FitWithinMaxSize', 'ScaleWithParentSize'];
 const dominantAxes: readonly DominantAxis[] = ['Width', 'Height'];
 
 /** Creates a constraint that maintains its GUI parent's width-to-height ratio. */
 export function createUIAspectRatioConstraint(
-  initial: Partial<UIAspectRatioConstraintProps> = {},
+  initial: Partial<UIAspectRatioConstraintProperties> = {},
 ): UIAspectRatioConstraintNode {
   return createStyleModifier(
     'UIAspectRatioConstraint',
-    mergeProps(
+    mergeProperties(
       {
         Name: 'UIAspectRatioConstraint',
         AspectRatio: 1,
@@ -38,38 +38,40 @@ export function createUIAspectRatioConstraint(
 }
 
 function resolveAspectRatio(
-  props: Readonly<UIAspectRatioConstraintProps>,
-  parentProps: Readonly<NodeProps>,
+  properties: Readonly<UIAspectRatioConstraintProperties>,
+  parentProperties: Readonly<NodeProperties>,
 ): Styles {
-  assertAllowedValue(props.AspectType, aspectTypes, 'AspectType');
-  assertAllowedValue(props.DominantAxis, dominantAxes, 'DominantAxis');
-  assertFiniteNumber(props.AspectRatio, 'AspectRatio');
+  assertAllowedValue(properties.AspectType, aspectTypes, 'AspectType');
+  assertAllowedValue(properties.DominantAxis, dominantAxes, 'DominantAxis');
+  assertFiniteNumber(properties.AspectRatio, 'AspectRatio');
   const aspectRatio =
-    Number.isFinite(props.AspectRatio) && props.AspectRatio > 0 ? props.AspectRatio : 1;
+    Number.isFinite(properties.AspectRatio) && properties.AspectRatio > 0
+      ? properties.AspectRatio
+      : 1;
   const styles: Record<string, string> = { 'aspect-ratio': `${aspectRatio} / 1` };
 
-  if (props.AspectType === 'ScaleWithParentSize') {
+  if (properties.AspectType === 'ScaleWithParentSize') {
     return {
       ...styles,
       'max-width': '100%',
       'max-height': '100%',
-      width: props.DominantAxis === 'Width' ? '100%' : 'auto',
-      height: props.DominantAxis === 'Height' ? '100%' : 'auto',
+      width: properties.DominantAxis === 'Width' ? '100%' : 'auto',
+      height: properties.DominantAxis === 'Height' ? '100%' : 'auto',
     };
   }
 
-  if (!hasSize(parentProps)) return styles;
-  const width = udimToCss(parentProps.Size.X);
-  const height = udimToCss(parentProps.Size.Y);
+  if (!hasSize(parentProperties)) return styles;
+  const width = udimToCss(parentProperties.Size.X);
+  const height = udimToCss(parentProperties.Size.Y);
   return {
     ...styles,
     'max-width': width,
     'max-height': height,
-    width: props.DominantAxis === 'Width' ? width : 'auto',
-    height: props.DominantAxis === 'Height' ? height : 'auto',
+    width: properties.DominantAxis === 'Width' ? width : 'auto',
+    height: properties.DominantAxis === 'Height' ? height : 'auto',
   };
 }
 
-function hasSize(props: Readonly<NodeProps>): props is Readonly<FrameProps> {
-  return 'Size' in props;
+function hasSize(properties: Readonly<NodeProperties>): properties is Readonly<FrameProperties> {
+  return 'Size' in properties;
 }

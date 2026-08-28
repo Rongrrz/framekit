@@ -1,19 +1,39 @@
-import { addCleanup, assertNodeActive } from '../runtime/node';
+import { guiEventMethods } from '../runtime/gui-events';
+import { addCleanup, assertNodeActive } from '../runtime/node-lifecycle';
+import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { createGuiNode, type GuiNode } from '../runtime/render';
-import { mergeProps, type NodeProps } from '../runtime/state';
 import { assertBoolean, assertInteger } from '../runtime/validation';
 import { connectHoverEvents } from './hover-events';
 
-export type ScreenGuiProps = NodeProps & {
+export type ScreenGuiProperties = NodeProperties & {
   Enabled: boolean;
   DisplayOrder: number;
 };
 
-export type ScreenGuiNode = GuiNode<ScreenGuiProps>;
+export type ScreenGuiMethods = {
+  mount(target: string | HTMLElement): void;
+  unmount(): void;
+  isMounted(): boolean;
+};
+
+export type ScreenGuiNode = GuiNode<ScreenGuiProperties> & ScreenGuiMethods;
+
+const screenGuiMethods = Object.freeze({
+  ...guiEventMethods,
+  mount(this: ScreenGuiNode, target: string | HTMLElement): void {
+    mountScreenGui(this, target);
+  },
+  unmount(this: ScreenGuiNode): void {
+    unmountScreenGui(this);
+  },
+  isMounted(this: ScreenGuiNode): boolean {
+    return isScreenGuiMounted(this);
+  },
+} satisfies typeof guiEventMethods & ScreenGuiMethods);
 
 const mountTargets = new WeakMap<ScreenGuiNode, HTMLElement>();
 
-export function createScreenGui(initial: Partial<ScreenGuiProps> = {}): ScreenGuiNode {
+export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): ScreenGuiNode {
   const element = document.createElement('div');
   element.dataset.framekit = 'ScreenGui';
   Object.assign(element.style, {
@@ -26,37 +46,39 @@ export function createScreenGui(initial: Partial<ScreenGuiProps> = {}): ScreenGu
     overscrollBehavior: 'none',
   });
   const gui = createGuiNode(
-    mergeProps({ Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 }, initial),
+    'ScreenGui',
+    mergeProperties({ Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 }, initial),
     element,
-    (props) => {
-      assertBoolean(props.Enabled, 'Enabled');
-      assertInteger(props.DisplayOrder, 'DisplayOrder');
-      element.style.display = props.Enabled ? '' : 'none';
-      element.style.zIndex = String(props.DisplayOrder);
+    (properties) => {
+      assertBoolean(properties.Enabled, 'Enabled');
+      assertInteger(properties.DisplayOrder, 'DisplayOrder');
+      element.style.display = properties.Enabled ? '' : 'none';
+      element.style.zIndex = String(properties.DisplayOrder);
     },
-  );
+    screenGuiMethods,
+  ) as ScreenGuiNode;
   connectHoverEvents(gui, element);
   addCleanup(gui, () => mountTargets.delete(gui));
   return gui;
 }
 
 /** Mounts a full-viewport ScreenGui beneath the supplied DOM owner. */
-export function mount(gui: ScreenGuiNode, target: string | HTMLElement): void {
+function mountScreenGui(gui: ScreenGuiNode, target: string | HTMLElement): void {
   assertNodeActive(gui);
   const element = resolveMountTarget(target);
   if (mountTargets.get(gui) === element && gui.element.parentElement === element) return;
-  unmount(gui);
+  unmountScreenGui(gui);
   mountTargets.set(gui, element);
   element.append(gui.element);
 }
 
-export function unmount(gui: ScreenGuiNode): void {
+function unmountScreenGui(gui: ScreenGuiNode): void {
   assertNodeActive(gui);
   gui.element.remove();
   mountTargets.delete(gui);
 }
 
-export function isMounted(gui: ScreenGuiNode): boolean {
+function isScreenGuiMounted(gui: ScreenGuiNode): boolean {
   assertNodeActive(gui);
   const target = mountTargets.get(gui);
   if (!target || gui.element.parentElement !== target) {

@@ -1,23 +1,23 @@
 import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
-import { mergeProps, type NodeProps } from '../runtime/state';
+import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertNonNegativeFinite } from '../runtime/validation';
 
-export type UIScaleProps = NodeProps & {
+export type UIScaleProperties = NodeProperties & {
   Scale: number;
 };
 
-export type UIScaleNode = StyleModifierNode<UIScaleProps>;
+export type UIScaleNode = StyleModifierNode<UIScaleProperties>;
 
 /** Visually scales a GUI node and its descendants without changing its layout footprint. */
-export function createUIScale(initial: Partial<UIScaleProps> = {}): UIScaleNode {
+export function createUIScale(initial: Partial<UIScaleProperties> = {}): UIScaleNode {
   return createStyleModifier(
     'UIScale',
-    mergeProps({ Name: 'UIScale', Scale: 1 }, initial),
+    mergeProperties({ Name: 'UIScale', Scale: 1 }, initial),
     resolveScale,
   );
 }
 
-function resolveScale(props: Readonly<UIScaleProps>): Styles {
-  assertNonNegativeFinite(props.Scale, 'UIScale Scale');
-  return { scale: String(props.Scale), 'transform-origin': 'center' };
+function resolveScale(properties: Readonly<UIScaleProperties>): Styles {
+  assertNonNegativeFinite(properties.Scale, 'UIScale Scale');
+  return { scale: String(properties.Scale), 'transform-origin': 'center' };
 }

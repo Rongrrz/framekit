@@ -3,18 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
 
-const { append, color3, createTextLabel, update } = fk;
-
+const { color3FromRGB, createTextLabel } = fk;
 resetDocumentAfterEach();
 
 describe('text labels', () => {
   it('synchronizes text properties without replacing node children', () => {
     const label = createTextLabel();
     const child = createTextLabel();
-    append(label, child);
-    update(label, {
+    label.addChild(child);
+    label.setProperties({
       Text: 'Inventory',
-      TextColor3: color3(10, 20, 30),
+      TextColor3: color3FromRGB(10, 20, 30),
       TextSize: 24,
       TextWrapped: true,
       TextXAlignment: 'Left',

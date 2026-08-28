@@ -8,6 +8,7 @@ type AnimationClock = Readonly<{
 const frameDuration = 1000 / 60;
 
 /** Installs a deterministic animation-frame clock for the surrounding test suite. */
+
 export function setupAnimationClock(): AnimationClock {
   let time = 0;
   let nextFrameId = 1;

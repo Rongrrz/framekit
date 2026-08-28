@@ -3,7 +3,6 @@ import { fk } from 'framekit';
 import { createText } from '../shared/ui';
 import { colors } from '../theme';
 import { contentWidth, designWidth, type SectionMetrics } from './layout';
-
 export { contentWidth } from './layout';
 
 export function createSection(
@@ -34,8 +33,7 @@ export function appendSectionHeading(
   body: string,
   usesDarkText: boolean,
 ): void {
-  fk.append(
-    parent,
+  parent.addChild(
     createText({
       text: heading,
       size: fk.udim2FromOffset(contentWidth, 126),
@@ -47,8 +45,8 @@ export function appendSectionHeading(
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    parent,
+
+  parent.addChild(
     createText({
       text: body,
       size: fk.udim2FromOffset(contentWidth, 84),

@@ -21,17 +21,17 @@ const apiSections = [
   {
     tab: 'NODES',
     index: '01 / NODES',
-    title: 'Build the tree.',
-    body: 'Factories return typed handles. append(), detach(), and destroy() make ownership explicit.',
-    tokens: 'createTextBox  ·  props\nonTextChanged  ·  RichText',
+    title: 'Inspect the hierarchy.',
+    body: 'Every persistent node has a Name, ClassName, and live Parent. Traverse or print any subtree without touching the DOM.',
+    tokens: 'Parent  ·  ClassName\nfindFirstChild  ·  printTree',
     lines: [
       'const editor = fk.createTextBox({',
-      "  Text: 'Hello <b>world</b>',",
-      '  RichText: true,',
-      '  MultiLine: true,',
+      "  Name: 'Editor',",
+      "  Text: 'Hello',",
       '});',
-      'editor.onTextChanged(save);',
-      '',
+      'editor.Parent = panel;',
+      "panel.findFirstChild('Editor');",
+      'panel.printTree();',
     ],
   },
   {
@@ -45,7 +45,7 @@ const apiSections = [
       '  Color: colors.violet,',
       '  Radius: 24,',
       '});',
-      'fk.append(panel, glow);',
+      'panel.addChild(glow);',
       '',
       '',
     ],
@@ -54,15 +54,15 @@ const apiSections = [
     tab: 'STATE',
     index: '03 / STATE',
     title: 'Connect behavior.',
-    body: 'Explicit observable values remain framework-free. Owned observations stop automatically on destroy.',
-    tokens: 'state.observable  ·  state.observe\nstate.signal  ·  get / set',
+    body: 'Shared values are optional and synchronous. Watching one never rerenders or recreates a node.',
+    tokens: 'createValue  ·  node.watch\nvalue.get  ·  value.set',
     lines: [
-      'const count = fk.state.observable(0);',
+      'const count = fk.createValue(0);',
       'count.set(1);',
-      'fk.state.observe(label, count,',
-      '  value => fk.update(label, {',
-      '    Text: String(value),',
-      '  })',
+      'label.watch(count,',
+      '  value => label.Text = String(value)',
+      '',
+      '',
       ');',
     ],
   },
@@ -78,6 +78,7 @@ const apiSections = [
 
 export function createApi(): fk.FrameNode {
   const section = createSection('MobileApi', sectionLayout.api, colors.ink);
+
   const content = createSectionContent();
   appendSectionHeading(
     content,
@@ -85,7 +86,8 @@ export function createApi(): fk.FrameNode {
     'Pick an area. Each panel explains what it owns and shows a complete, formatted usage pattern.',
     false,
   );
-  const selected = fk.state.observable(0);
+
+  const selected = fk.createValue(0);
   for (const [index, apiSection] of apiSections.entries()) {
     const control = createButton(
       apiSection.tab,
@@ -94,17 +96,19 @@ export function createApi(): fk.FrameNode {
       colors.inkRaised,
       colors.text,
     );
-    fk.update(control, { TextSize: 9, FontFamily: fonts.mono });
+    control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
     bindScaleMotion(control, 1.035);
     control.onClick(() => selected.set(index));
-    fk.append(content, control);
+    content.addChild(control);
   }
+
   const detail = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 794),
     Position: fk.udim2FromOffset(0, 358),
     BackgroundColor3: colors.paperRaised,
   });
   addRoundedBorder(detail, 22, colors.inkSoft, 2);
+
   const indexLabel = createText({
     text: '',
     size: fk.udim2FromOffset(310, 28),
@@ -113,6 +117,7 @@ export function createApi(): fk.FrameNode {
     textSize: 10,
     font: fonts.mono,
   });
+
   const title = createText({
     text: '',
     size: fk.udim2FromOffset(310, 48),
@@ -121,6 +126,7 @@ export function createApi(): fk.FrameNode {
     textSize: 25,
     weight: 900,
   });
+
   const body = createText({
     text: '',
     size: fk.udim2FromOffset(310, 104),
@@ -130,9 +136,13 @@ export function createApi(): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(detail, indexLabel);
-  fk.append(detail, title);
-  fk.append(detail, body);
+
+  detail.addChild(indexLabel);
+
+  detail.addChild(title);
+
+  detail.addChild(body);
+
   const tokens = createText({
     text: '',
     size: fk.udim2FromOffset(310, 88),
@@ -143,13 +153,16 @@ export function createApi(): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(detail, tokens);
+
+  detail.addChild(tokens);
+
   const code = fk.createFrame({
     Size: fk.udim2FromOffset(310, 400),
     Position: fk.udim2FromOffset(24, 356),
     BackgroundColor3: colors.ink,
   });
   addRoundedBorder(code, 16, colors.inkSoft);
+
   const lines = [
     appendCodeLine(code, '', 24, colors.violet),
     appendCodeLine(code, '', 68),
@@ -159,17 +172,19 @@ export function createApi(): fk.FrameNode {
     appendCodeLine(code, '', 244),
     appendCodeLine(code, '', 288, colors.violet),
   ];
-  fk.append(detail, code);
-  fk.append(content, detail);
-  fk.state.observe(detail, selected, (value) => {
+  detail.addChild(code);
+
+  content.addChild(detail);
+  detail.watch(selected, (value) => {
     const apiSection = apiSections[value];
     if (!apiSection) return;
-    fk.update(indexLabel, { Text: apiSection.index });
-    fk.update(title, { Text: apiSection.title });
-    fk.update(body, { Text: apiSection.body });
-    fk.update(tokens, { Text: apiSection.tokens });
+    indexLabel.setProperties({ Text: apiSection.index });
+    title.setProperties({ Text: apiSection.title });
+    body.setProperties({ Text: apiSection.body });
+    tokens.setProperties({ Text: apiSection.tokens });
     updateTextLines(lines, apiSection.lines);
   });
-  fk.append(section, content);
+
+  section.addChild(content);
   return section;
 }

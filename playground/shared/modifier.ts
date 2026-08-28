@@ -1,13 +1,13 @@
 import { fk } from 'framekit';
-
 /** Keeps an existing modifier handle attached or detached without recreating it. */
+
 export function setModifierAttached(parent: fk.Node, modifier: fk.Node, attached: boolean): void {
-  const currentParent = fk.parent(modifier);
-  if (attached && currentParent !== parent) fk.append(parent, modifier);
-  if (!attached && currentParent !== undefined) fk.detach(modifier);
+  const currentParent = modifier.Parent;
+  if (attached && currentParent !== parent) parent.addChild(modifier);
+  if (!attached && currentParent !== undefined) modifier.removeFromParent();
 }
 
-type SpringModifierOptions<Props extends fk.NodeProps> = Readonly<{
+type SpringModifierOptions<Props extends fk.NodeProperties> = Readonly<{
   parent: fk.Node;
   modifier: fk.Node<Props>;
   motion: fk.Motion<Props>;
@@ -15,26 +15,24 @@ type SpringModifierOptions<Props extends fk.NodeProps> = Readonly<{
   inactive: fk.AnimationGoal<Props>;
   isActive: () => boolean;
 }>;
-
 /** Springs a modifier to neutral before detaching and restores it from neutral when reattached. */
-export function createSpringModifierToggle<Props extends fk.NodeProps>(
+
+export function createSpringModifierToggle<Props extends fk.NodeProperties>(
   options: SpringModifierOptions<Props>,
 ): (active: boolean) => void {
   options.motion.completed.subscribe(() => {
-    if (!options.isActive() && fk.parent(options.modifier) === options.parent) {
-      fk.detach(options.modifier);
+    if (!options.isActive() && options.modifier.Parent === options.parent) {
+      options.modifier.removeFromParent();
     }
   });
-
   return (active) => {
     if (!active) {
-      if (fk.parent(options.modifier) === options.parent) options.motion.spring(options.inactive);
+      if (options.modifier.Parent === options.parent) options.motion.spring(options.inactive);
       return;
     }
-
-    if (fk.parent(options.modifier) !== options.parent) {
-      fk.update(options.modifier, options.inactive);
-      fk.append(options.parent, options.modifier);
+    if (options.modifier.Parent !== options.parent) {
+      options.modifier.setProperties(options.inactive);
+      options.parent.addChild(options.modifier);
     }
     options.motion.spring(options.active);
   };

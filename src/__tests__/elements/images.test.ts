@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fk } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
 
-const { createImageLabel, props, update } = fk;
-
+const { createImageLabel } = fk;
 resetDocumentAfterEach();
 
 describe('images', () => {
@@ -21,23 +20,20 @@ describe('images', () => {
     expect(element?.style.objectFit).toBe('cover');
     expect(element?.style.opacity).toBe('0.75');
   });
-
   it('removes the native URL when an image source is cleared', () => {
     const image = createImageLabel({ Image: '/item.png' });
-    update(image, { Image: '' });
+    image.setProperties({ Image: '' });
     expect(image.element.querySelector('img')?.hasAttribute('src')).toBe(false);
   });
-
   it('rejects executable URL schemes without corrupting the previous source', () => {
     expect(() => createImageLabel({ Image: 'javascript:alert(1)' })).toThrow(
       /Unsupported image URL protocol/,
     );
-
     const image = createImageLabel({ Image: '/safe.png' });
-    expect(() => update(image, { Image: 'javascript:alert(1)' })).toThrow(
+    expect(() => image.setProperties({ Image: 'javascript:alert(1)' })).toThrow(
       /Unsupported image URL protocol/,
     );
-    expect(props(image).Image).toBe('/safe.png');
+    expect(image.Image).toBe('/safe.png');
     expect(image.element.querySelector('img')?.getAttribute('src')).toBe('/safe.png');
   });
 });

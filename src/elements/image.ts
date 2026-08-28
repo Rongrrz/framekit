@@ -6,27 +6,27 @@ import {
   assertFiniteNumber,
   assertString,
 } from '../runtime/validation';
-import { initializeButtonElement, type ButtonNode, type ButtonProps } from './button';
-import { createDefaultFrameProps, createFrameBasedNode, type FrameProps } from './frame';
+import { initializeButtonElement, type ButtonNode, type ButtonProperties } from './button';
+import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
 
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 
-export type ImageLabelProps = FrameProps & {
+export type ImageLabelProperties = FrameProperties & {
   Image: string;
   ImageTransparency: number;
   ScaleType: ScaleType;
   AltText: string;
 };
 
-export type ImageLabelNode = GuiNode<ImageLabelProps>;
-export type ImageButtonProps = ImageLabelProps & ButtonProps;
-export type ImageButtonNode = GuiNode<ImageButtonProps> & ButtonNode;
+export type ImageLabelNode = GuiNode<ImageLabelProperties>;
+export type ImageButtonProperties = ImageLabelProperties & ButtonProperties;
+export type ImageButtonNode = ButtonNode<ImageButtonProperties>;
 
 const objectFit = { Stretch: 'fill', Fit: 'contain', Crop: 'cover' } as const;
 const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
-export function createImageLabel(initial: Partial<ImageLabelProps> = {}): ImageLabelNode {
+export function createImageLabel(initial: Partial<ImageLabelProperties> = {}): ImageLabelNode {
   return createImageNode(
     'ImageLabel',
     document.createElement('div'),
@@ -35,17 +35,17 @@ export function createImageLabel(initial: Partial<ImageLabelProps> = {}): ImageL
   );
 }
 
-export function createImageButton(initial: Partial<ImageButtonProps> = {}): ImageButtonNode {
+export function createImageButton(initial: Partial<ImageButtonProperties> = {}): ImageButtonNode {
   const element = document.createElement('button');
   const node = createImageNode(
     'ImageButton',
     element,
     { ...createDefaultImageProps(), Name: 'ImageButton', Disabled: false },
     initial,
-    (props) => {
-      assertBoolean(props.Disabled, 'Disabled');
-      element.disabled = props.Disabled;
-      element.style.cursor = props.Disabled ? 'not-allowed' : 'pointer';
+    (properties) => {
+      assertBoolean(properties.Disabled, 'Disabled');
+      element.disabled = properties.Disabled;
+      element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
     },
     buttonEventMethods,
   ) as ImageButtonNode;
@@ -53,9 +53,9 @@ export function createImageButton(initial: Partial<ImageButtonProps> = {}): Imag
   return node;
 }
 
-function createDefaultImageProps(): ImageLabelProps {
+function createDefaultImageProps(): ImageLabelProperties {
   return {
-    ...createDefaultFrameProps(),
+    ...createDefaultFrameProperties(),
     Name: 'ImageLabel',
     BackgroundTransparency: 1,
     Image: '',
@@ -65,14 +65,14 @@ function createDefaultImageProps(): ImageLabelProps {
   };
 }
 
-function createImageNode<Props extends ImageLabelProps>(
+function createImageNode<Properties extends ImageLabelProperties>(
   nodeType: string,
   element: HTMLElement,
-  defaultProps: Props,
-  initial: Partial<Props>,
-  renderAdditionalProperties?: PropertyRenderer<Props>,
+  defaultProperties: Properties,
+  initial: Partial<Properties>,
+  renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Props> {
+): GuiNode<Properties> {
   const image = document.createElement('img');
   image.draggable = false;
   image.decoding = 'async';
@@ -90,26 +90,26 @@ function createImageNode<Props extends ImageLabelProps>(
   return createFrameBasedNode(
     nodeType,
     element,
-    defaultProps,
+    defaultProperties,
     initial,
-    (props, changed) => {
+    (properties, changed) => {
       if (changed.has('Image')) {
-        assertString(props.Image, 'Image');
-        setImageSource(image, props.Image);
+        assertString(properties.Image, 'Image');
+        setImageSource(image, properties.Image);
       }
       if (changed.has('AltText')) {
-        assertString(props.AltText, 'AltText');
-        image.alt = props.AltText;
+        assertString(properties.AltText, 'AltText');
+        image.alt = properties.AltText;
       }
       if (changed.has('ImageTransparency')) {
-        assertFiniteNumber(props.ImageTransparency, 'ImageTransparency');
-        image.style.opacity = String(1 - clamp(props.ImageTransparency, 0, 1));
+        assertFiniteNumber(properties.ImageTransparency, 'ImageTransparency');
+        image.style.opacity = String(1 - clamp(properties.ImageTransparency, 0, 1));
       }
       if (changed.has('ScaleType')) {
-        assertAllowedValue(props.ScaleType, scaleTypes, 'ScaleType');
-        image.style.objectFit = objectFit[props.ScaleType];
+        assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
+        image.style.objectFit = objectFit[properties.ScaleType];
       }
-      renderAdditionalProperties?.(props, changed);
+      renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
   );

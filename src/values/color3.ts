@@ -6,7 +6,7 @@ export type Color3 = Readonly<{
 }>;
 
 /** Creates an immutable RGB color, rounding and constraining each component. */
-export function color3(red: number, green: number, blue: number): Color3 {
+export function color3FromRGB(red: number, green: number, blue: number): Color3 {
   return Object.freeze({ R: colorChannel(red), G: colorChannel(green), B: colorChannel(blue) });
 }
 
@@ -15,7 +15,7 @@ export function color3FromHex(hex: string): Color3 {
   if (!/^#[\dA-Fa-f]{6}$/.test(hex)) {
     throw new TypeError(`Expected a color in #RRGGBB format, got "${hex}".`);
   }
-  return color3(
+  return color3FromRGB(
     Number.parseInt(hex.slice(1, 3), 16),
     Number.parseInt(hex.slice(3, 5), 16),
     Number.parseInt(hex.slice(5, 7), 16),

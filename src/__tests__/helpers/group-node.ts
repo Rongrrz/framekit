@@ -1,10 +1,18 @@
-import { createBaseState, registerNode, type Node, type NodeProps } from '../../runtime/state';
+import { createNodeHandle } from '../../runtime/node-handle';
+import {
+  createBaseState,
+  registerNode,
+  type Node,
+  type NodeProperties,
+} from '../../runtime/node-state';
 
 /** Creates an element-less node for testing tree behavior without involving the DOM. */
-export function groupNode(initial: Partial<NodeProps> = {}): Node<NodeProps> {
-  const handle = Object.freeze({}) as Node<NodeProps>;
+
+export function groupNode(initial: Partial<NodeProperties> = {}): Node<NodeProperties> {
+  const properties = { Name: 'TestGroup', ...initial };
+  const handle = createNodeHandle(properties);
   registerNode(handle, {
-    ...createBaseState({ Name: 'TestGroup', ...initial }),
+    ...createBaseState('Group', properties),
     kind: 'group',
     children: [],
   });

@@ -1,44 +1,52 @@
 import { guiEventMethods, type GuiEventMethodTable, type GuiEventMethods } from './gui-events';
 import type { LayoutChild, LayoutNodeState, ModifierNode, Styles } from './modifier';
+import { createNodeHandle, extendMethodTable } from './node-handle';
+import { nodeMethods } from './node-methods';
 import {
   createBaseState,
   getNodeState,
   registerNode,
   type BaseNodeState,
   type Node,
-  type NodeProps,
-} from './state';
+  type NodeProperties,
+} from './node-state';
 
 /** A node backed by an HTML element. */
-export type GuiNode<Props extends NodeProps = NodeProps> = Node<Props> &
+export type GuiNode<Properties extends NodeProperties = NodeProperties> = Node<Properties> &
   GuiEventMethods & {
     readonly element: HTMLElement;
   };
 
-export type PropertyRenderer<Props extends NodeProps> = (
-  props: Readonly<Props>,
-  changedProperties: ReadonlySet<keyof Props>,
+export type PropertyRenderer<Properties extends NodeProperties> = (
+  properties: Readonly<Properties>,
+  changedProperties: ReadonlySet<keyof Properties>,
 ) => void;
 
-export type GuiNodeState<Props extends NodeProps = NodeProps> = BaseNodeState<Props> & {
-  kind: 'gui';
-  children: Node[];
-  renderProperties: PropertyRenderer<Props> | undefined;
-  modifiers: Map<string, ModifierNode>;
-  appliedModifierStyles: Set<string>;
-  appliedLayoutStylesByChild: Map<GuiNode, Set<string>>;
-};
+export type GuiNodeState<Properties extends NodeProperties = NodeProperties> =
+  BaseNodeState<Properties> & {
+    kind: 'gui';
+    children: Node[];
+    renderProperties: PropertyRenderer<Properties> | undefined;
+    modifiers: Map<string, ModifierNode>;
+    appliedModifierStyles: Set<string>;
+    appliedLayoutStylesByChild: Map<GuiNode, Set<string>>;
+  };
 
 /** Creates a DOM-backed node and renders its initial properties. */
-export function createGuiNode<Props extends NodeProps>(
-  props: Props,
+export function createGuiNode<Properties extends NodeProperties>(
+  className: string,
+  properties: Properties,
   element: HTMLElement,
-  renderProperties?: PropertyRenderer<Props>,
+  renderProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Props> {
-  const node = createGuiNodeHandle<Props>(element, eventMethods ?? guiEventMethods);
+): GuiNode<Properties> {
+  const node = createGuiNodeHandle<Properties>(
+    properties,
+    element,
+    eventMethods ?? guiEventMethods,
+  );
   registerNode(node, {
-    ...createBaseState(props),
+    ...createBaseState(className, properties),
     kind: 'gui',
     children: [],
     renderProperties,
@@ -46,16 +54,27 @@ export function createGuiNode<Props extends NodeProps>(
     appliedModifierStyles: new Set(),
     appliedLayoutStylesByChild: new Map(),
   });
-  renderNode(node, new Set(Object.keys(props) as (keyof Props)[]));
+  renderNode(node, new Set(Object.keys(properties) as (keyof Properties)[]));
   return node;
 }
 
-function createGuiNodeHandle<Props extends NodeProps>(
+function createGuiNodeHandle<Properties extends NodeProperties>(
+  properties: Readonly<Properties>,
   element: HTMLElement,
   eventMethods: GuiEventMethodTable,
-): GuiNode<Props> {
-  const handle = Object.assign(Object.create(eventMethods) as object, { element });
-  return Object.freeze(handle) as GuiNode<Props>;
+): GuiNode<Properties> {
+  const methodTable = getGuiMethodTable(eventMethods);
+  return createNodeHandle(properties, methodTable, { element }) as GuiNode<Properties>;
+}
+
+const guiMethodTables = new WeakMap<object, object>();
+
+function getGuiMethodTable(eventMethods: GuiEventMethodTable): object {
+  const existing = guiMethodTables.get(eventMethods);
+  if (existing) return existing;
+  const methodTable = extendMethodTable(nodeMethods, eventMethods);
+  guiMethodTables.set(eventMethods, methodTable);
+  return methodTable;
 }
 
 export function isGuiNode(node: Node): node is GuiNode {
@@ -72,17 +91,17 @@ export function hasLayoutModifier(node: Node): boolean {
 }
 
 /** Renders base properties first, followed by attached modifiers. */
-export function renderNode<Props extends NodeProps>(
-  node: Node<Props>,
-  changedProperties: ReadonlySet<keyof Props> = new Set(),
+export function renderNode<Properties extends NodeProperties>(
+  node: Node<Properties>,
+  changedProperties: ReadonlySet<keyof Properties> = new Set(),
 ): void {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return;
-  const guiNode = node as GuiNode<Props>;
+  const guiNode = node as GuiNode<Properties>;
 
   clearLayoutStyles(state);
   clearStyles(guiNode.element, state.appliedModifierStyles);
-  state.renderProperties?.(state.props, changedProperties);
+  state.renderProperties?.(state.properties, changedProperties);
   const baseRenderHidesElement = guiNode.element.style.display === 'none';
   const resolvedModifierStyles: Record<string, string> = {};
   const layoutModifiers: LayoutNodeState[] = [];
@@ -92,7 +111,7 @@ export function renderNode<Props extends NodeProps>(
     if (modifierState.kind === 'style') {
       mergeStyles(
         resolvedModifierStyles,
-        modifierState.resolveStyles(modifierState.props, state.props),
+        modifierState.resolveStyles(modifierState.properties, state.properties),
       );
     } else if (modifierState.kind === 'layout') {
       layoutModifiers.push(modifierState);
@@ -120,7 +139,9 @@ function mergeStyles(target: Record<string, string>, source: Styles): void {
   }
 }
 
-function clearLayoutStyles<Props extends NodeProps>(state: GuiNodeState<Props>): void {
+function clearLayoutStyles<Properties extends NodeProperties>(
+  state: GuiNodeState<Properties>,
+): void {
   for (const [child, properties] of state.appliedLayoutStylesByChild) {
     if (getNodeState(child).destroyed) continue;
     clearStyles(child.element, properties);
@@ -133,14 +154,14 @@ function applyLayout(parent: GuiNode, layout: LayoutNodeState, isHidden: boolean
   const parentState = getNodeState(parent);
   if (parentState.kind !== 'gui') return;
   const children = parentState.children.filter(isGuiNode);
-  const childProps = children.map((child): LayoutChild => {
-    const props = getNodeState(child).props as NodeProps & { LayoutOrder?: unknown };
+  const childProperties = children.map((child): LayoutChild => {
+    const properties = getNodeState(child).properties as NodeProperties & { LayoutOrder?: unknown };
     return {
-      Name: props.Name,
-      LayoutOrder: typeof props.LayoutOrder === 'number' ? props.LayoutOrder : 0,
+      Name: properties.Name,
+      LayoutOrder: typeof properties.LayoutOrder === 'number' ? properties.LayoutOrder : 0,
     };
   });
-  const resolvedLayout = layout.resolveLayout(layout.props, childProps);
+  const resolvedLayout = layout.resolveLayout(layout.properties, childProperties);
   applyStyles(parent.element, resolvedLayout.parent, parentState.appliedModifierStyles, isHidden);
 
   for (const [index, child] of children.entries()) {

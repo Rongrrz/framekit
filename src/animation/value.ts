@@ -1,4 +1,4 @@
-import { color3, type Color3 } from '../values/color3';
+import { color3FromRGB, type Color3 } from '../values/color3';
 import { udim, udim2, type UDim, type UDim2 } from '../values/udim';
 import { vector2, type Vector2 } from '../values/vector2';
 
@@ -36,7 +36,7 @@ export function composeAnimationValue(
     case 'number':
       return numbers[0]!;
     case 'Color3':
-      return color3(numbers[0]!, numbers[1]!, numbers[2]!);
+      return color3FromRGB(numbers[0]!, numbers[1]!, numbers[2]!);
     case 'Vector2':
       return vector2(numbers[0]!, numbers[1]!);
     case 'UDim':

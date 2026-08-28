@@ -12,15 +12,15 @@ const principles = [
   {
     number: '01',
     title: 'Create typed nodes',
-    body: 'Factories produce opaque handles with a property contract. Misspelled properties fail early instead of silently becoming broken CSS.',
+    body: 'Factories produce persistent nodes with a property contract. Misspelled properties fail early instead of silently becoming broken CSS.',
     code: 'fk.createFrame({ ... })',
     accent: colors.coral,
   },
   {
     number: '02',
     title: 'Compose a real tree',
-    body: 'Append controls and element-less modifiers into an explicit hierarchy. Detach to reuse; destroy to release every owned resource.',
-    code: 'fk.append(parent, child)',
+    body: 'Add controls and element-less modifiers to an explicit hierarchy. Remove a node to reuse it; destroy it to release every owned resource.',
+    code: 'parent.addChild(child)',
     accent: colors.mint,
   },
   {
@@ -34,10 +34,10 @@ const principles = [
 
 export function createPrinciples(): fk.FrameNode {
   const section = pageSection('Principles', top, height, colors.paper);
+
   const content = sectionContent();
 
-  fk.append(
-    content,
+  content.addChild(
     createText({
       text: 'A SMALL SYSTEM,\nNOT A NEW LANGUAGE.',
       size: scaledSize(650, 142, contentWidth, height),
@@ -49,8 +49,8 @@ export function createPrinciples(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       text: 'FrameKit keeps construction, behavior, state, and motion separate—then gives them one consistent vocabulary.',
       size: scaledSize(390, 100, contentWidth, height),
@@ -77,8 +77,7 @@ export function createPrinciples(): fk.FrameNode {
     });
     addRoundedBorder(card, 22, colors.paperMuted, 2);
     bindCardMotion(card, index === 1 ? 1 : -1);
-    fk.append(
-      card,
+    card.addChild(
       createText({
         text: principle.number,
         size: fk.udim2FromOffset(72, 54),
@@ -95,10 +94,9 @@ export function createPrinciples(): fk.FrameNode {
       BackgroundColor3: principle.accent,
       Rotation: index === 1 ? 45 : 0,
     });
-    fk.append(icon, fk.createUICorner({ CornerRadius: index === 2 ? 22 : 12 }));
-    fk.append(card, icon);
-    fk.append(
-      card,
+    icon.addChild(fk.createUICorner({ CornerRadius: index === 2 ? 22 : 12 }));
+    card.addChild(icon);
+    card.addChild(
       createText({
         text: principle.title,
         size: fk.udim2FromOffset(300, 58),
@@ -108,8 +106,7 @@ export function createPrinciples(): fk.FrameNode {
         weight: 850,
       }),
     );
-    fk.append(
-      card,
+    card.addChild(
       createText({
         text: principle.body,
         size: fk.udim2FromOffset(300, 112),
@@ -127,15 +124,17 @@ export function createPrinciples(): fk.FrameNode {
       colors.ink,
       principle.accent,
     );
-    fk.update(copy, { TextSize: 11, FontFamily: fonts.mono });
+    copy.setProperties({ TextSize: 11, FontFamily: fonts.mono });
     copy.onClick(() => {
       void copyCommand(copy, principle.code, principle.code, colors.ink, principle.accent);
     });
-    fk.append(card, copy);
-    fk.append(cards, card);
+    card.addChild(copy);
+    cards.addChild(card);
   }
-  fk.append(cards, fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(0, 32) }));
-  fk.append(content, cards);
-  fk.append(section, content);
+  cards.addChild(fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(0, 32) }));
+
+  content.addChild(cards);
+
+  section.addChild(content);
   return section;
 }

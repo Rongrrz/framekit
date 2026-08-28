@@ -25,10 +25,10 @@ const valueExamples = [
     position: fk.udim2FromOffset(68, 72),
     rotation: -2,
     lines: [
-      'const coral = fk.color3(',
+      'const coral = fk.color3FromRGB(',
       '  255, 111, 95',
       ');',
-      'fk.update(card, {',
+      'card.setProperties({',
       '  BackgroundColor3: coral });',
     ],
   },
@@ -43,7 +43,7 @@ const valueExamples = [
       '  0.5, -110,',
       '  0.5, -75',
       ');',
-      'fk.update(card, { Position: centered });',
+      'card.setProperties({ Position: centered });',
     ],
   },
   {
@@ -56,7 +56,7 @@ const valueExamples = [
       'const anchor = fk.vector2(',
       '  0.5, 0.5',
       ');',
-      'fk.update(card, {',
+      'card.setProperties({',
       '  AnchorPoint: anchor });',
     ],
   },
@@ -72,6 +72,7 @@ const valueExamples = [
 
 export function createValues(): fk.FrameNode {
   const section = createSection('MobileValues', sectionLayout.values, colors.mint);
+
   const content = createSectionContent();
   appendSectionHeading(
     content,
@@ -79,7 +80,8 @@ export function createValues(): fk.FrameNode {
     'Inspect the same immutable values used by construction, updates, tweens, and springs.',
     true,
   );
-  const selected = fk.state.observable(0);
+
+  const selected = fk.createValue(0);
   for (const [index, example] of valueExamples.entries()) {
     const control = createButton(
       example.label,
@@ -88,23 +90,26 @@ export function createValues(): fk.FrameNode {
       colors.ink,
       colors.text,
     );
-    fk.update(control, { TextSize: 10, FontFamily: fonts.mono });
+    control.setProperties({ TextSize: 10, FontFamily: fonts.mono });
     bindButtonMotion(control, colors.ink, colors.violet);
     control.onClick(() => selected.set(index));
-    fk.append(content, control);
+    content.addChild(control);
   }
+
   const preview = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 302),
     Position: fk.udim2FromOffset(0, 362),
     BackgroundColor3: colors.paperRaised,
   });
   addRoundedBorder(preview, 20, colors.ink, 2);
+
   const shape = fk.createFrame({
     Size: fk.udim2FromOffset(220, 150),
     Position: fk.udim2FromOffset(68, 72),
     BackgroundColor3: colors.coral,
   });
   addRoundedBorder(shape, 18, colors.ink, 2);
+
   const shapeTitle = createText({
     text: 'COLOR3',
     size: fk.udim2FromOffset(176, 42),
@@ -113,15 +118,20 @@ export function createValues(): fk.FrameNode {
     textSize: 23,
     weight: 900,
   });
-  fk.append(shape, shapeTitle);
-  fk.append(preview, shape);
-  fk.append(content, preview);
+
+  shape.addChild(shapeTitle);
+
+  preview.addChild(shape);
+
+  content.addChild(preview);
+
   const code = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 230),
     Position: fk.udim2FromOffset(0, 694),
     BackgroundColor3: colors.ink,
   });
   addRoundedBorder(code, 16, colors.inkSoft);
+
   const lines = [
     appendCodeLine(code, '', 22, colors.violet),
     appendCodeLine(code, '', 62),
@@ -129,11 +139,11 @@ export function createValues(): fk.FrameNode {
     appendCodeLine(code, '', 142),
     appendCodeLine(code, '', 182, colors.mint),
   ];
-  fk.append(content, code);
-  fk.state.observe(shape, selected, (value) => {
+  content.addChild(code);
+  shape.watch(selected, (value) => {
     const example = valueExamples[value];
     if (!example) return;
-    fk.update(shapeTitle, { Text: example.title });
+    shapeTitle.setProperties({ Text: example.title });
     fk.spring(shape, {
       BackgroundColor3: example.accent,
       Position: example.position,
@@ -141,6 +151,7 @@ export function createValues(): fk.FrameNode {
     });
     updateTextLines(lines, example.lines);
   });
-  fk.append(section, content);
+
+  section.addChild(content);
   return section;
 }

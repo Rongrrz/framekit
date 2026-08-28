@@ -15,20 +15,22 @@ import { sectionLayout } from '../layout';
 type ApiGroup = 'nodes' | 'modifiers' | 'state' | 'motion';
 
 const { top, height } = sectionLayout.api;
+
 const apiGroups: readonly ApiGroup[] = ['nodes', 'modifiers', 'state', 'motion'];
+
 const groups = {
   nodes: {
     index: '01 / NODES',
-    title: 'Build a typed tree.',
-    body: 'Factories return opaque handles. Compose them explicitly, inspect them, and own their complete lifecycle.',
+    title: 'Build an inspectable hierarchy.',
+    body: 'Every persistent node has a Name, ClassName, and live Parent. Traverse it like an engine scene tree or print any subtree while debugging.',
     accent: colors.coral,
-    tokens: ['createFrame', 'createTextBox', 'props', 'append'],
+    tokens: ['Parent', 'ClassName', 'findFirstChild', 'printTree'],
     lines: [
       'const editor = fk.createTextBox({',
-      "  Text: 'Hello <b>world</b>',",
-      '  RichText: true, MultiLine: true,',
+      "  Name: 'Editor', Text: 'Hello',",
       '});',
-      'editor.onTextChanged(save);',
+      'editor.Parent = panel;',
+      'panel.printTree();',
     ],
   },
   modifiers: {
@@ -39,23 +41,23 @@ const groups = {
     tokens: ['createUICorner', 'createUIStroke', 'createUIShadow', 'createUIGlow'],
     lines: [
       'const glow = fk.createUIGlow({',
-      '  Color: fk.color3(174, 145, 255),',
+      '  Color: fk.color3FromRGB(174, 145, 255),',
       '  Radius: 24,',
       '});',
-      'fk.append(panel, glow);',
+      'panel.addChild(glow);',
     ],
   },
   state: {
     index: '03 / STATE',
     title: 'Keep state direct.',
-    body: 'Explicit observable values are synchronous and framework-free. Owned observations clean themselves up.',
+    body: 'A shared value is optional, synchronous, and explicit. Watching it never rerenders or recreates a node.',
     accent: colors.mint,
-    tokens: ['state.observable', 'state.observe', 'state.signal', 'get / set'],
+    tokens: ['createValue', 'node.watch', 'value.get', 'value.set'],
     lines: [
-      'const count = fk.state.observable(0);',
+      'const count = fk.createValue(0);',
       'count.set(1);',
-      'fk.state.observe(label, count, value =>',
-      '  fk.update(label, { Text: `${value}` })',
+      'label.watch(count, value =>',
+      '  label.Text = `${value}`',
       ');',
     ],
   },
@@ -77,11 +79,12 @@ const groups = {
 
 export function createApi(): fk.FrameNode {
   const section = pageSection('Api', top, height, colors.ink);
-  const content = sectionContent();
-  const selected = fk.state.observable<ApiGroup>('nodes');
 
-  fk.append(
-    content,
+  const content = sectionContent();
+
+  const selected = fk.createValue<ApiGroup>('nodes');
+
+  content.addChild(
     createText({
       text: 'ONE ENTRY POINT.\nA SYSTEM YOU CAN EXPLORE.',
       size: scaledSize(680, 130, contentWidth, height),
@@ -92,8 +95,8 @@ export function createApi(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       text: 'Choose an API area to inspect real functions and a working usage pattern.',
       size: scaledSize(380, 84, contentWidth, height),
@@ -119,8 +122,8 @@ export function createApi(): fk.FrameNode {
     Size: fk.udim2FromOffset(318, 548),
     BackgroundColor3: colors.inkRaised,
   });
-  fk.append(
-    navigation,
+
+  navigation.addChild(
     createText({
       text: 'PUBLIC API',
       size: fk.udim2FromOffset(260, 30),
@@ -131,9 +134,13 @@ export function createApi(): fk.FrameNode {
       weight: 750,
     }),
   );
+
   const groupControls = new Map<
     ApiGroup,
-    Readonly<{ button: fk.TextButtonNode; label: fk.TextLabelNode }>
+    Readonly<{
+      button: fk.TextButtonNode;
+      label: fk.TextLabelNode;
+    }>
   >();
   for (const [index, key] of apiGroups.entries()) {
     const group = groups[key];
@@ -154,14 +161,13 @@ export function createApi(): fk.FrameNode {
       wrapped: true,
       yAlignment: 'Center',
     });
-    fk.append(control, label);
+    control.addChild(label);
     bindScaleMotion(control, 1.025);
     control.onClick(() => selected.set(key));
     groupControls.set(key, { button: control, label });
-    fk.append(navigation, control);
+    navigation.addChild(control);
   }
-  fk.append(
-    navigation,
+  navigation.addChild(
     createText({
       text: "import { fk } from 'framekit'",
       size: fk.udim2FromOffset(262, 32),
@@ -171,7 +177,8 @@ export function createApi(): fk.FrameNode {
       font: fonts.mono,
     }),
   );
-  fk.append(explorer, navigation);
+
+  explorer.addChild(navigation);
 
   const detail = fk.createFrame({
     Name: 'APIDetail',
@@ -179,6 +186,7 @@ export function createApi(): fk.FrameNode {
     Position: fk.udim2FromOffset(318, 0),
     BackgroundColor3: colors.paperRaised,
   });
+
   const detailIndex = createText({
     text: '',
     size: fk.udim2FromOffset(260, 28),
@@ -188,6 +196,7 @@ export function createApi(): fk.FrameNode {
     font: fonts.mono,
     weight: 750,
   });
+
   const detailTitle = createText({
     text: '',
     size: fk.udim2FromOffset(620, 58),
@@ -196,6 +205,7 @@ export function createApi(): fk.FrameNode {
     textSize: 30,
     weight: 900,
   });
+
   const detailBody = createText({
     text: '',
     size: fk.udim2FromOffset(640, 68),
@@ -205,9 +215,12 @@ export function createApi(): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(detail, detailIndex);
-  fk.append(detail, detailTitle);
-  fk.append(detail, detailBody);
+
+  detail.addChild(detailIndex);
+
+  detail.addChild(detailTitle);
+
+  detail.addChild(detailBody);
 
   const tokenRow = fk.createFrame({
     Name: 'APITokens',
@@ -215,6 +228,7 @@ export function createApi(): fk.FrameNode {
     Position: fk.udim2FromOffset(38, 202),
     BackgroundTransparency: 1,
   });
+
   const tokenNodes: fk.TextLabelNode[] = [];
   for (let index = 0; index < 4; index += 1) {
     const token = fk.createTextLabel({
@@ -227,15 +241,15 @@ export function createApi(): fk.FrameNode {
       FontWeight: 650,
       LayoutOrder: index,
     });
-    fk.append(token, fk.createUICorner({ CornerRadius: 10 }));
-    fk.append(tokenRow, token);
+    token.addChild(fk.createUICorner({ CornerRadius: 10 }));
+    tokenRow.addChild(token);
     tokenNodes.push(token);
   }
-  fk.append(
-    tokenRow,
+  tokenRow.addChild(
     fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(0, 10) }),
   );
-  fk.append(detail, tokenRow);
+
+  detail.addChild(tokenRow);
 
   const code = fk.createFrame({
     Name: 'APIExample',
@@ -244,6 +258,7 @@ export function createApi(): fk.FrameNode {
     BackgroundColor3: colors.ink,
   });
   addRoundedBorder(code, 16, colors.inkSoft);
+
   const lineNodes = [
     appendCodeLine(code, '', 22, colors.violet),
     appendCodeLine(code, '', 58),
@@ -251,6 +266,7 @@ export function createApi(): fk.FrameNode {
     appendCodeLine(code, '', 130),
     appendCodeLine(code, '', 166, colors.mint),
   ];
+
   const copy = createButton(
     'COPY EXAMPLE',
     fk.udim2FromOffset(132, 34),
@@ -258,23 +274,25 @@ export function createApi(): fk.FrameNode {
     colors.inkRaised,
     colors.textMuted,
   );
-  fk.update(copy, { TextSize: 9, FontFamily: fonts.mono });
+  copy.setProperties({ TextSize: 9, FontFamily: fonts.mono });
   bindButtonMotion(copy, colors.inkRaised, colors.inkSoft);
-  fk.append(code, copy);
-  fk.append(detail, code);
-  fk.append(explorer, detail);
 
+  code.addChild(copy);
+
+  detail.addChild(code);
+
+  explorer.addChild(detail);
   let currentSnippet = '';
   copy.onClick(() => {
     void copyCommand(copy, currentSnippet, 'COPY EXAMPLE');
   });
-  fk.state.observe(detail, selected, (value) => {
+  detail.watch(selected, (value) => {
     const group = groups[value];
-    fk.update(detailIndex, { Text: group.index, TextColor3: group.accent });
-    fk.update(detailTitle, { Text: group.title });
-    fk.update(detailBody, { Text: group.body });
+    detailIndex.setProperties({ Text: group.index, TextColor3: group.accent });
+    detailTitle.setProperties({ Text: group.title });
+    detailBody.setProperties({ Text: group.body });
     for (const [index, token] of tokenNodes.entries()) {
-      fk.update(token, {
+      token.setProperties({
         Text: group.tokens[index] ?? '',
         Visible: group.tokens[index] !== undefined,
       });
@@ -283,14 +301,15 @@ export function createApi(): fk.FrameNode {
     currentSnippet = group.lines.join('\n');
     for (const [key, control] of groupControls) {
       const active = key === value;
-      fk.update(control.button, {
+      control.button.setProperties({
         BackgroundColor3: active ? group.accent : colors.ink,
       });
-      fk.update(control.label, { TextColor3: active ? colors.ink : colors.textMuted });
+      control.label.setProperties({ TextColor3: active ? colors.ink : colors.textMuted });
     }
   });
 
-  fk.append(content, explorer);
-  fk.append(section, content);
+  content.addChild(explorer);
+
+  section.addChild(content);
   return section;
 }

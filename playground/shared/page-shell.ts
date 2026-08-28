@@ -15,11 +15,13 @@ type ScaledPageShellOptions = Readonly<{
   navigationHeight: number;
   backgroundColor: fk.Color3;
 }>;
-
 /** Owns the responsive fixed-design canvas and its spring-driven scroll position. */
+
 export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPageShell {
   let currentScale = calculateScale();
+
   const app = fk.createScreenGui({ Name: options.name, DisplayOrder: 10 });
+
   const page = fk.createScrollingFrame({
     Name: `${options.name}Page`,
     Size: fk.udim2(1, 0, 1, -options.navigationHeight),
@@ -27,11 +29,13 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
     BackgroundColor3: options.backgroundColor,
     ScrollingDirection: 'Y',
   });
+
   const scrollSizer = fk.createFrame({
     Name: `${options.name}ScrollSizer`,
     Size: fk.udim2(1, 0, 0, options.pageHeight * currentScale),
     BackgroundTransparency: 1,
   });
+
   const content = fk.createFrame({
     Name: `${options.name}Content`,
     Size: fk.udim2FromOffset(options.designWidth, options.pageHeight),
@@ -39,39 +43,40 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
     AnchorPoint: fk.vector2(0.5, 0),
     BackgroundTransparency: 1,
   });
+
   const contentScale = fk.createUIScale({ Scale: currentScale });
+
   const scrollMotion = fk.createMotion(page);
 
-  fk.append(content, contentScale);
-  fk.append(scrollSizer, content);
-  fk.append(page, scrollSizer);
-  fk.append(app, page);
+  content.addChild(contentScale);
 
+  scrollSizer.addChild(content);
+
+  page.addChild(scrollSizer);
+
+  app.addChild(page);
   function calculateScale(): number {
     return Math.min(1, window.innerWidth / options.designWidth);
   }
-
   function scaledContentPosition(scale: number): fk.UDim2 {
     return fk.udim2(0.5, 0, 0, -((1 - scale) * options.pageHeight) / 2);
   }
-
   function navigate(offset: number): void {
     scrollMotion.stop('CanvasPosition');
     scrollMotion.spring({ CanvasPosition: fk.vector2(0, offset * currentScale) });
   }
-
   function updateScale(): void {
     currentScale = calculateScale();
-    fk.update(contentScale, { Scale: currentScale });
-    fk.update(scrollSizer, {
+    contentScale.setProperties({ Scale: currentScale });
+    scrollSizer.setProperties({
       Size: fk.udim2(1, 0, 0, options.pageHeight * currentScale),
     });
-    fk.update(content, { Position: scaledContentPosition(currentScale) });
+    content.setProperties({ Position: scaledContentPosition(currentScale) });
   }
 
   const listenerController = new AbortController();
   window.addEventListener('resize', updateScale, { signal: listenerController.signal });
-  fk.onDestroy(app, () => listenerController.abort());
+  app.onDestroy(() => listenerController.abort());
   return Object.freeze({
     app,
     page,

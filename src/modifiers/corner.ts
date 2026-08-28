@@ -1,25 +1,25 @@
 import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
-import { mergeProps, type NodeProps } from '../runtime/state';
+import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertBoolean, assertFiniteNumber } from '../runtime/validation';
 
-export type UICornerProps = NodeProps & {
+export type UICornerProperties = NodeProperties & {
   Enabled: boolean;
   CornerRadius: number;
 };
 
-export type UICornerNode = StyleModifierNode<UICornerProps>;
+export type UICornerNode = StyleModifierNode<UICornerProperties>;
 
 /** Creates a corner modifier that applies border radius to its GUI parent. */
-export function createUICorner(initial: Partial<UICornerProps> = {}): UICornerNode {
+export function createUICorner(initial: Partial<UICornerProperties> = {}): UICornerNode {
   return createStyleModifier(
     'UICorner',
-    mergeProps({ Name: 'UICorner', Enabled: true, CornerRadius: 0 }, initial),
+    mergeProperties({ Name: 'UICorner', Enabled: true, CornerRadius: 0 }, initial),
     resolveCornerStyles,
   );
 }
 
-function resolveCornerStyles(props: Readonly<UICornerProps>): Styles {
-  assertBoolean(props.Enabled, 'Enabled');
-  assertFiniteNumber(props.CornerRadius, 'CornerRadius');
-  return props.Enabled ? { 'border-radius': `${Math.max(0, props.CornerRadius)}px` } : {};
+function resolveCornerStyles(properties: Readonly<UICornerProperties>): Styles {
+  assertBoolean(properties.Enabled, 'Enabled');
+  assertFiniteNumber(properties.CornerRadius, 'CornerRadius');
+  return properties.Enabled ? { 'border-radius': `${Math.max(0, properties.CornerRadius)}px` } : {};
 }

@@ -8,7 +8,9 @@ import { contentWidth, createSection, createSectionContent } from '../primitives
 
 export function createFooter(onBackToTop: () => void): fk.FrameNode {
   const section = createSection('MobileFooter', sectionLayout.footer, colors.coral);
+
   const content = createSectionContent();
+
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 486),
     Position: fk.udim2FromOffset(0, 54),
@@ -16,8 +18,8 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
     Rotation: -1,
   });
   addRoundedBorder(card, 24, colors.ink, 3);
-  fk.append(
-    card,
+
+  card.addChild(
     createText({
       text: 'BUILD WITH THE\nMENTAL MODEL\nYOU ALREADY KNOW.',
       size: fk.udim2FromOffset(310, 178),
@@ -29,8 +31,8 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    card,
+
+  card.addChild(
     createText({
       text: 'Typed nodes. Explicit trees. Direct state. Motion without bookkeeping.',
       size: fk.udim2FromOffset(310, 76),
@@ -41,6 +43,7 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
+
   const source = createButton(
     'VIEW SOURCE  ↗',
     fk.udim2FromOffset(310, 52),
@@ -52,7 +55,9 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
   source.onClick(() => {
     window.open('https://github.com/Rongrrz/framekit', '_blank', 'noopener,noreferrer');
   });
-  fk.append(card, source);
+
+  card.addChild(source);
+
   const install = createButton(
     'COPY  npm i framekit',
     fk.udim2FromOffset(310, 44),
@@ -60,7 +65,7 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
     colors.paperMuted,
     colors.darkText,
   );
-  fk.update(install, { TextSize: 10, FontFamily: fonts.mono });
+  install.setProperties({ TextSize: 10, FontFamily: fonts.mono });
   install.onClick(
     () =>
       void copyCommand(
@@ -71,8 +76,11 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
         colors.darkText,
       ),
   );
-  fk.append(card, install);
-  fk.append(content, card);
+
+  card.addChild(install);
+
+  content.addChild(card);
+
   const back = createButton(
     'BACK TO TOP  ↑',
     fk.udim2FromOffset(150, 42),
@@ -82,9 +90,10 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
   );
   bindButtonMotion(back, colors.coral, colors.amber);
   back.onClick(onBackToTop);
-  fk.append(content, back);
-  fk.append(
-    content,
+
+  content.addChild(back);
+
+  content.addChild(
     createText({
       text: 'FRAMEKIT  /  2026',
       size: fk.udim2FromOffset(180, 42),
@@ -95,6 +104,7 @@ export function createFooter(onBackToTop: () => void): fk.FrameNode {
       weight: 800,
     }),
   );
-  fk.append(section, content);
+
+  section.addChild(content);
   return section;
 }

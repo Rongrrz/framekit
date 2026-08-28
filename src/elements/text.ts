@@ -1,25 +1,25 @@
 import { buttonEventMethods, type GuiEventMethodTable } from '../runtime/gui-events';
 import { type GuiNode, type PropertyRenderer } from '../runtime/render';
 import { assertBoolean } from '../runtime/validation';
-import { initializeButtonElement, type ButtonNode, type ButtonProps } from './button';
-import { createDefaultFrameProps, createFrameBasedNode, type FrameProps } from './frame';
+import { initializeButtonElement, type ButtonNode, type ButtonProperties } from './button';
+import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
 import {
-  createDefaultTextStyleProps,
+  createDefaultTextStyleProperties,
   horizontalFlexAlignment,
   renderTextStyle,
   verticalFlexAlignment,
-  type TextStyleProps,
+  type TextStyleProperties,
 } from './text-style';
 
 export type { TextXAlignment, TextYAlignment } from './text-style';
 
-export type TextLabelProps = FrameProps & TextStyleProps;
+export type TextLabelProperties = FrameProperties & TextStyleProperties;
 
-export type TextLabelNode = GuiNode<TextLabelProps>;
-export type TextButtonProps = TextLabelProps & ButtonProps;
-export type TextButtonNode = GuiNode<TextButtonProps> & ButtonNode;
+export type TextLabelNode = GuiNode<TextLabelProperties>;
+export type TextButtonProperties = TextLabelProperties & ButtonProperties;
+export type TextButtonNode = ButtonNode<TextButtonProperties>;
 
-export function createTextLabel(initial: Partial<TextLabelProps> = {}): TextLabelNode {
+export function createTextLabel(initial: Partial<TextLabelProperties> = {}): TextLabelNode {
   return createTextNode(
     'TextLabel',
     document.createElement('div'),
@@ -28,17 +28,17 @@ export function createTextLabel(initial: Partial<TextLabelProps> = {}): TextLabe
   );
 }
 
-export function createTextButton(initial: Partial<TextButtonProps> = {}): TextButtonNode {
+export function createTextButton(initial: Partial<TextButtonProperties> = {}): TextButtonNode {
   const element = document.createElement('button');
   const node = createTextNode(
     'TextButton',
     element,
     { ...createDefaultTextProps(), Name: 'TextButton', Disabled: false },
     initial,
-    (props) => {
-      assertBoolean(props.Disabled, 'Disabled');
-      element.disabled = props.Disabled;
-      element.style.cursor = props.Disabled ? 'not-allowed' : 'pointer';
+    (properties) => {
+      assertBoolean(properties.Disabled, 'Disabled');
+      element.disabled = properties.Disabled;
+      element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
     },
     buttonEventMethods,
   ) as TextButtonNode;
@@ -46,22 +46,22 @@ export function createTextButton(initial: Partial<TextButtonProps> = {}): TextBu
   return node;
 }
 
-function createDefaultTextProps(): TextLabelProps {
+function createDefaultTextProps(): TextLabelProperties {
   return {
-    ...createDefaultFrameProps(),
+    ...createDefaultFrameProperties(),
     Name: 'TextLabel',
-    ...createDefaultTextStyleProps(),
+    ...createDefaultTextStyleProperties(),
   };
 }
 
-function createTextNode<Props extends TextLabelProps>(
+function createTextNode<Properties extends TextLabelProperties>(
   nodeType: string,
   element: HTMLElement,
-  defaultProps: Props,
-  initial: Partial<Props>,
-  renderAdditionalProperties?: PropertyRenderer<Props>,
+  defaultProperties: Properties,
+  initial: Partial<Properties>,
+  renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Props> {
+): GuiNode<Properties> {
   const text = document.createElement('span');
   text.dataset.framekitText = '';
   Object.assign(text.style, {
@@ -76,14 +76,14 @@ function createTextNode<Props extends TextLabelProps>(
   return createFrameBasedNode(
     nodeType,
     element,
-    defaultProps,
+    defaultProperties,
     initial,
-    (props, changed) => {
-      text.textContent = props.Text;
-      renderTextStyle(text, props);
-      text.style.justifyContent = horizontalFlexAlignment[props.TextXAlignment];
-      text.style.alignItems = verticalFlexAlignment[props.TextYAlignment];
-      renderAdditionalProperties?.(props, changed);
+    (properties, changed) => {
+      text.textContent = properties.Text;
+      renderTextStyle(text, properties);
+      text.style.justifyContent = horizontalFlexAlignment[properties.TextXAlignment];
+      text.style.alignItems = verticalFlexAlignment[properties.TextYAlignment];
+      renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
   );

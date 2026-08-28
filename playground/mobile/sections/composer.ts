@@ -13,6 +13,7 @@ import {
 } from '../primitives';
 
 type ModifierKey = 'corner' | 'stroke' | 'shadow' | 'glow' | 'padding' | 'layout';
+
 type ComposerState = Readonly<Record<ModifierKey, boolean>>;
 
 const modifierKeys: readonly ModifierKey[] = [
@@ -26,14 +27,16 @@ const modifierKeys: readonly ModifierKey[] = [
 
 export function createComposer(): fk.FrameNode {
   const section = createSection('MobileComposer', sectionLayout.composer, colors.paper);
+
   const content = createSectionContent();
   appendSectionHeading(
     content,
-    'ATTACH IT.\nSEE THE DIFFERENCE.',
+    'ADD IT.\nSEE THE DIFFERENCE.',
     'These controls change real modifier nodes on the preview below.',
     true,
   );
-  const enabled = fk.state.observable<ComposerState>({
+
+  const enabled = fk.createValue<ComposerState>({
     corner: true,
     stroke: true,
     shadow: true,
@@ -41,6 +44,7 @@ export function createComposer(): fk.FrameNode {
     padding: false,
     layout: true,
   });
+
   const controls = new Map<ModifierKey, fk.TextButtonNode>();
   for (const [index, key] of modifierKeys.entries()) {
     const control = createButton(
@@ -50,22 +54,23 @@ export function createComposer(): fk.FrameNode {
       colors.ink,
       colors.text,
     );
-    fk.update(control, { TextSize: 10, FontFamily: fonts.mono });
+    control.setProperties({ TextSize: 10, FontFamily: fonts.mono });
     bindScaleMotion(control, 1.035);
     control.onClick(() => {
       enabled.update((state) => ({ ...state, [key]: !state[key] }));
     });
     controls.set(key, control);
-    fk.append(content, control);
+    content.addChild(control);
   }
+
   const preview = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 480),
     Position: fk.udim2FromOffset(0, 428),
     BackgroundColor3: colors.paperRaised,
   });
   addRoundedBorder(preview, 22, colors.paperMuted, 2);
-  fk.append(
-    preview,
+
+  preview.addChild(
     createText({
       text: 'SHADOW ↓ DEPTH   ·   GLOW ✦ LIGHT',
       size: fk.udim2FromOffset(314, 28),
@@ -76,17 +81,21 @@ export function createComposer(): fk.FrameNode {
       weight: 750,
     }),
   );
+
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(314, 336),
     Position: fk.udim2FromOffset(22, 76),
     BackgroundColor3: colors.ink,
   });
+
   const corner = fk.createUICorner({ CornerRadius: 24 });
+
   const stroke = fk.createUIStroke({
     Color: colors.violet,
     Thickness: 4,
     BorderStrokePosition: 'Outer',
   });
+
   const shadow = fk.createUIShadow({
     Color: colors.ink,
     Transparency: 0.3,
@@ -94,16 +103,20 @@ export function createComposer(): fk.FrameNode {
     BlurRadius: 16,
     SpreadRadius: -2,
   });
+
   const glow = fk.createUIGlow({
     Color: colors.violet,
     Transparency: 0.18,
     Radius: 32,
   });
-  fk.append(card, corner);
-  fk.append(card, stroke);
-  fk.append(card, shadow);
-  fk.append(
-    card,
+
+  card.addChild(corner);
+
+  card.addChild(stroke);
+
+  card.addChild(shadow);
+
+  card.addChild(
     createText({
       text: 'MODIFIER STACK',
       size: fk.udim2FromOffset(270, 42),
@@ -112,6 +125,7 @@ export function createComposer(): fk.FrameNode {
       weight: 900,
     }),
   );
+
   const description = fk.createTextBox({
     Name: 'MobileRichDescription',
     Size: fk.udim2FromOffset(270, 72),
@@ -128,24 +142,30 @@ export function createComposer(): fk.FrameNode {
     MultiLine: true,
     PlaceholderText: 'Type a description…',
   });
-  fk.append(card, description);
+
+  card.addChild(description);
+
   const tags = fk.createFrame({
     Size: fk.udim2FromOffset(270, 94),
     Position: fk.udim2FromOffset(22, 156),
     BackgroundColor3: colors.inkSoft,
   });
-  fk.append(tags, fk.createUICorner({ CornerRadius: 14 }));
+
+  tags.addChild(fk.createUICorner({ CornerRadius: 14 }));
+
   const padding = fk.createUIPadding({
     PaddingTop: fk.udim(0, 12),
     PaddingRight: fk.udim(0, 12),
     PaddingBottom: fk.udim(0, 12),
     PaddingLeft: fk.udim(0, 12),
   });
+
   const list = fk.createUIListLayout({
     FillDirection: 'Horizontal',
     Padding: fk.udim(0, 8),
     Wraps: true,
   });
+
   const tagsContent = [
     { label: 'ONE', accent: colors.coral },
     { label: 'TWO', accent: colors.mint },
@@ -163,11 +183,13 @@ export function createComposer(): fk.FrameNode {
       FontWeight: 800,
       LayoutOrder: index,
     });
-    fk.append(tag, fk.createUICorner({ CornerRadius: 9 }));
-    fk.append(tags, tag);
+    tag.addChild(fk.createUICorner({ CornerRadius: 9 }));
+    tags.addChild(tag);
   }
-  fk.append(tags, list);
-  fk.append(card, tags);
+  tags.addChild(list);
+
+  card.addChild(tags);
+
   const tree = createText({
     text: '',
     size: fk.udim2FromOffset(270, 60),
@@ -178,9 +200,13 @@ export function createComposer(): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(card, tree);
-  fk.append(preview, card);
-  fk.append(content, preview);
+
+  card.addChild(tree);
+
+  preview.addChild(card);
+
+  content.addChild(preview);
+
   const explanation = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 340),
     Position: fk.udim2FromOffset(0, 940),
@@ -188,12 +214,16 @@ export function createComposer(): fk.FrameNode {
   });
   addRoundedBorder(explanation, 18, colors.inkSoft);
   appendCodeLine(explanation, '// Modifiers are ordinary child nodes', 20, colors.textMuted);
+
   const lineOne = appendCodeLine(explanation, '', 64, colors.coral);
+
   const lineTwo = appendCodeLine(explanation, '', 102, colors.violet);
+
   const lineThree = appendCodeLine(explanation, '', 140, colors.mint);
+
   const lineFour = appendCodeLine(explanation, '', 178, colors.amber);
-  fk.append(
-    explanation,
+
+  explanation.addChild(
     createText({
       text: 'Stroke grows into a stronger edge. Shadow adds directional depth, glow blooms around the silhouette, and padding moves every tag inward.',
       size: fk.udim2FromOffset(310, 88),
@@ -204,11 +234,17 @@ export function createComposer(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(content, explanation);
+
+  content.addChild(explanation);
+
   const strokeMotion = fk.createMotion(stroke);
+
   const shadowMotion = fk.createMotion(shadow);
+
   const glowMotion = fk.createMotion(glow);
+
   const paddingMotion = fk.createMotion(padding);
+
   const toggleStroke = createSpringModifierToggle({
     parent: card,
     modifier: stroke,
@@ -217,6 +253,7 @@ export function createComposer(): fk.FrameNode {
     inactive: { Thickness: 0 },
     isActive: () => enabled.get().stroke,
   });
+
   const toggleShadow = createSpringModifierToggle({
     parent: card,
     modifier: shadow,
@@ -235,6 +272,7 @@ export function createComposer(): fk.FrameNode {
     },
     isActive: () => enabled.get().shadow,
   });
+
   const toggleGlow = createSpringModifierToggle({
     parent: card,
     modifier: glow,
@@ -243,6 +281,7 @@ export function createComposer(): fk.FrameNode {
     inactive: { Transparency: 1, Radius: 0 },
     isActive: () => enabled.get().glow,
   });
+
   const togglePadding = createSpringModifierToggle({
     parent: tags,
     modifier: padding,
@@ -261,7 +300,7 @@ export function createComposer(): fk.FrameNode {
     },
     isActive: () => enabled.get().padding,
   });
-  fk.state.observe(card, enabled, (value) => {
+  card.watch(enabled, (value) => {
     setModifierAttached(card, corner, value.corner);
     toggleStroke(value.stroke);
     toggleShadow(value.shadow);
@@ -270,27 +309,28 @@ export function createComposer(): fk.FrameNode {
     setModifierAttached(tags, list, value.layout);
     for (const [key, control] of controls) {
       const active = value[key];
-      fk.update(control, {
+      control.setProperties({
         Text: `${active ? '●' : '○'}  ${key.toUpperCase()}`,
         BackgroundColor3: active ? colors.coral : colors.ink,
         TextColor3: active ? colors.ink : colors.text,
       });
     }
-    fk.update(tree, { Text: describeModifierTree(value) });
-    fk.update(lineOne, {
+    tree.setProperties({ Text: describeModifierTree(value) });
+    lineOne.setProperties({
       Text: `fk.spring(stroke, { Thickness: ${value.stroke ? '4' : '0'} });`,
     });
-    fk.update(lineTwo, {
+    lineTwo.setProperties({
       Text: `fk.spring(shadow, { Offset: ${value.shadow ? '[10, 16]' : '[0, 0]'} });`,
     });
-    fk.update(lineThree, {
+    lineThree.setProperties({
       Text: `fk.spring(glow, { Radius: ${value.glow ? '32' : '0'} });`,
     });
-    fk.update(lineFour, {
+    lineFour.setProperties({
       Text: `fk.spring(padding, { all: ${value.padding ? '12' : '0'} });`,
     });
   });
-  fk.append(section, content);
+
+  section.addChild(content);
   return section;
 }
 
@@ -299,10 +339,12 @@ function describeModifierTree(state: ComposerState): string {
     modifierLabel(state.corner, 'UICorner'),
     modifierLabel(state.stroke, 'UIStroke'),
   ].join('  ');
+
   const cardEffects = [
     modifierLabel(state.shadow, 'UIShadow'),
     modifierLabel(state.glow, 'UIGlow'),
   ].join('  ');
+
   const tagModifiers = [
     modifierLabel(state.padding, 'UIPadding'),
     modifierLabel(state.layout, 'UIListLayout'),

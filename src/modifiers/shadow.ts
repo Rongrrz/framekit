@@ -1,10 +1,10 @@
 import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
-import { mergeProps, type NodeProps } from '../runtime/state';
+import { mergeProperties, type NodeProperties } from '../runtime/node-state';
 import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../runtime/validation';
-import { color3, color3ToCss, type Color3 } from '../values/color3';
+import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
-export type UIShadowProps = NodeProps & {
+export type UIShadowProperties = NodeProperties & {
   Enabled: boolean;
   Color: Color3;
   Transparency: number;
@@ -14,17 +14,17 @@ export type UIShadowProps = NodeProps & {
   Inset: boolean;
 };
 
-export type UIShadowNode = StyleModifierNode<UIShadowProps>;
+export type UIShadowNode = StyleModifierNode<UIShadowProperties>;
 
 /** Creates a drop-shadow modifier that composes with strokes and glows. */
-export function createUIShadow(initial: Partial<UIShadowProps> = {}): UIShadowNode {
+export function createUIShadow(initial: Partial<UIShadowProperties> = {}): UIShadowNode {
   return createStyleModifier(
     'UIShadow',
-    mergeProps(
+    mergeProperties(
       {
         Name: 'UIShadow',
         Enabled: true,
-        Color: color3(0, 0, 0),
+        Color: color3FromRGB(0, 0, 0),
         Transparency: 0.5,
         Offset: vector2(0, 8),
         BlurRadius: 16,
@@ -37,16 +37,16 @@ export function createUIShadow(initial: Partial<UIShadowProps> = {}): UIShadowNo
   );
 }
 
-function resolveShadowStyles(props: Readonly<UIShadowProps>): Styles {
-  assertBoolean(props.Enabled, 'Enabled');
-  assertBoolean(props.Inset, 'Inset');
-  return props.Enabled ? { 'box-shadow': resolveShadow(props) } : {};
+function resolveShadowStyles(properties: Readonly<UIShadowProperties>): Styles {
+  assertBoolean(properties.Enabled, 'Enabled');
+  assertBoolean(properties.Inset, 'Inset');
+  return properties.Enabled ? { 'box-shadow': resolveShadow(properties) } : {};
 }
 
-function resolveShadow(props: Readonly<UIShadowProps>): string {
-  assertVector2(props.Offset, 'Offset');
-  assertNonNegativeFinite(props.BlurRadius, 'BlurRadius');
-  assertFiniteNumber(props.SpreadRadius, 'SpreadRadius');
-  const inset = props.Inset ? 'inset ' : '';
-  return `${inset}${props.Offset.X}px ${props.Offset.Y}px ${props.BlurRadius}px ${props.SpreadRadius}px ${color3ToCss(props.Color, props.Transparency)}`;
+function resolveShadow(properties: Readonly<UIShadowProperties>): string {
+  assertVector2(properties.Offset, 'Offset');
+  assertNonNegativeFinite(properties.BlurRadius, 'BlurRadius');
+  assertFiniteNumber(properties.SpreadRadius, 'SpreadRadius');
+  const inset = properties.Inset ? 'inset ' : '';
+  return `${inset}${properties.Offset.X}px ${properties.Offset.Y}px ${properties.BlurRadius}px ${properties.SpreadRadius}px ${color3ToCss(properties.Color, properties.Transparency)}`;
 }

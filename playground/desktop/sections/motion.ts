@@ -15,6 +15,7 @@ import { sectionLayout } from '../layout';
 type DemoMode = 'calm' | 'focus' | 'play' | 'orbit';
 
 const { top, height } = sectionLayout.motion;
+
 const goals = {
   calm: {
     Position: fk.udim2FromOffset(170, 126),
@@ -44,11 +45,12 @@ const goals = {
 
 export function createMotion(): fk.FrameNode {
   const section = pageSection('Motion', top, height, colors.ink);
-  const content = sectionContent();
-  const mode = fk.state.observable<DemoMode>('calm');
 
-  fk.append(
-    content,
+  const content = sectionContent();
+
+  const mode = fk.createValue<DemoMode>('calm');
+
+  content.addChild(
     createPill(
       'LIVE MOTION LAB  ·  CLICK FAST',
       scaledSize(260, 38, contentWidth, height),
@@ -56,8 +58,8 @@ export function createMotion(): fk.FrameNode {
       colors.violet,
     ),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       text: 'Retarget the interface.\nThe spring handles the rest.',
       size: scaledSize(760, 128, contentWidth, height),
@@ -68,8 +70,8 @@ export function createMotion(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       text: 'Every button sets a new position, rotation, color, and scale. Current momentum carries into the next goal.',
       size: scaledSize(350, 96, contentWidth, height),
@@ -95,8 +97,8 @@ export function createMotion(): fk.FrameNode {
     Size: fk.udim2FromOffset(390, 560),
     BackgroundColor3: colors.inkRaised,
   });
-  fk.append(
-    controls,
+
+  controls.addChild(
     createText({
       text: 'RETAINED MOTION CONTROLLER',
       size: fk.udim2FromOffset(330, 30),
@@ -107,6 +109,7 @@ export function createMotion(): fk.FrameNode {
       weight: 700,
     }),
   );
+
   const codePanel = fk.createFrame({
     Name: 'MotionCode',
     Size: fk.udim2FromOffset(334, 196),
@@ -115,14 +118,17 @@ export function createMotion(): fk.FrameNode {
   });
   addRoundedBorder(codePanel, 16, colors.inkSoft);
   appendCodeLine(codePanel, 'fk.spring(card, {', 22, colors.coral);
+
   const positionLine = appendCodeLine(codePanel, '  Position: calmPosition,', 50);
+
   const rotationLine = appendCodeLine(codePanel, '  Rotation: 0,', 78);
   appendCodeLine(codePanel, '  BackgroundColor3: accent,', 106);
   appendCodeLine(codePanel, '});', 134, colors.coral);
   appendCodeLine(codePanel, '', 162);
-  fk.append(controls, codePanel);
-  fk.append(
-    controls,
+
+  controls.addChild(codePanel);
+
+  controls.addChild(
     createText({
       text: 'SEND A NEW GOAL',
       size: fk.udim2FromOffset(180, 28),
@@ -135,6 +141,7 @@ export function createMotion(): fk.FrameNode {
   );
 
   const modeButtons = new Map<DemoMode, fk.TextButtonNode>();
+
   const modes: readonly [DemoMode, string, fk.Color3][] = [
     ['calm', 'CALM', colors.mint],
     ['focus', 'FOCUS', colors.violet],
@@ -149,11 +156,11 @@ export function createMotion(): fk.FrameNode {
       colors.inkSoft,
       colors.text,
     );
-    fk.update(control, { TextSize: 11 });
+    control.setProperties({ TextSize: 11 });
     bindButtonMotion(control, colors.inkSoft, accent);
     control.onClick(() => mode.set(value));
     modeButtons.set(value, control);
-    fk.append(controls, control);
+    controls.addChild(control);
   }
 
   const status = createText({
@@ -165,9 +172,10 @@ export function createMotion(): fk.FrameNode {
     font: fonts.mono,
     wrapped: true,
   });
-  fk.append(controls, status);
-  fk.append(
-    controls,
+
+  controls.addChild(status);
+
+  controls.addChild(
     createText({
       text: 'The controller stops itself after settling. Retargeting while it is moving keeps the current velocity.',
       size: fk.udim2FromOffset(328, 78),
@@ -178,7 +186,8 @@ export function createMotion(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(lab, controls);
+
+  lab.addChild(controls);
 
   const stage = fk.createFrame({
     Name: 'MotionStage',
@@ -187,17 +196,17 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.paper,
     ClipsDescendants: true,
   });
+
   const grid = fk.createFrame({
     Size: fk.udim2(1, -70, 1, -70),
     Position: fk.udim2FromOffset(35, 35),
     BackgroundColor3: colors.paperRaised,
   });
   addRoundedBorder(grid, 20, colors.paperMuted);
-  fk.append(stage, grid);
 
+  stage.addChild(grid);
   for (let index = 0; index < 6; index += 1) {
-    fk.append(
-      grid,
+    grid.addChild(
       createText({
         text: index % 2 === 0 ? '·' : '+',
         size: fk.udim2FromOffset(30, 30),
@@ -217,10 +226,12 @@ export function createMotion(): fk.FrameNode {
     BackgroundTransparency: 0.04,
   });
   addRoundedBorder(demoCard, 26, colors.ink, 2);
+
   const demoScale = fk.createUIScale();
-  fk.append(demoCard, demoScale);
-  fk.append(
-    demoCard,
+
+  demoCard.addChild(demoScale);
+
+  demoCard.addChild(
     createText({
       text: 'MOTION,\nWITHOUT THE\nBOOKKEEPING.',
       size: fk.udim2FromOffset(270, 132),
@@ -232,6 +243,7 @@ export function createMotion(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
+
   const cardStatus = createText({
     text: 'Position  •  Rotation  •  Scale',
     size: fk.udim2FromOffset(270, 28),
@@ -240,21 +252,26 @@ export function createMotion(): fk.FrameNode {
     textSize: 12,
     font: fonts.mono,
   });
-  fk.append(demoCard, cardStatus);
-  fk.append(stage, demoCard);
-  fk.append(lab, stage);
+
+  demoCard.addChild(cardStatus);
+
+  stage.addChild(demoCard);
+
+  lab.addChild(stage);
 
   const cardMotion = fk.createMotion(demoCard);
-  cardMotion.completed.subscribe(() => fk.update(status, { Text: '● SPRING SETTLED' }));
-  fk.state.observe(demoCard, mode, (value) => {
+  cardMotion.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
+  demoCard.watch(mode, (value) => {
     const goal = goals[value];
-    fk.update(status, {
+    status.setProperties({
       Text: `● MOVING TO ${value.toUpperCase()}`,
       TextColor3: goal.BackgroundColor3,
     });
-    fk.update(positionLine, { Text: `  Position: ${value}Position,` });
-    fk.update(rotationLine, { Text: `  Rotation: ${goal.Rotation},` });
-    fk.update(cardStatus, { Text: `${value.toUpperCase()}  •  Position  •  Rotation  •  Scale` });
+    positionLine.setProperties({ Text: `  Position: ${value}Position,` });
+    rotationLine.setProperties({ Text: `  Rotation: ${goal.Rotation},` });
+    cardStatus.setProperties({
+      Text: `${value.toUpperCase()}  •  Position  •  Rotation  •  Scale`,
+    });
     cardMotion.spring({
       Position: goal.Position,
       Rotation: goal.Rotation,
@@ -262,13 +279,14 @@ export function createMotion(): fk.FrameNode {
     });
     fk.spring(demoScale, { Scale: goal.Scale });
     for (const [buttonMode, control] of modeButtons) {
-      fk.update(control, {
+      control.setProperties({
         TextColor3: buttonMode === value ? goal.BackgroundColor3 : colors.text,
       });
     }
   });
 
-  fk.append(content, lab);
-  fk.append(section, content);
+  content.addChild(lab);
+
+  section.addChild(content);
   return section;
 }

@@ -37,7 +37,7 @@ Sections never import other sections. The application root is the only place tha
 
 - `main.ts` owns device selection and mounting only.
 - Each `app.ts` owns section order and navigation wiring only.
-- Each section owns its nodes, local example data, observables, and event bindings.
+- Each section owns its nodes, local example data, shared values, and event bindings.
 - Device `layout.ts` files are the single source of truth for design width, content width, page height, and section offsets.
 - Device primitives contain patterns that are repeated within one presentation but would be dishonest to call cross-device abstractions.
 - `shared` accepts code only after both device applications genuinely need the same behavior.
@@ -59,7 +59,7 @@ Section modules expose one primary factory. Device applications use explicit fil
 1. Add its metrics to the device's `sectionLayout`.
 2. Create one file in that device's `sections` directory.
 3. Export one section factory and keep its state local.
-4. Import and append it in the device `app.ts`.
+4. Import it and add it to the device tree in `app.ts`.
 5. Share a helper only when both presentations need the same semantics.
 
 This structure optimizes for locality first, reuse second, and abstraction only when the repeated concept has a stable name.

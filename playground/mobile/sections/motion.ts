@@ -44,6 +44,7 @@ const motionGoals = [
 
 export function createMotion(): fk.FrameNode {
   const section = createSection('MobileMotion', sectionLayout.motion, colors.ink);
+
   const content = createSectionContent();
   appendSectionHeading(
     content,
@@ -51,6 +52,7 @@ export function createMotion(): fk.FrameNode {
     'Tap goals quickly. Position, size, rotation, color, and scale remain continuous.',
     false,
   );
+
   const lab = fk.createFrame({
     Size: fk.udim2FromOffset(contentWidth, 820),
     Position: fk.udim2FromOffset(0, 238),
@@ -58,7 +60,8 @@ export function createMotion(): fk.FrameNode {
     ClipsDescendants: true,
   });
   addRoundedBorder(lab, 22, colors.inkSoft, 2);
-  const mode = fk.state.observable(0);
+
+  const mode = fk.createValue(0);
   for (const [index, goal] of motionGoals.entries()) {
     const control = createButton(
       goal.label,
@@ -67,11 +70,12 @@ export function createMotion(): fk.FrameNode {
       colors.ink,
       colors.text,
     );
-    fk.update(control, { TextSize: 9, FontFamily: fonts.mono });
+    control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
     bindButtonMotion(control, colors.ink, goal.accent);
     control.onClick(() => mode.set(index));
-    fk.append(lab, control);
+    lab.addChild(control);
   }
+
   const stage = fk.createFrame({
     Size: fk.udim2FromOffset(318, 420),
     Position: fk.udim2FromOffset(20, 92),
@@ -79,16 +83,19 @@ export function createMotion(): fk.FrameNode {
     ClipsDescendants: true,
   });
   addRoundedBorder(stage, 18, colors.paperMuted);
+
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(220, 170),
     Position: fk.udim2FromOffset(48, 110),
     BackgroundColor3: colors.mint,
   });
   addRoundedBorder(card, 22, colors.ink, 2);
+
   const scale = fk.createUIScale();
-  fk.append(card, scale);
-  fk.append(
-    card,
+
+  card.addChild(scale);
+
+  card.addChild(
     createText({
       text: 'SPRING\nCONTROLLER',
       size: fk.udim2FromOffset(176, 90),
@@ -100,6 +107,7 @@ export function createMotion(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
+
   const stateLabel = createText({
     text: 'CALM',
     size: fk.udim2FromOffset(176, 28),
@@ -108,9 +116,13 @@ export function createMotion(): fk.FrameNode {
     textSize: 10,
     font: fonts.mono,
   });
-  fk.append(card, stateLabel);
-  fk.append(stage, card);
-  fk.append(lab, stage);
+
+  card.addChild(stateLabel);
+
+  stage.addChild(card);
+
+  lab.addChild(stage);
+
   const status = createText({
     text: '● SPRING SETTLED',
     size: fk.udim2FromOffset(318, 28),
@@ -119,7 +131,9 @@ export function createMotion(): fk.FrameNode {
     textSize: 10,
     font: fonts.mono,
   });
-  fk.append(lab, status);
+
+  lab.addChild(status);
+
   const code = fk.createFrame({
     Size: fk.udim2FromOffset(318, 206),
     Position: fk.udim2FromOffset(20, 582),
@@ -127,21 +141,25 @@ export function createMotion(): fk.FrameNode {
   });
   addRoundedBorder(code, 14, colors.inkSoft);
   appendCodeLine(code, 'fk.spring(card, {', 18, colors.coral);
+
   const positionLine = appendCodeLine(code, '  Position: calmPosition,', 48);
+
   const rotationLine = appendCodeLine(code, '  Rotation: 0,', 78);
   appendCodeLine(code, '  BackgroundColor3: accent,', 108);
   appendCodeLine(code, '});', 138, colors.coral);
   appendCodeLine(code, '', 168);
+
   const cardMotion = fk.createMotion(card);
+
   const scaleMotion = fk.createMotion(scale);
-  cardMotion.completed.subscribe(() => fk.update(status, { Text: '● SPRING SETTLED' }));
-  fk.state.observe(card, mode, (value) => {
+  cardMotion.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
+  card.watch(mode, (value) => {
     const goal = motionGoals[value];
     if (!goal) return;
-    fk.update(status, { Text: `● MOVING TO ${goal.label}`, TextColor3: goal.accent });
-    fk.update(stateLabel, { Text: goal.label });
-    fk.update(positionLine, { Text: `  Position: ${goal.label.toLowerCase()}Position,` });
-    fk.update(rotationLine, { Text: `  Rotation: ${goal.rotation},` });
+    status.setProperties({ Text: `● MOVING TO ${goal.label}`, TextColor3: goal.accent });
+    stateLabel.setProperties({ Text: goal.label });
+    positionLine.setProperties({ Text: `  Position: ${goal.label.toLowerCase()}Position,` });
+    rotationLine.setProperties({ Text: `  Rotation: ${goal.rotation},` });
     cardMotion.spring({
       Position: goal.position,
       Rotation: goal.rotation,
@@ -149,7 +167,9 @@ export function createMotion(): fk.FrameNode {
     });
     scaleMotion.spring({ Scale: goal.scale });
   });
-  fk.append(content, lab);
-  fk.append(section, content);
+
+  content.addChild(lab);
+
+  section.addChild(content);
   return section;
 }

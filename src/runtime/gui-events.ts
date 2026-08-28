@@ -1,5 +1,5 @@
+import type { Node } from './node-state';
 import { subscribeToNodeEvent, type Unsubscribe } from './signal';
-import type { Node } from './state';
 
 export type GuiEventMethods = {
   onMouseEnter(listener: (event: MouseEvent) => void): Unsubscribe;
@@ -64,11 +64,11 @@ export const buttonEventMethods = Object.freeze({
   onSecondaryButtonUp(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.secondaryButtonUp, listener);
   },
-} satisfies GuiEventMethods & ButtonEventMethods);
+} satisfies ButtonEventMethods);
 
 export const textBoxEventMethods = Object.freeze({
   ...guiEventMethods,
   onTextChanged(this: Node, listener: (text: string, event: InputEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.textChanged, listener);
   },
-} satisfies GuiEventMethods & TextBoxEventMethods);
+} satisfies TextBoxEventMethods);

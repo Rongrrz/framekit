@@ -12,10 +12,10 @@ const { top, height } = sectionLayout.lifecycle;
 
 export function createLifecycle(): fk.FrameNode {
   const section = pageSection('Lifecycle', top, height, colors.ink);
+
   const content = sectionContent();
 
-  fk.append(
-    content,
+  content.addChild(
     createText({
       text: 'OWNERSHIP WITHOUT\nLIFECYCLE MYSTERY.',
       size: scaledSize(650, 128, contentWidth, height),
@@ -26,10 +26,10 @@ export function createLifecycle(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
-      text: 'Detach when a node should remain reusable. Destroy when its descendants, listeners, observations, and animations should be released.',
+      text: 'Remove a node from its parent when it should remain reusable. Destroy it when descendants, listeners, watched values, and animations should be released.',
       size: scaledSize(410, 104, contentWidth, height),
       position: scaledPosition(710, 76, contentWidth, height),
       color: colors.textMuted,
@@ -53,8 +53,8 @@ export function createLifecycle(): fk.FrameNode {
     Size: fk.udim2FromOffset(352, 548),
     BackgroundColor3: colors.inkRaised,
   });
-  fk.append(
-    controls,
+
+  controls.addChild(
     createText({
       text: 'NODE LIFECYCLE',
       size: fk.udim2FromOffset(296, 30),
@@ -65,6 +65,7 @@ export function createLifecycle(): fk.FrameNode {
       weight: 750,
     }),
   );
+
   const tree = fk.createFrame({
     Size: fk.udim2FromOffset(296, 170),
     Position: fk.udim2FromOffset(28, 72),
@@ -73,22 +74,29 @@ export function createLifecycle(): fk.FrameNode {
   addRoundedBorder(tree, 14, colors.inkSoft);
   appendCodeLine(tree, '▼ ScreenGui', 16, colors.violet);
   appendCodeLine(tree, '  ▼ InventoryPanel', 48, colors.mint);
+
   const childLine = appendCodeLine(tree, '    ● ItemDetails', 80, colors.coral);
+
   const resourceLine = appendCodeLine(tree, '      3 resources owned', 116, colors.textMuted);
-  fk.append(controls, tree);
+
+  controls.addChild(tree);
 
   const actions: readonly Readonly<{
     phase: LifecyclePhase;
     label: string;
     accent: fk.Color3;
   }>[] = [
-    { phase: 'attached', label: 'APPEND', accent: colors.mint },
-    { phase: 'detached', label: 'DETACH', accent: colors.amber },
+    { phase: 'attached', label: 'ADD CHILD', accent: colors.mint },
+    { phase: 'detached', label: 'REMOVE', accent: colors.amber },
     { phase: 'destroyed', label: 'DESTROY', accent: colors.coral },
   ];
+
   const actionButtons = new Map<
     LifecyclePhase,
-    Readonly<{ button: fk.TextButtonNode; accent: fk.Color3 }>
+    Readonly<{
+      button: fk.TextButtonNode;
+      accent: fk.Color3;
+    }>
   >();
   for (const [index, { phase, label, accent }] of actions.entries()) {
     const action = createButton(
@@ -98,11 +106,12 @@ export function createLifecycle(): fk.FrameNode {
       colors.ink,
       colors.text,
     );
-    fk.update(action, { TextSize: 10, FontFamily: fonts.mono });
+    action.setProperties({ TextSize: 10, FontFamily: fonts.mono });
     bindScaleMotion(action, 1.04);
     actionButtons.set(phase, { button: action, accent });
-    fk.append(controls, action);
+    controls.addChild(action);
   }
+
   const explanation = createText({
     text: '',
     size: fk.udim2FromOffset(296, 96),
@@ -112,7 +121,9 @@ export function createLifecycle(): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(controls, explanation);
+
+  controls.addChild(explanation);
+
   const status = createText({
     text: '',
     size: fk.udim2FromOffset(296, 40),
@@ -121,8 +132,10 @@ export function createLifecycle(): fk.FrameNode {
     textSize: 10,
     font: fonts.mono,
   });
-  fk.append(controls, status);
-  fk.append(lab, controls);
+
+  controls.addChild(status);
+
+  lab.addChild(controls);
 
   const stage = fk.createFrame({
     Name: 'LifecycleStage',
@@ -130,6 +143,7 @@ export function createLifecycle(): fk.FrameNode {
     Position: fk.udim2FromOffset(352, 0),
     BackgroundColor3: colors.paperRaised,
   });
+
   const inventory = fk.createFrame({
     Name: 'InventoryPanel',
     Size: fk.udim2FromOffset(410, 260),
@@ -137,8 +151,8 @@ export function createLifecycle(): fk.FrameNode {
     BackgroundColor3: colors.paper,
   });
   addRoundedBorder(inventory, 20, colors.paperMuted, 2);
-  fk.append(
-    inventory,
+
+  inventory.addChild(
     createText({
       text: 'INVENTORY PANEL',
       size: fk.udim2FromOffset(340, 30),
@@ -149,7 +163,8 @@ export function createLifecycle(): fk.FrameNode {
       weight: 750,
     }),
   );
-  fk.append(stage, inventory);
+
+  stage.addChild(inventory);
 
   const pool = fk.createFrame({
     Name: 'DetachedPool',
@@ -158,8 +173,8 @@ export function createLifecycle(): fk.FrameNode {
     BackgroundColor3: colors.paper,
   });
   addRoundedBorder(pool, 20, colors.paperMuted, 2);
-  fk.append(
-    pool,
+
+  pool.addChild(
     createText({
       text: 'DETACHED HANDLE',
       size: fk.udim2FromOffset(220, 30),
@@ -170,6 +185,7 @@ export function createLifecycle(): fk.FrameNode {
       weight: 750,
     }),
   );
+
   const ghost = fk.createTextLabel({
     Size: fk.udim2FromOffset(220, 112),
     Position: fk.udim2FromOffset(24, 82),
@@ -181,9 +197,12 @@ export function createLifecycle(): fk.FrameNode {
     FontFamily: fonts.mono,
     FontWeight: 700,
   });
-  fk.append(ghost, fk.createUICorner({ CornerRadius: 16 }));
-  fk.append(pool, ghost);
-  fk.append(stage, pool);
+
+  ghost.addChild(fk.createUICorner({ CornerRadius: 16 }));
+
+  pool.addChild(ghost);
+
+  stage.addChild(pool);
 
   const code = fk.createFrame({
     Name: 'LifecycleCode',
@@ -192,74 +211,78 @@ export function createLifecycle(): fk.FrameNode {
     BackgroundColor3: colors.ink,
   });
   addRoundedBorder(code, 16, colors.inkSoft);
+
   const codeTitle = appendCodeLine(
     code,
     '// ItemDetails is currently attached',
     16,
     colors.textMuted,
   );
-  const codeAction = appendCodeLine(code, 'fk.append(inventory, details);', 52, colors.mint);
-  const codeResult = appendCodeLine(code, '// parent(details) === inventory', 88, colors.violet);
-  fk.append(stage, code);
-  fk.append(lab, stage);
 
+  const codeAction = appendCodeLine(code, 'inventory.addChild(details);', 52, colors.mint);
+
+  const codeResult = appendCodeLine(code, '// details.Parent === inventory', 88, colors.violet);
+
+  stage.addChild(code);
+
+  lab.addChild(stage);
   let details = createDetailsNode();
-  fk.append(inventory, details);
 
+  inventory.addChild(details);
   function setPhase(phase: LifecyclePhase): void {
     if (phase === 'attached') {
-      if (fk.isDestroyed(details)) details = createDetailsNode();
-      if (fk.parent(details) === undefined) fk.append(inventory, details);
-      fk.update(ghost, { Text: 'NO DETACHED NODE', BackgroundColor3: colors.paperMuted });
-      fk.update(childLine, { Text: '    ● ItemDetails', TextColor3: colors.coral });
-      fk.update(resourceLine, { Text: '      3 resources owned' });
-      fk.update(explanation, {
-        Text: 'append() gives the node a visible parent. Its events, observations, and motion remain owned by the node.',
+      if (details.isDestroyed()) details = createDetailsNode();
+      if (details.Parent === undefined) inventory.addChild(details);
+      ghost.setProperties({ Text: 'NO DETACHED NODE', BackgroundColor3: colors.paperMuted });
+      childLine.setProperties({ Text: '    ● ItemDetails', TextColor3: colors.coral });
+      resourceLine.setProperties({ Text: '      3 resources owned' });
+      explanation.setProperties({
+        Text: 'addChild() gives the node a visible parent. Its events, value watchers, and motion remain owned by the node.',
       });
-      fk.update(status, { Text: '● ATTACHED AND ACTIVE', TextColor3: colors.mint });
-      fk.update(codeTitle, { Text: '// ItemDetails is currently attached' });
-      fk.update(codeAction, { Text: 'fk.append(inventory, details);' });
-      fk.update(codeResult, { Text: '// parent(details) === inventory' });
+      status.setProperties({ Text: '● ATTACHED AND ACTIVE', TextColor3: colors.mint });
+      codeTitle.setProperties({ Text: '// ItemDetails is currently attached' });
+      codeAction.setProperties({ Text: 'inventory.addChild(details);' });
+      codeResult.setProperties({ Text: '// details.Parent === inventory' });
     } else if (phase === 'detached') {
-      if (!fk.isDestroyed(details) && fk.parent(details) !== undefined) fk.detach(details);
-      fk.update(ghost, { Text: 'ItemDetails\nREUSABLE', BackgroundColor3: colors.amber });
-      fk.update(childLine, { Text: '    ○ ItemDetails (detached)', TextColor3: colors.amber });
-      fk.update(resourceLine, { Text: '      resources still owned' });
-      fk.update(explanation, {
-        Text: 'detach() removes the node from the visible tree without invalidating its handle. It can be appended again.',
+      if (!details.isDestroyed() && details.Parent !== undefined) details.removeFromParent();
+      ghost.setProperties({ Text: 'ItemDetails\nREUSABLE', BackgroundColor3: colors.amber });
+      childLine.setProperties({ Text: '    ○ ItemDetails (detached)', TextColor3: colors.amber });
+      resourceLine.setProperties({ Text: '      resources still owned' });
+      explanation.setProperties({
+        Text: 'removeFromParent() hides the node without invalidating its handle. It can be added again.',
       });
-      fk.update(status, { Text: '○ DETACHED, STILL REUSABLE', TextColor3: colors.amber });
-      fk.update(codeTitle, { Text: '// Keep the node for later reuse' });
-      fk.update(codeAction, { Text: 'fk.detach(details);' });
-      fk.update(codeResult, { Text: '// isDestroyed(details) === false' });
+      status.setProperties({ Text: '○ DETACHED, STILL REUSABLE', TextColor3: colors.amber });
+      codeTitle.setProperties({ Text: '// Keep the node for later reuse' });
+      codeAction.setProperties({ Text: 'details.removeFromParent();' });
+      codeResult.setProperties({ Text: '// details.isDestroyed() === false' });
     } else {
-      if (!fk.isDestroyed(details)) fk.destroy(details);
-      fk.update(ghost, { Text: 'HANDLE RELEASED', BackgroundColor3: colors.coral });
-      fk.update(childLine, { Text: '    × ItemDetails (destroyed)', TextColor3: colors.coral });
-      fk.update(resourceLine, { Text: '      0 resources owned' });
-      fk.update(explanation, {
+      if (!details.isDestroyed()) details.destroy();
+      ghost.setProperties({ Text: 'HANDLE RELEASED', BackgroundColor3: colors.coral });
+      childLine.setProperties({ Text: '    × ItemDetails (destroyed)', TextColor3: colors.coral });
+      resourceLine.setProperties({ Text: '      0 resources owned' });
+      explanation.setProperties({
         Text: 'destroy() permanently invalidates the handle and releases descendants plus every lifecycle-owned resource.',
       });
-      fk.update(status, { Text: '× DESTROYED AND RELEASED', TextColor3: colors.coral });
-      fk.update(codeTitle, { Text: '// Release the complete owned subtree' });
-      fk.update(codeAction, { Text: 'fk.destroy(details);' });
-      fk.update(codeResult, { Text: '// isDestroyed(details) === true' });
+      status.setProperties({ Text: '× DESTROYED AND RELEASED', TextColor3: colors.coral });
+      codeTitle.setProperties({ Text: '// Release the complete owned subtree' });
+      codeAction.setProperties({ Text: 'details.destroy();' });
+      codeResult.setProperties({ Text: '// details.isDestroyed() === true' });
     }
     for (const [key, action] of actionButtons) {
-      fk.update(action.button, {
+      action.button.setProperties({
         BackgroundColor3: key === phase ? action.accent : colors.ink,
         TextColor3: key === phase ? colors.ink : colors.text,
       });
     }
   }
-
   for (const [phase, action] of actionButtons) {
     action.button.onClick(() => setPhase(phase));
   }
   setPhase('attached');
 
-  fk.append(content, lab);
-  fk.append(section, content);
+  content.addChild(lab);
+
+  section.addChild(content);
   return section;
 }
 
@@ -271,8 +294,8 @@ function createDetailsNode(): fk.FrameNode {
     BackgroundColor3: colors.violet,
   });
   addRoundedBorder(node, 18, colors.ink, 2);
-  fk.append(
-    node,
+
+  node.addChild(
     createText({
       text: 'ITEM DETAILS',
       size: fk.udim2FromOffset(300, 46),
@@ -282,10 +305,10 @@ function createDetailsNode(): fk.FrameNode {
       weight: 900,
     }),
   );
-  fk.append(
-    node,
+
+  node.addChild(
     createText({
-      text: '1 event  •  1 observation  •  1 motion',
+      text: '1 event  •  1 value watcher  •  1 motion',
       size: fk.udim2FromOffset(300, 34),
       position: fk.udim2FromOffset(24, 86),
       color: colors.inkSoft,

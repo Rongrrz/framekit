@@ -1,17 +1,17 @@
-import { cancelAnimationProperties } from '../animation/ownership';
-import { addCleanup, assertNodeActive, props, update } from '../runtime/node';
+import { cancelAnimationProperties } from '../runtime/animation-ownership';
+import { addCleanup } from '../runtime/node-lifecycle';
+import { applyPropertyPatch, getPropertiesSnapshot } from '../runtime/node-properties';
 import type { GuiNode } from '../runtime/render';
 import { assertAllowedValue } from '../runtime/validation';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
-import { createDefaultFrameProps, createFrameBasedNode, type FrameProps } from './frame';
+import { createDefaultFrameProperties, createFrameBasedNode, type FrameProperties } from './frame';
 
 export type ScrollingDirection = 'X' | 'Y' | 'XY';
-export type ScrollingFrameProps = FrameProps & {
+export type ScrollingFrameProperties = FrameProperties & {
   ScrollingDirection: ScrollingDirection;
   CanvasPosition: Vector2;
 };
-export type ScrollingFrameNode = GuiNode<ScrollingFrameProps>;
-export type CanvasPosition = Vector2;
+export type ScrollingFrameNode = GuiNode<ScrollingFrameProperties>;
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const keyboardScrollKeys = new Set([
@@ -26,9 +26,8 @@ const keyboardScrollKeys = new Set([
   ' ',
 ]);
 const canvasPositionProperty = ['CanvasPosition'] as const;
-
 export function createScrollingFrame(
-  initial: Partial<ScrollingFrameProps> = {},
+  initial: Partial<ScrollingFrameProperties> = {},
 ): ScrollingFrameNode {
   const element = document.createElement('div');
   element.style.overscrollBehavior = 'contain';
@@ -36,11 +35,11 @@ export function createScrollingFrame(
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
   // position accepted by the browser after each FrameKit write so those events can be ignored.
   let lastRenderedCanvasPosition = readCanvasPosition(element);
-  const node = createFrameBasedNode<ScrollingFrameProps>(
+  const node = createFrameBasedNode<ScrollingFrameProperties>(
     'ScrollingFrame',
     element,
     {
-      ...createDefaultFrameProps(),
+      ...createDefaultFrameProperties(),
       Name: 'ScrollingFrame',
       ScrollingDirection: 'XY',
       CanvasPosition: vector2(0, 0),
@@ -60,18 +59,18 @@ export function createScrollingFrame(
         lastRenderedCanvasPosition = readCanvasPosition(element);
       }
     },
-  );
+  ) as ScrollingFrameNode;
 
   const syncCanvasPositionFromBrowser = (): void => {
     const browserPosition = readCanvasPosition(element);
     if (positionsMatch(browserPosition, lastRenderedCanvasPosition)) return;
-    const current = props(node).CanvasPosition;
+    const current = getPropertiesSnapshot(node).CanvasPosition;
     if (positionsMatch(browserPosition, current)) {
       lastRenderedCanvasPosition = browserPosition;
       return;
     }
     cancelAnimationProperties(node, canvasPositionProperty);
-    update(node, { CanvasPosition: browserPosition });
+    applyPropertyPatch(node, { CanvasPosition: browserPosition });
   };
   const stopCanvasPositionAnimation = (): void => {
     cancelAnimationProperties(node, canvasPositionProperty);
@@ -92,11 +91,11 @@ export function createScrollingFrame(
   return node;
 }
 
-function readCanvasPosition(element: HTMLElement): CanvasPosition {
+function readCanvasPosition(element: HTMLElement): Vector2 {
   return vector2(element.scrollLeft, element.scrollTop);
 }
 
-function writeCanvasPosition(element: HTMLElement, position: CanvasPosition): void {
+function writeCanvasPosition(element: HTMLElement, position: Vector2): void {
   if (typeof element.scrollTo === 'function') {
     element.scrollTo(position.X, position.Y);
     return;
@@ -107,14 +106,4 @@ function writeCanvasPosition(element: HTMLElement, position: CanvasPosition): vo
 
 function positionsMatch(first: Vector2, second: Vector2): boolean {
   return first.X === second.X && first.Y === second.Y;
-}
-
-export function canvasPosition(node: ScrollingFrameNode): CanvasPosition {
-  assertNodeActive(node);
-  return readCanvasPosition(node.element);
-}
-
-export function scrollTo(node: ScrollingFrameNode, position: CanvasPosition): void {
-  cancelAnimationProperties(node, canvasPositionProperty);
-  update(node, { CanvasPosition: vector2(position.X, position.Y) });
 }

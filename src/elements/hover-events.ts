@@ -1,5 +1,5 @@
 import { guiEventKeys } from '../runtime/gui-events';
-import { addCleanup } from '../runtime/node';
+import { addCleanup } from '../runtime/node-lifecycle';
 import type { GuiNode } from '../runtime/render';
 import { emitNodeEvent } from '../runtime/signal';
 

@@ -21,15 +21,15 @@ const previewModes: Readonly<
 > = {
   NODE: {
     title: 'TYPED NODE',
-    description: 'Factories create inspectable handles with a strict property contract.',
+    description: 'Factories create persistent nodes with a strict property contract.',
     accent: colors.coral,
     code: 'const card = fk.createFrame({ ... });',
   },
   STATE: {
     title: 'DIRECT STATE',
-    description: 'Explicit observables update the same node without a component framework.',
+    description: 'An explicit shared value updates the same node without a component framework.',
     accent: colors.mint,
-    code: 'const open = fk.state.observable(false);',
+    code: 'const open = fk.createValue(false);',
   },
   MOTION: {
     title: 'RETAINED MOTION',
@@ -43,9 +43,10 @@ const previewModeOrder: readonly PreviewMode[] = ['NODE', 'STATE', 'MOTION'];
 
 export function createHero(onExplore: () => void): fk.FrameNode {
   const section = createSection('MobileHero', sectionLayout.hero, colors.ink);
+
   const content = createSectionContent();
-  fk.append(
-    content,
+
+  content.addChild(
     createPill(
       'GAME UI THINKING  ·  WEB NATIVE',
       fk.udim2FromOffset(282, 36),
@@ -53,8 +54,8 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       colors.mint,
     ),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
       text: 'Build the web\nlike a game UI.',
       size: fk.udim2FromOffset(contentWidth, 190),
@@ -65,10 +66,10 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  fk.append(
-    content,
+
+  content.addChild(
     createText({
-      text: 'Typed nodes, UDim2 layout, observable state, modifiers, tweens, and springs—without translating every idea into a CSS hierarchy.',
+      text: 'Typed nodes, UDim2 layout, shared values, modifiers, tweens, and springs—without translating every idea into a CSS hierarchy.',
       size: fk.udim2FromOffset(contentWidth, 116),
       position: fk.udim2FromOffset(0, 318),
       color: colors.textMuted,
@@ -77,6 +78,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
+
   const explore = createButton(
     'TRY THE LIVE LAB  ↓',
     fk.udim2FromOffset(172, 50),
@@ -86,7 +88,9 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   bindButtonMotion(explore, colors.coral, colors.amber);
   explore.onClick(onExplore);
-  fk.append(content, explore);
+
+  content.addChild(explore);
+
   const install = createButton(
     'COPY INSTALL',
     fk.udim2FromOffset(172, 50),
@@ -94,14 +98,16 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     colors.inkRaised,
     colors.text,
   );
-  fk.update(install, { TextSize: 10, FontFamily: fonts.mono });
+  install.setProperties({ TextSize: 10, FontFamily: fonts.mono });
   bindButtonMotion(install, colors.inkRaised, colors.inkSoft);
   install.onClick(() => {
     void copyCommand(install, 'npm i framekit', 'COPY INSTALL');
   });
-  fk.append(content, install);
 
-  const selected = fk.state.observable<PreviewMode>('NODE');
+  content.addChild(install);
+
+  const selected = fk.createValue<PreviewMode>('NODE');
+
   const preview = fk.createFrame({
     Name: 'MobileHeroPreview',
     Size: fk.udim2FromOffset(contentWidth, 360),
@@ -109,6 +115,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     BackgroundColor3: colors.paper,
   });
   addRoundedBorder(preview, 24, colors.violet, 2);
+
   const controls = new Map<PreviewMode, fk.TextButtonNode>();
   for (const [index, mode] of previewModeOrder.entries()) {
     const control = createButton(
@@ -118,18 +125,20 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       colors.paperMuted,
       colors.darkText,
     );
-    fk.update(control, { TextSize: 9, FontFamily: fonts.mono });
+    control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
     bindScaleMotion(control, 1.04);
     control.onClick(() => selected.set(mode));
     controls.set(mode, control);
-    fk.append(preview, control);
+    preview.addChild(control);
   }
+
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(322, 160),
     Position: fk.udim2FromOffset(18, 78),
     BackgroundColor3: colors.coral,
   });
   addRoundedBorder(card, 18, colors.ink, 2);
+
   const title = createText({
     text: '',
     size: fk.udim2FromOffset(274, 46),
@@ -138,6 +147,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     textSize: 22,
     weight: 900,
   });
+
   const description = createText({
     text: '',
     size: fk.udim2FromOffset(274, 62),
@@ -147,9 +157,13 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(card, title);
-  fk.append(card, description);
-  fk.append(preview, card);
+
+  card.addChild(title);
+
+  card.addChild(description);
+
+  preview.addChild(card);
+
   const code = createText({
     text: '',
     size: fk.udim2FromOffset(322, 74),
@@ -160,20 +174,23 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     wrapped: true,
     yAlignment: 'Top',
   });
-  fk.append(preview, code);
-  fk.state.observe(preview, selected, (value) => {
+
+  preview.addChild(code);
+  preview.watch(selected, (value) => {
     const mode = previewModes[value];
-    fk.update(title, { Text: mode.title });
-    fk.update(description, { Text: mode.description });
-    fk.update(code, { Text: mode.code });
+    title.setProperties({ Text: mode.title });
+    description.setProperties({ Text: mode.description });
+    code.setProperties({ Text: mode.code });
     fk.spring(card, { BackgroundColor3: mode.accent, Rotation: value === 'MOTION' ? 2 : 0 });
     for (const [controlMode, control] of controls) {
-      fk.update(control, {
+      control.setProperties({
         BackgroundColor3: controlMode === value ? mode.accent : colors.paperMuted,
       });
     }
   });
-  fk.append(content, preview);
-  fk.append(section, content);
+
+  content.addChild(preview);
+
+  section.addChild(content);
   return section;
 }

@@ -23,21 +23,24 @@ export function createMobileApp(): fk.ScreenGuiNode {
     backgroundColor: colors.ink,
   });
 
-  fk.append(
-    content,
-    createHero(() => navigate(sectionLayout.motion.top)),
-  );
-  fk.append(content, createPrinciples());
-  fk.append(content, createMotion());
-  fk.append(content, createComposer());
-  fk.append(content, createValues());
-  fk.append(content, createApi());
-  fk.append(content, createGuide());
-  fk.append(content, createLifecycle());
-  fk.append(
-    content,
-    createFooter(() => navigate(0)),
-  );
-  fk.append(app, createNavigation(page, navigate));
+  content.addChild(createHero(() => navigate(sectionLayout.motion.top)));
+
+  content.addChild(createPrinciples());
+
+  content.addChild(createMotion());
+
+  content.addChild(createComposer());
+
+  content.addChild(createValues());
+
+  content.addChild(createApi());
+
+  content.addChild(createGuide());
+
+  content.addChild(createLifecycle());
+
+  content.addChild(createFooter(() => navigate(0)));
+
+  app.addChild(createNavigation(page, navigate));
   return app;
 }

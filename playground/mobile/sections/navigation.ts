@@ -14,6 +14,7 @@ export function createNavigation(
     BackgroundColor3: colors.ink,
     ZIndex: 100,
   });
+
   const mark = createButton(
     'F',
     fk.udim2FromOffset(36, 36),
@@ -21,12 +22,13 @@ export function createNavigation(
     colors.coral,
     colors.ink,
   );
-  fk.update(mark, { TextSize: 18, FontWeight: 900 });
+  mark.setProperties({ TextSize: 18, FontWeight: 900 });
   bindButtonMotion(mark, colors.coral, colors.amber);
   mark.onClick(() => navigate(0));
-  fk.append(navigation, mark);
-  fk.append(
-    navigation,
+
+  navigation.addChild(mark);
+
+  navigation.addChild(
     createText({
       text: 'FRAMEKIT',
       size: fk.udim2FromOffset(150, 36),
@@ -35,6 +37,7 @@ export function createNavigation(
       weight: 850,
     }),
   );
+
   const source = createButton(
     'SOURCE  ↗',
     fk.udim2FromOffset(112, 38),
@@ -42,35 +45,41 @@ export function createNavigation(
     colors.paper,
     colors.ink,
   );
-  fk.update(source, { TextSize: 10, FontFamily: fonts.mono });
+  source.setProperties({ TextSize: 10, FontFamily: fonts.mono });
   bindButtonMotion(source, colors.paper, colors.mint);
   source.onClick(() => {
     window.open('https://github.com/Rongrrz/framekit', '_blank', 'noopener,noreferrer');
   });
-  fk.append(navigation, source);
+
+  navigation.addChild(source);
+
   const track = fk.createFrame({
     Size: fk.udim2(1, 0, 0, 3),
     Position: fk.udim2FromOffset(0, 61),
     BackgroundColor3: colors.inkSoft,
     ZIndex: 101,
   });
+
   const progress = fk.createFrame({
     Size: fk.udim2FromScale(0, 1),
     BackgroundColor3: colors.coral,
     ZIndex: 102,
   });
-  fk.append(track, progress);
-  fk.append(navigation, track);
+
+  track.addChild(progress);
+
+  navigation.addChild(track);
+
   const listenerController = new AbortController();
   page.element.addEventListener(
     'scroll',
     () => {
       const maximum = Math.max(1, page.element.scrollHeight - page.element.clientHeight);
       const scrollProgress = Math.min(1, Math.max(0, page.element.scrollTop / maximum));
-      fk.update(progress, { Size: fk.udim2FromScale(scrollProgress, 1) });
+      progress.setProperties({ Size: fk.udim2FromScale(scrollProgress, 1) });
     },
     { passive: true, signal: listenerController.signal },
   );
-  fk.onDestroy(navigation, () => listenerController.abort());
+  navigation.onDestroy(() => listenerController.abort());
   return navigation;
 }

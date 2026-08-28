@@ -4,12 +4,12 @@ import {
   assertNonNegativeFinite,
   assertString,
 } from '../runtime/validation';
-import { color3, color3ToCss, type Color3 } from '../values/color3';
+import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 export type TextXAlignment = 'Left' | 'Center' | 'Right';
 export type TextYAlignment = 'Top' | 'Center' | 'Bottom';
 
-export type TextStyleProps = {
+export type TextStyleProperties = {
   Text: string;
   TextColor3: Color3;
   TextTransparency: number;
@@ -36,10 +36,10 @@ export const verticalFlexAlignment = {
 const horizontalAlignments: readonly TextXAlignment[] = ['Left', 'Center', 'Right'];
 const verticalAlignments: readonly TextYAlignment[] = ['Top', 'Center', 'Bottom'];
 
-export function createDefaultTextStyleProps(): TextStyleProps {
+export function createDefaultTextStyleProperties(): TextStyleProperties {
   return {
     Text: '',
-    TextColor3: color3(0, 0, 0),
+    TextColor3: color3FromRGB(0, 0, 0),
     TextTransparency: 0,
     TextSize: 14,
     TextWrapped: false,
@@ -50,20 +50,23 @@ export function createDefaultTextStyleProps(): TextStyleProps {
   };
 }
 
-export function renderTextStyle(element: HTMLElement, props: Readonly<TextStyleProps>): void {
-  assertAllowedValue(props.TextXAlignment, horizontalAlignments, 'TextXAlignment');
-  assertAllowedValue(props.TextYAlignment, verticalAlignments, 'TextYAlignment');
-  assertString(props.Text, 'Text');
-  assertNonNegativeFinite(props.TextSize, 'TextSize');
-  assertBoolean(props.TextWrapped, 'TextWrapped');
-  assertString(props.FontFamily, 'FontFamily');
-  if (typeof props.FontWeight !== 'string') {
-    assertNonNegativeFinite(props.FontWeight, 'FontWeight');
+export function renderTextStyle(
+  element: HTMLElement,
+  properties: Readonly<TextStyleProperties>,
+): void {
+  assertAllowedValue(properties.TextXAlignment, horizontalAlignments, 'TextXAlignment');
+  assertAllowedValue(properties.TextYAlignment, verticalAlignments, 'TextYAlignment');
+  assertString(properties.Text, 'Text');
+  assertNonNegativeFinite(properties.TextSize, 'TextSize');
+  assertBoolean(properties.TextWrapped, 'TextWrapped');
+  assertString(properties.FontFamily, 'FontFamily');
+  if (typeof properties.FontWeight !== 'string') {
+    assertNonNegativeFinite(properties.FontWeight, 'FontWeight');
   }
-  element.style.color = color3ToCss(props.TextColor3, props.TextTransparency);
-  element.style.fontSize = `${props.TextSize}px`;
-  element.style.whiteSpace = props.TextWrapped ? 'pre-wrap' : 'pre';
-  element.style.textAlign = props.TextXAlignment.toLowerCase();
-  element.style.fontFamily = props.FontFamily;
-  element.style.fontWeight = String(props.FontWeight);
+  element.style.color = color3ToCss(properties.TextColor3, properties.TextTransparency);
+  element.style.fontSize = `${properties.TextSize}px`;
+  element.style.whiteSpace = properties.TextWrapped ? 'pre-wrap' : 'pre';
+  element.style.textAlign = properties.TextXAlignment.toLowerCase();
+  element.style.fontFamily = properties.FontFamily;
+  element.style.fontWeight = String(properties.FontWeight);
 }
