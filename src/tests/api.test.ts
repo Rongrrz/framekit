@@ -10,6 +10,7 @@ describe('package API', () => {
     expect(typeof fk.createFrame).toBe('function');
     expect(typeof fk.color3FromRGB).toBe('function');
     expect(typeof fk.createValue).toBe('function');
+    expect(typeof fk.createUIGradient).toBe('function');
 
     expect(typeof fka.spring).toBe('function');
     expect(typeof fka.createTween).toBe('function');

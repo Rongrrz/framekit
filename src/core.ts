@@ -37,6 +37,7 @@ export type { TextBoxNode, TextBoxProperties } from './core/elements/text-box';
 
 export * from './core/modifiers/aspect-ratio';
 export * from './core/modifiers/corner';
+export * from './core/modifiers/gradient';
 export * from './core/modifiers/list-layout';
 export * from './core/modifiers/padding';
 export * from './core/modifiers/scale';
@@ -54,6 +55,13 @@ export { udim, udim2, udim2FromOffset, udim2FromScale } from './core/values/udim
 export type { UDim, UDim2 } from './core/values/udim';
 export { vector2 } from './core/values/vector2';
 export type { Vector2 } from './core/values/vector2';
+export { colorSequence, numberSequence } from './core/values/sequence';
+export type {
+  ColorSequence,
+  ColorSequenceKeypoint,
+  NumberSequence,
+  NumberSequenceKeypoint,
+} from './core/values/sequence';
 
 export type { LayoutNode, StyleModifierNode } from './shared/runtime/modifier';
 export type { GuiGeometry, GuiNode } from './shared/runtime/render';

@@ -37,7 +37,7 @@ The common vocabulary is deliberately small:
 | Area          | What you use                                                                                  |
 | ------------- | --------------------------------------------------------------------------------------------- |
 | Elements      | `createScreenGui`, `createFrame`, `createScrollingFrame`, text, image, and text-box factories |
-| Modifiers     | `createUICorner`, `createUIStroke`, `createUIShadow`, padding, scale, and layout              |
+| Modifiers     | `createUICorner`, `createUIGradient`, strokes, shadows, padding, scale, and layout            |
 | Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`          |
 | Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`             |
 | Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry          |
@@ -75,6 +75,12 @@ const panel = fk.createFrame({
 });
 
 panel.addChild(fk.createUICorner({ CornerRadius: 18 }));
+panel.addChild(
+  fk.createUIGradient({
+    Color: fk.colorSequence(fk.color3FromHex('#9e83ee'), fk.color3FromHex('#5f9cf5')),
+    Rotation: 90,
+  }),
+);
 panel.addChild(
   fk.createUIStroke({
     Color: fk.color3FromHex('#9e83ee'),

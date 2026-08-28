@@ -10,6 +10,7 @@ const {
   createFrame,
   createTextLabel,
   createUICorner,
+  createUIGradient,
   createUIScale,
   createUIShadow,
   createUIStroke,
@@ -150,6 +151,27 @@ describe('UI modifiers', () => {
 
     expect(frame.element.style.boxShadow).toContain('-2px 6px 18px 0px');
     expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
+  });
+
+  it('applies color and transparency sequences through UIGradient', () => {
+    const frame = createFrame({ BackgroundColor3: fk.color3FromRGB(255, 255, 255) });
+    const gradient = createUIGradient({
+      Color: fk.colorSequence(fk.color3FromRGB(255, 0, 0), fk.color3FromRGB(0, 0, 255)),
+      Transparency: fk.numberSequence(0, 0.5),
+      Rotation: 0,
+      Offset: fk.vector2(0.1, 0),
+    });
+
+    frame.addChild(gradient);
+
+    expect(frame.element.style.backgroundImage).toContain('linear-gradient(90deg');
+    expect(frame.element.style.backgroundImage).toContain('rgb(255 0 0 / 1) 10%');
+    expect(frame.element.style.backgroundImage).toContain('rgb(0 0 255 / 0.5) 110%');
+    expect(frame.element.style.backgroundColor).toBe('transparent');
+
+    gradient.Enabled = false;
+
+    expect(frame.element.style.backgroundImage).toBe('');
   });
 
   it('validates shadow geometry', () => {
