@@ -40,6 +40,7 @@ The common vocabulary is deliberately small:
 | Modifiers     | `createUICorner`, `createUIStroke`, `createUIShadow`, padding, scale, and layout              |
 | Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`          |
 | Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`             |
+| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`                                                |
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                         |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                    |
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                         |
@@ -180,6 +181,15 @@ bio.onTextChanged((value) => console.log(value));
 ```
 
 Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
+
+## Computed geometry
+
+Every GUI node exposes browser-computed geometry as readonly `Vector2` values:
+
+```ts
+panel.AbsolutePosition;
+panel.AbsoluteSize;
+```
 
 ## Spring motion
 

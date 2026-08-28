@@ -1,3 +1,4 @@
+import { vector2, type Vector2 } from '../../core/values/vector2';
 import { guiEventMethods, type GuiEventMethodTable, type GuiEventMethods } from './gui-events';
 import type { LayoutChild, LayoutNodeState, ModifierNode, Styles } from './modifier';
 import {
@@ -15,9 +16,18 @@ import {
   type PropertyValidator,
 } from './node-state';
 
+/** Browser-computed geometry available on every GUI node. */
+export type GuiGeometry = {
+  /** Current viewport position in pixels after layout and transforms. */
+  readonly AbsolutePosition: Vector2;
+  /** Current rendered width and height in pixels. */
+  readonly AbsoluteSize: Vector2;
+};
+
 /** A FrameKit node backed by a browser HTMLElement. */
 export type GuiNode<Properties extends NodeProperties = NodeProperties> = Node<Properties> &
-  GuiEventMethods & {
+  GuiEventMethods &
+  GuiGeometry & {
     /** The low-level DOM escape hatch for browser integrations. */
     readonly element: HTMLElement;
   };
@@ -78,9 +88,40 @@ const guiMethodTables = new WeakMap<object, object>();
 function getGuiMethodTable(eventMethods: GuiEventMethodTable): object {
   const existing = guiMethodTables.get(eventMethods);
   if (existing) return existing;
-  const methodTable = extendMethodTable(nodeMethods, eventMethods);
+  const methodTable = extendMethodTable(getGuiNodeMethods(), eventMethods);
   guiMethodTables.set(eventMethods, methodTable);
   return methodTable;
+}
+
+let guiNodeMethods: object | undefined;
+
+function getGuiNodeMethods(): object {
+  if (guiNodeMethods) return guiNodeMethods;
+
+  const methodTable = Object.create(nodeMethods) as object;
+  Object.defineProperties(methodTable, {
+    AbsolutePosition: {
+      get(this: GuiNode): Vector2 {
+        assertGuiNodeActive(this);
+        const bounds = this.element.getBoundingClientRect();
+        return vector2(bounds.left, bounds.top);
+      },
+    },
+    AbsoluteSize: {
+      get(this: GuiNode): Vector2 {
+        assertGuiNodeActive(this);
+        const bounds = this.element.getBoundingClientRect();
+        return vector2(bounds.width, bounds.height);
+      },
+    },
+  });
+  guiNodeMethods = Object.freeze(methodTable);
+  return guiNodeMethods;
+}
+
+function assertGuiNodeActive(node: GuiNode): void {
+  const state = getNodeState(node);
+  if (state.destroyed) throw new Error(`${state.properties.Name} has been destroyed.`);
 }
 
 export function isGuiNode(node: Node): node is GuiNode {

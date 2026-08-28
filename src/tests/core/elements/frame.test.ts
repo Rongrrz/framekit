@@ -130,6 +130,20 @@ describe('screen GUIs and frames', () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
+  it('reads browser-computed absolute geometry', () => {
+    const frame = createFrame();
+
+    frame.element.getBoundingClientRect = () =>
+      ({ left: 12, top: 34, width: 320, height: 180 }) as DOMRect;
+
+    expect(frame.AbsolutePosition).toEqual(fk.vector2(12, 34));
+    expect(frame.AbsoluteSize).toEqual(fk.vector2(320, 180));
+
+    frame.destroy();
+
+    expect(() => frame.AbsoluteSize).toThrow(/destroyed/);
+  });
+
   it('rejects non-finite rotations without disturbing the rendered angle', () => {
     const frame = createFrame({ Rotation: -15 });
 
