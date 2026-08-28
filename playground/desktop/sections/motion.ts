@@ -1,7 +1,13 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion } from '../../shared/interaction';
-import { button, codeLine, decorate, pill, text } from '../../shared/ui';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createPill,
+  createText,
+} from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
@@ -43,7 +49,7 @@ export function createMotion(): fk.FrameNode {
 
   fk.append(
     content,
-    pill(
+    createPill(
       'LIVE MOTION LAB  ·  CLICK FAST',
       scaledSize(260, 38, contentWidth, height),
       scaledPosition(0, 62, contentWidth, height),
@@ -52,7 +58,7 @@ export function createMotion(): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'Retarget the interface.\nThe spring handles the rest.',
       size: scaledSize(760, 128, contentWidth, height),
       position: scaledPosition(0, 116, contentWidth, height),
@@ -64,7 +70,7 @@ export function createMotion(): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'Every button sets a new position, rotation, color, and scale. Current momentum carries into the next goal.',
       size: scaledSize(350, 96, contentWidth, height),
       position: scaledPosition(770, 126, contentWidth, height),
@@ -82,7 +88,7 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.inkRaised,
     ClipsDescendants: true,
   });
-  decorate(lab, 26, colors.inkSoft, 2);
+  addRoundedBorder(lab, 26, colors.inkSoft, 2);
 
   const controls = fk.createFrame({
     Name: 'MotionControls',
@@ -91,7 +97,7 @@ export function createMotion(): fk.FrameNode {
   });
   fk.append(
     controls,
-    text({
+    createText({
       text: 'RETAINED MOTION CONTROLLER',
       size: fk.udim2FromOffset(330, 30),
       position: fk.udim2FromOffset(28, 24),
@@ -107,17 +113,17 @@ export function createMotion(): fk.FrameNode {
     Position: fk.udim2FromOffset(28, 70),
     BackgroundColor3: colors.ink,
   });
-  decorate(codePanel, 16, colors.inkSoft);
-  codeLine(codePanel, 'fk.spring(card, {', 22, colors.coral);
-  const positionLine = codeLine(codePanel, '  Position: calmPosition,', 50);
-  const rotationLine = codeLine(codePanel, '  Rotation: 0,', 78);
-  codeLine(codePanel, '  BackgroundColor3: accent,', 106);
-  codeLine(codePanel, '});', 134, colors.coral);
-  codeLine(codePanel, '', 162);
+  addRoundedBorder(codePanel, 16, colors.inkSoft);
+  appendCodeLine(codePanel, 'fk.spring(card, {', 22, colors.coral);
+  const positionLine = appendCodeLine(codePanel, '  Position: calmPosition,', 50);
+  const rotationLine = appendCodeLine(codePanel, '  Rotation: 0,', 78);
+  appendCodeLine(codePanel, '  BackgroundColor3: accent,', 106);
+  appendCodeLine(codePanel, '});', 134, colors.coral);
+  appendCodeLine(codePanel, '', 162);
   fk.append(controls, codePanel);
   fk.append(
     controls,
-    text({
+    createText({
       text: 'SEND A NEW GOAL',
       size: fk.udim2FromOffset(180, 28),
       position: fk.udim2FromOffset(28, 292),
@@ -136,7 +142,7 @@ export function createMotion(): fk.FrameNode {
     ['orbit', 'ORBIT', colors.amber],
   ];
   for (const [index, [value, label, accent]] of modes.entries()) {
-    const control = button(
+    const control = createButton(
       label,
       fk.udim2FromOffset(76, 44),
       fk.udim2FromOffset(28 + index * 84, 330),
@@ -145,12 +151,12 @@ export function createMotion(): fk.FrameNode {
     );
     fk.update(control, { TextSize: 11 });
     bindButtonMotion(control, colors.inkSoft, accent);
-    fk.on(control, 'MouseButton1Click', () => mode(value));
+    control.onClick(() => mode.set(value));
     modeButtons.set(value, control);
     fk.append(controls, control);
   }
 
-  const status = text({
+  const status = createText({
     text: '● SPRING SETTLED',
     size: fk.udim2FromOffset(328, 34),
     position: fk.udim2FromOffset(28, 408),
@@ -162,7 +168,7 @@ export function createMotion(): fk.FrameNode {
   fk.append(controls, status);
   fk.append(
     controls,
-    text({
+    createText({
       text: 'The controller stops itself after settling. Retargeting while it is moving keeps the current velocity.',
       size: fk.udim2FromOffset(328, 78),
       position: fk.udim2FromOffset(28, 454),
@@ -186,13 +192,13 @@ export function createMotion(): fk.FrameNode {
     Position: fk.udim2FromOffset(35, 35),
     BackgroundColor3: colors.paperRaised,
   });
-  decorate(grid, 20, colors.paperMuted);
+  addRoundedBorder(grid, 20, colors.paperMuted);
   fk.append(stage, grid);
 
   for (let index = 0; index < 6; index += 1) {
     fk.append(
       grid,
-      text({
+      createText({
         text: index % 2 === 0 ? '·' : '+',
         size: fk.udim2FromOffset(30, 30),
         position: fk.udim2FromOffset(35 + (index % 3) * 210, 28 + Math.floor(index / 3) * 410),
@@ -210,12 +216,12 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.mint,
     BackgroundTransparency: 0.04,
   });
-  decorate(demoCard, 26, colors.ink, 2);
+  addRoundedBorder(demoCard, 26, colors.ink, 2);
   const demoScale = fk.createUIScale();
   fk.append(demoCard, demoScale);
   fk.append(
     demoCard,
-    text({
+    createText({
       text: 'MOTION,\nWITHOUT THE\nBOOKKEEPING.',
       size: fk.udim2FromOffset(270, 132),
       position: fk.udim2FromOffset(28, 22),
@@ -226,7 +232,7 @@ export function createMotion(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  const cardStatus = text({
+  const cardStatus = createText({
     text: 'Position  •  Rotation  •  Scale',
     size: fk.udim2FromOffset(270, 28),
     position: fk.udim2FromOffset(28, 192),

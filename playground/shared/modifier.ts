@@ -3,7 +3,7 @@ import { fk } from 'framekit';
 /** Keeps an existing modifier handle attached or detached without recreating it. */
 export function setModifierAttached(parent: fk.Node, modifier: fk.Node, attached: boolean): void {
   const currentParent = fk.parent(modifier);
-  if (attached && currentParent === undefined) fk.append(parent, modifier);
+  if (attached && currentParent !== parent) fk.append(parent, modifier);
   if (!attached && currentParent !== undefined) fk.detach(modifier);
 }
 
@@ -32,8 +32,8 @@ export function createSpringModifierToggle<Props extends fk.NodeProps>(
       return;
     }
 
-    if (fk.parent(options.modifier) === undefined) {
-      fk.update(options.modifier, options.inactive as unknown as Partial<Props>);
+    if (fk.parent(options.modifier) !== options.parent) {
+      fk.update(options.modifier, options.inactive);
       fk.append(options.parent, options.modifier);
     }
     options.motion.spring(options.active);

@@ -1,9 +1,16 @@
-import { createGuiNode, type GuiNode, type Render } from '../runtime/render';
+import type { GuiEventMethodTable } from '../runtime/gui-events';
+import { createGuiNode, type GuiNode, type PropertyRenderer } from '../runtime/render';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertFiniteNumber,
+  assertInteger,
+} from '../runtime/validation';
 import { color3, color3ToCss, type Color3 } from '../values/color3';
 import { udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
-import { vector2, type Vector2 } from '../values/vector2';
-import { configureGuiInput } from './gui-input';
+import { assertVector2, vector2, type Vector2 } from '../values/vector2';
+import { connectHoverEvents } from './hover-events';
 
 export type AutomaticSize = 'None' | 'X' | 'Y' | 'XY';
 
@@ -23,11 +30,18 @@ export type FrameProps = NodeProps & {
 
 export type FrameNode = GuiNode<FrameProps>;
 
+const automaticSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
+
 export function createFrame(initial: Partial<FrameProps> = {}): FrameNode {
-  return createFrameNode('Frame', document.createElement('div'), defaultFrameProps(), initial);
+  return createFrameBasedNode(
+    'Frame',
+    document.createElement('div'),
+    createDefaultFrameProps(),
+    initial,
+  );
 }
 
-export function defaultFrameProps(): FrameProps {
+export function createDefaultFrameProps(): FrameProps {
   return {
     Name: 'Frame',
     Size: udim2FromOffset(100, 100),
@@ -45,27 +59,36 @@ export function defaultFrameProps(): FrameProps {
 }
 
 /** Builds controls that share Frame's positioning and appearance properties. */
-export function createFrameNode<Props extends FrameProps>(
-  kind: string,
+export function createFrameBasedNode<Props extends FrameProps>(
+  nodeType: string,
   element: HTMLElement,
-  defaults: Props,
+  defaultProps: Props,
   initial: Partial<Props>,
-  renderExtra?: Render<Props>,
+  renderAdditionalProperties?: PropertyRenderer<Props>,
+  eventMethods?: GuiEventMethodTable,
 ): GuiNode<Props> {
-  element.dataset.framekit = kind;
+  element.dataset.framekit = nodeType;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
-  const node = createGuiNode(mergeProps(defaults, initial), element, (props, changed) => {
-    renderFrame(element, props);
-    renderExtra?.(props, changed);
-  });
-  configureGuiInput(node, element);
+  const node = createGuiNode(
+    mergeProps(defaultProps, initial),
+    element,
+    (props, changed) => {
+      renderFrame(element, props);
+      renderAdditionalProperties?.(props, changed);
+    },
+    eventMethods,
+  );
+  connectHoverEvents(node, element);
   return node;
 }
 
 function renderFrame(element: HTMLElement, props: Readonly<FrameProps>): void {
-  if (!Number.isFinite(props.Rotation)) {
-    throw new TypeError('Rotation must be a finite number.');
-  }
+  assertAllowedValue(props.AutomaticSize, automaticSizes, 'AutomaticSize');
+  assertVector2(props.AnchorPoint, 'AnchorPoint');
+  assertFiniteNumber(props.Rotation, 'Rotation');
+  assertBoolean(props.Visible, 'Visible');
+  assertInteger(props.ZIndex, 'ZIndex');
+  assertBoolean(props.ClipsDescendants, 'ClipsDescendants');
   element.style.position = 'absolute';
   element.style.width =
     props.AutomaticSize === 'X' || props.AutomaticSize === 'XY' ? 'auto' : udimToCss(props.Size.X);

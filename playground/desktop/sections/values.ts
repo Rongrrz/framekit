@@ -1,7 +1,13 @@
 import { fk } from 'framekit';
 
 import { bindScaleMotion } from '../../shared/interaction';
-import { button, codeLine, decorate, text } from '../../shared/ui';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createText,
+  updateTextLines,
+} from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
@@ -9,6 +15,7 @@ import { sectionLayout } from '../layout';
 type ValueMode = 'Color3' | 'UDim2' | 'Vector2' | 'UDim';
 
 const { top, height } = sectionLayout.values;
+const valueModes: readonly ValueMode[] = ['Color3', 'UDim2', 'Vector2', 'UDim'];
 const examples = {
   Color3: {
     title: 'COLOR3',
@@ -88,7 +95,7 @@ export function createValues(): fk.FrameNode {
 
   fk.append(
     content,
-    text({
+    createText({
       text: 'VALUES YOU CAN SEE,\nINSPECT, AND ANIMATE.',
       size: scaledSize(660, 126, contentWidth, height),
       position: scaledPosition(0, 62, contentWidth, height),
@@ -101,7 +108,7 @@ export function createValues(): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'FrameKit values are frozen structural objects—not opaque class instances. Select one to inspect it in motion.',
       size: scaledSize(390, 90, contentWidth, height),
       position: scaledPosition(730, 76, contentWidth, height),
@@ -119,7 +126,7 @@ export function createValues(): fk.FrameNode {
     BackgroundColor3: colors.paperRaised,
     ClipsDescendants: true,
   });
-  decorate(lab, 26, colors.ink, 2);
+  addRoundedBorder(lab, 26, colors.ink, 2);
 
   const sidebar = fk.createFrame({
     Name: 'ValuePicker',
@@ -128,7 +135,7 @@ export function createValues(): fk.FrameNode {
   });
   fk.append(
     sidebar,
-    text({
+    createText({
       text: 'VALUE CONSTRUCTORS',
       size: fk.udim2FromOffset(244, 30),
       position: fk.udim2FromOffset(28, 28),
@@ -139,8 +146,8 @@ export function createValues(): fk.FrameNode {
     }),
   );
   const controls = new Map<ValueMode, fk.TextButtonNode>();
-  for (const [index, key] of (Object.keys(examples) as ValueMode[]).entries()) {
-    const control = button(
+  for (const [index, key] of valueModes.entries()) {
+    const control = createButton(
       key,
       fk.udim2FromOffset(244, 62),
       fk.udim2FromOffset(28, 78 + index * 74),
@@ -148,7 +155,7 @@ export function createValues(): fk.FrameNode {
       colors.text,
     );
     fk.update(control, { TextSize: 13, FontFamily: fonts.mono, TextXAlignment: 'Left' });
-    const inset = text({
+    const inset = createText({
       text: `0${index + 1}`,
       size: fk.udim2FromOffset(36, 24),
       position: fk.udim2FromOffset(194, 19),
@@ -159,13 +166,13 @@ export function createValues(): fk.FrameNode {
     });
     fk.append(control, inset);
     bindScaleMotion(control, 1.025);
-    fk.on(control, 'MouseButton1Click', () => selected(key));
+    control.onClick(() => selected.set(key));
     controls.set(key, control);
     fk.append(sidebar, control);
   }
   fk.append(
     sidebar,
-    text({
+    createText({
       text: 'One vocabulary from construction to animation.',
       size: fk.udim2FromOffset(244, 66),
       position: fk.udim2FromOffset(28, 400),
@@ -189,15 +196,15 @@ export function createValues(): fk.FrameNode {
     Position: fk.udim2FromOffset(32, 54),
     BackgroundColor3: colors.paper,
   });
-  decorate(previewArea, 20, colors.paperMuted);
+  addRoundedBorder(previewArea, 20, colors.paperMuted);
   const preview = fk.createFrame({
     Name: 'AnimatedValuePreview',
     Size: examples.Color3.size,
     Position: examples.Color3.position,
     BackgroundColor3: colors.coral,
   });
-  decorate(preview, 24, colors.ink, 2);
-  const previewTitle = text({
+  addRoundedBorder(preview, 24, colors.ink, 2);
+  const previewTitle = createText({
     text: 'COLOR3',
     size: fk.udim2(1, -48, 0, 54),
     position: fk.udim2FromOffset(24, 22),
@@ -215,12 +222,12 @@ export function createValues(): fk.FrameNode {
     Position: fk.udim2FromOffset(558, 54),
     BackgroundColor3: colors.ink,
   });
-  decorate(inspector, 16, colors.inkSoft);
-  const dataTitle = codeLine(inspector, 'READONLY VALUE', 18, colors.textMuted);
+  addRoundedBorder(inspector, 16, colors.inkSoft);
+  const dataTitle = appendCodeLine(inspector, 'READONLY VALUE', 18, colors.textMuted);
   const dataRows = [
-    codeLine(inspector, '', 62, colors.coral),
-    codeLine(inspector, '', 96, colors.text),
-    codeLine(inspector, '', 130, colors.text),
+    appendCodeLine(inspector, '', 62, colors.coral),
+    appendCodeLine(inspector, '', 96, colors.text),
+    appendCodeLine(inspector, '', 130, colors.text),
   ];
   fk.update(dataTitle, { TextSize: 9 });
   fk.append(stage, inspector);
@@ -231,14 +238,14 @@ export function createValues(): fk.FrameNode {
     Position: fk.udim2FromOffset(558, 278),
     BackgroundColor3: colors.ink,
   });
-  decorate(code, 16, colors.inkSoft);
+  addRoundedBorder(code, 16, colors.inkSoft);
   const codeRows = [
-    codeLine(code, '', 14, colors.violet),
-    codeLine(code, '', 44),
-    codeLine(code, '', 74, colors.coral),
-    codeLine(code, '', 104),
-    codeLine(code, '', 134, colors.mint),
-    codeLine(code, '', 164),
+    appendCodeLine(code, '', 14, colors.violet),
+    appendCodeLine(code, '', 44),
+    appendCodeLine(code, '', 74, colors.coral),
+    appendCodeLine(code, '', 104),
+    appendCodeLine(code, '', 134, colors.mint),
+    appendCodeLine(code, '', 164),
   ];
   for (const row of codeRows) fk.update(row, { TextSize: 10 });
   fk.append(stage, code);
@@ -255,11 +262,11 @@ export function createValues(): fk.FrameNode {
     fk.update(previewTitle, { Text: example.title });
     for (const [index, row] of dataRows.entries()) {
       fk.update(row, {
-        Text: example.rows[index]!,
+        Text: example.rows[index] ?? '',
         TextColor3: index === 0 ? example.accent : colors.text,
       });
     }
-    for (const [index, row] of codeRows.entries()) fk.update(row, { Text: example.lines[index]! });
+    updateTextLines(codeRows, example.lines);
     for (const [key, control] of controls) {
       fk.update(control, {
         BackgroundColor3: key === value ? example.accent : colors.inkRaised,

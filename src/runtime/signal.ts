@@ -1,5 +1,4 @@
-import { addCleanup, assertNodeActive, isDestroyed } from './node';
-import type { Node } from './state';
+import { getNodeState, type Node } from './state';
 
 export type Unsubscribe = () => void;
 
@@ -30,42 +29,43 @@ export function createSignal<Arguments extends unknown[] = []>(): Signal<Argumen
   };
 }
 
-const nodeEvents = new WeakMap<Node, Map<PropertyKey, Signal<unknown[]>>>();
+const eventSignalsByNode = new WeakMap<Node, Map<PropertyKey, Signal<unknown[]>>>();
 
 /** Subscribes to an event whose listeners are cleared with the node. */
-export function onNodeEvent<Arguments extends unknown[]>(
+export function subscribeToNodeEvent<Arguments extends unknown[]>(
   node: Node,
-  event: PropertyKey,
+  eventKey: PropertyKey,
   listener: (...args: Arguments) => void,
 ): Unsubscribe {
-  assertNodeActive(node);
-  let events = nodeEvents.get(node);
-  if (!events) {
-    events = new Map();
-    nodeEvents.set(node, events);
-    const ownedEvents = events;
-    addCleanup(node, () => {
-      for (const signal of ownedEvents.values()) signal.clear();
-      nodeEvents.delete(node);
+  const state = getNodeState(node);
+  if (state.destroyed) throw new Error(`${state.props.Name} has been destroyed.`);
+  let signalsByEvent = eventSignalsByNode.get(node);
+  if (!signalsByEvent) {
+    signalsByEvent = new Map();
+    eventSignalsByNode.set(node, signalsByEvent);
+    const ownedSignals = signalsByEvent;
+    state.cleanups.add(() => {
+      for (const signal of ownedSignals.values()) signal.clear();
+      eventSignalsByNode.delete(node);
     });
   }
 
-  let eventSignal = events.get(event);
+  let eventSignal = signalsByEvent.get(eventKey);
   if (!eventSignal) {
     eventSignal = createSignal();
-    events.set(event, eventSignal);
+    signalsByEvent.set(eventKey, eventSignal);
   }
   return eventSignal.subscribe(listener as (...args: unknown[]) => void);
 }
 
 export function emitNodeEvent<Arguments extends unknown[]>(
   node: Node,
-  event: PropertyKey,
+  eventKey: PropertyKey,
   ...args: Arguments
 ): void {
-  if (isDestroyed(node)) return;
-  nodeEvents
+  if (getNodeState(node).destroyed) return;
+  eventSignalsByNode
     .get(node)
-    ?.get(event)
+    ?.get(eventKey)
     ?.emit(...args);
 }

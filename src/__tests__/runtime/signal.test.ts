@@ -45,24 +45,24 @@ describe('observable values', () => {
 
     expect(Object.isFrozen(count)).toBe(true);
 
-    count(2);
-    count(2);
-    count((current) => current + 3);
+    count.set(2);
+    count.set(2);
+    count.update((current) => current + 3);
     unsubscribe();
-    count(8);
+    count.set(8);
 
-    expect(count()).toBe(8);
+    expect(count.get()).toBe(8);
     expect(listener.mock.calls).toEqual([[1], [2], [5]]);
   });
 
-  it('stores function values returned by updater functions', () => {
+  it('stores function values without confusing them with updater functions', () => {
     const first = () => 1;
     const second = () => 2;
     const value = observable(first);
 
-    value(() => second);
+    value.set(second);
 
-    expect(value()).toBe(second);
+    expect(value.get()).toBe(second);
   });
 
   it('does not publish when an updater returns the current value', () => {
@@ -70,7 +70,7 @@ describe('observable values', () => {
     const listener = vi.fn();
     value.subscribe(listener);
 
-    value((current) => current);
+    value.update((current) => current);
 
     expect(listener).toHaveBeenCalledOnce();
   });
@@ -81,9 +81,9 @@ describe('observable values', () => {
     const listener = vi.fn();
     observe(owner, count, listener);
 
-    count(2);
+    count.set(2);
     destroy(owner);
-    count(3);
+    count.set(3);
 
     expect(listener.mock.calls).toEqual([[1], [2]]);
   });

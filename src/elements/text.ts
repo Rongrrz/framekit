@@ -1,11 +1,13 @@
-import type { GuiNode, Render } from '../runtime/render';
-import { configureButton, type ButtonNode, type ButtonProps } from './button';
-import { createFrameNode, defaultFrameProps, type FrameProps } from './frame';
+import { buttonEventMethods, type GuiEventMethodTable } from '../runtime/gui-events';
+import { type GuiNode, type PropertyRenderer } from '../runtime/render';
+import { assertBoolean } from '../runtime/validation';
+import { initializeButtonElement, type ButtonNode, type ButtonProps } from './button';
+import { createDefaultFrameProps, createFrameBasedNode, type FrameProps } from './frame';
 import {
-  defaultTextStyleProps,
-  horizontalAlignment,
+  createDefaultTextStyleProps,
+  horizontalFlexAlignment,
   renderTextStyle,
-  verticalAlignment,
+  verticalFlexAlignment,
   type TextStyleProps,
 } from './text-style';
 
@@ -18,7 +20,12 @@ export type TextButtonProps = TextLabelProps & ButtonProps;
 export type TextButtonNode = GuiNode<TextButtonProps> & ButtonNode;
 
 export function createTextLabel(initial: Partial<TextLabelProps> = {}): TextLabelNode {
-  return createTextNode('TextLabel', document.createElement('div'), defaultTextProps(), initial);
+  return createTextNode(
+    'TextLabel',
+    document.createElement('div'),
+    createDefaultTextProps(),
+    initial,
+  );
 }
 
 export function createTextButton(initial: Partial<TextButtonProps> = {}): TextButtonNode {
@@ -26,31 +33,34 @@ export function createTextButton(initial: Partial<TextButtonProps> = {}): TextBu
   const node = createTextNode(
     'TextButton',
     element,
-    { ...defaultTextProps(), Name: 'TextButton', Disabled: false },
+    { ...createDefaultTextProps(), Name: 'TextButton', Disabled: false },
     initial,
     (props) => {
+      assertBoolean(props.Disabled, 'Disabled');
       element.disabled = props.Disabled;
       element.style.cursor = props.Disabled ? 'not-allowed' : 'pointer';
     },
+    buttonEventMethods,
   ) as TextButtonNode;
-  configureButton(node, element);
+  initializeButtonElement(node, element);
   return node;
 }
 
-function defaultTextProps(): TextLabelProps {
+function createDefaultTextProps(): TextLabelProps {
   return {
-    ...defaultFrameProps(),
+    ...createDefaultFrameProps(),
     Name: 'TextLabel',
-    ...defaultTextStyleProps(),
+    ...createDefaultTextStyleProps(),
   };
 }
 
 function createTextNode<Props extends TextLabelProps>(
-  kind: string,
+  nodeType: string,
   element: HTMLElement,
-  defaults: Props,
+  defaultProps: Props,
   initial: Partial<Props>,
-  renderExtra?: Render<Props>,
+  renderAdditionalProperties?: PropertyRenderer<Props>,
+  eventMethods?: GuiEventMethodTable,
 ): GuiNode<Props> {
   const text = document.createElement('span');
   text.dataset.framekitText = '';
@@ -63,11 +73,18 @@ function createTextNode<Props extends TextLabelProps>(
   });
   element.prepend(text);
 
-  return createFrameNode(kind, element, defaults, initial, (props, changed) => {
-    text.textContent = props.Text;
-    renderTextStyle(text, props);
-    text.style.justifyContent = horizontalAlignment[props.TextXAlignment];
-    text.style.alignItems = verticalAlignment[props.TextYAlignment];
-    renderExtra?.(props, changed);
-  });
+  return createFrameBasedNode(
+    nodeType,
+    element,
+    defaultProps,
+    initial,
+    (props, changed) => {
+      text.textContent = props.Text;
+      renderTextStyle(text, props);
+      text.style.justifyContent = horizontalFlexAlignment[props.TextXAlignment];
+      text.style.alignItems = verticalFlexAlignment[props.TextYAlignment];
+      renderAdditionalProperties?.(props, changed);
+    },
+    eventMethods,
+  );
 }

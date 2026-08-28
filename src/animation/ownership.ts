@@ -4,30 +4,22 @@ export type AnimationOwner = {
   cancelPropertyFromConflict(property: PropertyKey): void;
 };
 
-const activeProperties = new WeakMap<Node, Map<PropertyKey, AnimationOwner>>();
+const ownersByNode = new WeakMap<Node, Map<PropertyKey, AnimationOwner>>();
 
 export function claimAnimationProperties(
   node: Node,
   properties: readonly PropertyKey[],
   owner: AnimationOwner,
 ): void {
-  let active = activeProperties.get(node);
-  if (!active) {
-    active = new Map();
-    activeProperties.set(node, active);
-  }
-
-  const conflicts: [PropertyKey, AnimationOwner][] = [];
   for (const property of properties) {
-    const currentOwner = active.get(property);
-    if (currentOwner && currentOwner !== owner) conflicts.push([property, currentOwner]);
+    cancelConflictingPropertyOwner(node, property, owner);
+    getOrCreateNodeOwners(node).set(property, owner);
   }
-  for (const [property, currentOwner] of conflicts) {
-    currentOwner.cancelPropertyFromConflict(property);
-  }
-  // A conflicting owner may have released the final property and removed this map.
-  activeProperties.set(node, active);
-  for (const property of properties) active.set(property, owner);
+}
+
+/** Cancels every current owner of the requested properties without claiming replacements. */
+export function cancelAnimationProperties(node: Node, properties: readonly PropertyKey[]): void {
+  for (const property of properties) cancelConflictingPropertyOwner(node, property);
 }
 
 export function releaseAnimationProperties(
@@ -35,10 +27,35 @@ export function releaseAnimationProperties(
   properties: readonly PropertyKey[],
   owner: AnimationOwner,
 ): void {
-  const active = activeProperties.get(node);
-  if (!active) return;
+  const propertyOwners = ownersByNode.get(node);
+  if (!propertyOwners) return;
   for (const property of properties) {
-    if (active.get(property) === owner) active.delete(property);
+    if (propertyOwners.get(property) === owner) propertyOwners.delete(property);
   }
-  if (active.size === 0) activeProperties.delete(node);
+  if (propertyOwners.size === 0) ownersByNode.delete(node);
+}
+
+function getOrCreateNodeOwners(node: Node): Map<PropertyKey, AnimationOwner> {
+  const existing = ownersByNode.get(node);
+  if (existing) return existing;
+  const created = new Map<PropertyKey, AnimationOwner>();
+  ownersByNode.set(node, created);
+  return created;
+}
+
+function cancelConflictingPropertyOwner(
+  node: Node,
+  property: PropertyKey,
+  ownerToKeep?: AnimationOwner,
+): void {
+  let owner = ownersByNode.get(node)?.get(property);
+  while (owner && owner !== ownerToKeep) {
+    owner.cancelPropertyFromConflict(property);
+    // Cancellation is synchronous and may transfer ownership, so always reread the registry.
+    const nextOwner = ownersByNode.get(node)?.get(property);
+    if (nextOwner === owner) {
+      throw new Error(`Animation owner did not release property "${String(property)}".`);
+    }
+    owner = nextOwner;
+  }
 }

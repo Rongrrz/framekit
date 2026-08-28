@@ -1,12 +1,23 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion, bindScaleMotion } from '../../shared/interaction';
-import { button, text } from '../../shared/ui';
+import { createButton, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, scaledPosition, scaledSize } from '../geometry';
 import { designWidth, sectionLayout } from '../layout';
 
 type NavigationKey = 'why' | 'playground' | 'composer' | 'api';
+
+const navigationSections: readonly Readonly<{
+  key: NavigationKey;
+  label: string;
+  offset: number;
+}>[] = [
+  { key: 'why', label: 'WHY', offset: sectionLayout.principles.top },
+  { key: 'playground', label: 'MOTION', offset: sectionLayout.motion.top },
+  { key: 'composer', label: 'COMPOSER', offset: sectionLayout.composer.top },
+  { key: 'api', label: 'API', offset: sectionLayout.api.top },
+];
 
 export function createNavigation(
   page: fk.ScrollingFrameNode,
@@ -29,7 +40,7 @@ export function createNavigation(
     AnchorPoint: fk.vector2(0.5, 0),
     BackgroundTransparency: 1,
   });
-  const mark = button(
+  const mark = createButton(
     'F',
     fk.udim2FromOffset(38, 38),
     fk.udim2FromOffset(0, 19),
@@ -38,11 +49,11 @@ export function createNavigation(
   );
   fk.update(mark, { TextSize: 20, FontWeight: 900 });
   bindButtonMotion(mark, colors.coral, colors.amber);
-  fk.on(mark, 'MouseButton1Click', () => navigate(0));
+  mark.onClick(() => navigate(0));
   fk.append(content, mark);
   fk.append(
     content,
-    text({
+    createText({
       text: 'FRAMEKIT',
       size: fk.udim2FromOffset(170, 38),
       position: fk.udim2FromOffset(52, 19),
@@ -52,7 +63,7 @@ export function createNavigation(
   );
   fk.append(
     content,
-    text({
+    createText({
       text: '0.1  /  ALPHA',
       size: fk.udim2FromOffset(130, 24),
       position: fk.udim2FromOffset(166, 26),
@@ -62,15 +73,9 @@ export function createNavigation(
     }),
   );
 
-  const links: readonly [NavigationKey, string, number][] = [
-    ['why', 'WHY', sectionLayout.principles.top],
-    ['playground', 'MOTION', sectionLayout.motion.top],
-    ['composer', 'COMPOSER', sectionLayout.composer.top],
-    ['api', 'API', sectionLayout.api.top],
-  ];
   const linkButtons = new Map<NavigationKey, fk.TextButtonNode>();
-  for (const [index, [key, label, offset]] of links.entries()) {
-    const link = button(
+  for (const [index, { key, label, offset }] of navigationSections.entries()) {
+    const link = createButton(
       label,
       scaledSize(104, 38, contentWidth, 76),
       scaledPosition(516 + index * 112, 19, contentWidth, 76),
@@ -79,12 +84,12 @@ export function createNavigation(
     );
     fk.update(link, { TextSize: 10, FontFamily: fonts.mono });
     bindScaleMotion(link, 1.045);
-    fk.on(link, 'MouseButton1Click', () => navigate(offset));
+    link.onClick(() => navigate(offset));
     linkButtons.set(key, link);
     fk.append(content, link);
   }
 
-  const source = button(
+  const source = createButton(
     'VIEW SOURCE  ↗',
     scaledSize(150, 42, contentWidth, 76),
     scaledPosition(970, 17, contentWidth, 76),
@@ -92,7 +97,7 @@ export function createNavigation(
     colors.ink,
   );
   bindButtonMotion(source, colors.paper, colors.mint);
-  fk.on(source, 'MouseButton1Click', () => {
+  source.onClick(() => {
     window.open('https://github.com/Rongrrz/framekit', '_blank', 'noopener,noreferrer');
   });
   fk.append(content, source);
@@ -118,15 +123,8 @@ export function createNavigation(
     const maximum = Math.max(1, page.element.scrollHeight - page.element.clientHeight);
     const y = page.element.scrollTop;
     const scale = pageScale();
-    fk.update(progress, { Size: fk.udim2FromScale(Math.min(1, y / maximum), 1) });
-    const active: NavigationKey =
-      y >= (sectionLayout.api.top - 180) * scale
-        ? 'api'
-        : y >= (sectionLayout.composer.top - 180) * scale
-          ? 'composer'
-          : y >= (sectionLayout.motion.top - 180) * scale
-            ? 'playground'
-            : 'why';
+    fk.update(progress, { Size: fk.udim2FromScale(Math.min(1, Math.max(0, y / maximum)), 1) });
+    const active = activeNavigationSection(y, scale);
     for (const [key, link] of linkButtons) {
       const selected = key === active;
       fk.update(link, {
@@ -150,9 +148,22 @@ export function createNavigation(
     });
   }
 
-  page.element.addEventListener('scroll', updateScrollState, { passive: true });
-  window.addEventListener('resize', updateNavigationLayout);
+  const listenerController = new AbortController();
+  page.element.addEventListener('scroll', updateScrollState, {
+    passive: true,
+    signal: listenerController.signal,
+  });
+  window.addEventListener('resize', updateNavigationLayout, { signal: listenerController.signal });
+  fk.onDestroy(navigation, () => listenerController.abort());
   updateNavigationLayout();
   updateScrollState();
   return navigation;
+}
+
+function activeNavigationSection(scrollTop: number, pageScale: number): NavigationKey {
+  const activationOffset = 180;
+  if (scrollTop >= (sectionLayout.api.top - activationOffset) * pageScale) return 'api';
+  if (scrollTop >= (sectionLayout.composer.top - activationOffset) * pageScale) return 'composer';
+  if (scrollTop >= (sectionLayout.motion.top - activationOffset) * pageScale) return 'playground';
+  return 'why';
 }

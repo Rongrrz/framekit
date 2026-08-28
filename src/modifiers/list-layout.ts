@@ -4,8 +4,9 @@ import {
   type LayoutNode,
   type LayoutStyles,
   type Styles,
-} from '../runtime/render';
+} from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertAllowedValue, assertBoolean } from '../runtime/validation';
 import { udim, udimToCss, type UDim } from '../values/udim';
 
 export type FillDirection = 'Horizontal' | 'Vertical';
@@ -23,6 +24,11 @@ export type UIListLayoutProps = NodeProps & {
 };
 
 export type UIListLayoutNode = LayoutNode<UIListLayoutProps>;
+
+const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
+const horizontalAlignments: readonly HorizontalAlignment[] = ['Left', 'Center', 'Right'];
+const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bottom'];
+const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a list layout that arranges its parent's direct GUI children. */
 export function createUIListLayout(initial: Partial<UIListLayoutProps> = {}): UIListLayoutNode {
@@ -48,6 +54,11 @@ function resolveListLayout(
   props: Readonly<UIListLayoutProps>,
   children: readonly LayoutChild[],
 ): LayoutStyles {
+  assertAllowedValue(props.FillDirection, fillDirections, 'FillDirection');
+  assertAllowedValue(props.HorizontalAlignment, horizontalAlignments, 'HorizontalAlignment');
+  assertAllowedValue(props.VerticalAlignment, verticalAlignments, 'VerticalAlignment');
+  assertAllowedValue(props.SortOrder, sortOrders, 'SortOrder');
+  assertBoolean(props.Wraps, 'Wraps');
   const isHorizontal = props.FillDirection === 'Horizontal';
   const orderedChildren = children
     .map((child, originalIndex) => ({ child, originalIndex }))

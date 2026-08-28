@@ -16,7 +16,7 @@ type TextOptions = Readonly<{
   name?: string;
 }>;
 
-export function text(options: TextOptions): fk.TextLabelNode {
+export function createText(options: TextOptions): fk.TextLabelNode {
   return fk.createTextLabel({
     Name: options.name ?? 'Text',
     Size: options.size,
@@ -33,7 +33,7 @@ export function text(options: TextOptions): fk.TextLabelNode {
   });
 }
 
-export function decorate(
+export function addRoundedBorder(
   node: fk.GuiNode,
   radius: number,
   strokeColor: fk.Color3,
@@ -43,7 +43,7 @@ export function decorate(
   fk.append(node, fk.createUIStroke({ Color: strokeColor, Thickness: thickness }));
 }
 
-export function pill(
+export function createPill(
   label: string,
   size: fk.UDim2,
   position: fk.UDim2,
@@ -61,11 +61,11 @@ export function pill(
     FontFamily: fonts.mono,
     FontWeight: 700,
   });
-  decorate(node, 18, accent);
+  addRoundedBorder(node, 18, accent);
   return node;
 }
 
-export function button(
+export function createButton(
   label: string,
   size: fk.UDim2,
   position: fk.UDim2,
@@ -83,17 +83,17 @@ export function button(
     FontFamily: fonts.sans,
     FontWeight: 750,
   });
-  decorate(node, 12, background);
+  addRoundedBorder(node, 12, background);
   return node;
 }
 
-export function codeLine(
+export function appendCodeLine(
   parent: fk.GuiNode,
   line: string,
   y: number,
   color = colors.textMuted,
 ): fk.TextLabelNode {
-  const node = text({
+  const node = createText({
     text: line,
     size: fk.udim2(1, -36, 0, 24),
     position: fk.udim2FromOffset(18, y),
@@ -103,4 +103,13 @@ export function codeLine(
   });
   fk.append(parent, node);
   return node;
+}
+
+export function updateTextLines(
+  nodes: readonly fk.TextLabelNode[],
+  lines: readonly string[],
+): void {
+  for (const [index, node] of nodes.entries()) {
+    fk.update(node, { Text: lines[index] ?? '' });
+  }
 }

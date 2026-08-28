@@ -1,6 +1,8 @@
 import { addCleanup, assertNodeActive } from '../runtime/node';
 import { createGuiNode, type GuiNode } from '../runtime/render';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertBoolean, assertInteger } from '../runtime/validation';
+import { connectHoverEvents } from './hover-events';
 
 export type ScreenGuiProps = NodeProps & {
   Enabled: boolean;
@@ -27,10 +29,13 @@ export function createScreenGui(initial: Partial<ScreenGuiProps> = {}): ScreenGu
     mergeProps({ Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 }, initial),
     element,
     (props) => {
+      assertBoolean(props.Enabled, 'Enabled');
+      assertInteger(props.DisplayOrder, 'DisplayOrder');
       element.style.display = props.Enabled ? '' : 'none';
       element.style.zIndex = String(props.DisplayOrder);
     },
   );
+  connectHoverEvents(gui, element);
   addCleanup(gui, () => mountTargets.delete(gui));
   return gui;
 }
@@ -39,7 +44,7 @@ export function createScreenGui(initial: Partial<ScreenGuiProps> = {}): ScreenGu
 export function mount(gui: ScreenGuiNode, target: string | HTMLElement): void {
   assertNodeActive(gui);
   const element = resolveMountTarget(target);
-  if (mountTargets.get(gui) === element) return;
+  if (mountTargets.get(gui) === element && gui.element.parentElement === element) return;
   unmount(gui);
   mountTargets.set(gui, element);
   element.append(gui.element);
@@ -53,7 +58,12 @@ export function unmount(gui: ScreenGuiNode): void {
 
 export function isMounted(gui: ScreenGuiNode): boolean {
   assertNodeActive(gui);
-  return mountTargets.has(gui);
+  const target = mountTargets.get(gui);
+  if (!target || gui.element.parentElement !== target) {
+    mountTargets.delete(gui);
+    return false;
+  }
+  return true;
 }
 
 function resolveMountTarget(target: string | HTMLElement): HTMLElement {

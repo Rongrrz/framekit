@@ -1,41 +1,15 @@
 import { fk } from 'framekit';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
+import { setupAnimationClock } from '../../src/__tests__/helpers/animation-clock';
 import { createComposer } from '../desktop/sections/composer';
 import { createSpringModifierToggle } from './modifier';
 
-type FrameCallback = (timestamp: number) => void;
-
-let clock = 0;
-let nextFrame = 1;
-let frames = new Map<number, FrameCallback>();
-
-beforeEach(() => {
-  clock = 0;
-  nextFrame = 1;
-  frames = new Map();
-  vi.stubGlobal('performance', { now: () => clock });
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameCallback) => {
-    const id = nextFrame++;
-    frames.set(id, callback);
-    return id;
-  });
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
-});
+const { settle } = setupAnimationClock();
 
 afterEach(() => {
-  vi.unstubAllGlobals();
   document.body.replaceChildren();
 });
-
-function settle(maximumFrames = 300): void {
-  for (let index = 0; index < maximumFrames && frames.size > 0; index += 1) {
-    clock += 1000 / 60;
-    const pending = Array.from(frames.values());
-    frames.clear();
-    for (const callback of pending) callback(clock);
-  }
-}
 
 describe('spring modifier toggles', () => {
   it('can repeatedly detach and reattach the same modifier', () => {

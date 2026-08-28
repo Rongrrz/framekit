@@ -1,7 +1,8 @@
-import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/render';
+import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../runtime/validation';
 import { color3, color3ToCss, type Color3 } from '../values/color3';
-import { vector2, type Vector2 } from '../values/vector2';
+import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
 export type UIShadowProps = NodeProps & {
   Enabled: boolean;
@@ -32,25 +33,20 @@ export function createUIShadow(initial: Partial<UIShadowProps> = {}): UIShadowNo
       },
       initial,
     ),
-    (props): Styles => (props.Enabled ? { 'box-shadow': resolveShadow(props) } : {}),
+    resolveShadowStyles,
   );
 }
 
+function resolveShadowStyles(props: Readonly<UIShadowProps>): Styles {
+  assertBoolean(props.Enabled, 'Enabled');
+  assertBoolean(props.Inset, 'Inset');
+  return props.Enabled ? { 'box-shadow': resolveShadow(props) } : {};
+}
+
 function resolveShadow(props: Readonly<UIShadowProps>): string {
-  const blur = nonNegativeFinite(props.BlurRadius, 'BlurRadius');
-  const spread = finite(props.SpreadRadius, 'SpreadRadius');
+  assertVector2(props.Offset, 'Offset');
+  assertNonNegativeFinite(props.BlurRadius, 'BlurRadius');
+  assertFiniteNumber(props.SpreadRadius, 'SpreadRadius');
   const inset = props.Inset ? 'inset ' : '';
-  return `${inset}${props.Offset.X}px ${props.Offset.Y}px ${blur}px ${spread}px ${color3ToCss(props.Color, props.Transparency)}`;
-}
-
-function nonNegativeFinite(value: number, property: string): number {
-  if (!Number.isFinite(value) || value < 0) {
-    throw new TypeError(`${property} must be a non-negative finite number.`);
-  }
-  return value;
-}
-
-function finite(value: number, property: string): number {
-  if (!Number.isFinite(value)) throw new TypeError(`${property} must be a finite number.`);
-  return value;
+  return `${inset}${props.Offset.X}px ${props.Offset.Y}px ${props.BlurRadius}px ${props.SpreadRadius}px ${color3ToCss(props.Color, props.Transparency)}`;
 }

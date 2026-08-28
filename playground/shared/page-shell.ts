@@ -69,7 +69,9 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
     fk.update(content, { Position: scaledContentPosition(currentScale) });
   }
 
-  window.addEventListener('resize', updateScale);
+  const listenerController = new AbortController();
+  window.addEventListener('resize', updateScale, { signal: listenerController.signal });
+  fk.onDestroy(app, () => listenerController.abort());
   return Object.freeze({
     app,
     page,

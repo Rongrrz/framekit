@@ -38,8 +38,8 @@ FrameKit keeps a small, explicit vocabulary:
 | Modifiers  | `createUICorner`, `createUIStroke`, `createUIShadow`, `createUIGlow`, padding, scale, and layout |
 | Tree       | `append`, `detach`, `parent`, `children`, `find`                                                 |
 | Properties | `props`, `update`                                                                                |
-| Lifecycle  | `mount`, `unmount`, `destroy`, `isDestroyed`                                                     |
-| Input      | `on`                                                                                             |
+| Lifecycle  | `mount`, `unmount`, `destroy`, `isDestroyed`, `onDestroy`                                        |
+| Input      | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                       |
 | State      | `state.observable`, `state.observe`, `state.signal`                                              |
 | Motion     | `createMotion`, `createTween`, `tweenInfo`                                                       |
 | Values     | `color3`, `udim`, `udim2`, `vector2` and their convenience constructors                          |
@@ -84,22 +84,28 @@ A parent accepts one modifier of each kind. Duplicate modifiers throw without di
 
 Nodes are opaque handles with explicit lifetimes. `detach()` keeps a node reusable; `destroy()` recursively releases it, its descendants, event listeners, observations, and animations.
 
+Use `onDestroy(node, cleanup)` when application code attaches an external resource such as a
+window listener. The returned function unregisters that cleanup when it is no longer needed.
+
 ```ts
 const selected = fk.state.observable(false);
 const button = fk.createTextButton({ Text: 'Equip' });
 
-fk.on(button, 'MouseEnter', () => selected(true));
-fk.on(button, 'MouseLeave', () => selected(false));
-fk.on(button, 'MouseButton1Click', () => console.log('equipped'));
+button.onMouseEnter(() => selected.set(true));
+button.onMouseLeave(() => selected.set(false));
+button.onClick(() => console.log('equipped'));
 
 fk.state.observe(button, selected, (active) => {
   fk.update(button, { Rotation: active ? 2 : 0 });
 });
 ```
 
-All GUI nodes support hover input. Button nodes add click and press input. `on()` and standalone observable subscriptions return idempotent unsubscribe functions.
+Observable values use explicit `get()`, `set(value)`, and `update(current => next)` methods. This
+keeps reads and writes visible and allows functions to be stored as ordinary values.
 
-Text boxes keep their current string in `Text`, so it is available through either `props(box).Text` or `textBoxText(box)`. `TextChanged` emits that same string as the user edits:
+All GUI nodes expose `onMouseEnter()` and `onMouseLeave()`. Button nodes add `onClick()`, primary-button, and secondary-button methods. Every event method and standalone observable subscription returns an idempotent unsubscribe function.
+
+Text boxes keep their current string in `Text`, available through `props(box).Text`. `onTextChanged()` emits that same string as the user edits:
 
 ```ts
 const bio = fk.createTextBox({
@@ -109,7 +115,7 @@ const bio = fk.createTextBox({
   PlaceholderText: 'Write something…',
 });
 
-fk.on(bio, 'TextChanged', (value) => console.log(value));
+bio.onTextChanged((value) => console.log(value));
 ```
 
 Rich text is an explicit opt-in and supports bold, italic, underline, strikethrough, line breaks, and validated `font` color, size, and face attributes. Unsupported or executable elements are discarded rather than mounted.
@@ -124,8 +130,8 @@ Call `spring()` with a node and its goal. FrameKit retains the spring for you, s
 const scale = fk.createUIScale();
 fk.append(button, scale);
 
-fk.on(button, 'MouseEnter', () => fk.spring(scale, { Scale: 1.04 }));
-fk.on(button, 'MouseLeave', () => fk.spring(scale, { Scale: 1 }));
+button.onMouseEnter(() => fk.spring(scale, { Scale: 1.04 }));
+button.onMouseLeave(() => fk.spring(scale, { Scale: 1 }));
 ```
 
 The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mass: 1, precision: 0.001, restVelocity: 0.0625 }`. Most interactions should leave it alone. When a particular motion needs a different feel, pass a separate settings object:
@@ -135,6 +141,8 @@ fk.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
 ```
 
 `spring()` animates numeric properties plus `Color3`, `Vector2`, `UDim`, and `UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. `mass`, `precision`, and `restVelocity` are also available. Use the advanced `createMotion()` controller only when you need its `completed`, `isAnimating()`, or `stop()` controls.
+
+For scrolling frames, wheel, touch, keyboard, and explicit `scrollTo()` input immediately take control from an active `CanvasPosition` animation. Scroll events produced by the animation itself do not interrupt it.
 
 Scaling with `UIScale` is useful for hover effects because it changes visual size without asking a `UIListLayout` to reposition neighboring items.
 
@@ -171,7 +179,7 @@ The runtime remains an implementation boundary rather than a secondary public en
 
 ## Safety boundaries
 
-FrameKit treats ordinary caller-provided text as text, never HTML. A text box with `RichText: true` parses only FrameKit's documented, non-executable formatting subset into newly created DOM nodes. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, value constructors reject non-finite numbers, tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
+FrameKit treats ordinary caller-provided text as text, never HTML. A text box with `RichText: true` parses only FrameKit's documented, non-executable formatting subset into newly created DOM nodes. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, missing values, non-finite numbers, and invalid runtime enum members. Tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
 
 `GuiNode.element` is an intentional low-level escape hatch for integrations FrameKit does not cover. Prefer FrameKit properties and operations for normal application behavior.
 

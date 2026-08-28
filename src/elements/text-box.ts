@@ -1,12 +1,12 @@
+import { guiEventKeys, textBoxEventMethods, type TextBoxEventMethods } from '../runtime/gui-events';
 import { addCleanup, props, update } from '../runtime/node';
 import type { GuiNode } from '../runtime/render';
 import { emitNodeEvent } from '../runtime/signal';
+import { assertBoolean, assertString } from '../runtime/validation';
 import { color3, color3ToCss, type Color3 } from '../values/color3';
-import { createFrameNode, defaultFrameProps, type FrameProps } from './frame';
-import { plainTextString, renderRichText, richTextString } from './rich-text';
-import { defaultTextStyleProps, renderTextStyle, type TextStyleProps } from './text-style';
-
-export type TextBoxEvent = 'TextChanged';
+import { createDefaultFrameProps, createFrameBasedNode, type FrameProps } from './frame';
+import { readPlainText, renderRichText, serializeRichText } from './rich-text';
+import { createDefaultTextStyleProps, renderTextStyle, type TextStyleProps } from './text-style';
 
 export type TextBoxProps = FrameProps &
   TextStyleProps & {
@@ -18,9 +18,10 @@ export type TextBoxProps = FrameProps &
     PlaceholderTransparency: number;
   };
 
-export type TextBoxNode = GuiNode<TextBoxProps> & {
-  readonly element: HTMLDivElement;
-};
+export type TextBoxNode = GuiNode<TextBoxProps> &
+  TextBoxEventMethods & {
+    readonly element: HTMLDivElement;
+  };
 
 /** Creates an editable text node whose Text property stays synchronized with the DOM. */
 export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode {
@@ -47,13 +48,13 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
   });
   element.append(editor, placeholder);
 
-  let updatingFromEditor = false;
-  const node = createFrameNode(
+  let applyingEditorInput = false;
+  const node = createFrameBasedNode(
     'TextBox',
     element,
     {
-      ...defaultFrameProps(),
-      ...defaultTextStyleProps(),
+      ...createDefaultFrameProps(),
+      ...createDefaultTextStyleProps(),
       Name: 'TextBox',
       BackgroundColor3: color3(255, 255, 255),
       RichText: false,
@@ -65,6 +66,10 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
     },
     initial,
     (current) => {
+      assertBoolean(current.RichText, 'RichText');
+      assertBoolean(current.MultiLine, 'MultiLine');
+      assertBoolean(current.Disabled, 'Disabled');
+      assertString(current.PlaceholderText, 'PlaceholderText');
       renderTextStyle(editor, current);
       renderTextStyle(placeholder, { ...current, Text: current.PlaceholderText });
       editor.style.alignContent = textAlignment(current.TextYAlignment);
@@ -77,39 +82,46 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
       editor.tabIndex = current.Disabled ? -1 : 0;
       editor.setAttribute('aria-disabled', String(current.Disabled));
       editor.setAttribute('aria-multiline', String(current.MultiLine));
+      editor.setAttribute('aria-placeholder', current.PlaceholderText);
       editor.style.cursor = current.Disabled ? 'not-allowed' : 'text';
       placeholder.textContent = current.PlaceholderText;
       placeholder.style.display = current.Text.length === 0 ? '' : 'none';
-      if (!updatingFromEditor) {
+      if (!applyingEditorInput) {
         if (current.RichText) renderRichText(editor, current.Text);
         else editor.textContent = current.Text;
       }
     },
+    textBoxEventMethods,
   ) as TextBoxNode;
 
-  const controller = new AbortController();
-  const options = { signal: controller.signal };
+  const listenerController = new AbortController();
+  const listenerOptions = { signal: listenerController.signal };
   editor.addEventListener(
     'input',
     (event) => {
       const current = props(node);
-      const text = current.RichText ? richTextString(editor) : plainTextString(editor);
-      updatingFromEditor = true;
+      const editorText = current.RichText ? serializeRichText(editor) : readPlainText(editor);
+      const text = current.MultiLine ? editorText : removeLineBreaks(editorText, current.RichText);
+      applyingEditorInput = true;
       try {
-        update(node, { Text: current.MultiLine ? text : text.replaceAll('\n', '') });
+        update(node, { Text: text });
       } finally {
-        updatingFromEditor = false;
+        applyingEditorInput = false;
       }
-      emitNodeEvent(node, 'TextChanged', props(node).Text, event);
+      if (text !== editorText) {
+        if (current.RichText) renderRichText(editor, text);
+        else editor.textContent = text;
+      }
+      emitNodeEvent(node, guiEventKeys.textChanged, props(node).Text, event);
     },
-    options,
+    listenerOptions,
   );
   editor.addEventListener(
     'keydown',
     (event) => {
       if (event.key === 'Enter' && !props(node).MultiLine) event.preventDefault();
     },
-    options,
+    listenerOptions,
   );
   editor.addEventListener(
     'paste',
@@ -117,21 +129,21 @@ export function createTextBox(initial: Partial<TextBoxProps> = {}): TextBoxNode 
       event.preventDefault();
       insertPlainText(editor, event.clipboardData?.getData('text/plain') ?? '');
     },
-    options,
+    listenerOptions,
   );
-  addCleanup(node, () => controller.abort());
+  addCleanup(node, () => listenerController.abort());
   return node;
-}
-
-/** Returns the current Text value, including supported rich-text markup when enabled. */
-export function textBoxText(node: TextBoxNode): string {
-  return props(node).Text;
 }
 
 function textAlignment(alignment: TextBoxProps['TextYAlignment']): string {
   if (alignment === 'Center') return 'center';
   if (alignment === 'Bottom') return 'end';
   return 'start';
+}
+
+function removeLineBreaks(value: string, richText: boolean): string {
+  const withoutTextBreaks = value.replaceAll(/\r\n?|\n/g, '');
+  return richText ? withoutTextBreaks.replaceAll(/<br>/gi, '') : withoutTextBreaks;
 }
 
 function insertPlainText(editor: HTMLElement, value: string): void {

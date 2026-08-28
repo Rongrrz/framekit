@@ -1,6 +1,14 @@
 import { addCleanup, assertNodeActive, isDestroyed, props, update } from '../runtime/node';
 import { createSignal, type Signal } from '../runtime/signal';
 import type { Node, NodeProps } from '../runtime/state';
+import { assertNonNegativeFinite } from '../runtime/validation';
+import {
+  assertEasingDirection,
+  assertEasingStyle,
+  ease,
+  type EasingDirection,
+  type EasingStyle,
+} from './easing';
 import {
   claimAnimationProperties,
   releaseAnimationProperties,
@@ -9,20 +17,7 @@ import {
 import type { AnimationGoal } from './types';
 import { interpolateAnimationValue } from './value';
 
-export type EasingStyle =
-  | 'Linear'
-  | 'Sine'
-  | 'Quad'
-  | 'Cubic'
-  | 'Quart'
-  | 'Quint'
-  | 'Exponential'
-  | 'Circular'
-  | 'Back'
-  | 'Bounce'
-  | 'Elastic';
-
-export type EasingDirection = 'In' | 'Out' | 'InOut';
+export type { EasingDirection, EasingStyle } from './easing';
 
 export type TweenInfo = Readonly<{
   Time: number;
@@ -52,20 +47,6 @@ export type Tween = {
 };
 
 type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
-const easingStyles: readonly EasingStyle[] = [
-  'Linear',
-  'Sine',
-  'Quad',
-  'Cubic',
-  'Quart',
-  'Quint',
-  'Exponential',
-  'Circular',
-  'Back',
-  'Bounce',
-  'Elastic',
-];
-const easingDirections: readonly EasingDirection[] = ['In', 'Out', 'InOut'];
 
 /** Creates immutable playback settings for a tween. Times are measured in seconds. */
 export function tweenInfo(
@@ -102,104 +83,129 @@ export function createTween<Props extends NodeProps>(
   assertNodeActive(node);
   validateInfo(info);
 
-  const goalKeys = Object.keys(goal) as (keyof Props)[];
-  const goals = goal as unknown as Partial<Props>;
-  if (goalKeys.length === 0) throw new TypeError('A tween needs at least one goal property.');
-  const currentProps = props(node);
+  const goalEntries = Object.entries(goal) as [keyof Props, unknown][];
+  if (goalEntries.length === 0) throw new TypeError('A tween needs at least one goal property.');
+  const goalKeys = goalEntries.map(([key]) => key);
+  const goalValuesByProperty = new Map(goalEntries);
+  const initialProps = props(node);
   for (const key of goalKeys) {
-    if (!Object.hasOwn(currentProps, key)) {
-      throw new TypeError(`Unknown tween property "${String(key)}" on ${currentProps.Name}.`);
+    if (!Object.hasOwn(initialProps, key)) {
+      throw new TypeError(`Unknown tween property "${String(key)}" on ${initialProps.Name}.`);
     }
-    assertTweenable(currentProps[key], goals[key], String(key));
+    assertTweenable(initialProps[key], goalValuesByProperty.get(key), String(key));
   }
 
   const completed = createSignal<[TweenPlaybackState]>();
-  let state: TweenPlaybackState = 'Idle';
-  let frame: AnimationFrame | undefined;
-  let startedAt = 0;
-  let elapsedBeforePause = 0;
+  let playbackState: TweenPlaybackState = 'Idle';
+  let animationFrame: AnimationFrame | undefined;
+  let startedAtMs = 0;
+  let elapsedBeforePauseMs = 0;
   let startValues: Partial<Props> = {};
-  let ownedKeys: (keyof Props)[] = [];
+  let ownedProperties: (keyof Props)[] = [];
   let disposed = false;
 
-  const controller: AnimationOwner = { cancelPropertyFromConflict: () => finish('Cancelled') };
+  const animationOwner: AnimationOwner = {
+    cancelPropertyFromConflict: () => finish('Cancelled'),
+  };
 
   function play(): void {
     assertUsable();
-    if (state === 'Playing' || state === 'Delayed') return;
+    if (playbackState === 'Playing' || playbackState === 'Delayed') return;
 
-    if (state === 'Paused') {
-      startedAt = now() - elapsedBeforePause;
+    if (playbackState === 'Paused') {
+      startedAtMs = now() - elapsedBeforePauseMs;
     } else {
       startValues = {};
       const latest = props(node);
       for (const key of goalKeys) startValues[key] = latest[key];
-      elapsedBeforePause = 0;
-      startedAt = now();
+      elapsedBeforePauseMs = 0;
+      startedAtMs = now();
     }
 
-    claimProperties();
-    state = elapsedBeforePause < info.DelayTime * 1000 ? 'Delayed' : 'Playing';
+    claimGoalProperties();
+    playbackState = elapsedBeforePauseMs < info.DelayTime * 1000 ? 'Delayed' : 'Playing';
     if (info.Time === 0 && info.DelayTime === 0) {
-      applyProgress(finalProgress());
+      applyProgressOrCancel(finalProgress());
       finish('Completed');
       return;
     }
-    frame = requestAnimationFrame(step);
+    animationFrame = requestAnimationFrame(step);
   }
 
   function pause(): void {
     assertUsable();
-    if (state !== 'Playing' && state !== 'Delayed') return;
-    elapsedBeforePause = Math.max(0, now() - startedAt);
+    if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
+    elapsedBeforePauseMs = Math.max(0, now() - startedAtMs);
     cancelFrame();
-    releaseProperties();
-    state = 'Paused';
+    releaseGoalProperties();
+    playbackState = 'Paused';
   }
 
   function cancel(): void {
     assertUsable();
-    if (state === 'Idle' || state === 'Completed' || state === 'Cancelled') return;
+    if (
+      playbackState === 'Idle' ||
+      playbackState === 'Completed' ||
+      playbackState === 'Cancelled'
+    ) {
+      return;
+    }
     finish('Cancelled');
   }
 
   function step(timestamp: number): void {
-    frame = undefined;
-    if (state !== 'Playing' && state !== 'Delayed') return;
+    animationFrame = undefined;
+    if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
 
-    const elapsed = Math.max(0, timestamp - startedAt);
-    elapsedBeforePause = elapsed;
-    const delay = info.DelayTime * 1000;
-    if (elapsed < delay) {
-      state = 'Delayed';
-      frame = requestAnimationFrame(step);
+    const elapsedMs = Math.max(0, timestamp - startedAtMs);
+    elapsedBeforePauseMs = elapsedMs;
+    const delayMs = info.DelayTime * 1000;
+    if (elapsedMs < delayMs) {
+      playbackState = 'Delayed';
+      animationFrame = requestAnimationFrame(step);
       return;
     }
 
-    state = 'Playing';
-    const duration = info.Time * 1000;
-    const activeElapsed = elapsed - delay;
-    if (duration === 0) {
-      applyProgress(finalProgress());
+    playbackState = 'Playing';
+    const durationMs = info.Time * 1000;
+    const activeElapsedMs = elapsedMs - delayMs;
+    if (durationMs === 0) {
+      applyProgressOrCancel(finalProgress());
       finish('Completed');
       return;
     }
-    const cycle = Math.floor(activeElapsed / duration);
-    const traversalsPerCycle = info.Reverses ? 2 : 1;
-    const maximumCycles =
+    const traversalIndex = Math.floor(activeElapsedMs / durationMs);
+    const traversalsPerIteration = info.Reverses ? 2 : 1;
+    const maximumTraversals =
       info.RepeatCount === -1
         ? Number.POSITIVE_INFINITY
-        : (info.RepeatCount + 1) * traversalsPerCycle;
-    if (cycle >= maximumCycles) {
-      applyProgress(finalProgress());
+        : (info.RepeatCount + 1) * traversalsPerIteration;
+    if (traversalIndex >= maximumTraversals) {
+      applyProgressOrCancel(finalProgress());
       finish('Completed');
       return;
     }
 
-    const cycleProgress = (activeElapsed % duration) / duration;
-    const reversed = info.Reverses && cycle % 2 === 1;
-    applyProgress(reversed ? 1 - cycleProgress : cycleProgress);
-    frame = requestAnimationFrame(step);
+    const traversalProgress = (activeElapsedMs % durationMs) / durationMs;
+    const isReverseTraversal = info.Reverses && traversalIndex % 2 === 1;
+    applyProgressOrCancel(isReverseTraversal ? 1 - traversalProgress : traversalProgress);
+    animationFrame = requestAnimationFrame(step);
+  }
+
+  function applyProgressOrCancel(progress: number): void {
+    try {
+      applyProgress(progress);
+    } catch (error) {
+      try {
+        finish('Cancelled');
+      } catch (completionError) {
+        throw new AggregateError(
+          [error, completionError],
+          'A tween update and its cancellation listener both failed.',
+        );
+      }
+      throw error;
+    }
   }
 
   function applyProgress(progress: number): void {
@@ -209,7 +215,7 @@ export function createTween<Props extends NodeProps>(
     for (const key of goalKeys) {
       patch[key] = interpolateAnimationValue(
         startValues[key],
-        goals[key],
+        goalValuesByProperty.get(key),
         eased,
         String(key),
       ) as Props[keyof Props];
@@ -221,43 +227,52 @@ export function createTween<Props extends NodeProps>(
     return info.Reverses ? 0 : 1;
   }
 
-  function claimProperties(): void {
-    claimAnimationProperties(node, goalKeys, controller);
-    ownedKeys = [...goalKeys];
+  function claimGoalProperties(): void {
+    claimAnimationProperties(node, goalKeys, animationOwner);
+    ownedProperties = [...goalKeys];
   }
 
-  function releaseProperties(): void {
-    releaseAnimationProperties(node, ownedKeys, controller);
-    ownedKeys = [];
+  function releaseGoalProperties(): void {
+    releaseAnimationProperties(node, ownedProperties, animationOwner);
+    ownedProperties = [];
   }
 
   function finish(nextState: 'Completed' | 'Cancelled'): void {
-    if (state === 'Completed' || state === 'Cancelled') return;
+    if (playbackState === 'Completed' || playbackState === 'Cancelled') return;
     cancelFrame();
-    releaseProperties();
-    state = nextState;
+    releaseGoalProperties();
+    playbackState = nextState;
     completed.emit(nextState);
   }
 
   function cancelFrame(): void {
-    if (frame === undefined) return;
-    cancelAnimationFrame(frame);
-    frame = undefined;
+    if (animationFrame === undefined) return;
+    cancelAnimationFrame(animationFrame);
+    animationFrame = undefined;
   }
 
   function assertUsable(): void {
-    if (disposed || isDestroyed(node)) throw new Error(`${currentProps.Name} has been destroyed.`);
+    if (disposed || isDestroyed(node)) throw new Error(`${initialProps.Name} has been destroyed.`);
   }
 
   addCleanup(node, () => {
-    if (state === 'Playing' || state === 'Delayed' || state === 'Paused') finish('Cancelled');
-    cancelFrame();
-    releaseProperties();
-    disposed = true;
-    completed.clear();
+    try {
+      if (
+        playbackState === 'Playing' ||
+        playbackState === 'Delayed' ||
+        playbackState === 'Paused'
+      ) {
+        finish('Cancelled');
+      }
+    } finally {
+      cancelFrame();
+      releaseGoalProperties();
+      disposed = true;
+      completed.clear();
+    }
   });
 
-  return Object.freeze({ play, pause, cancel, playbackState: () => state, completed });
+  return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
 }
 
 function assertTweenable(start: unknown, goal: unknown, property: string): void {
@@ -268,60 +283,8 @@ function assertTweenable(start: unknown, goal: unknown, property: string): void 
   }
 }
 
-function ease(alpha: number, style: EasingStyle, direction: EasingDirection): number {
-  const clamped = Math.min(1, Math.max(0, alpha));
-  if (direction === 'In') return easeIn(clamped, style);
-  if (direction === 'Out') return 1 - easeIn(1 - clamped, style);
-  return clamped < 0.5 ? easeIn(clamped * 2, style) / 2 : 1 - easeIn((1 - clamped) * 2, style) / 2;
-}
-
-function easeIn(alpha: number, style: EasingStyle): number {
-  switch (style) {
-    case 'Linear':
-      return alpha;
-    case 'Sine':
-      return 1 - Math.cos((alpha * Math.PI) / 2);
-    case 'Quad':
-      return alpha ** 2;
-    case 'Cubic':
-      return alpha ** 3;
-    case 'Quart':
-      return alpha ** 4;
-    case 'Quint':
-      return alpha ** 5;
-    case 'Exponential':
-      return alpha === 0 ? 0 : 2 ** (10 * alpha - 10);
-    case 'Circular':
-      return 1 - Math.sqrt(1 - alpha ** 2);
-    case 'Back': {
-      const overshoot = 1.70158;
-      return (overshoot + 1) * alpha ** 3 - overshoot * alpha ** 2;
-    }
-    case 'Bounce':
-      return 1 - bounceOut(1 - alpha);
-    case 'Elastic':
-      if (alpha === 0 || alpha === 1) return alpha;
-      return -(2 ** (10 * alpha - 10)) * Math.sin(((alpha * 10 - 10.75) * 2 * Math.PI) / 3);
-  }
-}
-
-function bounceOut(alpha: number): number {
-  const scale = 7.5625;
-  const divisor = 2.75;
-  if (alpha < 1 / divisor) return scale * alpha ** 2;
-  if (alpha < 2 / divisor) return scale * (alpha - 1.5 / divisor) ** 2 + 0.75;
-  if (alpha < 2.5 / divisor) return scale * (alpha - 2.25 / divisor) ** 2 + 0.9375;
-  return scale * (alpha - 2.625 / divisor) ** 2 + 0.984375;
-}
-
 function now(): number {
   return performance.now();
-}
-
-function assertNonNegativeFinite(value: number, name: string): void {
-  if (!Number.isFinite(value) || value < 0) {
-    throw new TypeError(`${name} must be a non-negative finite number.`);
-  }
 }
 
 function validateInfo(info: TweenInfo): void {
@@ -330,9 +293,7 @@ function validateInfo(info: TweenInfo): void {
   if (!Number.isInteger(info.RepeatCount) || info.RepeatCount < -1) {
     throw new TypeError('Tween repeat count must be -1 or a non-negative integer.');
   }
-  if (!easingStyles.includes(info.EasingStyle)) throw new TypeError('Unknown tween easing style.');
-  if (!easingDirections.includes(info.EasingDirection)) {
-    throw new TypeError('Unknown tween easing direction.');
-  }
+  assertEasingStyle(info.EasingStyle);
+  assertEasingDirection(info.EasingDirection);
   if (typeof info.Reverses !== 'boolean') throw new TypeError('Tween reverses must be a boolean.');
 }

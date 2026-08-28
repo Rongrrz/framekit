@@ -9,7 +9,8 @@ describe('text boxes', () => {
   it('keeps typed text synchronized and emits its string value', () => {
     const box = fk.createTextBox({ PlaceholderText: 'Type here' });
     const changed = vi.fn();
-    fk.on(box, 'TextChanged', changed);
+    box.onTextChanged(changed);
+    expect('onClick' in box).toBe(false);
 
     const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
     const placeholder = box.element.querySelector<HTMLElement>(
@@ -17,11 +18,12 @@ describe('text boxes', () => {
     )!;
     expect(placeholder.textContent).toBe('Type here');
     expect(placeholder.style.display).toBe('');
+    expect(editor.getAttribute('aria-placeholder')).toBe('Type here');
 
     editor.textContent = 'Hello FrameKit';
     editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
 
-    expect(fk.textBoxText(box)).toBe('Hello FrameKit');
+    expect(fk.props(box).Text).toBe('Hello FrameKit');
     expect(fk.props(box).Text).toBe('Hello FrameKit');
     expect(placeholder.style.display).toBe('none');
     expect(changed).toHaveBeenCalledWith('Hello FrameKit', expect.any(InputEvent));
@@ -38,12 +40,12 @@ describe('text boxes', () => {
     expect(editor.querySelector('[data-framekit-rich-font]')?.textContent).toBe('coral');
     expect(editor.querySelector('script')).toBeNull();
     expect(editor.textContent).not.toContain('bad()');
-    expect(fk.textBoxText(box)).toBe(source);
+    expect(fk.props(box).Text).toBe(source);
 
     editor.append(document.createTextNode(' updated'));
     editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
-    expect(fk.textBoxText(box)).toContain('<b>Bold</b>');
-    expect(fk.textBoxText(box)).toContain(' updated');
+    expect(fk.props(box).Text).toContain('<b>Bold</b>');
+    expect(fk.props(box).Text).toContain(' updated');
   });
 
   it('can switch between rich and ordinary text without interpreting markup', () => {
@@ -54,5 +56,17 @@ describe('text boxes', () => {
     fk.update(box, { RichText: false });
     expect(editor.querySelector('b')).toBeNull();
     expect(editor.textContent).toBe('<b>Hello</b>');
+  });
+
+  it('removes disallowed line breaks from both state and the single-line editor', () => {
+    const box = fk.createTextBox();
+    const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
+    editor.innerHTML = '<div>First</div><div>Second</div>';
+
+    editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+
+    expect(fk.props(box).Text).toBe('FirstSecond');
+    expect(editor.textContent).toBe('FirstSecond');
+    expect(editor.querySelector('div')).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
-import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/render';
+import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../runtime/validation';
 import { color3, color3ToCss, type Color3 } from '../values';
 
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
@@ -13,6 +14,8 @@ export type UIStrokeProps = NodeProps & {
 };
 
 export type UIStrokeNode = StyleModifierNode<UIStrokeProps>;
+
+const borderStrokePositions: readonly BorderStrokePosition[] = ['Inner', 'Center', 'Outer'];
 
 /** Creates a stroke modifier that applies a border effect to its GUI parent. */
 export function createUIStroke(initial: Partial<UIStrokeProps> = {}): UIStrokeNode {
@@ -29,11 +32,18 @@ export function createUIStroke(initial: Partial<UIStrokeProps> = {}): UIStrokeNo
       },
       initial,
     ),
-    (props): Styles => (props.Enabled ? { 'box-shadow': resolveStrokeShadow(props) } : {}),
+    resolveStrokeStyles,
   );
 }
 
+function resolveStrokeStyles(props: Readonly<UIStrokeProps>): Styles {
+  assertBoolean(props.Enabled, 'Enabled');
+  return props.Enabled ? { 'box-shadow': resolveStrokeShadow(props) } : {};
+}
+
 function resolveStrokeShadow(props: Readonly<UIStrokeProps>): string {
+  assertAllowedValue(props.BorderStrokePosition, borderStrokePositions, 'BorderStrokePosition');
+  assertFiniteNumber(props.Thickness, 'Thickness');
   const thickness = Math.max(0, props.Thickness);
   const color = color3ToCss(props.Color, props.Transparency);
   if (props.BorderStrokePosition === 'Inner') return `inset 0px 0px 0px ${thickness}px ${color}`;

@@ -1,7 +1,14 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion, copyCommand } from '../../shared/interaction';
-import { button, codeLine, decorate, pill, text } from '../../shared/ui';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createPill,
+  createText,
+  updateTextLines,
+} from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
@@ -71,7 +78,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
 
   fk.append(
     content,
-    pill(
+    createPill(
       'ROBLOX-INSPIRED  ·  BROWSER-NATIVE',
       scaledSize(306, 38, contentWidth, height),
       scaledPosition(0, 74, contentWidth, height),
@@ -80,7 +87,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       name: 'HeroHeadline',
       text: 'Build browser interfaces like a game UI.',
       size: scaledSize(590, 260, contentWidth, height),
@@ -93,7 +100,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'Typed nodes, familiar UDim2 layout, explicit state, and motion that stays out of your way. FrameKit brings the Roblox UI mental model to the DOM.',
       size: scaledSize(536, 112, contentWidth, height),
       position: scaledPosition(0, 396, contentWidth, height),
@@ -104,7 +111,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     }),
   );
 
-  const explore = button(
+  const explore = createButton(
     'EXPLORE THE SYSTEM  ↓',
     scaledSize(214, 52, contentWidth, height),
     scaledPosition(0, 532, contentWidth, height),
@@ -112,10 +119,10 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     colors.ink,
   );
   bindButtonMotion(explore, colors.coral, colors.amber);
-  fk.on(explore, 'MouseButton1Click', onExplore);
+  explore.onClick(onExplore);
   fk.append(content, explore);
 
-  const install = button(
+  const install = createButton(
     'COPY  npm i framekit',
     scaledSize(204, 52, contentWidth, height),
     scaledPosition(228, 532, contentWidth, height),
@@ -124,33 +131,33 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   fk.update(install, { FontFamily: fonts.mono, TextSize: 12 });
   bindButtonMotion(install, colors.inkRaised, colors.inkSoft);
-  fk.on(install, 'MouseButton1Click', () => {
+  install.onClick(() => {
     void copyCommand(install, 'npm i framekit', 'COPY  npm i framekit');
   });
   fk.append(content, install);
 
   const metrics = [
-    ['0', 'CSS CLASSES'],
-    ['55', 'TESTS PASSING'],
-    ['6', 'VALUE TYPES'],
+    { value: '0', label: 'CSS CLASSES', accent: colors.coral },
+    { value: '80+', label: 'TESTS PASSING', accent: colors.mint },
+    { value: '6', label: 'VALUE TYPES', accent: colors.violet },
   ] as const;
-  for (const [index, [value, label]] of metrics.entries()) {
+  for (const [index, metric] of metrics.entries()) {
     const x = index * 174;
     fk.append(
       content,
-      text({
-        text: value,
+      createText({
+        text: metric.value,
         size: scaledSize(54, 28, contentWidth, height),
         position: scaledPosition(x, 628, contentWidth, height),
-        color: [colors.coral, colors.mint, colors.violet][index]!,
+        color: metric.accent,
         textSize: 20,
         weight: 850,
       }),
     );
     fk.append(
       content,
-      text({
-        text: label,
+      createText({
+        text: metric.label,
         size: scaledSize(120, 28, contentWidth, height),
         position: scaledPosition(x + 44, 628, contentWidth, height),
         color: colors.textMuted,
@@ -168,11 +175,11 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   fk.append(canvas, scale);
   fk.spring(scale, { Scale: 1 });
   fk.spring(canvas, { Rotation: 0 });
-  fk.on(canvas, 'MouseEnter', () => {
+  canvas.onMouseEnter(() => {
     fk.spring(scale, { Scale: 1.015 });
     fk.spring(canvas, { Rotation: 0.7 });
   });
-  fk.on(canvas, 'MouseLeave', () => {
+  canvas.onMouseLeave(() => {
     fk.spring(scale, { Scale: 1 });
     fk.spring(canvas, { Rotation: 0 });
   });
@@ -189,7 +196,7 @@ function createHeroCanvas(): fk.FrameNode {
     Rotation: 2.5,
     ClipsDescendants: true,
   });
-  decorate(canvas, 28, colors.violet, 2);
+  addRoundedBorder(canvas, 28, colors.violet, 2);
 
   const topbar = fk.createFrame({
     Name: 'PreviewTopbar',
@@ -208,7 +215,7 @@ function createHeroCanvas(): fk.FrameNode {
   }
   fk.append(
     topbar,
-    text({
+    createText({
       text: 'Interface.framekit',
       size: fk.udim2FromOffset(230, 30),
       position: fk.udim2FromOffset(142, 14),
@@ -228,7 +235,7 @@ function createHeroCanvas(): fk.FrameNode {
   });
   const modeButtons = new Map<CanvasMode, fk.TextButtonNode>();
   for (const [index, value] of modeOrder.entries()) {
-    const control = button(
+    const control = createButton(
       value.toUpperCase(),
       fk.udim2FromOffset(102, 38),
       fk.udim2FromOffset(12, 22 + index * 52),
@@ -237,13 +244,13 @@ function createHeroCanvas(): fk.FrameNode {
     );
     fk.update(control, { TextSize: 10, FontFamily: fonts.mono, TextXAlignment: 'Left' });
     bindButtonMotion(control, colors.inkRaised, colors.inkSoft);
-    fk.on(control, 'MouseButton1Click', () => mode(value));
+    control.onClick(() => mode.set(value));
     modeButtons.set(value, control);
     fk.append(sidebar, control);
   }
   fk.append(
     sidebar,
-    text({
+    createText({
       text: 'CLICK A LAYER',
       size: fk.udim2FromOffset(102, 36),
       position: fk.udim2FromOffset(12, 458),
@@ -262,8 +269,8 @@ function createHeroCanvas(): fk.FrameNode {
     BackgroundColor3: colors.coral,
     BackgroundTransparency: 0.06,
   });
-  decorate(preview, 22, colors.darkText, 2);
-  const previewTitle = text({
+  addRoundedBorder(preview, 22, colors.darkText, 2);
+  const previewTitle = createText({
     text: '',
     size: fk.udim2FromOffset(280, 54),
     position: fk.udim2FromOffset(26, 24),
@@ -271,7 +278,7 @@ function createHeroCanvas(): fk.FrameNode {
     textSize: 26,
     weight: 900,
   });
-  const previewBody = text({
+  const previewBody = createText({
     text: '',
     size: fk.udim2FromOffset(270, 54),
     position: fk.udim2FromOffset(26, 76),
@@ -281,7 +288,7 @@ function createHeroCanvas(): fk.FrameNode {
   });
   fk.append(preview, previewTitle);
   fk.append(preview, previewBody);
-  const launch = button(
+  const launch = createButton(
     'NEXT LAYER  →',
     fk.udim2FromOffset(142, 42),
     fk.udim2FromOffset(26, 148),
@@ -289,9 +296,10 @@ function createHeroCanvas(): fk.FrameNode {
     colors.text,
   );
   bindButtonMotion(launch, colors.ink, colors.violet);
-  fk.on(launch, 'MouseButton1Click', () => {
-    const index = modeOrder.indexOf(mode());
-    mode(modeOrder[(index + 1) % modeOrder.length]!);
+  launch.onClick(() => {
+    const index = modeOrder.indexOf(mode.get());
+    const nextMode = modeOrder[(index + 1) % modeOrder.length];
+    if (nextMode) mode.set(nextMode);
   });
   fk.append(preview, launch);
   fk.append(canvas, preview);
@@ -302,13 +310,13 @@ function createHeroCanvas(): fk.FrameNode {
     Position: fk.udim2FromOffset(146, 320),
     BackgroundColor3: colors.ink,
   });
-  decorate(code, 18, colors.inkSoft);
+  addRoundedBorder(code, 18, colors.inkSoft);
   const codeNodes = [
-    codeLine(code, '', 22, colors.violet),
-    codeLine(code, '', 54),
-    codeLine(code, '', 86, colors.coral),
-    codeLine(code, '', 118, colors.violet),
-    codeLine(code, '', 168, colors.mint),
+    appendCodeLine(code, '', 22, colors.violet),
+    appendCodeLine(code, '', 54),
+    appendCodeLine(code, '', 86, colors.coral),
+    appendCodeLine(code, '', 118, colors.violet),
+    appendCodeLine(code, '', 168, colors.mint),
   ];
   fk.append(canvas, code);
 
@@ -317,9 +325,7 @@ function createHeroCanvas(): fk.FrameNode {
     fk.update(previewTitle, { Text: selected.title });
     fk.update(previewBody, { Text: selected.body });
     fk.spring(preview, { BackgroundColor3: selected.accent, Rotation: selected.rotation });
-    for (const [index, line] of selected.lines.entries()) {
-      fk.update(codeNodes[index]!, { Text: line });
-    }
+    updateTextLines(codeNodes, selected.lines);
     for (const [buttonMode, control] of modeButtons) {
       const active = buttonMode === value;
       fk.update(control, {

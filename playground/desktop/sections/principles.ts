@@ -1,7 +1,7 @@
 import { fk } from 'framekit';
 
 import { bindCardMotion, copyCommand } from '../../shared/interaction';
-import { button, decorate, text } from '../../shared/ui';
+import { createButton, addRoundedBorder, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
@@ -38,7 +38,7 @@ export function createPrinciples(): fk.FrameNode {
 
   fk.append(
     content,
-    text({
+    createText({
       text: 'A SMALL SYSTEM,\nNOT A NEW LANGUAGE.',
       size: scaledSize(650, 142, contentWidth, height),
       position: scaledPosition(0, 76, contentWidth, height),
@@ -51,7 +51,7 @@ export function createPrinciples(): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'FrameKit keeps construction, behavior, state, and motion separate—then gives them one consistent vocabulary.',
       size: scaledSize(390, 100, contentWidth, height),
       position: scaledPosition(730, 86, contentWidth, height),
@@ -75,11 +75,11 @@ export function createPrinciples(): fk.FrameNode {
       BackgroundColor3: colors.paperRaised,
       LayoutOrder: index,
     });
-    decorate(card, 22, colors.paperMuted, 2);
+    addRoundedBorder(card, 22, colors.paperMuted, 2);
     bindCardMotion(card, index === 1 ? 1 : -1);
     fk.append(
       card,
-      text({
+      createText({
         text: principle.number,
         size: fk.udim2FromOffset(72, 54),
         position: fk.udim2FromOffset(24, 22),
@@ -99,7 +99,7 @@ export function createPrinciples(): fk.FrameNode {
     fk.append(card, icon);
     fk.append(
       card,
-      text({
+      createText({
         text: principle.title,
         size: fk.udim2FromOffset(300, 58),
         position: fk.udim2FromOffset(24, 104),
@@ -110,7 +110,7 @@ export function createPrinciples(): fk.FrameNode {
     );
     fk.append(
       card,
-      text({
+      createText({
         text: principle.body,
         size: fk.udim2FromOffset(300, 112),
         position: fk.udim2FromOffset(24, 174),
@@ -120,7 +120,7 @@ export function createPrinciples(): fk.FrameNode {
         yAlignment: 'Top',
       }),
     );
-    const copy = button(
+    const copy = createButton(
       principle.code,
       fk.udim2FromOffset(304, 48),
       fk.udim2FromOffset(24, 302),
@@ -128,7 +128,7 @@ export function createPrinciples(): fk.FrameNode {
       principle.accent,
     );
     fk.update(copy, { TextSize: 11, FontFamily: fonts.mono });
-    fk.on(copy, 'MouseButton1Click', () => {
+    copy.onClick(() => {
       void copyCommand(copy, principle.code, principle.code, colors.ink, principle.accent);
     });
     fk.append(card, copy);

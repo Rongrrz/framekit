@@ -1,17 +1,52 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion, bindScaleMotion, copyCommand } from '../../shared/interaction';
-import { button, decorate, pill, text } from '../../shared/ui';
+import { createButton, addRoundedBorder, createPill, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import { contentWidth, createSection, createSectionContent } from '../primitives';
+
+type PreviewMode = 'NODE' | 'STATE' | 'MOTION';
+
+const previewModes: Readonly<
+  Record<
+    PreviewMode,
+    Readonly<{
+      title: string;
+      description: string;
+      accent: fk.Color3;
+      code: string;
+    }>
+  >
+> = {
+  NODE: {
+    title: 'TYPED NODE',
+    description: 'Factories create inspectable handles with a strict property contract.',
+    accent: colors.coral,
+    code: 'const card = fk.createFrame({ ... });',
+  },
+  STATE: {
+    title: 'DIRECT STATE',
+    description: 'Explicit observables update the same node without a component framework.',
+    accent: colors.mint,
+    code: 'const open = fk.state.observable(false);',
+  },
+  MOTION: {
+    title: 'RETAINED MOTION',
+    description: 'A spring keeps current position and velocity when you give it a new goal.',
+    accent: colors.violet,
+    code: 'fk.spring(card, { Rotation: 4 });',
+  },
+};
+
+const previewModeOrder: readonly PreviewMode[] = ['NODE', 'STATE', 'MOTION'];
 
 export function createHero(onExplore: () => void): fk.FrameNode {
   const section = createSection('MobileHero', sectionLayout.hero, colors.ink);
   const content = createSectionContent();
   fk.append(
     content,
-    pill(
+    createPill(
       'GAME UI THINKING  ·  WEB NATIVE',
       fk.udim2FromOffset(282, 36),
       fk.udim2FromOffset(0, 54),
@@ -20,7 +55,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'Build the web\nlike a game UI.',
       size: fk.udim2FromOffset(contentWidth, 190),
       position: fk.udim2FromOffset(0, 116),
@@ -32,7 +67,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'Typed nodes, UDim2 layout, observable state, modifiers, tweens, and springs—without translating every idea into a CSS hierarchy.',
       size: fk.udim2FromOffset(contentWidth, 116),
       position: fk.udim2FromOffset(0, 318),
@@ -42,7 +77,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  const explore = button(
+  const explore = createButton(
     'TRY THE LIVE LAB  ↓',
     fk.udim2FromOffset(172, 50),
     fk.udim2FromOffset(0, 452),
@@ -50,9 +85,9 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     colors.ink,
   );
   bindButtonMotion(explore, colors.coral, colors.amber);
-  fk.on(explore, 'MouseButton1Click', onExplore);
+  explore.onClick(onExplore);
   fk.append(content, explore);
-  const install = button(
+  const install = createButton(
     'COPY INSTALL',
     fk.udim2FromOffset(172, 50),
     fk.udim2FromOffset(186, 452),
@@ -61,23 +96,23 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   );
   fk.update(install, { TextSize: 10, FontFamily: fonts.mono });
   bindButtonMotion(install, colors.inkRaised, colors.inkSoft);
-  fk.on(install, 'MouseButton1Click', () => {
+  install.onClick(() => {
     void copyCommand(install, 'npm i framekit', 'COPY INSTALL');
   });
   fk.append(content, install);
 
-  const selected = fk.state.observable<'NODE' | 'STATE' | 'MOTION'>('NODE');
+  const selected = fk.state.observable<PreviewMode>('NODE');
   const preview = fk.createFrame({
     Name: 'MobileHeroPreview',
     Size: fk.udim2FromOffset(contentWidth, 360),
     Position: fk.udim2FromOffset(0, 548),
     BackgroundColor3: colors.paper,
   });
-  decorate(preview, 24, colors.violet, 2);
-  const controls = new Map<string, fk.TextButtonNode>();
-  for (const [index, label] of ['NODE', 'STATE', 'MOTION'].entries()) {
-    const control = button(
-      label,
+  addRoundedBorder(preview, 24, colors.violet, 2);
+  const controls = new Map<PreviewMode, fk.TextButtonNode>();
+  for (const [index, mode] of previewModeOrder.entries()) {
+    const control = createButton(
+      mode,
       fk.udim2FromOffset(98, 38),
       fk.udim2FromOffset(18 + index * 112, 18),
       colors.paperMuted,
@@ -85,8 +120,8 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     );
     fk.update(control, { TextSize: 9, FontFamily: fonts.mono });
     bindScaleMotion(control, 1.04);
-    fk.on(control, 'MouseButton1Click', () => selected(label as 'NODE' | 'STATE' | 'MOTION'));
-    controls.set(label, control);
+    control.onClick(() => selected.set(mode));
+    controls.set(mode, control);
     fk.append(preview, control);
   }
   const card = fk.createFrame({
@@ -94,8 +129,8 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     Position: fk.udim2FromOffset(18, 78),
     BackgroundColor3: colors.coral,
   });
-  decorate(card, 18, colors.ink, 2);
-  const title = text({
+  addRoundedBorder(card, 18, colors.ink, 2);
+  const title = createText({
     text: '',
     size: fk.udim2FromOffset(274, 46),
     position: fk.udim2FromOffset(24, 20),
@@ -103,7 +138,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     textSize: 22,
     weight: 900,
   });
-  const description = text({
+  const description = createText({
     text: '',
     size: fk.udim2FromOffset(274, 62),
     position: fk.udim2FromOffset(24, 72),
@@ -115,7 +150,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   fk.append(card, title);
   fk.append(card, description);
   fk.append(preview, card);
-  const code = text({
+  const code = createText({
     text: '',
     size: fk.udim2FromOffset(322, 74),
     position: fk.udim2FromOffset(18, 262),
@@ -127,33 +162,15 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   });
   fk.append(preview, code);
   fk.state.observe(preview, selected, (value) => {
-    const state = {
-      NODE: [
-        'TYPED NODE',
-        'Factories create inspectable handles with a strict property contract.',
-        colors.coral,
-        'const card = fk.createFrame({ ... });',
-      ],
-      STATE: [
-        'DIRECT STATE',
-        'Callable observables update the same node without a component framework.',
-        colors.mint,
-        'const open = fk.state.observable(false);',
-      ],
-      MOTION: [
-        'RETAINED MOTION',
-        'A spring keeps current position and velocity when you give it a new goal.',
-        colors.violet,
-        'fk.spring(card, { Rotation: 4 });',
-      ],
-    } as const;
-    const current = state[value];
-    fk.update(title, { Text: current[0] });
-    fk.update(description, { Text: current[1] });
-    fk.update(code, { Text: current[3] });
-    fk.spring(card, { BackgroundColor3: current[2], Rotation: value === 'MOTION' ? 2 : 0 });
-    for (const [label, control] of controls) {
-      fk.update(control, { BackgroundColor3: label === value ? current[2] : colors.paperMuted });
+    const mode = previewModes[value];
+    fk.update(title, { Text: mode.title });
+    fk.update(description, { Text: mode.description });
+    fk.update(code, { Text: mode.code });
+    fk.spring(card, { BackgroundColor3: mode.accent, Rotation: value === 'MOTION' ? 2 : 0 });
+    for (const [controlMode, control] of controls) {
+      fk.update(control, {
+        BackgroundColor3: controlMode === value ? mode.accent : colors.paperMuted,
+      });
     }
   });
   fk.append(content, preview);

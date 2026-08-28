@@ -25,16 +25,21 @@ resetDocumentAfterEach();
 describe('screen GUIs and frames', () => {
   it('exposes hover events on non-button GUI nodes', () => {
     const frame = createFrame();
+    const gui = createScreenGui();
     const entered = vi.fn();
     const left = vi.fn();
-    fk.on(frame, 'MouseEnter', entered);
-    fk.on(frame, 'MouseLeave', left);
+    frame.onMouseEnter(entered);
+    frame.onMouseLeave(left);
+    gui.onMouseEnter(entered);
 
     frame.element.dispatchEvent(new MouseEvent('mouseenter'));
     frame.element.dispatchEvent(new MouseEvent('mouseleave'));
+    gui.element.dispatchEvent(new MouseEvent('mouseenter'));
 
-    expect(entered).toHaveBeenCalledOnce();
+    expect(entered).toHaveBeenCalledTimes(2);
     expect(left).toHaveBeenCalledOnce();
+    expect('onClick' in frame).toBe(false);
+    expect('onTextChanged' in frame).toBe(false);
   });
 
   it('mounts, reparents, unmounts, and synchronizes the DOM tree', () => {
@@ -50,8 +55,24 @@ describe('screen GUIs and frames', () => {
     expect(container.element.firstElementChild).toBe(child.element);
     append(gui, child);
     expect(container.element.childElementCount).toBe(0);
+    child.element.remove();
+    append(gui, child);
+    expect(child.element.parentElement).toBe(gui.element);
     unmount(gui);
     expect(target.childElementCount).toBe(0);
+  });
+
+  it('repairs stale mount bookkeeping after low-level DOM changes', () => {
+    const target = document.body.appendChild(document.createElement('main'));
+    const gui = createScreenGui();
+    mount(gui, target);
+
+    gui.element.remove();
+    expect(isMounted(gui)).toBe(false);
+
+    mount(gui, target);
+    expect(isMounted(gui)).toBe(true);
+    expect(gui.element.parentElement).toBe(target);
   });
 
   it('always covers the viewport regardless of its mount target', () => {
@@ -124,6 +145,33 @@ describe('screen GUIs and frames', () => {
     expect(() => createFrame({ Typo: true } as never)).toThrow(/Unknown property "Typo"/);
     const frame = createFrame();
     expect(() => update(frame, { Typo: true } as never)).toThrow(/Unknown property "Typo"/);
+  });
+
+  it('rejects invalid primitive values and enum members without changing state', () => {
+    expect(() => createFrame({ Rotation: Number.NaN })).toThrow(/Rotation.*finite/);
+    const frame = createFrame();
+    expect(() => update(frame, { ZIndex: 1.5 })).toThrow(/ZIndex.*integer/);
+    expect(() => update(frame, { AutomaticSize: 'Invalid' } as never)).toThrow(/AutomaticSize/);
+    expect(props(frame)).toMatchObject({ ZIndex: 1, AutomaticSize: 'None', Visible: true });
+  });
+
+  it('rejects malformed JavaScript values at the rendering boundary', () => {
+    const frame = createFrame();
+
+    expect(() => update(frame, { Visible: 'yes' } as never)).toThrow(/Visible must be a boolean/);
+    expect(() => update(frame, { Name: 42 } as never)).toThrow(/Name must be a string/);
+    expect(() => update(frame, { AnchorPoint: { X: 0, Y: 'center' } } as never)).toThrow(
+      /AnchorPoint\.Y must be a finite number/,
+    );
+    expect(() => update(frame, { BackgroundColor3: { R: 999, G: 0, B: 0 } } as never)).toThrow(
+      /Color3 channels/,
+    );
+
+    expect(props(frame)).toMatchObject({
+      Name: 'Frame',
+      Visible: true,
+      AnchorPoint: vector2(0, 0),
+    });
   });
 
   it('controls the whole tree and cleans up when destroyed', () => {

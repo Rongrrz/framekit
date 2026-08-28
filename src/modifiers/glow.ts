@@ -1,5 +1,6 @@
-import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/render';
+import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertBoolean, assertNonNegativeFinite } from '../runtime/validation';
 import { color3, color3ToCss, type Color3 } from '../values/color3';
 
 export type UIGlowProps = NodeProps & {
@@ -25,14 +26,17 @@ export function createUIGlow(initial: Partial<UIGlowProps> = {}): UIGlowNode {
       },
       initial,
     ),
-    (props): Styles => (props.Enabled ? { filter: resolveGlow(props) } : {}),
+    resolveGlowStyles,
   );
 }
 
+function resolveGlowStyles(props: Readonly<UIGlowProps>): Styles {
+  assertBoolean(props.Enabled, 'Enabled');
+  return props.Enabled ? { filter: resolveGlow(props) } : {};
+}
+
 function resolveGlow(props: Readonly<UIGlowProps>): string {
-  if (!Number.isFinite(props.Radius) || props.Radius < 0) {
-    throw new TypeError('Radius must be a non-negative finite number.');
-  }
+  assertNonNegativeFinite(props.Radius, 'Radius');
   const opacity = 1 - clamp(props.Transparency, 0, 1);
   const coreTransparency = 1 - Math.min(1, opacity * 1.25);
   const haloTransparency = 1 - opacity * 0.5;

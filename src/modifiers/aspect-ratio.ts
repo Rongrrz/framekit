@@ -1,6 +1,7 @@
 import type { FrameProps } from '../elements/frame';
-import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/render';
+import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertAllowedValue, assertFiniteNumber } from '../runtime/validation';
 import { udimToCss } from '../values/udim';
 
 export type AspectType = 'FitWithinMaxSize' | 'ScaleWithParentSize';
@@ -13,6 +14,9 @@ export type UIAspectRatioConstraintProps = NodeProps & {
 };
 
 export type UIAspectRatioConstraintNode = StyleModifierNode<UIAspectRatioConstraintProps>;
+
+const aspectTypes: readonly AspectType[] = ['FitWithinMaxSize', 'ScaleWithParentSize'];
+const dominantAxes: readonly DominantAxis[] = ['Width', 'Height'];
 
 /** Creates a constraint that maintains its GUI parent's width-to-height ratio. */
 export function createUIAspectRatioConstraint(
@@ -37,6 +41,9 @@ function resolveAspectRatio(
   props: Readonly<UIAspectRatioConstraintProps>,
   parentProps: Readonly<NodeProps>,
 ): Styles {
+  assertAllowedValue(props.AspectType, aspectTypes, 'AspectType');
+  assertAllowedValue(props.DominantAxis, dominantAxes, 'DominantAxis');
+  assertFiniteNumber(props.AspectRatio, 'AspectRatio');
   const aspectRatio =
     Number.isFinite(props.AspectRatio) && props.AspectRatio > 0 ? props.AspectRatio : 1;
   const styles: Record<string, string> = { 'aspect-ratio': `${aspectRatio} / 1` };

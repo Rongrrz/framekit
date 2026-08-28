@@ -1,4 +1,6 @@
-import type { GuiNodeState, LayoutNodeState, StyleModifierState } from './render';
+import type { LayoutNodeState, StyleModifierState } from './modifier';
+import type { GuiNodeState } from './render';
+import { assertString } from './validation';
 
 export type NodeProps = {
   Name: string;
@@ -38,15 +40,32 @@ export function createBaseState<Props extends NodeProps>(props: Props): BaseNode
 
 /** Merges constructor properties while rejecting misspelled or unsupported keys. */
 export function mergeProps<Props extends NodeProps>(
-  defaults: Props,
+  defaultProps: Props,
   initial: Partial<Props>,
 ): Props {
-  for (const property of Object.keys(initial)) {
-    if (!Object.hasOwn(defaults, property)) {
-      throw new TypeError(`Unknown property "${property}" on ${defaults.Name}.`);
+  validatePropertyPatch(defaultProps, initial);
+  return { ...defaultProps, ...initial };
+}
+
+/** Rejects unknown, missing, and non-finite property values. */
+export function validatePropertyPatch<Props extends NodeProps>(
+  current: Readonly<Props>,
+  patch: Partial<Props>,
+): void {
+  for (const property of Object.keys(patch) as (keyof Props)[]) {
+    if (!Object.hasOwn(current, property)) {
+      throw new TypeError(`Unknown property "${String(property)}" on ${current.Name}.`);
     }
+
+    const received = patch[property];
+    if (received === undefined || received === null) {
+      throw new TypeError(`Property "${String(property)}" on ${current.Name} is required.`);
+    }
+    if (typeof received === 'number' && !Number.isFinite(received)) {
+      throw new TypeError(`Property "${String(property)}" on ${current.Name} must be finite.`);
+    }
+    if (property === 'Name') assertString(received, 'Name');
   }
-  return { ...defaults, ...initial };
 }
 
 export function registerNode<Props extends NodeProps>(

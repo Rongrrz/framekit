@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { fk } from '../..';
+import { createStyleModifier } from '../../runtime/modifier';
 import { groupNode } from '../helpers/group-node';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
 
@@ -98,7 +99,7 @@ describe('UI modifiers', () => {
 
     update(scale, { Scale: 0.8 });
     expect(frame.element.style.getPropertyValue('scale')).toBe('0.8');
-    expect(() => update(scale, { Scale: Number.NaN })).toThrow(/non-negative finite/);
+    expect(() => update(scale, { Scale: Number.NaN })).toThrow(/finite/);
 
     detach(scale);
     expect(frame.element.style.getPropertyValue('scale')).toBe('');
@@ -153,5 +154,34 @@ describe('UI modifiers', () => {
     expect(() => update(glow, { Radius: Number.NaN })).toThrow(/Radius/);
     expect(props(shadow).BlurRadius).toBe(16);
     expect(props(glow).Radius).toBe(18);
+  });
+
+  it('rolls back a failed modifier append without corrupting its target', () => {
+    const frame = createFrame({ Name: 'RejectedTarget' });
+    const rejected = createStyleModifier('Rejected', { Name: 'Rejected' }, (_, target) => {
+      if (target.Name === 'RejectedTarget') throw new Error('target rejected');
+      return {};
+    });
+
+    expect(() => append(frame, rejected)).toThrow(/target rejected/);
+    expect(parent(rejected)).toBeUndefined();
+
+    const corner = createUICorner({ CornerRadius: 6 });
+    append(frame, corner);
+    expect(frame.element.style.borderRadius).toBe('6px');
+  });
+
+  it('rejects non-finite modifier properties at construction', () => {
+    expect(() => createUIStroke({ Thickness: Number.NaN })).toThrow(/Thickness.*finite/);
+    expect(() => createUICorner({ CornerRadius: Number.POSITIVE_INFINITY })).toThrow(
+      /CornerRadius.*finite/,
+    );
+  });
+
+  it('validates domain-specific modifier values while detached', () => {
+    expect(() => createUIScale({ Scale: -1 })).toThrow(/non-negative finite/);
+    const scale = createUIScale();
+    expect(() => update(scale, { Scale: -1 })).toThrow(/non-negative finite/);
+    expect(props(scale).Scale).toBe(1);
   });
 });

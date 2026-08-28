@@ -2,7 +2,13 @@ import { fk } from 'framekit';
 
 import { bindButtonMotion, bindScaleMotion } from '../../shared/interaction';
 import { createSpringModifierToggle, setModifierAttached } from '../../shared/modifier';
-import { button, codeLine, decorate, pill, text } from '../../shared/ui';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createPill,
+  createText,
+} from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
@@ -19,6 +25,16 @@ type ModifierKey =
 type ComposerState = Readonly<Record<ModifierKey, boolean>>;
 
 const { top, height } = sectionLayout.composer;
+const modifierKeys: readonly ModifierKey[] = [
+  'corner',
+  'stroke',
+  'shadow',
+  'glow',
+  'padding',
+  'layout',
+  'scale',
+  'rotation',
+];
 const initialState: ComposerState = {
   corner: true,
   stroke: true,
@@ -37,7 +53,7 @@ export function createComposer(): fk.FrameNode {
 
   fk.append(
     content,
-    pill(
+    createPill(
       'MODIFIER COMPOSER  ·  FULLY INTERACTIVE',
       scaledSize(316, 38, contentWidth, height),
       scaledPosition(0, 62, contentWidth, height),
@@ -46,7 +62,7 @@ export function createComposer(): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'Build appearance by\ncomposing the tree.',
       size: scaledSize(640, 130, contentWidth, height),
       position: scaledPosition(0, 116, contentWidth, height),
@@ -59,7 +75,7 @@ export function createComposer(): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'Toggle real modifier nodes. The preview, node tree, and generated snippet all update together.',
       size: scaledSize(380, 94, contentWidth, height),
       position: scaledPosition(740, 130, contentWidth, height),
@@ -77,7 +93,7 @@ export function createComposer(): fk.FrameNode {
     BackgroundColor3: colors.ink,
     ClipsDescendants: true,
   });
-  decorate(lab, 26, colors.darkText, 2);
+  addRoundedBorder(lab, 26, colors.darkText, 2);
 
   const controls = fk.createFrame({
     Name: 'ModifierControls',
@@ -86,7 +102,7 @@ export function createComposer(): fk.FrameNode {
   });
   fk.append(
     controls,
-    text({
+    createText({
       text: 'CLICK TO ATTACH / DETACH',
       size: fk.udim2FromOffset(300, 30),
       position: fk.udim2FromOffset(28, 26),
@@ -108,9 +124,8 @@ export function createComposer(): fk.FrameNode {
     rotation: colors.violet,
   };
   const toggles = new Map<ModifierKey, fk.TextButtonNode>();
-  const keys = Object.keys(initialState) as ModifierKey[];
-  for (const [index, key] of keys.entries()) {
-    const control = button(
+  for (const [index, key] of modifierKeys.entries()) {
+    const control = createButton(
       key.toUpperCase(),
       fk.udim2FromOffset(144, 46),
       fk.udim2FromOffset(28 + (index % 2) * 160, 78 + Math.floor(index / 2) * 62),
@@ -119,15 +134,14 @@ export function createComposer(): fk.FrameNode {
     );
     fk.update(control, { TextSize: 11, FontFamily: fonts.mono });
     bindScaleMotion(control, 1.04);
-    fk.on(control, 'MouseButton1Click', () => {
-      const current = configuration();
-      configuration({ ...current, [key]: !current[key] });
+    control.onClick(() => {
+      configuration.update((current) => ({ ...current, [key]: !current[key] }));
     });
     toggles.set(key, control);
     fk.append(controls, control);
   }
 
-  const randomize = button(
+  const randomize = createButton(
     'RANDOMIZE BUILD  ✦',
     fk.udim2FromOffset(304, 46),
     fk.udim2FromOffset(28, 330),
@@ -168,13 +182,14 @@ export function createComposer(): fk.FrameNode {
       rotation: true,
     },
   ];
-  fk.on(randomize, 'MouseButton1Click', () => {
-    configuration(presets[randomStep % presets.length]!);
+  randomize.onClick(() => {
+    const preset = presets[randomStep % presets.length];
+    if (preset) configuration.set(preset);
     randomStep += 1;
   });
   fk.append(controls, randomize);
 
-  const reset = button(
+  const reset = createButton(
     'RESET DEFAULTS',
     fk.udim2FromOffset(304, 40),
     fk.udim2FromOffset(28, 388),
@@ -183,7 +198,7 @@ export function createComposer(): fk.FrameNode {
   );
   fk.update(reset, { TextSize: 10, FontFamily: fonts.mono });
   bindButtonMotion(reset, colors.ink, colors.inkSoft);
-  fk.on(reset, 'MouseButton1Click', () => configuration(initialState));
+  reset.onClick(() => configuration.set(initialState));
   fk.append(controls, reset);
 
   const tree = fk.createFrame({
@@ -192,11 +207,11 @@ export function createComposer(): fk.FrameNode {
     Position: fk.udim2FromOffset(28, 444),
     BackgroundColor3: colors.ink,
   });
-  decorate(tree, 14, colors.inkSoft);
-  const treeTitle = codeLine(tree, '▼ NotificationCard', 14, colors.coral);
-  const modifierLine = codeLine(tree, '', 44, colors.textMuted);
-  const layoutLine = codeLine(tree, '', 74, colors.textMuted);
-  const transformLine = codeLine(tree, '', 100, colors.textMuted);
+  addRoundedBorder(tree, 14, colors.inkSoft);
+  const treeTitle = appendCodeLine(tree, '▼ NotificationCard', 14, colors.coral);
+  const modifierLine = appendCodeLine(tree, '', 44, colors.textMuted);
+  const layoutLine = appendCodeLine(tree, '', 74, colors.textMuted);
+  const transformLine = appendCodeLine(tree, '', 100, colors.textMuted);
   fk.update(treeTitle, { TextSize: 11 });
   for (const line of [modifierLine, layoutLine, transformLine]) fk.update(line, { TextSize: 10 });
   fk.append(controls, tree);
@@ -211,7 +226,7 @@ export function createComposer(): fk.FrameNode {
   });
   fk.append(
     stage,
-    text({
+    createText({
       text: 'LIVE PREVIEW',
       size: fk.udim2FromOffset(180, 28),
       position: fk.udim2FromOffset(36, 28),
@@ -223,7 +238,7 @@ export function createComposer(): fk.FrameNode {
   );
   fk.append(
     stage,
-    text({
+    createText({
       text: 'SHADOW ↓ DIRECTIONAL DEPTH   ·   GLOW ✦ SILHOUETTE LIGHT',
       size: fk.udim2FromOffset(430, 28),
       position: fk.udim2FromOffset(294, 28),
@@ -284,7 +299,7 @@ export function createComposer(): fk.FrameNode {
   fk.append(sample, badge);
   fk.append(
     sample,
-    text({
+    createText({
       text: 'LOADOUT SAVED',
       size: fk.udim2FromOffset(282, 46),
       position: fk.udim2FromOffset(98, 22),
@@ -319,13 +334,18 @@ export function createComposer(): fk.FrameNode {
   });
   fk.append(tags, fk.createUICorner({ CornerRadius: 14 }));
   const tagLayout = fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(0, 8) });
-  for (const [index, label] of ['TYPED', 'OWNED', 'ANIMATED'].entries()) {
+  const tagsContent = [
+    { label: 'TYPED', accent: colors.mint },
+    { label: 'OWNED', accent: colors.violet },
+    { label: 'ANIMATED', accent: colors.amber },
+  ] as const;
+  for (const [index, tagContent] of tagsContent.entries()) {
     const tag = fk.createTextLabel({
       Size: fk.udim2FromOffset(104, 34),
       Position: fk.udim2FromOffset(12 + index * 30, 10 + index * 8),
       BackgroundColor3: colors.ink,
-      Text: label,
-      TextColor3: [colors.mint, colors.violet, colors.amber][index]!,
+      Text: tagContent.label,
+      TextColor3: tagContent.accent,
       TextSize: 9,
       FontFamily: fonts.mono,
       FontWeight: 750,
@@ -338,7 +358,7 @@ export function createComposer(): fk.FrameNode {
   fk.append(sample, tags);
   fk.append(
     sample,
-    text({
+    createText({
       text: 'append(card, modifier)  →',
       size: fk.udim2FromOffset(332, 36),
       position: fk.udim2FromOffset(28, 266),
@@ -355,10 +375,10 @@ export function createComposer(): fk.FrameNode {
     Position: fk.udim2FromOffset(58, 416),
     BackgroundColor3: colors.paper,
   });
-  decorate(snippet, 16, colors.paperMuted);
-  codeLine(snippet, '// Modifiers share the spring API', 16, colors.darkMuted);
-  const snippetOne = codeLine(snippet, '', 48, colors.coral);
-  const snippetTwo = codeLine(snippet, '', 80, colors.violet);
+  addRoundedBorder(snippet, 16, colors.paperMuted);
+  appendCodeLine(snippet, '// Modifiers share the spring API', 16, colors.darkMuted);
+  const snippetOne = appendCodeLine(snippet, '', 48, colors.coral);
+  const snippetTwo = appendCodeLine(snippet, '', 80, colors.violet);
   fk.update(snippetOne, { TextColor3: colors.darkText });
   fk.update(snippetTwo, { TextColor3: colors.darkText });
   fk.append(stage, snippet);
@@ -374,7 +394,7 @@ export function createComposer(): fk.FrameNode {
     motion: strokeMotion,
     active: { Thickness: 4 },
     inactive: { Thickness: 0 },
-    isActive: () => configuration().stroke,
+    isActive: () => configuration.get().stroke,
   });
   const toggleShadow = createSpringModifierToggle({
     parent: sample,
@@ -392,7 +412,7 @@ export function createComposer(): fk.FrameNode {
       BlurRadius: 0,
       SpreadRadius: -2,
     },
-    isActive: () => configuration().shadow,
+    isActive: () => configuration.get().shadow,
   });
   const toggleGlow = createSpringModifierToggle({
     parent: sample,
@@ -400,7 +420,7 @@ export function createComposer(): fk.FrameNode {
     motion: glowMotion,
     active: { Transparency: 0.18, Radius: 36 },
     inactive: { Transparency: 1, Radius: 0 },
-    isActive: () => configuration().glow,
+    isActive: () => configuration.get().glow,
   });
   const zeroPadding = {
     PaddingTop: fk.udim(0, 0),
@@ -419,15 +439,15 @@ export function createComposer(): fk.FrameNode {
       PaddingLeft: fk.udim(0, 16),
     },
     inactive: zeroPadding,
-    isActive: () => configuration().padding,
+    isActive: () => configuration.get().padding,
   });
-  fk.on(sample, 'MouseEnter', () => {
-    const current = configuration();
+  sample.onMouseEnter(() => {
+    const current = configuration.get();
     if (current.shadow) shadowMotion.spring({ Offset: fk.vector2(16, 24), BlurRadius: 24 });
     if (current.glow) glowMotion.spring({ Radius: 46, Transparency: 0.12 });
   });
-  fk.on(sample, 'MouseLeave', () => {
-    const current = configuration();
+  sample.onMouseLeave(() => {
+    const current = configuration.get();
     if (current.shadow) shadowMotion.spring({ Offset: fk.vector2(12, 18), BlurRadius: 18 });
     if (current.glow) glowMotion.spring({ Radius: 36, Transparency: 0.18 });
   });

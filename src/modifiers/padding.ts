@@ -1,4 +1,4 @@
-import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/render';
+import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
 import { udim, udimToCss, type UDim } from '../values/udim';
 

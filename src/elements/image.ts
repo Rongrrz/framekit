@@ -1,6 +1,13 @@
-import type { GuiNode, Render } from '../runtime/render';
-import { configureButton, type ButtonNode, type ButtonProps } from './button';
-import { createFrameNode, defaultFrameProps, type FrameProps } from './frame';
+import { buttonEventMethods, type GuiEventMethodTable } from '../runtime/gui-events';
+import { type GuiNode, type PropertyRenderer } from '../runtime/render';
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertFiniteNumber,
+  assertString,
+} from '../runtime/validation';
+import { initializeButtonElement, type ButtonNode, type ButtonProps } from './button';
+import { createDefaultFrameProps, createFrameBasedNode, type FrameProps } from './frame';
 
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 
@@ -16,10 +23,16 @@ export type ImageButtonProps = ImageLabelProps & ButtonProps;
 export type ImageButtonNode = GuiNode<ImageButtonProps> & ButtonNode;
 
 const objectFit = { Stretch: 'fill', Fit: 'contain', Crop: 'cover' } as const;
+const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
 export function createImageLabel(initial: Partial<ImageLabelProps> = {}): ImageLabelNode {
-  return createImageNode('ImageLabel', document.createElement('div'), defaultImageProps(), initial);
+  return createImageNode(
+    'ImageLabel',
+    document.createElement('div'),
+    createDefaultImageProps(),
+    initial,
+  );
 }
 
 export function createImageButton(initial: Partial<ImageButtonProps> = {}): ImageButtonNode {
@@ -27,20 +40,22 @@ export function createImageButton(initial: Partial<ImageButtonProps> = {}): Imag
   const node = createImageNode(
     'ImageButton',
     element,
-    { ...defaultImageProps(), Name: 'ImageButton', Disabled: false },
+    { ...createDefaultImageProps(), Name: 'ImageButton', Disabled: false },
     initial,
     (props) => {
+      assertBoolean(props.Disabled, 'Disabled');
       element.disabled = props.Disabled;
       element.style.cursor = props.Disabled ? 'not-allowed' : 'pointer';
     },
+    buttonEventMethods,
   ) as ImageButtonNode;
-  configureButton(node, element);
+  initializeButtonElement(node, element);
   return node;
 }
 
-function defaultImageProps(): ImageLabelProps {
+function createDefaultImageProps(): ImageLabelProps {
   return {
-    ...defaultFrameProps(),
+    ...createDefaultFrameProps(),
     Name: 'ImageLabel',
     BackgroundTransparency: 1,
     Image: '',
@@ -51,11 +66,12 @@ function defaultImageProps(): ImageLabelProps {
 }
 
 function createImageNode<Props extends ImageLabelProps>(
-  kind: string,
+  nodeType: string,
   element: HTMLElement,
-  defaults: Props,
+  defaultProps: Props,
   initial: Partial<Props>,
-  renderExtra?: Render<Props>,
+  renderAdditionalProperties?: PropertyRenderer<Props>,
+  eventMethods?: GuiEventMethodTable,
 ): GuiNode<Props> {
   const image = document.createElement('img');
   image.draggable = false;
@@ -71,15 +87,32 @@ function createImageNode<Props extends ImageLabelProps>(
   });
   element.prepend(image);
 
-  return createFrameNode(kind, element, defaults, initial, (props, changed) => {
-    if (changed.has('Image')) setImageSource(image, props.Image);
-    if (changed.has('AltText')) image.alt = props.AltText;
-    if (changed.has('ImageTransparency')) {
-      image.style.opacity = String(1 - clamp(props.ImageTransparency, 0, 1));
-    }
-    if (changed.has('ScaleType')) image.style.objectFit = objectFit[props.ScaleType];
-    renderExtra?.(props, changed);
-  });
+  return createFrameBasedNode(
+    nodeType,
+    element,
+    defaultProps,
+    initial,
+    (props, changed) => {
+      if (changed.has('Image')) {
+        assertString(props.Image, 'Image');
+        setImageSource(image, props.Image);
+      }
+      if (changed.has('AltText')) {
+        assertString(props.AltText, 'AltText');
+        image.alt = props.AltText;
+      }
+      if (changed.has('ImageTransparency')) {
+        assertFiniteNumber(props.ImageTransparency, 'ImageTransparency');
+        image.style.opacity = String(1 - clamp(props.ImageTransparency, 0, 1));
+      }
+      if (changed.has('ScaleType')) {
+        assertAllowedValue(props.ScaleType, scaleTypes, 'ScaleType');
+        image.style.objectFit = objectFit[props.ScaleType];
+      }
+      renderAdditionalProperties?.(props, changed);
+    },
+    eventMethods,
+  );
 }
 
 function setImageSource(element: HTMLImageElement, source: string): void {

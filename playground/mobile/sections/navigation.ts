@@ -1,7 +1,7 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion } from '../../shared/interaction';
-import { button, text } from '../../shared/ui';
+import { createButton, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 
 export function createNavigation(
@@ -14,7 +14,7 @@ export function createNavigation(
     BackgroundColor3: colors.ink,
     ZIndex: 100,
   });
-  const mark = button(
+  const mark = createButton(
     'F',
     fk.udim2FromOffset(36, 36),
     fk.udim2FromOffset(16, 14),
@@ -23,11 +23,11 @@ export function createNavigation(
   );
   fk.update(mark, { TextSize: 18, FontWeight: 900 });
   bindButtonMotion(mark, colors.coral, colors.amber);
-  fk.on(mark, 'MouseButton1Click', () => navigate(0));
+  mark.onClick(() => navigate(0));
   fk.append(navigation, mark);
   fk.append(
     navigation,
-    text({
+    createText({
       text: 'FRAMEKIT',
       size: fk.udim2FromOffset(150, 36),
       position: fk.udim2FromOffset(62, 14),
@@ -35,7 +35,7 @@ export function createNavigation(
       weight: 850,
     }),
   );
-  const source = button(
+  const source = createButton(
     'SOURCE  ↗',
     fk.udim2FromOffset(112, 38),
     fk.udim2(1, -128, 0, 13),
@@ -44,7 +44,7 @@ export function createNavigation(
   );
   fk.update(source, { TextSize: 10, FontFamily: fonts.mono });
   bindButtonMotion(source, colors.paper, colors.mint);
-  fk.on(source, 'MouseButton1Click', () => {
+  source.onClick(() => {
     window.open('https://github.com/Rongrrz/framekit', '_blank', 'noopener,noreferrer');
   });
   fk.append(navigation, source);
@@ -61,13 +61,16 @@ export function createNavigation(
   });
   fk.append(track, progress);
   fk.append(navigation, track);
+  const listenerController = new AbortController();
   page.element.addEventListener(
     'scroll',
     () => {
       const maximum = Math.max(1, page.element.scrollHeight - page.element.clientHeight);
-      fk.update(progress, { Size: fk.udim2FromScale(page.element.scrollTop / maximum, 1) });
+      const scrollProgress = Math.min(1, Math.max(0, page.element.scrollTop / maximum));
+      fk.update(progress, { Size: fk.udim2FromScale(scrollProgress, 1) });
     },
-    { passive: true },
+    { passive: true, signal: listenerController.signal },
   );
+  fk.onDestroy(navigation, () => listenerController.abort());
   return navigation;
 }

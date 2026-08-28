@@ -1,38 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { fk } from '../..';
+import { setupAnimationClock } from '../helpers/animation-clock';
 
-type FrameCallback = (timestamp: number) => void;
-
-let clock = 0;
-let nextFrame = 1;
-let frames = new Map<number, FrameCallback>();
-
-beforeEach(() => {
-  clock = 0;
-  nextFrame = 1;
-  frames = new Map();
-  vi.stubGlobal('performance', { now: () => clock });
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameCallback) => {
-    const id = nextFrame++;
-    frames.set(id, callback);
-    return id;
-  });
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
-});
-
-afterEach(() => vi.unstubAllGlobals());
-
-function advance(milliseconds = 1000 / 60): void {
-  clock += milliseconds;
-  const pending = Array.from(frames.values());
-  frames.clear();
-  for (const callback of pending) callback(clock);
-}
-
-function settle(maximumFrames = 300): void {
-  for (let index = 0; index < maximumFrames && frames.size > 0; index += 1) advance();
-}
+const { advance, settle } = setupAnimationClock();
 
 describe('motion springs', () => {
   it('retains a spring per node through the top-level API', () => {
@@ -153,6 +124,21 @@ describe('motion springs', () => {
     const motion = fk.createMotion(frame);
     expect(() => motion.spring({})).toThrow(/goal property/);
     expect(() => motion.spring({ BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
+  });
+
+  it('releases property ownership when a spring update cannot render', () => {
+    const frame = fk.createFrame();
+    const scale = fk.createUIScale();
+    fk.append(frame, scale);
+    const motion = fk.createMotion(scale, { tension: 170, friction: 5 });
+    motion.spring({ Scale: -1 });
+
+    expect(() => settle()).toThrow(/non-negative finite/);
+    expect(motion.isAnimating()).toBe(false);
+
+    const replacement = fk.createTween(scale, fk.tweenInfo(0), { Scale: 0.5 });
+    replacement.play();
+    expect(fk.props(scale).Scale).toBe(0.5);
   });
 
   it('springs shadow and glow properties through the same motion API', () => {

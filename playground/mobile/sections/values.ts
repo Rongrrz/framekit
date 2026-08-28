@@ -1,7 +1,13 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion } from '../../shared/interaction';
-import { button, codeLine, decorate, text } from '../../shared/ui';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createText,
+  updateTextLines,
+} from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
@@ -10,6 +16,59 @@ import {
   createSectionContent,
   appendSectionHeading,
 } from '../primitives';
+
+const valueExamples = [
+  {
+    label: 'Color3',
+    title: 'COLOR3',
+    accent: colors.coral,
+    position: fk.udim2FromOffset(68, 72),
+    rotation: -2,
+    lines: [
+      'const coral = fk.color3(',
+      '  255, 111, 95',
+      ');',
+      'fk.update(card, {',
+      '  BackgroundColor3: coral });',
+    ],
+  },
+  {
+    label: 'UDim2',
+    title: 'UDIM2',
+    accent: colors.violet,
+    position: fk.udim2FromOffset(104, 48),
+    rotation: 3,
+    lines: [
+      'const centered = fk.udim2(',
+      '  0.5, -110,',
+      '  0.5, -75',
+      ');',
+      'fk.update(card, { Position: centered });',
+    ],
+  },
+  {
+    label: 'Vector2',
+    title: 'VECTOR2',
+    accent: colors.amber,
+    position: fk.udim2FromOffset(36, 104),
+    rotation: -5,
+    lines: [
+      'const anchor = fk.vector2(',
+      '  0.5, 0.5',
+      ');',
+      'fk.update(card, {',
+      '  AnchorPoint: anchor });',
+    ],
+  },
+  {
+    label: 'UDim',
+    title: 'UDIM',
+    accent: colors.mint,
+    position: fk.udim2FromOffset(86, 92),
+    rotation: 5,
+    lines: ['const gap = fk.udim(0, 16);', '', 'fk.createUIListLayout({', '  Padding: gap,', '});'],
+  },
+] as const;
 
 export function createValues(): fk.FrameNode {
   const section = createSection('MobileValues', sectionLayout.values, colors.mint);
@@ -21,10 +80,9 @@ export function createValues(): fk.FrameNode {
     true,
   );
   const selected = fk.state.observable(0);
-  const labels = ['Color3', 'UDim2', 'Vector2', 'UDim'] as const;
-  for (const [index, label] of labels.entries()) {
-    const control = button(
-      label,
+  for (const [index, example] of valueExamples.entries()) {
+    const control = createButton(
+      example.label,
       fk.udim2FromOffset(172, 44),
       fk.udim2FromOffset((index % 2) * 186, 224 + Math.floor(index / 2) * 58),
       colors.ink,
@@ -32,7 +90,7 @@ export function createValues(): fk.FrameNode {
     );
     fk.update(control, { TextSize: 10, FontFamily: fonts.mono });
     bindButtonMotion(control, colors.ink, colors.violet);
-    fk.on(control, 'MouseButton1Click', () => selected(index));
+    control.onClick(() => selected.set(index));
     fk.append(content, control);
   }
   const preview = fk.createFrame({
@@ -40,14 +98,14 @@ export function createValues(): fk.FrameNode {
     Position: fk.udim2FromOffset(0, 362),
     BackgroundColor3: colors.paperRaised,
   });
-  decorate(preview, 20, colors.ink, 2);
+  addRoundedBorder(preview, 20, colors.ink, 2);
   const shape = fk.createFrame({
     Size: fk.udim2FromOffset(220, 150),
     Position: fk.udim2FromOffset(68, 72),
     BackgroundColor3: colors.coral,
   });
-  decorate(shape, 18, colors.ink, 2);
-  const shapeTitle = text({
+  addRoundedBorder(shape, 18, colors.ink, 2);
+  const shapeTitle = createText({
     text: 'COLOR3',
     size: fk.udim2FromOffset(176, 42),
     position: fk.udim2FromOffset(22, 18),
@@ -63,68 +121,25 @@ export function createValues(): fk.FrameNode {
     Position: fk.udim2FromOffset(0, 694),
     BackgroundColor3: colors.ink,
   });
-  decorate(code, 16, colors.inkSoft);
+  addRoundedBorder(code, 16, colors.inkSoft);
   const lines = [
-    codeLine(code, '', 22, colors.violet),
-    codeLine(code, '', 62),
-    codeLine(code, '', 102, colors.coral),
-    codeLine(code, '', 142),
-    codeLine(code, '', 182, colors.mint),
+    appendCodeLine(code, '', 22, colors.violet),
+    appendCodeLine(code, '', 62),
+    appendCodeLine(code, '', 102, colors.coral),
+    appendCodeLine(code, '', 142),
+    appendCodeLine(code, '', 182, colors.mint),
   ];
   fk.append(content, code);
   fk.state.observe(shape, selected, (value) => {
-    const data = [
-      [
-        'COLOR3',
-        colors.coral,
-        fk.udim2FromOffset(68, 72),
-        -2,
-        [
-          'const coral = fk.color3(',
-          '  255, 111, 95',
-          ');',
-          'fk.update(card, {',
-          '  BackgroundColor3: coral });',
-        ],
-      ],
-      [
-        'UDIM2',
-        colors.violet,
-        fk.udim2FromOffset(104, 48),
-        3,
-        [
-          'const centered = fk.udim2(',
-          '  0.5, -110,',
-          '  0.5, -75',
-          ');',
-          'fk.update(card, { Position: centered });',
-        ],
-      ],
-      [
-        'VECTOR2',
-        colors.amber,
-        fk.udim2FromOffset(36, 104),
-        -5,
-        [
-          'const anchor = fk.vector2(',
-          '  0.5, 0.5',
-          ');',
-          'fk.update(card, {',
-          '  AnchorPoint: anchor });',
-        ],
-      ],
-      [
-        'UDIM',
-        colors.mint,
-        fk.udim2FromOffset(86, 92),
-        5,
-        ['const gap = fk.udim(0, 16);', '', 'fk.createUIListLayout({', '  Padding: gap,', '});'],
-      ],
-    ] as const;
-    const item = data[value]!;
-    fk.update(shapeTitle, { Text: item[0] });
-    fk.spring(shape, { BackgroundColor3: item[1], Position: item[2], Rotation: item[3] });
-    for (const [index, line] of lines.entries()) fk.update(line, { Text: item[4][index]! });
+    const example = valueExamples[value];
+    if (!example) return;
+    fk.update(shapeTitle, { Text: example.title });
+    fk.spring(shape, {
+      BackgroundColor3: example.accent,
+      Position: example.position,
+      Rotation: example.rotation,
+    });
+    updateTextLines(lines, example.lines);
   });
   fk.append(section, content);
   return section;

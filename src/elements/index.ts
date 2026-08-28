@@ -1,6 +1,4 @@
-export { on } from './button';
-export type { ButtonEvent, ButtonNode, ButtonPressEvent, ButtonProps } from './button';
-export type { GuiEvent } from './gui-input';
+export type { ButtonNode, ButtonProps } from './button';
 export { createFrame } from './frame';
 export type { AutomaticSize, FrameNode, FrameProps } from './frame';
 export { createImageButton, createImageLabel } from './image';
@@ -29,5 +27,5 @@ export type {
   TextXAlignment,
   TextYAlignment,
 } from './text';
-export { createTextBox, textBoxText } from './text-box';
-export type { TextBoxEvent, TextBoxNode, TextBoxProps } from './text-box';
+export { createTextBox } from './text-box';
+export type { TextBoxNode, TextBoxProps } from './text-box';

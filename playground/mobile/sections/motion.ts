@@ -1,7 +1,7 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion } from '../../shared/interaction';
-import { button, codeLine, decorate, text } from '../../shared/ui';
+import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
@@ -10,6 +10,37 @@ import {
   createSectionContent,
   appendSectionHeading,
 } from '../primitives';
+
+const motionGoals = [
+  {
+    label: 'CALM',
+    accent: colors.mint,
+    position: fk.udim2FromOffset(48, 110),
+    rotation: 0,
+    scale: 1,
+  },
+  {
+    label: 'FOCUS',
+    accent: colors.violet,
+    position: fk.udim2FromOffset(76, 72),
+    rotation: -5,
+    scale: 1.08,
+  },
+  {
+    label: 'PLAY',
+    accent: colors.coral,
+    position: fk.udim2FromOffset(28, 188),
+    rotation: 7,
+    scale: 0.94,
+  },
+  {
+    label: 'ORBIT',
+    accent: colors.amber,
+    position: fk.udim2FromOffset(86, 204),
+    rotation: 11,
+    scale: 0.86,
+  },
+] as const;
 
 export function createMotion(): fk.FrameNode {
   const section = createSection('MobileMotion', sectionLayout.motion, colors.ink);
@@ -26,21 +57,19 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.inkRaised,
     ClipsDescendants: true,
   });
-  decorate(lab, 22, colors.inkSoft, 2);
+  addRoundedBorder(lab, 22, colors.inkSoft, 2);
   const mode = fk.state.observable(0);
-  const accents = [colors.mint, colors.violet, colors.coral, colors.amber] as const;
-  const labels = ['CALM', 'FOCUS', 'PLAY', 'ORBIT'] as const;
-  for (const [index, label] of labels.entries()) {
-    const control = button(
-      label,
+  for (const [index, goal] of motionGoals.entries()) {
+    const control = createButton(
+      goal.label,
       fk.udim2FromOffset(72, 42),
       fk.udim2FromOffset(20 + index * 82, 24),
       colors.ink,
       colors.text,
     );
     fk.update(control, { TextSize: 9, FontFamily: fonts.mono });
-    bindButtonMotion(control, colors.ink, accents[index]!);
-    fk.on(control, 'MouseButton1Click', () => mode(index));
+    bindButtonMotion(control, colors.ink, goal.accent);
+    control.onClick(() => mode.set(index));
     fk.append(lab, control);
   }
   const stage = fk.createFrame({
@@ -49,18 +78,18 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.paper,
     ClipsDescendants: true,
   });
-  decorate(stage, 18, colors.paperMuted);
+  addRoundedBorder(stage, 18, colors.paperMuted);
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(220, 170),
     Position: fk.udim2FromOffset(48, 110),
     BackgroundColor3: colors.mint,
   });
-  decorate(card, 22, colors.ink, 2);
+  addRoundedBorder(card, 22, colors.ink, 2);
   const scale = fk.createUIScale();
   fk.append(card, scale);
   fk.append(
     card,
-    text({
+    createText({
       text: 'SPRING\nCONTROLLER',
       size: fk.udim2FromOffset(176, 90),
       position: fk.udim2FromOffset(22, 18),
@@ -71,7 +100,7 @@ export function createMotion(): fk.FrameNode {
       yAlignment: 'Top',
     }),
   );
-  const stateLabel = text({
+  const stateLabel = createText({
     text: 'CALM',
     size: fk.udim2FromOffset(176, 28),
     position: fk.udim2FromOffset(22, 126),
@@ -82,7 +111,7 @@ export function createMotion(): fk.FrameNode {
   fk.append(card, stateLabel);
   fk.append(stage, card);
   fk.append(lab, stage);
-  const status = text({
+  const status = createText({
     text: '● SPRING SETTLED',
     size: fk.udim2FromOffset(318, 28),
     position: fk.udim2FromOffset(20, 536),
@@ -96,30 +125,29 @@ export function createMotion(): fk.FrameNode {
     Position: fk.udim2FromOffset(20, 582),
     BackgroundColor3: colors.ink,
   });
-  decorate(code, 14, colors.inkSoft);
-  codeLine(code, 'fk.spring(card, {', 18, colors.coral);
-  const positionLine = codeLine(code, '  Position: calmPosition,', 48);
-  const rotationLine = codeLine(code, '  Rotation: 0,', 78);
-  codeLine(code, '  BackgroundColor3: accent,', 108);
-  codeLine(code, '});', 138, colors.coral);
-  codeLine(code, '', 168);
+  addRoundedBorder(code, 14, colors.inkSoft);
+  appendCodeLine(code, 'fk.spring(card, {', 18, colors.coral);
+  const positionLine = appendCodeLine(code, '  Position: calmPosition,', 48);
+  const rotationLine = appendCodeLine(code, '  Rotation: 0,', 78);
+  appendCodeLine(code, '  BackgroundColor3: accent,', 108);
+  appendCodeLine(code, '});', 138, colors.coral);
+  appendCodeLine(code, '', 168);
   const cardMotion = fk.createMotion(card);
   const scaleMotion = fk.createMotion(scale);
   cardMotion.completed.subscribe(() => fk.update(status, { Text: '● SPRING SETTLED' }));
   fk.state.observe(card, mode, (value) => {
-    const goals = [
-      [fk.udim2FromOffset(48, 110), 0, 1],
-      [fk.udim2FromOffset(76, 72), -5, 1.08],
-      [fk.udim2FromOffset(28, 188), 7, 0.94],
-      [fk.udim2FromOffset(86, 204), 11, 0.86],
-    ] as const;
-    const goal = goals[value]!;
-    fk.update(status, { Text: `● MOVING TO ${labels[value]}`, TextColor3: accents[value]! });
-    fk.update(stateLabel, { Text: labels[value]! });
-    fk.update(positionLine, { Text: `  Position: ${labels[value]!.toLowerCase()}Position,` });
-    fk.update(rotationLine, { Text: `  Rotation: ${goal[1]},` });
-    cardMotion.spring({ Position: goal[0], Rotation: goal[1], BackgroundColor3: accents[value]! });
-    scaleMotion.spring({ Scale: goal[2] });
+    const goal = motionGoals[value];
+    if (!goal) return;
+    fk.update(status, { Text: `● MOVING TO ${goal.label}`, TextColor3: goal.accent });
+    fk.update(stateLabel, { Text: goal.label });
+    fk.update(positionLine, { Text: `  Position: ${goal.label.toLowerCase()}Position,` });
+    fk.update(rotationLine, { Text: `  Rotation: ${goal.rotation},` });
+    cardMotion.spring({
+      Position: goal.position,
+      Rotation: goal.rotation,
+      BackgroundColor3: goal.accent,
+    });
+    scaleMotion.spring({ Scale: goal.scale });
   });
   fk.append(content, lab);
   fk.append(section, content);

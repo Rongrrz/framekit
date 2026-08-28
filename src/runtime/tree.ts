@@ -1,5 +1,6 @@
+import type { ModifierNode } from './modifier';
 import { assertNodeActive } from './node';
-import { hasLayout, isGuiNode, renderNode, type ModifierNode } from './render';
+import { hasLayoutModifier, isGuiNode, renderNode } from './render';
 import { getChildren, getNodeState, isModifierState, type Node, type NodeState } from './state';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
@@ -18,7 +19,10 @@ export function append(parent: Node, child: Node): void {
   if (isModifierState(childState) && parentState.kind !== 'gui') {
     throw new TypeError('UI modifiers must be appended to a DOM-backed node.');
   }
-  if (childState.parent === parent) return;
+  if (childState.parent === parent) {
+    placeChildElement(parent, parentState, child);
+    return;
+  }
   if (
     isModifierState(childState) &&
     parentState.kind === 'gui' &&
@@ -28,17 +32,25 @@ export function append(parent: Node, child: Node): void {
   }
 
   const previousParent = childState.parent;
+  const previousIndex = previousParent
+    ? getChildren(getNodeState(previousParent)).indexOf(child)
+    : -1;
   unlinkFromParent(child, childState);
-  childState.parent = parent;
-  getChildren(parentState).push(child);
-  if (isModifierState(childState) && parentState.kind === 'gui') {
-    parentState.modifiers.set(childState.modifierKey, child as ModifierNode);
+  linkToParent(parent, parentState, child, childState);
+
+  try {
+    if (previousParent && (isModifierState(childState) || hasLayoutModifier(previousParent))) {
+      renderNode(previousParent);
+    }
+    if (isModifierState(childState) || hasLayoutModifier(parent)) renderNode(parent);
+  } catch (error) {
+    unlinkFromParent(child, childState);
+    if (isGuiNode(child)) child.element.remove();
+    if (previousParent) {
+      linkToParent(previousParent, getNodeState(previousParent), child, childState, previousIndex);
+    }
+    restoreRendering(parent, previousParent, error);
   }
-  if (isGuiNode(child) && isGuiNode(parent)) parent.element.append(child.element);
-  if (previousParent && (isModifierState(childState) || hasLayout(previousParent))) {
-    renderNode(previousParent);
-  }
-  if (isModifierState(childState) || hasLayout(parent)) renderNode(parent);
 }
 
 /** Detaches a node without destroying it or its descendants. */
@@ -48,7 +60,7 @@ export function detach(node: Node): void {
   const previousParent = state.parent;
   unlinkFromParent(node, state);
   if (isGuiNode(node)) node.element.remove();
-  if (previousParent && (isModifierState(state) || hasLayout(previousParent))) {
+  if (previousParent && (isModifierState(state) || hasLayoutModifier(previousParent))) {
     renderNode(previousParent);
   }
 }
@@ -88,6 +100,48 @@ function unlinkFromParent(node: Node, state: NodeState): void {
     parentState.modifiers.delete(state.modifierKey);
   }
   state.parent = undefined;
+}
+
+function linkToParent(
+  parent: Node,
+  parentState: NodeState,
+  child: Node,
+  childState: NodeState,
+  index = getChildren(parentState).length,
+): void {
+  childState.parent = parent;
+  const siblings = getChildren(parentState);
+  siblings.splice(Math.max(0, Math.min(index, siblings.length)), 0, child);
+  if (isModifierState(childState) && parentState.kind === 'gui') {
+    parentState.modifiers.set(childState.modifierKey, child as ModifierNode);
+  }
+  placeChildElement(parent, parentState, child);
+}
+
+function placeChildElement(parent: Node, parentState: NodeState, child: Node): void {
+  if (!isGuiNode(child) || !isGuiNode(parent) || child.element.parentElement === parent.element) {
+    return;
+  }
+  const siblings = getChildren(parentState);
+  const nextGuiSibling = siblings.slice(siblings.indexOf(child) + 1).find(isGuiNode);
+  parent.element.insertBefore(child.element, nextGuiSibling?.element ?? null);
+}
+
+function restoreRendering(
+  parent: Node,
+  previousParent: Node | undefined,
+  originalError: unknown,
+): never {
+  try {
+    renderNode(parent);
+    if (previousParent) renderNode(previousParent);
+  } catch (rollbackError) {
+    throw new AggregateError(
+      [originalError, rollbackError],
+      'Appending the node failed, and rendering could not be fully restored.',
+    );
+  }
+  throw originalError;
 }
 
 function isAncestor(candidate: Node, node: Node): boolean {

@@ -1,7 +1,13 @@
 import { fk } from 'framekit';
 
 import { bindScaleMotion } from '../../shared/interaction';
-import { button, codeLine, decorate, text } from '../../shared/ui';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createText,
+  updateTextLines,
+} from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
@@ -10,6 +16,65 @@ import {
   createSectionContent,
   appendSectionHeading,
 } from '../primitives';
+
+const apiSections = [
+  {
+    tab: 'NODES',
+    index: '01 / NODES',
+    title: 'Build the tree.',
+    body: 'Factories return typed handles. append(), detach(), and destroy() make ownership explicit.',
+    tokens: 'createTextBox  ·  props\nonTextChanged  ·  RichText',
+    lines: [
+      'const editor = fk.createTextBox({',
+      "  Text: 'Hello <b>world</b>',",
+      '  RichText: true,',
+      '  MultiLine: true,',
+      '});',
+      'editor.onTextChanged(save);',
+      '',
+    ],
+  },
+  {
+    tab: 'MODIFIERS',
+    index: '02 / MODIFIERS',
+    title: 'Compose appearance.',
+    body: 'Corners, strokes, shadows, glows, padding, scale, constraints, and layout are element-less child nodes.',
+    tokens: 'createUIShadow  ·  createUIGlow\ncreateUIStroke  ·  createUICorner',
+    lines: [
+      'const glow = fk.createUIGlow({',
+      '  Color: colors.violet,',
+      '  Radius: 24,',
+      '});',
+      'fk.append(panel, glow);',
+      '',
+      '',
+    ],
+  },
+  {
+    tab: 'STATE',
+    index: '03 / STATE',
+    title: 'Connect behavior.',
+    body: 'Explicit observable values remain framework-free. Owned observations stop automatically on destroy.',
+    tokens: 'state.observable  ·  state.observe\nstate.signal  ·  get / set',
+    lines: [
+      'const count = fk.state.observable(0);',
+      'count.set(1);',
+      'fk.state.observe(label, count,',
+      '  value => fk.update(label, {',
+      '    Text: String(value),',
+      '  })',
+      ');',
+    ],
+  },
+  {
+    tab: 'MOTION',
+    index: '04 / MOTION',
+    title: 'Animate values.',
+    body: 'Springs retarget continuously. Tweens provide explicit playback over the same typed properties.',
+    tokens: 'spring  ·  createTween\ntweenInfo  ·  createMotion',
+    lines: ['fk.spring(card, {', '  Position: nextPosition,', '  Rotation: 3,', '});'],
+  },
+] as const;
 
 export function createApi(): fk.FrameNode {
   const section = createSection('MobileApi', sectionLayout.api, colors.ink);
@@ -21,10 +86,9 @@ export function createApi(): fk.FrameNode {
     false,
   );
   const selected = fk.state.observable(0);
-  const tabs = ['NODES', 'MODIFIERS', 'STATE', 'MOTION'] as const;
-  for (const [index, label] of tabs.entries()) {
-    const control = button(
-      label,
+  for (const [index, apiSection] of apiSections.entries()) {
+    const control = createButton(
+      apiSection.tab,
       fk.udim2FromOffset(172, 44),
       fk.udim2FromOffset((index % 2) * 186, 226 + Math.floor(index / 2) * 58),
       colors.inkRaised,
@@ -32,7 +96,7 @@ export function createApi(): fk.FrameNode {
     );
     fk.update(control, { TextSize: 9, FontFamily: fonts.mono });
     bindScaleMotion(control, 1.035);
-    fk.on(control, 'MouseButton1Click', () => selected(index));
+    control.onClick(() => selected.set(index));
     fk.append(content, control);
   }
   const detail = fk.createFrame({
@@ -40,8 +104,8 @@ export function createApi(): fk.FrameNode {
     Position: fk.udim2FromOffset(0, 358),
     BackgroundColor3: colors.paperRaised,
   });
-  decorate(detail, 22, colors.inkSoft, 2);
-  const indexLabel = text({
+  addRoundedBorder(detail, 22, colors.inkSoft, 2);
+  const indexLabel = createText({
     text: '',
     size: fk.udim2FromOffset(310, 28),
     position: fk.udim2FromOffset(24, 24),
@@ -49,7 +113,7 @@ export function createApi(): fk.FrameNode {
     textSize: 10,
     font: fonts.mono,
   });
-  const title = text({
+  const title = createText({
     text: '',
     size: fk.udim2FromOffset(310, 48),
     position: fk.udim2FromOffset(24, 62),
@@ -57,7 +121,7 @@ export function createApi(): fk.FrameNode {
     textSize: 25,
     weight: 900,
   });
-  const body = text({
+  const body = createText({
     text: '',
     size: fk.udim2FromOffset(310, 104),
     position: fk.udim2FromOffset(24, 116),
@@ -69,7 +133,7 @@ export function createApi(): fk.FrameNode {
   fk.append(detail, indexLabel);
   fk.append(detail, title);
   fk.append(detail, body);
-  const tokens = text({
+  const tokens = createText({
     text: '',
     size: fk.udim2FromOffset(310, 88),
     position: fk.udim2FromOffset(24, 238),
@@ -85,79 +149,26 @@ export function createApi(): fk.FrameNode {
     Position: fk.udim2FromOffset(24, 356),
     BackgroundColor3: colors.ink,
   });
-  decorate(code, 16, colors.inkSoft);
+  addRoundedBorder(code, 16, colors.inkSoft);
   const lines = [
-    codeLine(code, '', 24, colors.violet),
-    codeLine(code, '', 68),
-    codeLine(code, '', 112, colors.coral),
-    codeLine(code, '', 156),
-    codeLine(code, '', 200, colors.mint),
-    codeLine(code, '', 244),
-    codeLine(code, '', 288, colors.violet),
+    appendCodeLine(code, '', 24, colors.violet),
+    appendCodeLine(code, '', 68),
+    appendCodeLine(code, '', 112, colors.coral),
+    appendCodeLine(code, '', 156),
+    appendCodeLine(code, '', 200, colors.mint),
+    appendCodeLine(code, '', 244),
+    appendCodeLine(code, '', 288, colors.violet),
   ];
   fk.append(detail, code);
   fk.append(content, detail);
   fk.state.observe(detail, selected, (value) => {
-    const data = [
-      [
-        '01 / NODES',
-        'Build the tree.',
-        'Factories return typed handles. append(), detach(), and destroy() make ownership explicit.',
-        'createTextBox  ·  textBoxText\nTextChanged  ·  RichText',
-        [
-          'const editor = fk.createTextBox({',
-          "  Text: 'Hello <b>world</b>',",
-          '  RichText: true,',
-          '  MultiLine: true,',
-          '});',
-          "fk.on(editor, 'TextChanged', save);",
-          '',
-        ],
-      ],
-      [
-        '02 / MODIFIERS',
-        'Compose appearance.',
-        'Corners, strokes, shadows, glows, padding, scale, constraints, and layout are element-less child nodes.',
-        'createUIShadow  ·  createUIGlow\ncreateUIStroke  ·  createUICorner',
-        [
-          'const glow = fk.createUIGlow({',
-          '  Color: colors.violet,',
-          '  Radius: 24,',
-          '});',
-          'fk.append(panel, glow);',
-          '',
-          '',
-        ],
-      ],
-      [
-        '03 / STATE',
-        'Connect behavior.',
-        'Callable observable values remain framework-free. Owned observations stop automatically on destroy.',
-        'state.observable  ·  state.observe\nstate.signal  ·  on',
-        [
-          'const count = fk.state.observable(0);',
-          '',
-          'fk.state.observe(label, count,',
-          '  value => fk.update(label, {',
-          '    Text: String(value),',
-          '  })',
-          ');',
-        ],
-      ],
-      [
-        '04 / MOTION',
-        'Animate values.',
-        'Springs retarget continuously. Tweens provide explicit playback over the same typed properties.',
-        'spring  ·  createTween\ntweenInfo  ·  createMotion',
-        ['fk.spring(card, {', '  Position: nextPosition,', '  Rotation: 3,', '});', '', '', ''],
-      ],
-    ] as const;
-    const item = data[value]!;
-    fk.update(indexLabel, { Text: item[0] });
-    fk.update(title, { Text: item[1] });
-    fk.update(body, { Text: item[2] });
-    fk.update(tokens, { Text: item[3] });
-    for (const [index, line] of lines.entries()) fk.update(line, { Text: item[4][index]! });
+    const apiSection = apiSections[value];
+    if (!apiSection) return;
+    fk.update(indexLabel, { Text: apiSection.index });
+    fk.update(title, { Text: apiSection.title });
+    fk.update(body, { Text: apiSection.body });
+    fk.update(tokens, { Text: apiSection.tokens });
+    updateTextLines(lines, apiSection.lines);
   });
   fk.append(section, content);
   return section;

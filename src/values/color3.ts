@@ -24,15 +24,29 @@ export function color3FromHex(hex: string): Color3 {
 
 /** Converts a color and Roblox-style transparency to a CSS color string. */
 export function color3ToCss(value: Color3, transparency = 0): string {
+  assertColor3(value);
+  assertFiniteNumber(transparency, 'Color transparency');
   const alpha = 1 - clamp(transparency, 0, 1);
   return `rgb(${value.R} ${value.G} ${value.B} / ${alpha})`;
 }
 
+function assertColor3(value: Color3): void {
+  if (typeof value !== 'object' || value === null) {
+    throw new TypeError('Color3 must contain valid R, G, and B channels.');
+  }
+  for (const channel of [value.R, value.G, value.B]) {
+    if (!Number.isInteger(channel) || channel < 0 || channel > 255) {
+      throw new TypeError('Color3 channels must be integers from 0 to 255.');
+    }
+  }
+}
+
 function colorChannel(value: number): number {
-  if (!Number.isFinite(value)) throw new TypeError('Color components must be finite numbers.');
+  assertFiniteNumber(value, 'Color component');
   return Math.round(clamp(value, 0, 255));
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
+import { assertFiniteNumber } from '../runtime/validation';

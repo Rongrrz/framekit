@@ -24,12 +24,12 @@ export function renderRichText(container: HTMLElement, source: string): void {
 }
 
 /** Converts an editable rich-text DOM back into the supported string format. */
-export function richTextString(container: HTMLElement): string {
+export function serializeRichText(container: HTMLElement): string {
   return Array.from(container.childNodes, serializeNode).join('');
 }
 
 /** Reads visible editable content as ordinary text, retaining authored line breaks. */
-export function plainTextString(container: HTMLElement): string {
+export function readPlainText(container: HTMLElement): string {
   return Array.from(container.childNodes, plainTextNode).join('');
 }
 

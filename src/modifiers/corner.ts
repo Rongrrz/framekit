@@ -1,5 +1,6 @@
-import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/render';
+import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertBoolean, assertFiniteNumber } from '../runtime/validation';
 
 export type UICornerProps = NodeProps & {
   Enabled: boolean;
@@ -13,7 +14,12 @@ export function createUICorner(initial: Partial<UICornerProps> = {}): UICornerNo
   return createStyleModifier(
     'UICorner',
     mergeProps({ Name: 'UICorner', Enabled: true, CornerRadius: 0 }, initial),
-    (props): Styles =>
-      props.Enabled ? { 'border-radius': `${Math.max(0, props.CornerRadius)}px` } : {},
+    resolveCornerStyles,
   );
+}
+
+function resolveCornerStyles(props: Readonly<UICornerProps>): Styles {
+  assertBoolean(props.Enabled, 'Enabled');
+  assertFiniteNumber(props.CornerRadius, 'CornerRadius');
+  return props.Enabled ? { 'border-radius': `${Math.max(0, props.CornerRadius)}px` } : {};
 }

@@ -1,5 +1,6 @@
-import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/render';
+import { createStyleModifier, type StyleModifierNode, type Styles } from '../runtime/modifier';
 import { mergeProps, type NodeProps } from '../runtime/state';
+import { assertNonNegativeFinite } from '../runtime/validation';
 
 export type UIScaleProps = NodeProps & {
   Scale: number;
@@ -17,8 +18,6 @@ export function createUIScale(initial: Partial<UIScaleProps> = {}): UIScaleNode 
 }
 
 function resolveScale(props: Readonly<UIScaleProps>): Styles {
-  if (!Number.isFinite(props.Scale) || props.Scale < 0) {
-    throw new TypeError('UIScale Scale must be a non-negative finite number.');
-  }
+  assertNonNegativeFinite(props.Scale, 'UIScale Scale');
   return { scale: String(props.Scale), 'transform-origin': 'center' };
 }

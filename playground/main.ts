@@ -13,7 +13,13 @@ const useMobileLayout =
 const playground = useMobileLayout ? createMobileApp() : createDesktopApp();
 fk.mount(playground, '#root');
 
-window.addEventListener('resize', () => {
-  const crossedLayoutBreakpoint = window.innerWidth < mobileBreakpoint !== useMobileLayout;
-  if (forcedPreview === null && crossedLayoutBreakpoint) window.location.reload();
-});
+const listenerController = new AbortController();
+window.addEventListener(
+  'resize',
+  () => {
+    const crossedLayoutBreakpoint = window.innerWidth < mobileBreakpoint !== useMobileLayout;
+    if (forcedPreview === null && crossedLayoutBreakpoint) window.location.reload();
+  },
+  { signal: listenerController.signal },
+);
+fk.onDestroy(playground, () => listenerController.abort());

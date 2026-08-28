@@ -1,34 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { fk } from '../..';
+import { setupAnimationClock } from '../helpers/animation-clock';
 
-type FrameCallback = (timestamp: number) => void;
-
-let clock = 0;
-let nextFrame = 1;
-let frames = new Map<number, FrameCallback>();
-
-beforeEach(() => {
-  clock = 0;
-  nextFrame = 1;
-  frames = new Map();
-  vi.stubGlobal('performance', { now: () => clock });
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameCallback) => {
-    const id = nextFrame++;
-    frames.set(id, callback);
-    return id;
-  });
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
-});
-
-afterEach(() => vi.unstubAllGlobals());
-
-function advance(milliseconds: number): void {
-  clock += milliseconds;
-  const pending = Array.from(frames.values());
-  frames.clear();
-  for (const callback of pending) callback(clock);
-}
+const { advance } = setupAnimationClock();
 
 describe('tweens', () => {
   it('interpolates numbers and structured FrameKit values', () => {
@@ -116,6 +91,29 @@ describe('tweens', () => {
     expect(second.playbackState()).toBe('Playing');
   });
 
+  it('keeps ownership consistent when cancellation listeners start another tween', () => {
+    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const first = fk.createTween(frame, fk.tweenInfo(1, 'Linear'), {
+      BackgroundTransparency: 1,
+    });
+    const reentrant = fk.createTween(frame, fk.tweenInfo(1, 'Linear'), {
+      BackgroundTransparency: 0.75,
+    });
+    const latest = fk.createTween(frame, fk.tweenInfo(1, 'Linear'), {
+      BackgroundTransparency: 0.5,
+    });
+    first.completed.subscribe(() => reentrant.play());
+
+    first.play();
+    latest.play();
+
+    expect(first.playbackState()).toBe('Cancelled');
+    expect(reentrant.playbackState()).toBe('Cancelled');
+    expect(latest.playbackState()).toBe('Playing');
+    advance(500);
+    expect(fk.props(frame).BackgroundTransparency).toBe(0.25);
+  });
+
   it('finishes zero-duration tweens and cancels playback with node destruction', () => {
     const frame = fk.createFrame();
     const instant = fk.createTween(frame, fk.tweenInfo(0), { BackgroundTransparency: 1 });
@@ -138,6 +136,21 @@ describe('tweens', () => {
     expect(() => running.play()).toThrow(/destroyed/);
   });
 
+  it('finishes tween cleanup when a cancellation listener throws during destruction', () => {
+    const frame = fk.createFrame();
+    const tween = fk.createTween(frame, fk.tweenInfo(1), { BackgroundTransparency: 1 });
+    const listener = vi.fn(() => {
+      throw new Error('listener failed');
+    });
+    tween.completed.subscribe(listener);
+    tween.play();
+
+    expect(() => fk.destroy(frame)).toThrow(/listener failed/);
+    expect(tween.playbackState()).toBe('Cancelled');
+    expect(() => tween.completed.emit('Cancelled')).not.toThrow();
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
   it('validates tween configuration and goal values', () => {
     const frame = fk.createFrame();
     expect(() => fk.tweenInfo(-1)).toThrow(/time/);
@@ -148,5 +161,20 @@ describe('tweens', () => {
         BackgroundTransparency: Number.NaN,
       }),
     ).toThrow(/compatible tweenable/);
+  });
+
+  it('releases property ownership when rendering an animated value fails', () => {
+    const frame = fk.createFrame();
+    const scale = fk.createUIScale();
+    fk.append(frame, scale);
+    const invalid = fk.createTween(scale, fk.tweenInfo(0), { Scale: -1 });
+
+    expect(() => invalid.play()).toThrow(/non-negative finite/);
+    expect(invalid.playbackState()).toBe('Cancelled');
+
+    const valid = fk.createTween(scale, fk.tweenInfo(0), { Scale: 0.5 });
+    valid.play();
+    expect(valid.playbackState()).toBe('Completed');
+    expect(fk.props(scale).Scale).toBe(0.5);
   });
 });

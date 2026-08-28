@@ -2,7 +2,13 @@ import { fk } from 'framekit';
 
 import { bindButtonMotion, bindScaleMotion } from '../../shared/interaction';
 import { setModifierAttached } from '../../shared/modifier';
-import { button, codeLine, decorate, text } from '../../shared/ui';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createText,
+  updateTextLines,
+} from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
@@ -10,6 +16,7 @@ import { sectionLayout } from '../layout';
 type GuideStep = 'create' | 'decorate' | 'connect' | 'animate';
 
 const { top, height } = sectionLayout.guide;
+const guideSteps: readonly GuideStep[] = ['create', 'decorate', 'connect', 'animate'];
 const guide = {
   create: {
     number: '01',
@@ -43,11 +50,11 @@ const guide = {
     number: '03',
     label: 'CONNECT STATE',
     heading: 'Let one value drive the interface.',
-    body: 'A callable observable stores availability. The owned observation updates both label and color.',
+    body: 'An observable stores availability. The owned observation updates both label and color.',
     accent: colors.mint,
     lines: [
       'const online = fk.state.observable(false);',
-      '',
+      'online.set(true);',
       'fk.state.observe(card, online, value => {',
       '  fk.update(status, statusProps(value));',
       '});',
@@ -59,19 +66,19 @@ const guide = {
     heading: 'Retarget the same properties on input.',
     body: 'Hover the finished preview. FrameKit retains scale and rotation springs between goals.',
     accent: colors.amber,
-    lines: ["fk.on(card, 'MouseEnter', () =>", '  fk.spring(scale, { Scale: 1.04 })', ');', '', ''],
+    lines: ['card.onMouseEnter(() =>', '  fk.spring(scale, { Scale: 1.04 })', ');', '', ''],
   },
 } as const;
 
 export function createGuide(): fk.FrameNode {
   const section = pageSection('BuildGuide', top, height, colors.paper);
   const content = sectionContent();
-  const step = fk.state.observable<GuideStep>('create');
+  const selectedStepKey = fk.state.observable<GuideStep>('create');
   const online = fk.state.observable(false);
 
   fk.append(
     content,
-    text({
+    createText({
       text: 'BUILD ONE REAL INTERACTION,\nSTEP BY STEP.',
       size: scaledSize(690, 128, contentWidth, height),
       position: scaledPosition(0, 58, contentWidth, height),
@@ -84,7 +91,7 @@ export function createGuide(): fk.FrameNode {
   );
   fk.append(
     content,
-    text({
+    createText({
       text: 'This is the complete FrameKit loop: create a node, compose modifiers, connect state, then add motion to the same property model.',
       size: scaledSize(400, 110, contentWidth, height),
       position: scaledPosition(720, 72, contentWidth, height),
@@ -102,7 +109,7 @@ export function createGuide(): fk.FrameNode {
     BackgroundColor3: colors.ink,
     ClipsDescendants: true,
   });
-  decorate(lab, 26, colors.darkText, 2);
+  addRoundedBorder(lab, 26, colors.darkText, 2);
 
   const navigation = fk.createFrame({
     Name: 'GuideSteps',
@@ -111,7 +118,7 @@ export function createGuide(): fk.FrameNode {
   });
   fk.append(
     navigation,
-    text({
+    createText({
       text: 'SELECT A BUILD STEP',
       size: fk.udim2FromOffset(294, 30),
       position: fk.udim2FromOffset(28, 26),
@@ -121,19 +128,21 @@ export function createGuide(): fk.FrameNode {
       weight: 750,
     }),
   );
-  const stepButtons = new Map<GuideStep, fk.TextButtonNode>();
-  const stepLabels = new Map<GuideStep, fk.TextLabelNode>();
-  for (const [index, key] of (Object.keys(guide) as GuideStep[]).entries()) {
-    const item = guide[key];
-    const control = button(
+  const stepControls = new Map<
+    GuideStep,
+    Readonly<{ button: fk.TextButtonNode; label: fk.TextLabelNode }>
+  >();
+  for (const [index, key] of guideSteps.entries()) {
+    const stepContent = guide[key];
+    const control = createButton(
       '',
       fk.udim2FromOffset(294, 92),
       fk.udim2FromOffset(28, 74 + index * 106),
       colors.ink,
       colors.text,
     );
-    const label = text({
-      text: `${item.number}\n${item.label}`,
+    const label = createText({
+      text: `${stepContent.number}\n${stepContent.label}`,
       size: fk.udim2FromOffset(250, 58),
       position: fk.udim2FromOffset(20, 17),
       color: colors.textMuted,
@@ -143,14 +152,13 @@ export function createGuide(): fk.FrameNode {
     });
     fk.append(control, label);
     bindScaleMotion(control, 1.025);
-    fk.on(control, 'MouseButton1Click', () => step(key));
-    stepButtons.set(key, control);
-    stepLabels.set(key, label);
+    control.onClick(() => selectedStepKey.set(key));
+    stepControls.set(key, { button: control, label });
     fk.append(navigation, control);
   }
   fk.append(
     navigation,
-    text({
+    createText({
       text: 'Each step changes the actual preview and its corresponding code.',
       size: fk.udim2FromOffset(294, 70),
       position: fk.udim2FromOffset(28, 524),
@@ -168,7 +176,7 @@ export function createGuide(): fk.FrameNode {
     Position: fk.udim2FromOffset(350, 0),
     BackgroundColor3: colors.paperRaised,
   });
-  const stepIndex = text({
+  const stepIndex = createText({
     text: '',
     size: fk.udim2FromOffset(180, 28),
     position: fk.udim2FromOffset(40, 28),
@@ -177,7 +185,7 @@ export function createGuide(): fk.FrameNode {
     font: fonts.mono,
     weight: 750,
   });
-  const heading = text({
+  const heading = createText({
     text: '',
     size: fk.udim2FromOffset(650, 54),
     position: fk.udim2FromOffset(40, 62),
@@ -185,7 +193,7 @@ export function createGuide(): fk.FrameNode {
     textSize: 28,
     weight: 900,
   });
-  const body = text({
+  const body = createText({
     text: '',
     size: fk.udim2FromOffset(650, 62),
     position: fk.udim2FromOffset(40, 112),
@@ -204,10 +212,10 @@ export function createGuide(): fk.FrameNode {
     Position: fk.udim2FromOffset(40, 206),
     BackgroundColor3: colors.paper,
   });
-  decorate(previewArea, 18, colors.paperMuted);
+  addRoundedBorder(previewArea, 18, colors.paperMuted);
   fk.append(
     previewArea,
-    text({
+    createText({
       text: 'LIVE RESULT',
       size: fk.udim2FromOffset(300, 28),
       position: fk.udim2FromOffset(24, 18),
@@ -245,7 +253,7 @@ export function createGuide(): fk.FrameNode {
   fk.append(card, avatar);
   fk.append(
     card,
-    text({
+    createText({
       text: 'FRAME BUILDER',
       size: fk.udim2FromOffset(170, 36),
       position: fk.udim2FromOffset(98, 22),
@@ -256,7 +264,7 @@ export function createGuide(): fk.FrameNode {
   );
   fk.append(
     card,
-    text({
+    createText({
       text: 'Typed UI engineer',
       size: fk.udim2FromOffset(170, 28),
       position: fk.udim2FromOffset(98, 58),
@@ -264,7 +272,7 @@ export function createGuide(): fk.FrameNode {
       textSize: 12,
     }),
   );
-  const stateButton = button(
+  const stateButton = createButton(
     'SET ONLINE',
     fk.udim2FromOffset(246, 48),
     fk.udim2FromOffset(24, 154),
@@ -272,9 +280,9 @@ export function createGuide(): fk.FrameNode {
     colors.text,
   );
   bindButtonMotion(stateButton, colors.ink, colors.mint);
-  fk.on(stateButton, 'MouseButton1Click', () => online((value) => !value));
+  stateButton.onClick(() => online.update((value) => !value));
   fk.append(card, stateButton);
-  const hoverHint = text({
+  const hoverHint = createText({
     text: 'HOVER THE FINISHED CARD  ↗',
     size: fk.udim2FromOffset(246, 28),
     position: fk.udim2FromOffset(24, 216),
@@ -293,10 +301,10 @@ export function createGuide(): fk.FrameNode {
     Position: fk.udim2FromOffset(426, 206),
     BackgroundColor3: colors.ink,
   });
-  decorate(code, 18, colors.inkSoft);
+  addRoundedBorder(code, 18, colors.inkSoft);
   fk.append(
     code,
-    text({
+    createText({
       text: 'CURRENT STEP',
       size: fk.udim2FromOffset(290, 28),
       position: fk.udim2FromOffset(22, 18),
@@ -307,16 +315,16 @@ export function createGuide(): fk.FrameNode {
     }),
   );
   const codeRows = [
-    codeLine(code, '', 66, colors.violet),
-    codeLine(code, '', 106),
-    codeLine(code, '', 146, colors.coral),
-    codeLine(code, '', 186),
-    codeLine(code, '', 226, colors.mint),
+    appendCodeLine(code, '', 66, colors.violet),
+    appendCodeLine(code, '', 106),
+    appendCodeLine(code, '', 146, colors.coral),
+    appendCodeLine(code, '', 186),
+    appendCodeLine(code, '', 226, colors.mint),
   ];
   for (const row of codeRows) fk.update(row, { TextSize: 11 });
   fk.append(
     code,
-    text({
+    createText({
       text: 'The preview is not a mockup. It is built and updated by the code pattern shown here.',
       size: fk.udim2FromOffset(294, 80),
       position: fk.udim2FromOffset(22, 316),
@@ -329,12 +337,12 @@ export function createGuide(): fk.FrameNode {
   fk.append(stage, code);
   fk.append(lab, stage);
 
-  fk.on(card, 'MouseEnter', () => {
-    if (step() !== 'animate') return;
+  card.onMouseEnter(() => {
+    if (selectedStepKey.get() !== 'animate') return;
     fk.spring(cardScale, { Scale: 1.04 });
     fk.spring(card, { Rotation: -1.5 });
   });
-  fk.on(card, 'MouseLeave', () => {
+  card.onMouseLeave(() => {
     fk.spring(cardScale, { Scale: 1 });
     fk.spring(card, { Rotation: 0 });
   });
@@ -345,9 +353,9 @@ export function createGuide(): fk.FrameNode {
       TextColor3: value ? colors.ink : colors.text,
     });
   });
-  fk.state.observe(card, step, (value) => {
-    const item = guide[value];
-    const index = (Object.keys(guide) as GuideStep[]).indexOf(value);
+  fk.state.observe(card, selectedStepKey, (value) => {
+    const selectedStep = guide[value];
+    const index = guideSteps.indexOf(value);
     const decorated = index >= 1;
     const connected = index >= 2;
     const animated = index >= 3;
@@ -356,15 +364,19 @@ export function createGuide(): fk.FrameNode {
     fk.update(stateButton, { Visible: connected });
     fk.update(hoverHint, { Visible: animated });
     fk.update(card, { BackgroundColor3: decorated ? colors.paperRaised : colors.paperMuted });
-    fk.update(stepIndex, { Text: `${item.number} / 04`, TextColor3: item.accent });
-    fk.update(heading, { Text: item.heading });
-    fk.update(body, { Text: item.body });
-    for (const [lineIndex, row] of codeRows.entries())
-      fk.update(row, { Text: item.lines[lineIndex]! });
-    for (const [key, control] of stepButtons) {
+    fk.update(stepIndex, {
+      Text: `${selectedStep.number} / 04`,
+      TextColor3: selectedStep.accent,
+    });
+    fk.update(heading, { Text: selectedStep.heading });
+    fk.update(body, { Text: selectedStep.body });
+    updateTextLines(codeRows, selectedStep.lines);
+    for (const [key, control] of stepControls) {
       const active = key === value;
-      fk.update(control, { BackgroundColor3: active ? item.accent : colors.ink });
-      fk.update(stepLabels.get(key)!, { TextColor3: active ? colors.ink : colors.textMuted });
+      fk.update(control.button, {
+        BackgroundColor3: active ? selectedStep.accent : colors.ink,
+      });
+      fk.update(control.label, { TextColor3: active ? colors.ink : colors.textMuted });
     }
   });
 
