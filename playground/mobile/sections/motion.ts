@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 import { bindButtonMotion } from '../../shared/interaction';
 import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
@@ -140,7 +140,7 @@ export function createMotion(): fk.FrameNode {
     BackgroundColor3: colors.ink,
   });
   addRoundedBorder(code, 14, colors.inkSoft);
-  appendCodeLine(code, 'fk.spring(card, {', 18, colors.coral);
+  appendCodeLine(code, 'fka.spring(card, {', 18, colors.coral);
 
   const positionLine = appendCodeLine(code, '  Position: calmPosition,', 48);
 
@@ -149,9 +149,9 @@ export function createMotion(): fk.FrameNode {
   appendCodeLine(code, '});', 138, colors.coral);
   appendCodeLine(code, '', 168);
 
-  const cardMotion = fk.createMotion(card);
+  const cardMotion = fka.createMotion(card);
 
-  const scaleMotion = fk.createMotion(scale);
+  const scaleMotion = fka.createMotion(scale);
   cardMotion.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
   card.watch(mode, (value) => {
     const goal = motionGoals[value];

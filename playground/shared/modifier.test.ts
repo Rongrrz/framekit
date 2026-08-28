@@ -1,9 +1,8 @@
-import { fk } from 'framekit';
+import { fk, fka, fkh } from 'framekit';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { setupAnimationClock } from '../../src/__tests__/helpers/animation-clock';
 import { createComposer } from '../desktop/sections/composer';
-import { createSpringModifierToggle } from './modifier';
 
 const { settle } = setupAnimationClock();
 
@@ -15,9 +14,9 @@ describe('spring modifier toggles', () => {
   it('can repeatedly detach and reattach the same modifier', () => {
     const frame = fk.createFrame();
     const glow = fk.createUIGlow({ Transparency: 1, Radius: 0 });
-    const motion = fk.createMotion(glow);
+    const motion = fka.createMotion(glow);
     let active = false;
-    const toggle = createSpringModifierToggle({
+    const toggle = fkh.createSpringModifierToggle({
       parent: frame,
       modifier: glow,
       motion,

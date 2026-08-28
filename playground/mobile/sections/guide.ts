@@ -1,7 +1,6 @@
-import { fk } from 'framekit';
+import { fk, fka, fkh } from 'framekit';
 
-import { bindButtonMotion, bindScaleMotion } from '../../shared/interaction';
-import { setModifierAttached } from '../../shared/modifier';
+import { bindButtonMotion } from '../../shared/interaction';
 import {
   createButton,
   appendCodeLine,
@@ -56,7 +55,7 @@ const guideSteps = [
     index: '04 / ANIMATE',
     title: 'Add motion.',
     body: 'The finished card scales on hover through one retained spring.',
-    lines: ['card.onMouseEnter(() =>', '  fk.spring(scale, { Scale: 1.04 })', ');'],
+    lines: ['card.onMouseEnter(() =>', '  fka.spring(scale, { Scale: 1.04 })', ');'],
   },
 ] as const;
 
@@ -83,7 +82,7 @@ export function createGuide(): fk.FrameNode {
       colors.text,
     );
     control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
-    bindScaleMotion(control, 1.035);
+    fkh.bindHoverScale(control, 1.035);
     control.onClick(() => selected.set(index));
     content.addChild(control);
   }
@@ -212,9 +211,9 @@ export function createGuide(): fk.FrameNode {
   ];
   content.addChild(code);
   card.onMouseEnter(() => {
-    if (selected.get() === 3) fk.spring(cardScale, { Scale: 1.04 });
+    if (selected.get() === 3) fka.spring(cardScale, { Scale: 1.04 });
   });
-  card.onMouseLeave(() => fk.spring(cardScale, { Scale: 1 }));
+  card.onMouseLeave(() => fka.spring(cardScale, { Scale: 1 }));
   card.watch(online, (isOnline) => {
     stateButton.setProperties({
       Text: isOnline ? 'ONLINE  ●' : 'SET ONLINE',
@@ -225,8 +224,8 @@ export function createGuide(): fk.FrameNode {
   card.watch(selected, (value) => {
     const guideStep = guideSteps[value];
     if (!guideStep) return;
-    setModifierAttached(card, corner, value >= 1);
-    setModifierAttached(card, stroke, value >= 1);
+    fkh.setModifierAttached(card, corner, value >= 1);
+    fkh.setModifierAttached(card, stroke, value >= 1);
     stateButton.setProperties({ Visible: value >= 2 });
     hint.setProperties({ Visible: value >= 3 });
     stepLabel.setProperties({ Text: guideStep.index });

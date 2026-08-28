@@ -27,7 +27,7 @@ const principles = [
     number: '03',
     title: 'Move with intent',
     body: 'Use springs for interaction and tweens for bounded playback. Both update the same typed properties and arbitrate ownership safely.',
-    code: 'fk.spring(node, { ... })',
+    code: 'fka.spring(node, { ... })',
     accent: colors.violet,
   },
 ] as const;

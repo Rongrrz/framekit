@@ -1,6 +1,6 @@
-import { fk } from 'framekit';
+import { fk, fkh } from 'framekit';
 
-import { bindButtonMotion, bindScaleMotion, copyCommand } from '../../shared/interaction';
+import { bindButtonMotion, copyCommand } from '../../shared/interaction';
 import {
   createButton,
   appendCodeLine,
@@ -38,7 +38,7 @@ const groups = {
     title: 'Style by composition.',
     body: 'Corners, strokes, shadows, glows, padding, scale, constraints, and layout are element-less nodes with ordinary lifetimes.',
     accent: colors.violet,
-    tokens: ['createUICorner', 'createUIStroke', 'createUIShadow', 'createUIGlow'],
+    tokens: ['fk.createUICorner', 'fk.createUIStroke', 'fk.createUIShadow', 'fk.createUIGlow'],
     lines: [
       'const glow = fk.createUIGlow({',
       '  Color: fk.color3FromRGB(174, 145, 255),',
@@ -52,7 +52,7 @@ const groups = {
     title: 'Keep state direct.',
     body: 'A shared value is optional, synchronous, and explicit. Watching it never rerenders or recreates a node.',
     accent: colors.mint,
-    tokens: ['createValue', 'node.watch', 'value.get', 'value.set'],
+    tokens: ['fk.createValue', 'node.watch', 'value.get', 'value.set'],
     lines: [
       'const count = fk.createValue(0);',
       'count.set(1);',
@@ -66,9 +66,9 @@ const groups = {
     title: 'Move any value.',
     body: 'Springs retarget continuously. Tweens offer explicit playback. Property ownership prevents competing animations.',
     accent: colors.amber,
-    tokens: ['spring', 'createTween', 'tweenInfo', 'createMotion'],
+    tokens: ['fka.spring', 'fka.createTween', 'fka.tweenInfo', 'fka.createMotion'],
     lines: [
-      'fk.spring(card, {',
+      'fka.spring(card, {',
       '  Size: fk.udim2FromOffset(360, 220),',
       '  Rotation: 3,',
       '});',
@@ -162,14 +162,14 @@ export function createApi(): fk.FrameNode {
       yAlignment: 'Center',
     });
     control.addChild(label);
-    bindScaleMotion(control, 1.025);
+    fkh.bindHoverScale(control, 1.025);
     control.onClick(() => selected.set(key));
     groupControls.set(key, { button: control, label });
     navigation.addChild(control);
   }
   navigation.addChild(
     createText({
-      text: "import { fk } from 'framekit'",
+      text: "import { fk, fka, fkh } from 'framekit'",
       size: fk.udim2FromOffset(262, 32),
       position: fk.udim2FromOffset(28, 490),
       color: colors.violet,

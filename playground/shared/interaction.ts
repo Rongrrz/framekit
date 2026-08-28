@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 import { colors } from '../theme';
 
@@ -20,12 +20,12 @@ export function bindButtonMotion(
   node.addChild(scale);
   node.onMouseEnter(() => {
     if (node.Disabled) return;
-    fk.spring(node, { BackgroundColor3: hovered });
-    fk.spring(scale, { Scale: 1.035 });
+    fka.spring(node, { BackgroundColor3: hovered });
+    fka.spring(scale, { Scale: 1.035 });
   });
   node.onMouseLeave(() => {
-    fk.spring(node, { BackgroundColor3: idle });
-    fk.spring(scale, { Scale: 1 });
+    fka.spring(node, { BackgroundColor3: idle });
+    fka.spring(scale, { Scale: 1 });
   });
 }
 
@@ -34,21 +34,13 @@ export function bindCardMotion(node: fk.FrameNode, rotation = -1.25, scaleGoal =
 
   node.addChild(scale);
   node.onMouseEnter(() => {
-    fk.spring(scale, { Scale: scaleGoal });
-    fk.spring(node, { Rotation: rotation });
+    fka.spring(scale, { Scale: scaleGoal });
+    fka.spring(node, { Rotation: rotation });
   });
   node.onMouseLeave(() => {
-    fk.spring(scale, { Scale: 1 });
-    fk.spring(node, { Rotation: 0 });
+    fka.spring(scale, { Scale: 1 });
+    fka.spring(node, { Rotation: 0 });
   });
-}
-
-export function bindScaleMotion(node: fk.GuiNode, scaleGoal = 1.035): void {
-  const scale = fk.createUIScale();
-
-  node.addChild(scale);
-  node.onMouseEnter(() => fk.spring(scale, { Scale: scaleGoal }));
-  node.onMouseLeave(() => fk.spring(scale, { Scale: 1 }));
 }
 
 export async function copyCommand(

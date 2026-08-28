@@ -3,12 +3,12 @@
 FrameKit brings an engine-style UI object model to the browser. Create typed nodes, arrange them in an explicit tree, change their properties, and connect events. If you have used Roblox Instances—or scene trees in other engines—the ownership model should feel familiar.
 
 ```ts
-import { color3FromRGB, createFrame, createScreenGui, udim2FromOffset } from 'framekit';
+import { fk } from 'framekit';
 
-const gui = createScreenGui();
-const card = createFrame({
-  Size: udim2FromOffset(320, 180),
-  BackgroundColor3: color3FromRGB(238, 113, 99),
+const gui = fk.createScreenGui();
+const card = fk.createFrame({
+  Size: fk.udim2FromOffset(320, 180),
+  BackgroundColor3: fk.color3FromRGB(238, 113, 99),
   Rotation: 2,
 });
 
@@ -16,17 +16,17 @@ gui.addChild(card);
 gui.mount('#app');
 ```
 
-Prefer a Roblox-like namespace? The same API is available as `fk`:
+FrameKit exposes three focused namespaces:
 
 ```ts
-import { fk } from 'framekit';
-
-const gui = fk.createScreenGui();
-gui.addChild(fk.createFrame({ Size: fk.udim2FromOffset(320, 180) }));
-gui.mount('#app');
+import { fk, fka, fkh } from 'framekit';
 ```
 
-Named imports keep factories and value constructors tree-shakeable. The `fk` namespace offers a familiar single entry point. Either import style creates the same node objects; the programming model never changes.
+- `fk` contains core nodes, values, state, events, and hierarchy APIs.
+- `fka` contains springs, tweens, easing, and animation controllers.
+- `fkh` contains optional helpers that compose an opinionated interaction pattern.
+
+Each API has one canonical location; FrameKit does not expose parallel root-level function aliases.
 
 ## The model
 
@@ -43,7 +43,8 @@ The common vocabulary is deliberately small:
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                            |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                       |
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                            |
-| Motion        | `createMotion`, `createTween`, `tweenInfo`                                                       |
+| Motion        | `fka.spring`, `fka.createMotion`, `fka.createTween`, `fka.tweenInfo`                             |
+| Helpers       | `fkh.bindHoverScale`, `fkh.setModifierAttached`, `fkh.createSpringModifierToggle`                |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors                   |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
@@ -91,6 +92,8 @@ panel.addChild(
 ```
 
 A parent accepts one modifier of each kind. Duplicate modifiers throw without disturbing either tree. `UIListLayout` controls the positions of its parent's direct GUI children while attached; detaching it restores their own `Position` and `AnchorPoint` rendering.
+
+Use `fkh` when its optional interaction conventions fit your UI. `bindHoverScale()` adds a retained `UIScale`; `setModifierAttached()` toggles a modifier without recreating it; and `createSpringModifierToggle()` animates a modifier out before detaching it.
 
 ## Hierarchy and input
 
@@ -173,23 +176,23 @@ Rich text is an explicit opt-in and supports bold, italic, underline, strikethro
 
 ## Spring motion
 
-Call `spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
+Call `fka.spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
 
 ```ts
 const scale = fk.createUIScale();
 button.addChild(scale);
 
-button.onMouseEnter(() => fk.spring(scale, { Scale: 1.04 }));
-button.onMouseLeave(() => fk.spring(scale, { Scale: 1 }));
+button.onMouseEnter(() => fka.spring(scale, { Scale: 1.04 }));
+button.onMouseLeave(() => fka.spring(scale, { Scale: 1 }));
 ```
 
 The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mass: 1, precision: 0.001, restVelocity: 0.0625 }`. Most interactions should leave it alone. When a particular motion needs a different feel, pass a separate settings object:
 
 ```ts
-fk.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
+fka.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
 ```
 
-`spring()` animates numeric properties plus `Color3`, `Vector2`, `UDim`, and `UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. `mass`, `precision`, and `restVelocity` are also available. Use the advanced `createMotion()` controller only when you need its `completed`, `isAnimating()`, or `stop()` controls.
+`fka.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. `mass`, `precision`, and `restVelocity` are also available. Use the advanced `fka.createMotion()` controller only when you need its `completed`, `isAnimating()`, or `stop()` controls.
 
 Assigning a property or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue. A direct write always wins; there is no hidden animation priority to remember.
 
@@ -202,7 +205,7 @@ Scaling with `UIScale` is useful for hover effects because it changes visual siz
 Tweens are the explicit, timed alternative to springs:
 
 ```ts
-const tween = fk.createTween(panel, fk.tweenInfo(0.3, 'Quad', 'Out'), {
+const tween = fka.createTween(panel, fka.tweenInfo(0.3, 'Quad', 'Out'), {
   Position: fk.udim2FromOffset(240, 40),
   BackgroundTransparency: 0.1,
 });
@@ -215,16 +218,24 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 ## Package organization
 
-The public contract lives in `src/api.ts`; `src/index.ts` deliberately exposes it both as named exports and as `fk`. Source domains own their implementation and local barrel:
+The package entry point exposes only `fk`, `fka`, and `fkh`. Source domains own their implementation and local barrel:
 
+- `core` — public core barrel exposed as `fk`
 - `elements` — DOM-backed controls and input behavior
 - `modifiers` — element-less style, constraint, and layout nodes
 - `animation` — spring and tween controllers, physics, easing, and value interpolation
+- `helpers` — optional composed behavior exposed as `fkh`
 - `state` — explicit shared values and signals
 - `runtime` — internal node state, trees, rendering, property ownership, events, and cleanup
 - `values` — immutable Roblox-style structural values
 
-Types such as `Color3`, `UDim2`, `GuiNode`, `StyleModifierNode`, and `LayoutNode` are exported from the root. Lowercase functions create values; PascalCase names describe their TypeScript types.
+Core types are available through `fk`, while animation types are available through `fka`:
+
+```ts
+function show(panel: fk.FrameNode, motion: fka.Motion<fk.FrameProperties>): void {
+  motion.spring({ BackgroundTransparency: 0 });
+}
+```
 
 The runtime remains an implementation boundary rather than a secondary public entry point. Package consumers should import only from `framekit`.
 

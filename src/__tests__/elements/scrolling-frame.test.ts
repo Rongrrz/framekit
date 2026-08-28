@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../..';
+import { fk, fka } from '../..';
 import { resetDocumentAfterEach } from '../helpers/reset-document';
 
 const { createScrollingFrame } = fk;
@@ -40,7 +40,7 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
     const springTarget = createScrollingFrame();
-    const motion = fk.createMotion(springTarget);
+    const motion = fka.createMotion(springTarget);
     motion.spring({ CanvasPosition: fk.vector2(0, 200) });
     springTarget.element.dispatchEvent(new Event('scroll'));
     expect(motion.isAnimating()).toBe(true);
@@ -50,7 +50,7 @@ describe('scrolling frames', () => {
     springTarget.element.dispatchEvent(new Event('scroll'));
     expect(springTarget.CanvasPosition).toEqual(fk.vector2(0, 40));
     const tweenTarget = createScrollingFrame();
-    const tween = fk.createTween(tweenTarget, fk.tweenInfo(1), {
+    const tween = fka.createTween(tweenTarget, fka.tweenInfo(1), {
       CanvasPosition: fk.vector2(200, 0),
     });
     tween.play();
@@ -68,7 +68,7 @@ describe('scrolling frames', () => {
     const scrolling = createScrollingFrame();
     const child = document.createElement('button');
     scrolling.element.append(child);
-    const motion = fk.createMotion(scrolling);
+    const motion = fka.createMotion(scrolling);
     motion.spring({ CanvasPosition: fk.vector2(0, 200) });
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
     expect(scrolling.element.tabIndex).toBe(0);
@@ -88,7 +88,7 @@ describe('scrolling frames', () => {
       scrolling.element.scrollLeft = Math.round(left);
       scrolling.element.scrollTop = Math.round(top);
     });
-    const motion = fk.createMotion(scrolling);
+    const motion = fka.createMotion(scrolling);
     motion.spring({ CanvasPosition: fk.vector2(0, 200) });
     frame?.(1000 / 60);
     expect(scrolling.CanvasPosition.Y).not.toBe(scrolling.element.scrollTop);
@@ -102,7 +102,7 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
     const scrolling = createScrollingFrame();
-    const motion = fk.createMotion(scrolling);
+    const motion = fka.createMotion(scrolling);
     motion.spring({ CanvasPosition: fk.vector2(0, 200) });
     scrolling.CanvasPosition = fk.vector2(0, 80);
     expect(motion.isAnimating()).toBe(false);

@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 type ScaledPageShell = Readonly<{
   app: fk.ScreenGuiNode;
@@ -46,7 +46,7 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
 
   const contentScale = fk.createUIScale({ Scale: currentScale });
 
-  const scrollMotion = fk.createMotion(page);
+  const scrollMotion = fka.createMotion(page);
 
   content.addChild(contentScale);
 

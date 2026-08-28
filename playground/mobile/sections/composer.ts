@@ -1,7 +1,5 @@
-import { fk } from 'framekit';
+import { fk, fka, fkh } from 'framekit';
 
-import { bindScaleMotion } from '../../shared/interaction';
-import { createSpringModifierToggle, setModifierAttached } from '../../shared/modifier';
 import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
@@ -55,7 +53,7 @@ export function createComposer(): fk.FrameNode {
       colors.text,
     );
     control.setProperties({ TextSize: 10, FontFamily: fonts.mono });
-    bindScaleMotion(control, 1.035);
+    fkh.bindHoverScale(control, 1.035);
     control.onClick(() => {
       enabled.update((state) => ({ ...state, [key]: !state[key] }));
     });
@@ -237,15 +235,15 @@ export function createComposer(): fk.FrameNode {
 
   content.addChild(explanation);
 
-  const strokeMotion = fk.createMotion(stroke);
+  const strokeMotion = fka.createMotion(stroke);
 
-  const shadowMotion = fk.createMotion(shadow);
+  const shadowMotion = fka.createMotion(shadow);
 
-  const glowMotion = fk.createMotion(glow);
+  const glowMotion = fka.createMotion(glow);
 
-  const paddingMotion = fk.createMotion(padding);
+  const paddingMotion = fka.createMotion(padding);
 
-  const toggleStroke = createSpringModifierToggle({
+  const toggleStroke = fkh.createSpringModifierToggle({
     parent: card,
     modifier: stroke,
     motion: strokeMotion,
@@ -254,7 +252,7 @@ export function createComposer(): fk.FrameNode {
     isActive: () => enabled.get().stroke,
   });
 
-  const toggleShadow = createSpringModifierToggle({
+  const toggleShadow = fkh.createSpringModifierToggle({
     parent: card,
     modifier: shadow,
     motion: shadowMotion,
@@ -273,7 +271,7 @@ export function createComposer(): fk.FrameNode {
     isActive: () => enabled.get().shadow,
   });
 
-  const toggleGlow = createSpringModifierToggle({
+  const toggleGlow = fkh.createSpringModifierToggle({
     parent: card,
     modifier: glow,
     motion: glowMotion,
@@ -282,7 +280,7 @@ export function createComposer(): fk.FrameNode {
     isActive: () => enabled.get().glow,
   });
 
-  const togglePadding = createSpringModifierToggle({
+  const togglePadding = fkh.createSpringModifierToggle({
     parent: tags,
     modifier: padding,
     motion: paddingMotion,
@@ -301,12 +299,12 @@ export function createComposer(): fk.FrameNode {
     isActive: () => enabled.get().padding,
   });
   card.watch(enabled, (value) => {
-    setModifierAttached(card, corner, value.corner);
+    fkh.setModifierAttached(card, corner, value.corner);
     toggleStroke(value.stroke);
     toggleShadow(value.shadow);
     toggleGlow(value.glow);
     togglePadding(value.padding);
-    setModifierAttached(tags, list, value.layout);
+    fkh.setModifierAttached(tags, list, value.layout);
     for (const [key, control] of controls) {
       const active = value[key];
       control.setProperties({
@@ -317,16 +315,16 @@ export function createComposer(): fk.FrameNode {
     }
     tree.setProperties({ Text: describeModifierTree(value) });
     lineOne.setProperties({
-      Text: `fk.spring(stroke, { Thickness: ${value.stroke ? '4' : '0'} });`,
+      Text: `fka.spring(stroke, { Thickness: ${value.stroke ? '4' : '0'} });`,
     });
     lineTwo.setProperties({
-      Text: `fk.spring(shadow, { Offset: ${value.shadow ? '[10, 16]' : '[0, 0]'} });`,
+      Text: `fka.spring(shadow, { Offset: ${value.shadow ? '[10, 16]' : '[0, 0]'} });`,
     });
     lineThree.setProperties({
-      Text: `fk.spring(glow, { Radius: ${value.glow ? '32' : '0'} });`,
+      Text: `fka.spring(glow, { Radius: ${value.glow ? '32' : '0'} });`,
     });
     lineFour.setProperties({
-      Text: `fk.spring(padding, { all: ${value.padding ? '12' : '0'} });`,
+      Text: `fka.spring(padding, { all: ${value.padding ? '12' : '0'} });`,
     });
   });
 

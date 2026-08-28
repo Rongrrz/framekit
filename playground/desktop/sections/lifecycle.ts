@@ -1,6 +1,5 @@
-import { fk } from 'framekit';
+import { fk, fkh } from 'framekit';
 
-import { bindScaleMotion } from '../../shared/interaction';
 import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
@@ -107,7 +106,7 @@ export function createLifecycle(): fk.FrameNode {
       colors.text,
     );
     action.setProperties({ TextSize: 10, FontFamily: fonts.mono });
-    bindScaleMotion(action, 1.04);
+    fkh.bindHoverScale(action, 1.04);
     actionButtons.set(phase, { button: action, accent });
     controls.addChild(action);
   }

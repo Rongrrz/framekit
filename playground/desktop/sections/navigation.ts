@@ -1,6 +1,6 @@
-import { fk } from 'framekit';
+import { fk, fkh } from 'framekit';
 
-import { bindButtonMotion, bindScaleMotion } from '../../shared/interaction';
+import { bindButtonMotion } from '../../shared/interaction';
 import { createButton, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { contentWidth, scaledPosition, scaledSize } from '../geometry';
@@ -86,7 +86,7 @@ export function createNavigation(
       colors.textMuted,
     );
     link.setProperties({ TextSize: 10, FontFamily: fonts.mono });
-    bindScaleMotion(link, 1.045);
+    fkh.bindHoverScale(link, 1.045);
     link.onClick(() => navigate(offset));
     linkButtons.set(key, link);
     content.addChild(link);

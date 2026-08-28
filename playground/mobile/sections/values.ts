@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 import { bindButtonMotion } from '../../shared/interaction';
 import {
@@ -144,7 +144,7 @@ export function createValues(): fk.FrameNode {
     const example = valueExamples[value];
     if (!example) return;
     shapeTitle.setProperties({ Text: example.title });
-    fk.spring(shape, {
+    fka.spring(shape, {
       BackgroundColor3: example.accent,
       Position: example.position,
       Rotation: example.rotation,

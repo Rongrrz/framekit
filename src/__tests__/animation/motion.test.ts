@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../..';
+import { fk, fka } from '../..';
 import { setupAnimationClock } from '../helpers/animation-clock';
 
 const { advance, settle } = setupAnimationClock();
@@ -9,10 +9,10 @@ describe('motion springs', () => {
   it('retains a spring per node through the top-level API', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
     const settings = { tension: 170, friction: 5 } as const;
-    fk.spring(frame, { BackgroundTransparency: 1 }, settings);
+    fka.spring(frame, { BackgroundTransparency: 1 }, settings);
     for (let index = 0; index < 5; index += 1) advance();
     const beforeRetarget = frame.BackgroundTransparency;
-    fk.spring(frame, { BackgroundTransparency: 0 }, settings);
+    fka.spring(frame, { BackgroundTransparency: 0 }, settings);
     advance();
     expect(frame.BackgroundTransparency).toBeGreaterThan(beforeRetarget);
     settle();
@@ -22,10 +22,10 @@ describe('motion springs', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0, Rotation: 0 });
     const control = fk.createFrame({ BackgroundTransparency: 0 });
     const slow = { tension: 40, friction: 12 } as const;
-    fk.spring(frame, { BackgroundTransparency: 1 }, slow);
-    fk.spring(control, { BackgroundTransparency: 1 }, slow);
+    fka.spring(frame, { BackgroundTransparency: 1 }, slow);
+    fka.spring(control, { BackgroundTransparency: 1 }, slow);
     advance();
-    fk.spring(frame, { Rotation: 90 }, { tension: 400, friction: 40, mass: 2 });
+    fka.spring(frame, { Rotation: 90 }, { tension: 400, friction: 40, mass: 2 });
     advance();
     expect(frame.BackgroundTransparency).toBe(control.BackgroundTransparency);
     expect(frame.Rotation).toBeGreaterThan(0);
@@ -38,7 +38,7 @@ describe('motion springs', () => {
       Size: fk.udim2FromOffset(100, 100),
       BackgroundColor3: fk.color3FromRGB(0, 0, 0),
     });
-    const motion = fk.createMotion(frame);
+    const motion = fka.createMotion(frame);
     const completed = vi.fn();
     expect(motion.completed).not.toHaveProperty('emit');
     expect(motion.completed).not.toHaveProperty('clear');
@@ -62,7 +62,7 @@ describe('motion springs', () => {
   });
   it('preserves velocity when retargeted', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const motion = fk.createMotion(frame, { tension: 170, friction: 5 });
+    const motion = fka.createMotion(frame, { tension: 170, friction: 5 });
     motion.spring({ BackgroundTransparency: 1 });
     for (let index = 0; index < 5; index += 1) advance();
     const beforeRetarget = frame.BackgroundTransparency;
@@ -74,10 +74,10 @@ describe('motion springs', () => {
   });
   it('arbitrates property ownership with tweens in both directions', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const motion = fk.createMotion(frame);
+    const motion = fka.createMotion(frame);
     motion.spring({ BackgroundTransparency: 1 });
     advance();
-    const tween = fk.createTween(frame, fk.tweenInfo(1), { BackgroundTransparency: 0.5 });
+    const tween = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 0.5 });
     tween.play();
     expect(motion.isAnimating()).toBe(false);
     motion.spring({ BackgroundTransparency: 0.25 });
@@ -87,7 +87,7 @@ describe('motion springs', () => {
   });
   it('lets direct property changes take control from active animations', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const motion = fk.createMotion(frame);
+    const motion = fka.createMotion(frame);
     motion.spring({ Rotation: 90 });
     advance();
 
@@ -96,7 +96,7 @@ describe('motion springs', () => {
     advance();
     expect(frame.Rotation).toBe(12);
 
-    const tween = fk.createTween(frame, fk.tweenInfo(1), { BackgroundTransparency: 1 });
+    const tween = fka.createTween(frame, fka.tweenInfo(1), { BackgroundTransparency: 1 });
     tween.play();
     advance();
     frame.setProperties({ BackgroundTransparency: 0.4 });
@@ -105,7 +105,7 @@ describe('motion springs', () => {
   });
   it('keeps an animation when a rejected assignment never takes effect', () => {
     const scale = fk.createUIScale();
-    const motion = fk.createMotion(scale);
+    const motion = fka.createMotion(scale);
     motion.spring({ Scale: 2 });
 
     expect(() => (scale.Scale = -1)).toThrow(/non-negative finite/);
@@ -115,7 +115,7 @@ describe('motion springs', () => {
   });
   it('stops individual properties and releases everything on destruction', () => {
     const frame = fk.createFrame();
-    const motion = fk.createMotion(frame);
+    const motion = fka.createMotion(frame);
     motion.spring({
       BackgroundTransparency: 1,
       Position: fk.udim2FromOffset(100, 100),
@@ -128,11 +128,11 @@ describe('motion springs', () => {
   });
   it('validates options and spring goals', () => {
     const frame = fk.createFrame();
-    expect(() => fk.createMotion(frame, { tension: 0 })).toThrow(/tension/);
-    expect(() => fk.createMotion(frame, { friction: Number.NaN })).toThrow(/friction/);
-    expect(() => fk.spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
-    expect(() => fk.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
-    const motion = fk.createMotion(frame);
+    expect(() => fka.createMotion(frame, { tension: 0 })).toThrow(/tension/);
+    expect(() => fka.createMotion(frame, { friction: Number.NaN })).toThrow(/friction/);
+    expect(() => fka.spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
+    expect(() => fka.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
+    const motion = fka.createMotion(frame);
     expect(() => motion.spring({})).toThrow(/goal property/);
     expect(() => motion.spring({ BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
@@ -140,11 +140,11 @@ describe('motion springs', () => {
     const frame = fk.createFrame();
     const scale = fk.createUIScale();
     frame.addChild(scale);
-    const motion = fk.createMotion(scale, { tension: 170, friction: 5 });
+    const motion = fka.createMotion(scale, { tension: 170, friction: 5 });
     motion.spring({ Scale: -1 });
     expect(() => settle()).toThrow(/non-negative finite/);
     expect(motion.isAnimating()).toBe(false);
-    const replacement = fk.createTween(scale, fk.tweenInfo(0), { Scale: 0.5 });
+    const replacement = fka.createTween(scale, fka.tweenInfo(0), { Scale: 0.5 });
     replacement.play();
     expect(scale.Scale).toBe(0.5);
   });
@@ -154,12 +154,12 @@ describe('motion springs', () => {
     const glow = fk.createUIGlow();
     frame.addChild(shadow);
     frame.addChild(glow);
-    fk.createMotion(shadow).spring({
+    fka.createMotion(shadow).spring({
       Offset: fk.vector2(12, 20),
       BlurRadius: 28,
       Transparency: 0.25,
     });
-    fk.createMotion(glow).spring({ Radius: 32, Color: fk.color3FromRGB(120, 90, 255) });
+    fka.createMotion(glow).spring({ Radius: 32, Color: fk.color3FromRGB(120, 90, 255) });
     settle();
     expect(shadow).toMatchObject({
       Offset: fk.vector2(12, 20),

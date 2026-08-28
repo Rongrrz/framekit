@@ -1,7 +1,6 @@
-import { fk } from 'framekit';
+import { fk, fka, fkh } from 'framekit';
 
-import { bindButtonMotion, bindScaleMotion } from '../../shared/interaction';
-import { setModifierAttached } from '../../shared/modifier';
+import { bindButtonMotion } from '../../shared/interaction';
 import {
   createButton,
   appendCodeLine,
@@ -68,7 +67,7 @@ const guide = {
     heading: 'Retarget the same properties on input.',
     body: 'Hover the finished preview. FrameKit retains scale and rotation springs between goals.',
     accent: colors.amber,
-    lines: ['card.onMouseEnter(() =>', '  fk.spring(scale, { Scale: 1.04 })', ');', '', ''],
+    lines: ['card.onMouseEnter(() =>', '  fka.spring(scale, { Scale: 1.04 })', ');', '', ''],
   },
 } as const;
 
@@ -159,7 +158,7 @@ export function createGuide(): fk.FrameNode {
       wrapped: true,
     });
     control.addChild(label);
-    bindScaleMotion(control, 1.025);
+    fkh.bindHoverScale(control, 1.025);
     control.onClick(() => selectedStepKey.set(key));
     stepControls.set(key, { button: control, label });
     navigation.addChild(control);
@@ -369,12 +368,12 @@ export function createGuide(): fk.FrameNode {
   lab.addChild(stage);
   card.onMouseEnter(() => {
     if (selectedStepKey.get() !== 'animate') return;
-    fk.spring(cardScale, { Scale: 1.04 });
-    fk.spring(card, { Rotation: -1.5 });
+    fka.spring(cardScale, { Scale: 1.04 });
+    fka.spring(card, { Rotation: -1.5 });
   });
   card.onMouseLeave(() => {
-    fk.spring(cardScale, { Scale: 1 });
-    fk.spring(card, { Rotation: 0 });
+    fka.spring(cardScale, { Scale: 1 });
+    fka.spring(card, { Rotation: 0 });
   });
   card.watch(online, (value) => {
     stateButton.setProperties({
@@ -389,8 +388,8 @@ export function createGuide(): fk.FrameNode {
     const decorated = index >= 1;
     const connected = index >= 2;
     const animated = index >= 3;
-    setModifierAttached(card, cardCorner, decorated);
-    setModifierAttached(card, cardStroke, decorated);
+    fkh.setModifierAttached(card, cardCorner, decorated);
+    fkh.setModifierAttached(card, cardStroke, decorated);
     stateButton.setProperties({ Visible: connected });
     hoverHint.setProperties({ Visible: animated });
     card.setProperties({ BackgroundColor3: decorated ? colors.paperRaised : colors.paperMuted });

@@ -1,6 +1,5 @@
-import { fk } from 'framekit';
+import { fk, fkh } from 'framekit';
 
-import { bindScaleMotion } from '../../shared/interaction';
 import {
   createButton,
   appendCodeLine,
@@ -39,7 +38,7 @@ const apiSections = [
     index: '02 / MODIFIERS',
     title: 'Compose appearance.',
     body: 'Corners, strokes, shadows, glows, padding, scale, constraints, and layout are element-less child nodes.',
-    tokens: 'createUIShadow  ·  createUIGlow\ncreateUIStroke  ·  createUICorner',
+    tokens: 'fk.createUIShadow  ·  fk.createUIGlow\nfk.createUIStroke  ·  fk.createUICorner',
     lines: [
       'const glow = fk.createUIGlow({',
       '  Color: colors.violet,',
@@ -55,7 +54,7 @@ const apiSections = [
     index: '03 / STATE',
     title: 'Connect behavior.',
     body: 'Shared values are optional and synchronous. Watching one never rerenders or recreates a node.',
-    tokens: 'createValue  ·  node.watch\nvalue.get  ·  value.set',
+    tokens: 'fk.createValue  ·  node.watch\nvalue.get  ·  value.set',
     lines: [
       'const count = fk.createValue(0);',
       'count.set(1);',
@@ -71,8 +70,8 @@ const apiSections = [
     index: '04 / MOTION',
     title: 'Animate values.',
     body: 'Springs retarget continuously. Tweens provide explicit playback over the same typed properties.',
-    tokens: 'spring  ·  createTween\ntweenInfo  ·  createMotion',
-    lines: ['fk.spring(card, {', '  Position: nextPosition,', '  Rotation: 3,', '});'],
+    tokens: 'fka.spring  ·  fka.createTween\nfka.tweenInfo  ·  fka.createMotion',
+    lines: ['fka.spring(card, {', '  Position: nextPosition,', '  Rotation: 3,', '});'],
   },
 ] as const;
 
@@ -97,7 +96,7 @@ export function createApi(): fk.FrameNode {
       colors.text,
     );
     control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
-    bindScaleMotion(control, 1.035);
+    fkh.bindHoverScale(control, 1.035);
     control.onClick(() => selected.set(index));
     content.addChild(control);
   }

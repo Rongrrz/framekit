@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 import { bindButtonMotion, copyCommand } from '../../shared/interaction';
 import {
@@ -65,7 +65,7 @@ const modeContent = {
     accent: colors.mint,
     rotation: 2,
     lines: [
-      'fk.spring(card, {',
+      'fka.spring(card, {',
       '  Position: nextPosition,',
       '  Rotation: nextRotation,',
       '});',
@@ -178,15 +178,15 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   const scale = fk.createUIScale({ Scale: 0.94 });
 
   canvas.addChild(scale);
-  fk.spring(scale, { Scale: 1 });
-  fk.spring(canvas, { Rotation: 0 });
+  fka.spring(scale, { Scale: 1 });
+  fka.spring(canvas, { Rotation: 0 });
   canvas.onMouseEnter(() => {
-    fk.spring(scale, { Scale: 1.015 });
-    fk.spring(canvas, { Rotation: 0.7 });
+    fka.spring(scale, { Scale: 1.015 });
+    fka.spring(canvas, { Rotation: 0.7 });
   });
   canvas.onMouseLeave(() => {
-    fk.spring(scale, { Scale: 1 });
-    fk.spring(canvas, { Rotation: 0 });
+    fka.spring(scale, { Scale: 1 });
+    fka.spring(canvas, { Rotation: 0 });
   });
   return section;
 }
@@ -339,7 +339,7 @@ function createHeroCanvas(): fk.FrameNode {
     const selected = modeContent[value];
     previewTitle.setProperties({ Text: selected.title });
     previewBody.setProperties({ Text: selected.body });
-    fk.spring(preview, { BackgroundColor3: selected.accent, Rotation: selected.rotation });
+    fka.spring(preview, { BackgroundColor3: selected.accent, Rotation: selected.rotation });
     updateTextLines(codeNodes, selected.lines);
     for (const [buttonMode, control] of modeButtons) {
       const active = buttonMode === value;

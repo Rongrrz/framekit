@@ -1,6 +1,5 @@
-import { fk } from 'framekit';
+import { fk, fka, fkh } from 'framekit';
 
-import { bindScaleMotion } from '../../shared/interaction';
 import {
   createButton,
   appendCodeLine,
@@ -169,7 +168,7 @@ export function createValues(): fk.FrameNode {
       xAlignment: 'Center',
     });
     control.addChild(inset);
-    bindScaleMotion(control, 1.025);
+    fkh.bindHoverScale(control, 1.025);
     control.onClick(() => selected.set(key));
     controls.set(key, control);
     sidebar.addChild(control);
@@ -268,7 +267,7 @@ export function createValues(): fk.FrameNode {
   lab.addChild(stage);
   preview.watch(selected, (value) => {
     const example = examples[value];
-    fk.spring(preview, {
+    fka.spring(preview, {
       Position: example.position,
       Size: example.size,
       Rotation: example.rotation,

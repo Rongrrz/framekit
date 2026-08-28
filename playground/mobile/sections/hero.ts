@@ -1,6 +1,6 @@
-import { fk } from 'framekit';
+import { fk, fka, fkh } from 'framekit';
 
-import { bindButtonMotion, bindScaleMotion, copyCommand } from '../../shared/interaction';
+import { bindButtonMotion, copyCommand } from '../../shared/interaction';
 import { createButton, addRoundedBorder, createPill, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
@@ -35,7 +35,7 @@ const previewModes: Readonly<
     title: 'RETAINED MOTION',
     description: 'A spring keeps current position and velocity when you give it a new goal.',
     accent: colors.violet,
-    code: 'fk.spring(card, { Rotation: 4 });',
+    code: 'fka.spring(card, { Rotation: 4 });',
   },
 };
 
@@ -126,7 +126,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
       colors.darkText,
     );
     control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
-    bindScaleMotion(control, 1.04);
+    fkh.bindHoverScale(control, 1.04);
     control.onClick(() => selected.set(mode));
     controls.set(mode, control);
     preview.addChild(control);
@@ -181,7 +181,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
     title.setProperties({ Text: mode.title });
     description.setProperties({ Text: mode.description });
     code.setProperties({ Text: mode.code });
-    fk.spring(card, { BackgroundColor3: mode.accent, Rotation: value === 'MOTION' ? 2 : 0 });
+    fka.spring(card, { BackgroundColor3: mode.accent, Rotation: value === 'MOTION' ? 2 : 0 });
     for (const [controlMode, control] of controls) {
       control.setProperties({
         BackgroundColor3: controlMode === value ? mode.accent : colors.paperMuted,
