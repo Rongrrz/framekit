@@ -4,13 +4,20 @@ The playground has two intentional presentations of the same product story. Desk
 
 ```text
 playground/
+├── index.html               # playground-only browser entry point
 ├── main.ts                  # selects and mounts one device application
 ├── theme.ts                 # shared colors and typography
+├── tsconfig.json            # isolated playground project references
+├── tsconfig.app.json        # application and showcase test type checking
+├── tsconfig.node.json       # playground tooling type checking
+├── vite.config.ts           # playground development and production build
+├── vitest.config.ts         # playground-only test discovery
 ├── shared/
 │   ├── interaction.ts       # reusable hover, button, card, and copy behavior
-│   ├── modifier.ts          # modifier attachment semantics
 │   ├── page-shell.ts        # responsive scaling and spring scrolling
 │   └── ui.ts                # small visual constructors
+├── tests/
+│   └── composer.test.ts     # playground integration behavior
 ├── desktop/
 │   ├── app.ts               # desktop section composition
 │   ├── geometry.ts          # desktop-only scale helpers

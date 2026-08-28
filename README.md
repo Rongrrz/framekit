@@ -252,12 +252,14 @@ Its desktop/mobile module boundaries and extension rules are documented in [`pla
 
 ```sh
 npm run dev                 # playground development server
+npm run build               # package bundles and declarations only
 npm run build:playground    # production playground build
-npm run build:library       # package bundles and declarations
+npm test                    # package tests only
+npm run test:playground     # playground integration tests
 npm run check               # formatting, types, lint, tests, and both builds
 ```
 
-Tests mirror the implementation domains under `src/tests`. Cross-domain test utilities live under `src/tests/shared` and are not part of the package API.
+Package tests mirror the implementation domains under `src/tests`; playground integration tests stay under `playground/tests`. Cross-domain test utilities live under `src/tests/shared` and are not part of the package API.
 
 ## Inspiration
 
