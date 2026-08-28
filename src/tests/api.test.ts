@@ -11,6 +11,7 @@ describe('package API', () => {
     expect(typeof fk.color3FromRGB).toBe('function');
     expect(typeof fk.createValue).toBe('function');
     expect(typeof fk.createUIGradient).toBe('function');
+    expect(typeof fk.defineGuiObject).toBe('function');
 
     expect(typeof fka.spring).toBe('function');
     expect(typeof fka.createTween).toBe('function');
@@ -51,5 +52,31 @@ describe('package API', () => {
     expect(fk).not.toHaveProperty('color3ToCss');
     expect(typeof fk.createScrollingFrame().scrollTo).toBe('function');
     expect(fk.createScrollingFrame()).not.toHaveProperty('getCanvasPosition');
+  });
+
+  it('defines custom GUI classes without exposing runtime internals', () => {
+    const createBadge = fk.defineGuiObject({
+      className: 'Badge',
+      defaultProperties: { Label: 'New' },
+      defaultGuiProperties: { Size: fk.udim2FromOffset(80, 24) },
+      applyProperties: (element, properties) => {
+        element.textContent = properties.Label;
+      },
+      validate: (properties) => {
+        if (properties.Label.length === 0) throw new TypeError('Label must not be empty.');
+      },
+    });
+    const badge = createBadge();
+
+    expect(badge.ClassName).toBe('Badge');
+    expect(badge.Name).toBe('Badge');
+    expect(badge.Label).toBe('New');
+    expect(badge.element.textContent).toBe('New');
+
+    badge.Label = 'Updated';
+
+    expect(badge.element.textContent).toBe('Updated');
+    expect(() => badge.setProperties({ Label: '' })).toThrow(/must not be empty/);
+    expect(badge.Label).toBe('Updated');
   });
 });

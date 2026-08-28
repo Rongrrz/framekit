@@ -1,5 +1,7 @@
 export { createFrame } from './core/elements/frame';
 export type { FrameNode, FrameProperties } from './core/elements/frame';
+export { defineGuiObject } from './core/custom-gui-object';
+export type { GuiObjectConstructor, GuiObjectDefinition } from './core/custom-gui-object';
 export type { AutomaticSize, GuiObjectNode, GuiObjectProperties } from './core/gui-object';
 
 export { createImageButton, createImageLabel } from './core/elements/image';

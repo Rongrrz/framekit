@@ -282,6 +282,26 @@ function show(panel: fk.FrameNode): void {
 
 The runtime remains an implementation boundary rather than a secondary public entry point. Package consumers should import only from `framekit`.
 
+## Custom GUI classes
+
+`defineGuiObject()` is the supported extension point when an application needs a reusable node type. It returns an ordinary factory; created objects use the same properties, hierarchy, geometry, events, and lifecycle as built-in nodes.
+
+```ts
+const createBadge = fk.defineGuiObject({
+  className: 'Badge',
+  defaultProperties: { Label: 'New' },
+  applyProperties(element, properties) {
+    element.textContent = properties.Label;
+  },
+});
+
+const badge = createBadge({ Label: 'Featured' });
+badge.Label = 'Updated';
+badge.Parent = panel;
+```
+
+Use `defaultGuiProperties` to customize inherited defaults such as `Size`, and `validate` when custom properties have runtime constraints. Defining a class does not introduce components, rerenders, or a separate lifecycle.
+
 ## Safety boundaries
 
 FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, missing values, non-finite numbers, and invalid runtime enum members. Tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
