@@ -1,5 +1,11 @@
-import { fk, fka } from 'framekit';
+import { fk } from 'framekit';
 
+import {
+  bindMotionDemo,
+  motionModes,
+  type MotionMode,
+  type MotionPositions,
+} from '../../features/motion';
 import { bindButtonMotion } from '../../shared/interaction';
 import {
   createButton,
@@ -12,43 +18,21 @@ import { colors, fonts } from '../../theme';
 import { contentWidth, pageSection, scaledPosition, scaledSize, sectionContent } from '../geometry';
 import { sectionLayout } from '../layout';
 
-type DemoMode = 'calm' | 'focus' | 'play' | 'orbit';
-
 const { top, height } = sectionLayout.motion;
 
-const goals = {
-  calm: {
-    Position: fk.udim2FromOffset(170, 126),
-    Rotation: 0,
-    BackgroundColor3: colors.mint,
-    Scale: 1,
-  },
-  focus: {
-    Position: fk.udim2FromOffset(266, 82),
-    Rotation: -5,
-    BackgroundColor3: colors.violet,
-    Scale: 1.08,
-  },
-  play: {
-    Position: fk.udim2FromOffset(92, 190),
-    Rotation: 7,
-    BackgroundColor3: colors.coral,
-    Scale: 0.95,
-  },
-  orbit: {
-    Position: fk.udim2FromOffset(304, 212),
-    Rotation: 12,
-    BackgroundColor3: colors.amber,
-    Scale: 0.88,
-  },
-} as const;
+const motionPositions = {
+  calm: fk.udim2FromOffset(170, 126),
+  focus: fk.udim2FromOffset(266, 82),
+  play: fk.udim2FromOffset(92, 190),
+  orbit: fk.udim2FromOffset(304, 212),
+} satisfies MotionPositions;
 
 export function createMotionSection(): fk.FrameNode {
   const section = pageSection('Motion', top, height, colors.ink);
 
   const content = sectionContent();
 
-  const mode = fk.createValue<DemoMode>('calm');
+  const mode = fk.createValue<MotionMode>('calm');
 
   content.addChild(
     createPill(
@@ -140,26 +124,20 @@ export function createMotionSection(): fk.FrameNode {
     }),
   );
 
-  const modeButtons = new Map<DemoMode, fk.TextButtonNode>();
+  const modeButtons = new Map<MotionMode, fk.TextButtonNode>();
 
-  const modes: readonly [DemoMode, string, fk.Color3][] = [
-    ['calm', 'CALM', colors.mint],
-    ['focus', 'FOCUS', colors.violet],
-    ['play', 'PLAY', colors.coral],
-    ['orbit', 'ORBIT', colors.amber],
-  ];
-  for (const [index, [value, label, accent]] of modes.entries()) {
+  for (const [index, goal] of motionModes.entries()) {
     const control = createButton(
-      label,
+      goal.label,
       fk.udim2FromOffset(76, 44),
       fk.udim2FromOffset(28 + index * 84, 330),
       colors.inkSoft,
       colors.text,
     );
     control.setProperties({ TextSize: 11 });
-    bindButtonMotion(control, colors.inkSoft, accent);
-    control.onClick(() => mode.set(value));
-    modeButtons.set(value, control);
+    bindButtonMotion(control, colors.inkSoft, goal.accent);
+    control.onClick(() => mode.set(goal.key));
+    modeButtons.set(goal.key, control);
     controls.addChild(control);
   }
 
@@ -221,7 +199,7 @@ export function createMotionSection(): fk.FrameNode {
   const demoCard = fk.createFrame({
     Name: 'SpringCard',
     Size: fk.udim2FromOffset(330, 250),
-    Position: goals.calm.Position,
+    Position: motionPositions.calm,
     BackgroundColor3: colors.mint,
     BackgroundTransparency: 0.04,
   });
@@ -259,30 +237,28 @@ export function createMotionSection(): fk.FrameNode {
 
   lab.addChild(stage);
 
-  const springController = fka.spring(demoCard);
-  springController.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
-  demoCard.watch(mode, (value) => {
-    const goal = goals[value];
-    status.setProperties({
-      Text: `● MOVING TO ${value.toUpperCase()}`,
-      TextColor3: goal.BackgroundColor3,
-    });
-    positionLine.setProperties({ Text: `  Position: ${value}Position,` });
-    rotationLine.setProperties({ Text: `  Rotation: ${goal.Rotation},` });
-    cardStatus.setProperties({
-      Text: `${value.toUpperCase()}  •  Position  •  Rotation  •  Scale`,
-    });
-    fka.spring(demoCard, {
-      Position: goal.Position,
-      Rotation: goal.Rotation,
-      BackgroundColor3: goal.BackgroundColor3,
-    });
-    fka.spring(demoScale, { Scale: goal.Scale });
-    for (const [buttonMode, control] of modeButtons) {
-      control.setProperties({
-        TextColor3: buttonMode === value ? goal.BackgroundColor3 : colors.text,
+  bindMotionDemo({
+    card: demoCard,
+    scale: demoScale,
+    selectedMode: mode,
+    positions: motionPositions,
+    onSettled: () => status.setProperties({ Text: '● SPRING SETTLED' }),
+    onMoving: (goal) => {
+      status.setProperties({
+        Text: `● MOVING TO ${goal.label}`,
+        TextColor3: goal.accent,
       });
-    }
+      positionLine.setProperties({ Text: `  Position: ${goal.key}Position,` });
+      rotationLine.setProperties({ Text: `  Rotation: ${goal.rotation},` });
+      cardStatus.setProperties({
+        Text: `${goal.label}  •  Position  •  Rotation  •  Scale`,
+      });
+      for (const [buttonMode, control] of modeButtons) {
+        control.setProperties({
+          TextColor3: buttonMode === goal.key ? goal.accent : colors.text,
+        });
+      }
+    },
   });
 
   content.addChild(lab);

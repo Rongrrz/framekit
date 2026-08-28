@@ -8,7 +8,7 @@ type ScaledPageShell = Readonly<{
   pageScale: () => number;
 }>;
 
-type ScaledPageShellOptions = Readonly<{
+export type ScaledPageShellOptions = Readonly<{
   name: string;
   designWidth: number;
   pageHeight: number;

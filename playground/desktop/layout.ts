@@ -1,16 +1,19 @@
+import { defineSectionLayout } from '../shared/section-layout';
+
 export const designWidth = 1280;
 export const contentWidth = 1120;
 
-export const sectionLayout = {
-  hero: { top: 0, height: 840 },
-  principles: { top: 840, height: 720 },
-  motion: { top: 1560, height: 920 },
-  composer: { top: 2480, height: 920 },
-  values: { top: 3400, height: 840 },
-  api: { top: 4240, height: 840 },
-  guide: { top: 5080, height: 980 },
-  lifecycle: { top: 6060, height: 840 },
-  footer: { top: 6900, height: 700 },
-} as const;
+const layout = defineSectionLayout({
+  hero: 840,
+  principles: 720,
+  motion: 920,
+  composer: 920,
+  values: 840,
+  api: 840,
+  guide: 980,
+  lifecycle: 840,
+  footer: 700,
+});
 
-export const pageHeight = 7600;
+export const sectionLayout = layout.sections;
+export const pageHeight = layout.pageHeight;

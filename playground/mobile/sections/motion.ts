@@ -1,5 +1,11 @@
-import { fk, fka } from 'framekit';
+import { fk } from 'framekit';
 
+import {
+  bindMotionDemo,
+  motionModes,
+  type MotionMode,
+  type MotionPositions,
+} from '../../features/motion';
 import { bindButtonMotion } from '../../shared/interaction';
 import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
 import { colors, fonts } from '../../theme';
@@ -11,36 +17,12 @@ import {
   appendSectionHeading,
 } from '../primitives';
 
-const motionGoals = [
-  {
-    label: 'CALM',
-    accent: colors.mint,
-    position: fk.udim2FromOffset(48, 110),
-    rotation: 0,
-    scale: 1,
-  },
-  {
-    label: 'FOCUS',
-    accent: colors.violet,
-    position: fk.udim2FromOffset(76, 72),
-    rotation: -5,
-    scale: 1.08,
-  },
-  {
-    label: 'PLAY',
-    accent: colors.coral,
-    position: fk.udim2FromOffset(28, 188),
-    rotation: 7,
-    scale: 0.94,
-  },
-  {
-    label: 'ORBIT',
-    accent: colors.amber,
-    position: fk.udim2FromOffset(86, 204),
-    rotation: 11,
-    scale: 0.86,
-  },
-] as const;
+const motionPositions = {
+  calm: fk.udim2FromOffset(48, 110),
+  focus: fk.udim2FromOffset(76, 72),
+  play: fk.udim2FromOffset(28, 188),
+  orbit: fk.udim2FromOffset(86, 204),
+} satisfies MotionPositions;
 
 export function createMotionSection(): fk.FrameNode {
   const section = createSection('MobileMotion', sectionLayout.motion, colors.ink);
@@ -61,8 +43,8 @@ export function createMotionSection(): fk.FrameNode {
   });
   addRoundedBorder(lab, 22, colors.inkSoft, 2);
 
-  const mode = fk.createValue(0);
-  for (const [index, goal] of motionGoals.entries()) {
+  const mode = fk.createValue<MotionMode>('calm');
+  for (const [index, goal] of motionModes.entries()) {
     const control = createButton(
       goal.label,
       fk.udim2FromOffset(72, 42),
@@ -72,7 +54,7 @@ export function createMotionSection(): fk.FrameNode {
     );
     control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
     bindButtonMotion(control, colors.ink, goal.accent);
-    control.onClick(() => mode.set(index));
+    control.onClick(() => mode.set(goal.key));
     lab.addChild(control);
   }
 
@@ -86,7 +68,7 @@ export function createMotionSection(): fk.FrameNode {
 
   const card = fk.createFrame({
     Size: fk.udim2FromOffset(220, 170),
-    Position: fk.udim2FromOffset(48, 110),
+    Position: motionPositions.calm,
     BackgroundColor3: colors.mint,
   });
   addRoundedBorder(card, 22, colors.ink, 2);
@@ -149,21 +131,18 @@ export function createMotionSection(): fk.FrameNode {
   appendCodeLine(code, '});', 138, colors.coral);
   appendCodeLine(code, '', 168);
 
-  const springController = fka.spring(card);
-  springController.completed.subscribe(() => status.setProperties({ Text: '● SPRING SETTLED' }));
-  card.watch(mode, (value) => {
-    const goal = motionGoals[value];
-    if (!goal) return;
-    status.setProperties({ Text: `● MOVING TO ${goal.label}`, TextColor3: goal.accent });
-    stateLabel.setProperties({ Text: goal.label });
-    positionLine.setProperties({ Text: `  Position: ${goal.label.toLowerCase()}Position,` });
-    rotationLine.setProperties({ Text: `  Rotation: ${goal.rotation},` });
-    fka.spring(card, {
-      Position: goal.position,
-      Rotation: goal.rotation,
-      BackgroundColor3: goal.accent,
-    });
-    fka.spring(scale, { Scale: goal.scale });
+  bindMotionDemo({
+    card,
+    scale,
+    selectedMode: mode,
+    positions: motionPositions,
+    onSettled: () => status.setProperties({ Text: '● SPRING SETTLED' }),
+    onMoving: (goal) => {
+      status.setProperties({ Text: `● MOVING TO ${goal.label}`, TextColor3: goal.accent });
+      stateLabel.setProperties({ Text: goal.label });
+      positionLine.setProperties({ Text: `  Position: ${goal.key}Position,` });
+      rotationLine.setProperties({ Text: `  Rotation: ${goal.rotation},` });
+    },
   });
 
   content.addChild(lab);

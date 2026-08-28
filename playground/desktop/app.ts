@@ -1,6 +1,6 @@
 import { fk } from 'framekit';
 
-import { createScaledPageShell } from '../shared/page-shell';
+import { createPlaygroundApp } from '../shared/playground-app';
 import { colors } from '../theme';
 import { designWidth, pageHeight, sectionLayout } from './layout';
 import { createApi } from './sections/api';
@@ -15,32 +15,26 @@ import { createPrinciples } from './sections/principles';
 import { createValues } from './sections/values';
 
 export function createDesktopApp(): fk.ScreenGuiNode {
-  const { app, page, content, navigate, pageScale } = createScaledPageShell({
-    name: 'FrameKitDesktop',
-    designWidth,
-    pageHeight,
-    navigationHeight: 76,
-    backgroundColor: colors.ink,
+  return createPlaygroundApp({
+    shell: {
+      name: 'FrameKitDesktop',
+      designWidth,
+      pageHeight,
+      navigationHeight: 76,
+      backgroundColor: colors.ink,
+    },
+    exploreOffset: sectionLayout.principles.top,
+    sections: {
+      createHero,
+      createPrinciples,
+      createMotion: createMotionSection,
+      createComposer,
+      createValues,
+      createApi,
+      createGuide,
+      createLifecycle,
+      createFooter,
+    },
+    createNavigation,
   });
-
-  content.addChild(createHero(() => navigate(sectionLayout.principles.top)));
-
-  content.addChild(createPrinciples());
-
-  content.addChild(createMotionSection());
-
-  content.addChild(createComposer());
-
-  content.addChild(createValues());
-
-  content.addChild(createApi());
-
-  content.addChild(createGuide());
-
-  content.addChild(createLifecycle());
-
-  content.addChild(createFooter(() => navigate(0)));
-
-  app.addChild(createNavigation(page, navigate, pageScale));
-  return app;
 }

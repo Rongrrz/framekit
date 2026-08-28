@@ -14,10 +14,14 @@ playground/
 ├── vitest.config.ts         # playground-only test discovery
 ├── shared/
 │   ├── interaction.ts       # reusable hover, button, card, and copy behavior
+│   ├── playground-app.ts    # shared section order and application composition
 │   ├── page-shell.ts        # responsive scaling and spring scrolling
+│   ├── section-layout.ts    # calculated section offsets and page height
 │   └── ui.ts                # small visual constructors
+├── features/
+│   └── motion.ts            # shared motion modes and behavior; views own geometry
 ├── tests/
-│   └── composer.test.ts     # playground integration behavior
+│   └── *.test.ts            # composition, behavior, and layout tests
 ├── desktop/
 │   ├── app.ts               # desktop section composition
 │   ├── geometry.ts          # desktop-only scale helpers
@@ -35,7 +39,7 @@ playground/
 Dependencies flow down the hierarchy:
 
 ```text
-main → device app → device section → device primitives / shared → theme / framekit
+main → device app → device section → features / device primitives / shared → theme / framekit
 ```
 
 Sections never import other sections. The application root is the only place that knows their order. Shared modules never import desktop or mobile code. That makes every section independently readable and prevents circular feature dependencies.
@@ -43,9 +47,11 @@ Sections never import other sections. The application root is the only place tha
 ## Module ownership
 
 - `main.ts` owns device selection and mounting only.
-- Each `app.ts` owns section order and navigation wiring only.
-- Each section owns its nodes, local example data, shared values, and event bindings.
-- Device `layout.ts` files are the single source of truth for design width, content width, page height, and section offsets.
+- `shared/playground-app.ts` owns the common section order.
+- Each `app.ts` supplies its shell metrics, section views, and navigation view.
+- Each device section owns its nodes, geometry, and presentation-only behavior.
+- Cross-device feature models and behavior live under `features`; device sections keep their own geometry and composition.
+- Device `layout.ts` files list section heights; offsets and page height are derived automatically.
 - Device primitives contain patterns that are repeated within one presentation but would be dishonest to call cross-device abstractions.
 - `shared` accepts code only after both device applications genuinely need the same behavior.
 
@@ -63,10 +69,10 @@ Section modules expose one primary factory. Device applications use explicit fil
 
 ## Adding a section
 
-1. Add its metrics to the device's `sectionLayout`.
+1. Add its height to each device's `sectionLayout`.
 2. Create one file in that device's `sections` directory.
 3. Export one section factory and keep its state local.
 4. Import it and add it to the device tree in `app.ts`.
-5. Share a helper only when both presentations need the same semantics.
+5. Put stable cross-device data or behavior under `features`; keep device-specific geometry in the section views.
 
 This structure optimizes for locality first, reuse second, and abstraction only when the repeated concept has a stable name.
