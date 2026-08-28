@@ -16,16 +16,15 @@ gui.addChild(card);
 gui.mount('#app');
 ```
 
-FrameKit exposes four focused namespaces:
+FrameKit exposes three focused namespaces:
 
 ```ts
-import { fk, fka, fkh, fkp } from 'framekit';
+import { fk, fka, fkh } from 'framekit';
 ```
 
 - `fk` contains core nodes, values, state, events, and hierarchy APIs.
 - `fka` contains springs, tweens, easing, and animation controllers.
 - `fkh` contains optional helpers that compose an opinionated interaction pattern.
-- `fkp` contains ready-to-use prefabs built from ordinary FrameKit nodes.
 
 Each API has one canonical location; FrameKit does not expose parallel root-level function aliases.
 
@@ -46,7 +45,6 @@ The common vocabulary is deliberately small:
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                            |
 | Motion        | `fka.spring`, `fka.createMotion`, `fka.createTween`, `fka.tweenInfo`                             |
 | Helpers       | `fkh.bindHoverScale`, `fkh.setModifierAttached`, `fkh.createSpringModifierToggle`                |
-| Prefabs       | `fkp.createModal`, `fkp.createToggle`, `fkp.createProgressBar`                                   |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors                   |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
@@ -176,25 +174,6 @@ Rich text is an explicit opt-in and supports bold, italic, underline, strikethro
 
 `UIShadow` models box and surface depth with an animated `Offset`, blur, spread, and optional inset. `UIGlow` is deliberately different: it follows the rendered alpha silhouette and builds a centered colored core plus a wider soft halo from only `Radius`, `Color`, and `Transparency`. Both effects can be attached together.
 
-## Prefabs
-
-`fkp` creates useful, inspectable hierarchies without introducing components or another lifecycle. A prefab root is still a normal node: assign its `Parent`, edit its properties and named children, traverse it, or destroy the whole hierarchy normally.
-
-```ts
-const modal = fkp.createModal({ Title: 'Delete save?' });
-modal.content.addChild(fk.createTextLabel({ Text: 'This cannot be undone.' }));
-modal.Parent = gui;
-modal.open();
-
-const music = fkp.createToggle({ Label: 'Music', Checked: true });
-music.Parent = settingsPanel;
-
-const loading = fkp.createProgressBar({ Label: 'Loading', Value: 0.4 });
-loading.setValue(0.75);
-```
-
-The starter prefabs expose their meaningful children directly—for example `modal.panel`, `toggle.thumb`, and `progress.fill`—so changing their appearance does not require a separate theming system.
-
 ## Spring motion
 
 Call `fka.spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
@@ -239,19 +218,15 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 ## Package organization
 
-The package entry point exposes only `fk`, `fka`, `fkh`, and `fkp`. Source domains own their implementation and local barrel:
+The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree follows those same boundaries:
 
-- `core` — public core barrel exposed as `fk`
-- `elements` — DOM-backed controls and input behavior
-- `modifiers` — element-less style, constraint, and layout nodes
-- `animation` — spring and tween controllers, physics, easing, and value interpolation
-- `helpers` — optional composed behavior exposed as `fkh`
-- `prefabs` — ready-to-use retained hierarchies exposed as `fkp`
-- `state` — explicit shared values and signals
-- `runtime` — internal node state, trees, rendering, property ownership, events, and cleanup
-- `values` — immutable Roblox-style structural values
+- `core` — everything exposed through `fk`, organized into elements, modifiers, state, and values
+- `animation` — springs, tweens, easing, and controllers exposed through `fka`
+- `helpers` — optional composed behavior exposed through `fkh`
+- `shared/runtime` — node state, trees, rendering, property ownership, events, and cleanup used across domains
+- `tests` — mirrors the source domains and keeps reusable test infrastructure under `tests/shared`
 
-Core types are available through `fk`, animation types through `fka`, and prefab types through `fkp`:
+Core types are available through `fk`, while animation types are available through `fka`:
 
 ```ts
 function show(panel: fk.FrameNode, motion: fka.Motion<fk.FrameProperties>): void {
@@ -280,7 +255,7 @@ npm run build:library       # package bundles and declarations
 npm run check               # formatting, types, lint, tests, and both builds
 ```
 
-Tests mirror the source domains under `src/__tests__`. Test helpers are not part of the package API.
+Tests mirror the implementation domains under `src/tests`. Cross-domain test utilities live under `src/tests/shared` and are not part of the package API.
 
 ## Inspiration
 

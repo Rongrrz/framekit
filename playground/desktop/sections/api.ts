@@ -169,7 +169,7 @@ export function createApi(): fk.FrameNode {
   }
   navigation.addChild(
     createText({
-      text: "import { fk, fka, fkh, fkp } from 'framekit'",
+      text: "import { fk, fka, fkh } from 'framekit'",
       size: fk.udim2FromOffset(262, 32),
       position: fk.udim2FromOffset(28, 490),
       color: colors.violet,

@@ -1,9 +1,9 @@
 import type { Motion } from '../animation';
 import type { AnimationGoal } from '../animation/types';
-import type { LayoutNode, StyleModifierNode } from '../runtime/modifier';
-import type { NodeProperties } from '../runtime/node-state';
-import type { GuiNode } from '../runtime/render';
-import { assertBoolean } from '../runtime/validation';
+import type { LayoutNode, StyleModifierNode } from '../shared/runtime/modifier';
+import type { NodeProperties } from '../shared/runtime/node-state';
+import type { GuiNode } from '../shared/runtime/render';
+import { assertBoolean } from '../shared/runtime/validation';
 
 type ModifierNode<Properties extends NodeProperties = NodeProperties> =
   | LayoutNode<Properties>

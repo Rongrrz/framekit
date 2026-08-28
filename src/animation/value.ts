@@ -1,6 +1,6 @@
-import { color3FromRGB, type Color3 } from '../values/color3';
-import { udim, udim2, type UDim, type UDim2 } from '../values/udim';
-import { vector2, type Vector2 } from '../values/vector2';
+import { color3FromRGB, type Color3 } from '../core/values/color3';
+import { udim, udim2, type UDim, type UDim2 } from '../core/values/udim';
+import { vector2, type Vector2 } from '../core/values/vector2';
 
 export type AnimationValueKind = 'number' | 'Color3' | 'Vector2' | 'UDim' | 'UDim2';
 

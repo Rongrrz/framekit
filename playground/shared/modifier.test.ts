@@ -1,7 +1,7 @@
 import { fk, fka, fkh } from 'framekit';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { setupAnimationClock } from '../../src/__tests__/helpers/animation-clock';
+import { setupAnimationClock } from '../../src/tests/shared/animation-clock';
 import { createComposer } from '../desktop/sections/composer';
 
 const { settle } = setupAnimationClock();
@@ -24,19 +24,24 @@ describe('spring modifier toggles', () => {
       inactive: { Transparency: 1, Radius: 0 },
       isActive: () => active,
     });
+
     for (let cycle = 0; cycle < 3; cycle += 1) {
       active = true;
       toggle(true);
       settle();
+
       expect(glow.Parent).toBe(frame);
       expect(glow).toMatchObject({ Transparency: 0.2, Radius: 32 });
+
       active = false;
       toggle(false);
       settle();
+
       expect(glow.Parent).toBeUndefined();
       expect(glow).toMatchObject({ Transparency: 1, Radius: 0 });
     }
   });
+
   it('keeps the desktop stroke, shadow, glow, and padding controls live across repeated clicks', () => {
     const section = createComposer();
     const card = section.findFirstChild('NotificationCard', true)!;
@@ -48,6 +53,7 @@ describe('spring modifier toggles', () => {
     const shadowControl = section.findFirstChild('SHADOWButton', true) as fk.TextButtonNode;
     const glowControl = section.findFirstChild('GLOWButton', true) as fk.TextButtonNode;
     const paddingControl = section.findFirstChild('PADDINGButton', true) as fk.TextButtonNode;
+
     settle();
     for (const [modifier, control] of [
       [stroke, strokeControl],
@@ -57,16 +63,21 @@ describe('spring modifier toggles', () => {
       for (let click = 0; click < 4; click += 1) {
         control.element.click();
         settle();
+
         expect(modifier.Parent === card).toBe(click % 2 === 1);
       }
     }
     paddingControl.element.click();
     settle();
+
     const padding = tags.findFirstChild('UIPadding', true)!;
+
     expect(padding.Parent).toBe(tags);
+
     for (let click = 0; click < 4; click += 1) {
       paddingControl.element.click();
       settle();
+
       expect(padding.Parent === tags).toBe(click % 2 === 1);
     }
   });

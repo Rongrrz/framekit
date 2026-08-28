@@ -1,7 +1,7 @@
-import type { NodeProperties } from '../runtime/node-state';
-import type { Color3 } from '../values/color3';
-import type { UDim, UDim2 } from '../values/udim';
-import type { Vector2 } from '../values/vector2';
+import type { Color3 } from '../core/values/color3';
+import type { UDim, UDim2 } from '../core/values/udim';
+import type { Vector2 } from '../core/values/vector2';
+import type { NodeProperties } from '../shared/runtime/node-state';
 
 type AnimatableValue = number | Color3 | Vector2 | UDim | UDim2;
 

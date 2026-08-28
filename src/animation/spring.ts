@@ -1,4 +1,4 @@
-import type { Node, NodeProperties } from '../runtime/node-state';
+import type { Node, NodeProperties } from '../shared/runtime/node-state';
 import { createMotion, type Motion, type SpringOptions } from './motion';
 import type { AnimationGoal } from './types';
 

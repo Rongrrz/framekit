@@ -2,12 +2,12 @@ import {
   claimAnimationProperties,
   releaseAnimationProperties,
   type AnimationOwner,
-} from '../runtime/animation-ownership';
-import { addCleanup, assertNodeActive, isDestroyed } from '../runtime/node-lifecycle';
-import { applyPropertyPatch, getPropertiesSnapshot } from '../runtime/node-properties';
-import type { Node, NodeProperties } from '../runtime/node-state';
-import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
-import { assertNonNegativeFinite } from '../runtime/validation';
+} from '../shared/runtime/animation-ownership';
+import { addCleanup, assertNodeActive, isDestroyed } from '../shared/runtime/node-lifecycle';
+import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
+import type { Node, NodeProperties } from '../shared/runtime/node-state';
+import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
+import { assertNonNegativeFinite } from '../shared/runtime/validation';
 import {
   assertEasingDirection,
   assertEasingStyle,

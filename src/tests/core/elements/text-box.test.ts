@@ -1,0 +1,77 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { fk } from '../../..';
+import { resetDocumentAfterEach } from '../../shared/reset-document';
+
+resetDocumentAfterEach();
+
+describe('text boxes', () => {
+  it('keeps typed text synchronized and emits its string value', () => {
+    const box = fk.createTextBox({ PlaceholderText: 'Type here' });
+    const changed = vi.fn();
+
+    box.onTextChanged(changed);
+
+    expect('onClick' in box).toBe(false);
+
+    const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
+    const placeholder = box.element.querySelector<HTMLElement>(
+      '[data-framekit-text-box-placeholder]',
+    )!;
+
+    expect(placeholder.textContent).toBe('Type here');
+    expect(placeholder.style.display).toBe('');
+    expect(editor.getAttribute('aria-placeholder')).toBe('Type here');
+
+    editor.textContent = 'Hello FrameKit';
+    editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+
+    expect(box.Text).toBe('Hello FrameKit');
+    expect(placeholder.style.display).toBe('none');
+    expect(changed).toHaveBeenCalledWith('Hello FrameKit', expect.any(InputEvent));
+  });
+
+  it('renders safe rich text and returns its source string', () => {
+    const source =
+      '<b>Bold</b> <i>italic</i> <font color="#ff6f5f" size="18">coral</font><script>bad()</script>';
+    const box = fk.createTextBox({ Text: source, RichText: true, MultiLine: true });
+    const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
+
+    expect(editor.querySelector('b')?.textContent).toBe('Bold');
+    expect(editor.querySelector('i')?.textContent).toBe('italic');
+    expect(editor.querySelector('[data-framekit-rich-font]')?.textContent).toBe('coral');
+    expect(editor.querySelector('script')).toBeNull();
+    expect(editor.textContent).not.toContain('bad()');
+    expect(box.Text).toBe(source);
+
+    editor.append(document.createTextNode(' updated'));
+    editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+
+    expect(box.Text).toContain('<b>Bold</b>');
+    expect(box.Text).toContain(' updated');
+  });
+
+  it('can switch between rich and ordinary text without interpreting markup', () => {
+    const box = fk.createTextBox({ Text: '<b>Hello</b>', RichText: true });
+    const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
+
+    expect(editor.querySelector('b')).not.toBeNull();
+
+    box.setProperties({ RichText: false });
+
+    expect(editor.querySelector('b')).toBeNull();
+    expect(editor.textContent).toBe('<b>Hello</b>');
+  });
+
+  it('removes disallowed line breaks from both state and the single-line editor', () => {
+    const box = fk.createTextBox();
+    const editor = box.element.querySelector<HTMLElement>('[data-framekit-text-box]')!;
+
+    editor.innerHTML = '<div>First</div><div>Second</div>';
+    editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+
+    expect(box.Text).toBe('FirstSecond');
+    expect(editor.textContent).toBe('FirstSecond');
+    expect(editor.querySelector('div')).toBeNull();
+  });
+});

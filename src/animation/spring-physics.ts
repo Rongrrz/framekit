@@ -1,4 +1,4 @@
-import { assertPositiveFinite } from '../runtime/validation';
+import { assertPositiveFinite } from '../shared/runtime/validation';
 
 /** Optional physical and settling behavior for a spring. */
 export type SpringOptions = Readonly<{
