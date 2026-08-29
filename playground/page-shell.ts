@@ -1,11 +1,12 @@
 import { fk, fka } from 'framekit';
 
+import { maximumPageScale, type PlaygroundLayout } from './layout';
+
 type ScaledPageShell = Readonly<{
   app: fk.ScreenGuiNode;
   page: fk.ScrollingFrameNode;
   content: fk.FrameNode;
   navigate: (offset: number) => void;
-  pageScale: () => number;
 }>;
 
 export type ScaledPageShellOptions = Readonly<{
@@ -14,9 +15,10 @@ export type ScaledPageShellOptions = Readonly<{
   pageHeight: number;
   navigationHeight: number;
   backgroundColor: fk.Color3;
+  layout: fk.Value<PlaygroundLayout>;
 }>;
-/** Owns the responsive fixed-design canvas and its spring-driven scroll position. */
 
+/** Owns the scaled page canvas and its spring-driven scroll position. */
 export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPageShell {
   let currentScale = calculateScale();
 
@@ -55,9 +57,14 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
   page.addChild(scrollSizer);
 
   app.addChild(page);
+
   function calculateScale(): number {
-    return Math.min(1, window.innerWidth / options.designWidth);
+    return Math.min(
+      maximumPageScale[options.layout.get()],
+      window.innerWidth / options.designWidth,
+    );
   }
+
   function scaledContentPosition(scale: number): fk.UDim2 {
     return fk.udim2(0.5, 0, 0, -((1 - scale) * options.pageHeight) / 2);
   }
@@ -77,11 +84,12 @@ export function createScaledPageShell(options: ScaledPageShellOptions): ScaledPa
   const listenerController = new AbortController();
   window.addEventListener('resize', updateScale, { signal: listenerController.signal });
   app.onDestroy(() => listenerController.abort());
+  app.watch(options.layout, updateScale);
+
   return Object.freeze({
     app,
     page,
     content,
     navigate,
-    pageScale: () => currentScale,
   });
 }

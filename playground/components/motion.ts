@@ -5,17 +5,17 @@ import {
   motionModes,
   type MotionMode,
   type MotionPositions,
-} from '../../features/motion';
-import { bindButtonMotion } from '../../shared/interaction';
-import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
-import { colors, fonts } from '../../theme';
+} from '../features/motion';
 import { sectionLayout } from '../layout';
 import {
   contentWidth,
   createSection,
   createSectionContent,
   appendSectionHeading,
-} from '../primitives';
+} from '../section';
+import { bindButtonMotion } from '../shared/interaction';
+import { createButton, appendCodeLine, addRoundedBorder, createText } from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 const motionPositions = {
   calm: fk.udim2FromOffset(48, 110),
@@ -25,7 +25,7 @@ const motionPositions = {
 } satisfies MotionPositions;
 
 export function createMotionSection(): fk.FrameNode {
-  const section = createSection('MobileMotion', sectionLayout.motion, colors.ink);
+  const section = createSection('Motion', sectionLayout.motion, colors.ink);
 
   const content = createSectionContent();
   appendSectionHeading(

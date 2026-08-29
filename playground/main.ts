@@ -1,4 +1,5 @@
-import { createResponsivePlayground, type PlaygroundLayout } from './responsive-app';
+import { createPlaygroundApp } from './app';
+import type { PlaygroundLayout } from './layout';
 
 const previewParameter = import.meta.env.DEV
   ? new URLSearchParams(window.location.search).get('preview')
@@ -7,5 +8,5 @@ const previewParameter = import.meta.env.DEV
 const forcedLayout: PlaygroundLayout | undefined =
   previewParameter === 'desktop' || previewParameter === 'mobile' ? previewParameter : undefined;
 
-const playground = createResponsivePlayground(forcedLayout);
+const playground = createPlaygroundApp(forcedLayout);
 playground.mount('#root');

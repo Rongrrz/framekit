@@ -1,13 +1,13 @@
 import { fk } from 'framekit';
 
-import { bindButtonMotion, copyCommand } from '../../shared/interaction';
-import { createButton, addRoundedBorder, createText } from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
-import { contentWidth, createSection, createSectionContent } from '../primitives';
+import { contentWidth, createSection, createSectionContent } from '../section';
+import { bindButtonMotion, copyCommand } from '../shared/interaction';
+import { createButton, addRoundedBorder, createText } from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 export function createFooter(onBackToTop: () => void): fk.FrameNode {
-  const section = createSection('MobileFooter', sectionLayout.footer, colors.coral);
+  const section = createSection('Footer', sectionLayout.footer, colors.coral);
 
   const content = createSectionContent();
 

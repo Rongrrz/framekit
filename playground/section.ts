@@ -1,8 +1,8 @@
 import { fk } from 'framekit';
 
-import { createText } from '../shared/ui';
-import { colors } from '../theme';
 import { contentWidth, designWidth, type SectionMetrics } from './layout';
+import { createText } from './shared/ui';
+import { colors } from './theme';
 export { contentWidth } from './layout';
 
 export function createSection(

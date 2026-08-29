@@ -1,21 +1,21 @@
 import { fk, fka } from 'framekit';
 
-import { bindButtonMotion } from '../../shared/interaction';
-import {
-  createButton,
-  appendCodeLine,
-  addRoundedBorder,
-  createText,
-  updateTextLines,
-} from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
   contentWidth,
   createSection,
   createSectionContent,
   appendSectionHeading,
-} from '../primitives';
+} from '../section';
+import { bindButtonMotion } from '../shared/interaction';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createText,
+  updateTextLines,
+} from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 const valueExamples = [
   {
@@ -71,7 +71,7 @@ const valueExamples = [
 ] as const;
 
 export function createValues(): fk.FrameNode {
-  const section = createSection('MobileValues', sectionLayout.values, colors.mint);
+  const section = createSection('Values', sectionLayout.values, colors.mint);
 
   const content = createSectionContent();
   appendSectionHeading(

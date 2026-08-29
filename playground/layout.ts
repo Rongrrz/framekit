@@ -1,7 +1,15 @@
-import { defineSectionLayout, type SectionMetrics } from '../shared/section-layout';
+import { defineSectionLayout, type SectionMetrics } from './shared/section-layout';
 
 export const designWidth = 390;
 export const contentWidth = 358;
+export const mobileBreakpoint = 720;
+
+export type PlaygroundLayout = 'desktop' | 'mobile';
+
+export const maximumPageScale: Readonly<Record<PlaygroundLayout, number>> = {
+  desktop: 1.5,
+  mobile: 1,
+};
 
 const layout = defineSectionLayout({
   hero: 980,

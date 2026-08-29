@@ -1,14 +1,14 @@
 import { fk, fka, fkh } from 'framekit';
 
-import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
   contentWidth,
   createSection,
   createSectionContent,
   appendSectionHeading,
-} from '../primitives';
+} from '../section';
+import { createButton, appendCodeLine, addRoundedBorder, createText } from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 type ModifierKey = 'corner' | 'stroke' | 'shadow' | 'padding' | 'layout';
 
@@ -17,7 +17,7 @@ type ComposerState = Readonly<Record<ModifierKey, boolean>>;
 const modifierKeys: readonly ModifierKey[] = ['corner', 'stroke', 'shadow', 'padding', 'layout'];
 
 export function createComposer(): fk.FrameNode {
-  const section = createSection('MobileComposer', sectionLayout.composer, colors.paper);
+  const section = createSection('Composer', sectionLayout.composer, colors.paper);
 
   const content = createSectionContent();
   appendSectionHeading(
@@ -73,6 +73,7 @@ export function createComposer(): fk.FrameNode {
   );
 
   const card = fk.createFrame({
+    Name: 'NotificationCard',
     Size: fk.udim2FromOffset(314, 336),
     Position: fk.udim2FromOffset(22, 76),
     BackgroundColor3: colors.ink,
@@ -111,7 +112,7 @@ export function createComposer(): fk.FrameNode {
   );
 
   const description = fk.createTextBox({
-    Name: 'MobileDescription',
+    Name: 'Description',
     Size: fk.udim2FromOffset(270, 72),
     Position: fk.udim2FromOffset(22, 68),
     BackgroundTransparency: 1,
@@ -129,6 +130,7 @@ export function createComposer(): fk.FrameNode {
   card.addChild(description);
 
   const tags = fk.createFrame({
+    Name: 'FeatureTags',
     Size: fk.udim2FromOffset(270, 94),
     Position: fk.udim2FromOffset(22, 156),
     BackgroundColor3: colors.inkSoft,

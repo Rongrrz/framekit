@@ -1,21 +1,21 @@
 import { fk, fka, fkh } from 'framekit';
 
-import { bindButtonMotion } from '../../shared/interaction';
-import {
-  createButton,
-  appendCodeLine,
-  addRoundedBorder,
-  createText,
-  updateTextLines,
-} from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
   contentWidth,
   createSection,
   createSectionContent,
   appendSectionHeading,
-} from '../primitives';
+} from '../section';
+import { bindButtonMotion } from '../shared/interaction';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createText,
+  updateTextLines,
+} from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 const guideSteps = [
   {
@@ -60,7 +60,7 @@ const guideSteps = [
 ] as const;
 
 export function createGuide(): fk.FrameNode {
-  const section = createSection('MobileGuide', sectionLayout.guide, colors.paper);
+  const section = createSection('Guide', sectionLayout.guide, colors.paper);
 
   const content = createSectionContent();
   appendSectionHeading(

@@ -2,7 +2,7 @@ import { fk } from 'framekit';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { setupAnimationClock } from '../../src/test-support/animation-clock';
-import { createComposer } from '../desktop/sections/composer';
+import { createComposer } from '../components/composer';
 
 const { settle } = setupAnimationClock();
 
@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 describe('modifier composer', () => {
-  it('keeps the desktop stroke, shadow, and padding controls live across repeated clicks', () => {
+  it('keeps stroke, shadow, and padding controls live across repeated clicks', () => {
     const section = createComposer();
     const card = section.findFirstChild('NotificationCard', true)!;
     const tags = card.findFirstChild('FeatureTags', true)!;

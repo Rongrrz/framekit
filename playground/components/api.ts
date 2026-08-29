@@ -1,20 +1,20 @@
 import { fk, fkh } from 'framekit';
 
-import {
-  createButton,
-  appendCodeLine,
-  addRoundedBorder,
-  createText,
-  updateTextLines,
-} from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
   contentWidth,
   createSection,
   createSectionContent,
   appendSectionHeading,
-} from '../primitives';
+} from '../section';
+import {
+  createButton,
+  appendCodeLine,
+  addRoundedBorder,
+  createText,
+  updateTextLines,
+} from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 const apiSections = [
   {
@@ -76,7 +76,7 @@ const apiSections = [
 ] as const;
 
 export function createApi(): fk.FrameNode {
-  const section = createSection('MobileApi', sectionLayout.api, colors.ink);
+  const section = createSection('Api', sectionLayout.api, colors.ink);
 
   const content = createSectionContent();
   appendSectionHeading(

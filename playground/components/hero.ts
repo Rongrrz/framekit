@@ -1,10 +1,10 @@
 import { fk, fka, fkh } from 'framekit';
 
-import { bindButtonMotion, copyCommand } from '../../shared/interaction';
-import { createButton, addRoundedBorder, createPill, createText } from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
-import { contentWidth, createSection, createSectionContent } from '../primitives';
+import { contentWidth, createSection, createSectionContent } from '../section';
+import { bindButtonMotion, copyCommand } from '../shared/interaction';
+import { createButton, addRoundedBorder, createPill, createText } from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 type PreviewMode = 'NODE' | 'STATE' | 'MOTION';
 
@@ -42,7 +42,7 @@ const previewModes: Readonly<
 const previewModeOrder: readonly PreviewMode[] = ['NODE', 'STATE', 'MOTION'];
 
 export function createHero(onExplore: () => void): fk.FrameNode {
-  const section = createSection('MobileHero', sectionLayout.hero, colors.ink);
+  const section = createSection('Hero', sectionLayout.hero, colors.ink);
 
   const content = createSectionContent();
 
@@ -109,7 +109,7 @@ export function createHero(onExplore: () => void): fk.FrameNode {
   const selected = fk.createValue<PreviewMode>('NODE');
 
   const preview = fk.createFrame({
-    Name: 'MobileHeroPreview',
+    Name: 'HeroPreview',
     Size: fk.udim2FromOffset(contentWidth, 360),
     Position: fk.udim2FromOffset(0, 548),
     BackgroundColor3: colors.paper,

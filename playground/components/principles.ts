@@ -1,15 +1,15 @@
 import { fk } from 'framekit';
 
-import { bindCardMotion, copyCommand } from '../../shared/interaction';
-import { createButton, addRoundedBorder, createText } from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
   contentWidth,
   createSection,
   createSectionContent,
   appendSectionHeading,
-} from '../primitives';
+} from '../section';
+import { bindCardMotion, copyCommand } from '../shared/interaction';
+import { createButton, addRoundedBorder, createText } from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 const principles = [
   {
@@ -36,7 +36,7 @@ const principles = [
 ] as const;
 
 export function createPrinciples(): fk.FrameNode {
-  const section = createSection('MobilePrinciples', sectionLayout.principles, colors.paper);
+  const section = createSection('Principles', sectionLayout.principles, colors.paper);
 
   const content = createSectionContent();
   appendSectionHeading(

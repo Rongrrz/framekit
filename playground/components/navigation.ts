@@ -1,15 +1,17 @@
 import { fk } from 'framekit';
 
-import { bindButtonMotion } from '../../shared/interaction';
-import { createButton, createText } from '../../shared/ui';
-import { colors, fonts } from '../../theme';
+import { sectionLayout, type PlaygroundLayout } from '../layout';
+import { bindButtonMotion } from '../shared/interaction';
+import { createButton, createText } from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 export function createNavigation(
   page: fk.ScrollingFrameNode,
   navigate: (offset: number) => void,
+  layout: fk.Value<PlaygroundLayout>,
 ): fk.FrameNode {
   const navigation = fk.createFrame({
-    Name: 'MobileNavigation',
+    Name: 'Navigation',
     Size: fk.udim2(1, 0, 0, 64),
     BackgroundColor3: colors.ink,
     ZIndex: 100,
@@ -53,6 +55,27 @@ export function createNavigation(
 
   navigation.addChild(source);
 
+  const links = [
+    { label: 'MOTION', offset: sectionLayout.motion.top },
+    { label: 'COMPOSER', offset: sectionLayout.composer.top },
+    { label: 'API', offset: sectionLayout.api.top },
+  ] as const;
+
+  const linkButtons = links.map(({ label, offset }, index) => {
+    const link = createButton(
+      label,
+      fk.udim2FromOffset(96, 36),
+      fk.udim2(0.5, -154 + index * 106, 0, 14),
+      colors.ink,
+      colors.textMuted,
+    );
+    link.setProperties({ TextSize: 9, FontFamily: fonts.mono });
+    bindButtonMotion(link, colors.ink, colors.inkSoft);
+    link.onClick(() => navigate(offset));
+    navigation.addChild(link);
+    return link;
+  });
+
   const track = fk.createFrame({
     Size: fk.udim2(1, 0, 0, 3),
     Position: fk.udim2FromOffset(0, 61),
@@ -81,5 +104,15 @@ export function createNavigation(
     { passive: true, signal: listenerController.signal },
   );
   navigation.onDestroy(() => listenerController.abort());
+
+  navigation.watch(layout, (currentLayout) => {
+    const desktop = currentLayout === 'desktop';
+    for (const link of linkButtons) link.Visible = desktop;
+    source.setProperties({
+      Text: desktop ? 'VIEW SOURCE  ↗' : 'SOURCE  ↗',
+      Size: fk.udim2FromOffset(desktop ? 150 : 112, 38),
+      Position: fk.udim2(1, desktop ? -166 : -128, 0, 13),
+    });
+  });
   return navigation;
 }

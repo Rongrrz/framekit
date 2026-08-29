@@ -1,15 +1,15 @@
 import { fk } from 'framekit';
 
-import { bindButtonMotion } from '../../shared/interaction';
-import { createButton, appendCodeLine, addRoundedBorder, createText } from '../../shared/ui';
-import { colors, fonts } from '../../theme';
 import { sectionLayout } from '../layout';
 import {
   contentWidth,
   createSection,
   createSectionContent,
   appendSectionHeading,
-} from '../primitives';
+} from '../section';
+import { bindButtonMotion } from '../shared/interaction';
+import { createButton, appendCodeLine, addRoundedBorder, createText } from '../shared/ui';
+import { colors, fonts } from '../theme';
 
 const lifecycleStates = [
   {
@@ -48,7 +48,7 @@ const lifecycleStates = [
 ] as const;
 
 export function createLifecycle(): fk.FrameNode {
-  const section = createSection('MobileLifecycle', sectionLayout.lifecycle, colors.ink);
+  const section = createSection('Lifecycle', sectionLayout.lifecycle, colors.ink);
 
   const content = createSectionContent();
   appendSectionHeading(

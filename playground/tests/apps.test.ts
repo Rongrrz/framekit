@@ -1,64 +1,54 @@
+import { fk } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createDesktopApp } from '../desktop/app';
-import { createMobileApp } from '../mobile/app';
-import { createResponsivePlayground } from '../responsive-app';
+import { createPlaygroundApp } from '../app';
 
 afterEach(() => {
   document.body.replaceChildren();
   vi.unstubAllGlobals();
 });
 
-describe('device applications', () => {
-  it('composes the shared story with device-specific section views', () => {
-    const desktop = createDesktopApp();
-    const mobile = createMobileApp();
+describe('playground application', () => {
+  it('composes one hierarchy for every viewport', () => {
+    const app = createPlaygroundApp();
+    app.mount(document.body);
 
-    expect(desktop.findFirstChild('Motion', true)).toBeDefined();
-    expect(mobile.findFirstChild('MobileMotion', true)).toBeDefined();
+    expect(document.querySelectorAll('[data-framekit="ScreenGui"]')).toHaveLength(1);
+    expect(app.findFirstChild('Motion', true)).toBeDefined();
+    expect(app.findFirstChild('Composer', true)).toBeDefined();
 
-    desktop.destroy();
-    mobile.destroy();
+    app.destroy();
   });
 
-  it('switches persistent device presentations at the responsive breakpoint', () => {
+  it('resizes the same hierarchy when its responsive layout changes', () => {
     vi.stubGlobal('innerWidth', 900);
-    const playground = createResponsivePlayground();
-    playground.mount(document.body);
+    const app = createPlaygroundApp();
+    const content = app.findFirstChild('FrameKitPlaygroundContent', true)!;
+    const contentScale = content.findFirstChild('UIScale') as fk.UIScaleNode;
+    const motion = app.findFirstChild('Motion', true);
 
-    const [desktop, mobile] = document.querySelectorAll<HTMLElement>('[data-framekit="ScreenGui"]');
-
-    expect(desktop?.style.display).toBe('');
-    expect(mobile?.style.display).toBe('none');
+    expect(contentScale.Scale).toBe(1.5);
 
     vi.stubGlobal('innerWidth', 640);
     window.dispatchEvent(new Event('resize'));
 
-    expect(desktop?.style.display).toBe('none');
-    expect(mobile?.style.display).toBe('');
+    expect(contentScale.Scale).toBe(1);
+    expect(app.findFirstChild('Motion', true)).toBe(motion);
 
-    vi.stubGlobal('innerWidth', 680);
-    window.dispatchEvent(new Event('resize'));
-
-    expect(desktop?.style.display).toBe('none');
-    expect(mobile?.style.display).toBe('');
-
-    playground.destroy();
+    app.destroy();
     expect(() => window.dispatchEvent(new Event('resize'))).not.toThrow();
   });
 
-  it('keeps a forced preview layout independent of viewport changes', () => {
+  it('keeps a forced preview layout independent of viewport breakpoints', () => {
     vi.stubGlobal('innerWidth', 900);
-    const playground = createResponsivePlayground('mobile');
-    playground.mount(document.body);
-
-    const [desktop, mobile] = document.querySelectorAll<HTMLElement>('[data-framekit="ScreenGui"]');
+    const app = createPlaygroundApp('mobile');
+    const content = app.findFirstChild('FrameKitPlaygroundContent', true)!;
+    const contentScale = content.findFirstChild('UIScale') as fk.UIScaleNode;
 
     window.dispatchEvent(new Event('resize'));
 
-    expect(desktop?.style.display).toBe('none');
-    expect(mobile?.style.display).toBe('');
+    expect(contentScale.Scale).toBe(1);
 
-    playground.destroy();
+    app.destroy();
   });
 });
