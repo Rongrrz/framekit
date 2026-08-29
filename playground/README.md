@@ -5,7 +5,8 @@ The playground has two intentional presentations of the same product story. Desk
 ```text
 playground/
 ├── index.html               # playground-only browser entry point
-├── main.ts                  # selects and mounts one device application
+├── main.ts                  # reads preview options and mounts the playground
+├── responsive-app.ts        # owns persistent desktop/mobile layout switching
 ├── theme.ts                 # shared colors and typography
 ├── tsconfig.json            # isolated playground project references
 ├── tsconfig.app.json        # application and showcase test type checking
@@ -39,14 +40,15 @@ playground/
 Dependencies flow down the hierarchy:
 
 ```text
-main → device app → device section → features / device primitives / shared → theme / framekit
+main → responsive app → device app → device section → features / device primitives / shared → theme / framekit
 ```
 
 Sections never import other sections. The application root is the only place that knows their order. Shared modules never import desktop or mobile code. That makes every section independently readable and prevents circular feature dependencies.
 
 ## Module ownership
 
-- `main.ts` owns device selection and mounting only.
+- `main.ts` owns preview URL parsing and mounting only.
+- `responsive-app.ts` creates both presentations once and switches them with `fkh.bindResponsiveLayout`.
 - `shared/playground-app.ts` owns the common section order.
 - Each `app.ts` supplies its shell metrics, section views, and navigation view.
 - Each device section owns its nodes, geometry, and presentation-only behavior.

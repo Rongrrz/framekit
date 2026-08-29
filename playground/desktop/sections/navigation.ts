@@ -140,13 +140,14 @@ export function createNavigation(
       });
     }
   }
-  function updateNavigationLayout(): void {
-    const compact = window.innerWidth < 920;
-    const narrow = window.innerWidth < 520;
+  function setCompactNavigation(compact: boolean): void {
     content.setProperties({
       Size: compact ? fk.udim2(1, -32, 1, 0) : fk.udim2FromScale(contentWidth / designWidth, 1),
     });
     for (const link of linkButtons.values()) link.setProperties({ Visible: !compact });
+  }
+
+  function setNarrowSourceButton(narrow: boolean): void {
     source.setProperties({
       Size: narrow ? fk.udim2FromOffset(112, 42) : fk.udim2FromOffset(150, 42),
       Position: narrow ? fk.udim2(1, -112, 0, 17) : fk.udim2(1, -150, 0, 17),
@@ -159,9 +160,19 @@ export function createNavigation(
     passive: true,
     signal: listenerController.signal,
   });
-  window.addEventListener('resize', updateNavigationLayout, { signal: listenerController.signal });
   navigation.onDestroy(() => listenerController.abort());
-  updateNavigationLayout();
+
+  fkh.bindResponsiveLayout(navigation, {
+    breakpoint: 920,
+    mobile: () => setCompactNavigation(true),
+    desktop: () => setCompactNavigation(false),
+  });
+  fkh.bindResponsiveLayout(navigation, {
+    breakpoint: 520,
+    mobile: () => setNarrowSourceButton(true),
+    desktop: () => setNarrowSourceButton(false),
+  });
+
   updateScrollState();
   return navigation;
 }

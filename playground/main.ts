@@ -1,26 +1,11 @@
-import { createDesktopApp } from './desktop/app';
-import { createMobileApp } from './mobile/app';
+import { createResponsivePlayground, type PlaygroundLayout } from './responsive-app';
 
-const mobileBreakpoint = 720;
-
-const forcedPreview = import.meta.env.DEV
+const previewParameter = import.meta.env.DEV
   ? new URLSearchParams(window.location.search).get('preview')
   : null;
 
-const useMobileLayout =
-  forcedPreview === 'mobile' ||
-  (forcedPreview !== 'desktop' && window.innerWidth < mobileBreakpoint);
+const forcedLayout: PlaygroundLayout | undefined =
+  previewParameter === 'desktop' || previewParameter === 'mobile' ? previewParameter : undefined;
 
-const playground = useMobileLayout ? createMobileApp() : createDesktopApp();
+const playground = createResponsivePlayground(forcedLayout);
 playground.mount('#root');
-
-const listenerController = new AbortController();
-window.addEventListener(
-  'resize',
-  () => {
-    const crossedLayoutBreakpoint = window.innerWidth < mobileBreakpoint !== useMobileLayout;
-    if (forcedPreview === null && crossedLayoutBreakpoint) window.location.reload();
-  },
-  { signal: listenerController.signal },
-);
-playground.onDestroy(() => listenerController.abort());
