@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../..';
-import { setupAnimationClock } from '../shared/animation-clock';
+import { fk, fka } from '..';
+import { setupAnimationClock } from '../test-support/animation-clock';
 
 const { advance, settle } = setupAnimationClock();
 
@@ -185,6 +185,9 @@ describe('springs', () => {
     expect(() => fka.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
 
     expect(() => fka.spring(frame, {})).toThrow(/goal property/);
+    expect(() => fka.spring(frame, { Missing: 1 } as never)).toThrow(
+      /Unknown spring property "Missing"/,
+    );
     expect(() => fka.spring(frame, { BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
 

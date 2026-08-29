@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../..';
-import { groupNode } from '../../shared/group-node';
-import { resetDocumentAfterEach } from '../../shared/reset-document';
+import { fk } from '../..';
+import { groupNode } from '../../test-support/group-node';
+import { resetDocumentAfterEach } from '../../test-support/reset-document';
 
 const { createFrame, createUIListLayout, createUIScale, udim, udim2FromOffset } = fk;
 resetDocumentAfterEach();

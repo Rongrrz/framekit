@@ -1,5 +1,11 @@
 import type { Node } from './node';
-import { getChildren, getNodeState, isModifierState } from './node-state';
+import {
+  getActiveNodeState,
+  getChildren,
+  getNodeState,
+  isModifierState,
+  unlinkNodeFromParent,
+} from './node-state';
 import { hasLayoutModifier, renderNode, type GuiNode } from './render';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */
@@ -18,8 +24,7 @@ export function isDestroyed(node: Node): boolean {
 
 /** Registers a resource to release when the node is destroyed. */
 export function addCleanup(node: Node, callback: () => void): () => void {
-  assertNodeActive(node);
-  const cleanups = getNodeState(node).cleanups;
+  const cleanups = getActiveNodeState(node).cleanups;
   cleanups.add(callback);
   return () => cleanups.delete(callback);
 }
@@ -29,26 +34,13 @@ export function onDestroy(node: Node, callback: () => void): () => void {
   return addCleanup(node, callback);
 }
 
-export function assertNodeActive(node: Node): void {
-  const state = getNodeState(node);
-  if (state.destroyed) throw new Error(`${state.properties.Name} has been destroyed.`);
-}
-
 function destroyRecursively(node: Node, errors: unknown[], parentIsBeingDestroyed: boolean): void {
   const state = getNodeState(node);
   if (state.destroyed) return;
   for (const child of Array.from(getChildren(state))) destroyRecursively(child, errors, true);
 
   if (state.parent) {
-    const previousParent = state.parent;
-    const parentState = getNodeState(previousParent);
-    const siblings = getChildren(parentState);
-    const index = siblings.indexOf(node);
-    if (index >= 0) siblings.splice(index, 1);
-    if (isModifierState(state) && parentState.kind === 'gui') {
-      parentState.modifiers.delete(state.modifierKey);
-    }
-    state.parent = undefined;
+    const previousParent = unlinkNodeFromParent(node, state)!;
     if (!parentIsBeingDestroyed && (isModifierState(state) || hasLayoutModifier(previousParent))) {
       try {
         renderNode(previousParent);

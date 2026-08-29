@@ -1,19 +1,23 @@
-import type { ModifierNode } from './modifier';
 import type { Node } from './node';
-import { assertNodeActive } from './node-lifecycle';
-import { getChildren, getNodeState, isModifierState, type NodeState } from './node-state';
+import {
+  getActiveNodeState,
+  getChildren,
+  getNodeState,
+  isModifierState,
+  linkNodeToParent,
+  unlinkNodeFromParent,
+  type NodeState,
+} from './node-state';
 import { hasLayoutModifier, isGuiNode, renderNode } from './render';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
 export function append(parent: Node, child: Node): void {
-  assertNodeActive(parent);
-  assertNodeActive(child);
+  const parentState = getActiveNodeState(parent);
+  const childState = getActiveNodeState(child);
   if (parent === child || isAncestor(child, parent)) {
     throw new Error('A node cannot be appended to itself or one of its descendants.');
   }
 
-  const parentState = getNodeState(parent);
-  const childState = getNodeState(child);
   if (isModifierState(parentState)) {
     throw new TypeError('UI modifiers cannot contain child nodes.');
   }
@@ -38,8 +42,9 @@ export function append(parent: Node, child: Node): void {
   const previousIndex = previousParent
     ? getChildren(getNodeState(previousParent)).indexOf(child)
     : -1;
-  unlinkFromParent(child, childState);
-  linkToParent(parent, parentState, child, childState);
+  unlinkNodeFromParent(child, childState);
+  linkNodeToParent(parent, parentState, child, childState);
+  placeChildElement(parent, parentState, child);
 
   try {
     if (previousParent && (isModifierState(childState) || hasLayoutModifier(previousParent))) {
@@ -47,10 +52,12 @@ export function append(parent: Node, child: Node): void {
     }
     if (isModifierState(childState) || hasLayoutModifier(parent)) renderNode(parent);
   } catch (error) {
-    unlinkFromParent(child, childState);
+    unlinkNodeFromParent(child, childState);
     if (isGuiNode(child)) child.element.remove();
     if (previousParent) {
-      linkToParent(previousParent, getNodeState(previousParent), child, childState, previousIndex);
+      const previousParentState = getNodeState(previousParent);
+      linkNodeToParent(previousParent, previousParentState, child, childState, previousIndex);
+      placeChildElement(previousParent, previousParentState, child);
     }
     restoreRendering(parent, previousParent, error);
   }
@@ -58,10 +65,8 @@ export function append(parent: Node, child: Node): void {
 
 /** Detaches a node without destroying it or its descendants. */
 export function detach(node: Node): void {
-  assertNodeActive(node);
-  const state = getNodeState(node);
-  const previousParent = state.parent;
-  unlinkFromParent(node, state);
+  const state = getActiveNodeState(node);
+  const previousParent = unlinkNodeFromParent(node, state);
   if (isGuiNode(node)) node.element.remove();
   if (previousParent && (isModifierState(state) || hasLayoutModifier(previousParent))) {
     renderNode(previousParent);
@@ -69,13 +74,11 @@ export function detach(node: Node): void {
 }
 
 export function getParent(node: Node): Node | undefined {
-  assertNodeActive(node);
-  return getNodeState(node).parent;
+  return getActiveNodeState(node).parent;
 }
 
 export function getClassName(node: Node): string {
-  assertNodeActive(node);
-  return getNodeState(node).className;
+  return getActiveNodeState(node).className;
 }
 
 /** Reparents a node, or detaches it when `newParent` is undefined. */
@@ -86,15 +89,13 @@ export function setParent(node: Node, newParent: Node | undefined): void {
 
 /** Returns a snapshot of the node's direct children. */
 export function children(node: Node): readonly Node[] {
-  assertNodeActive(node);
-  return [...getChildren(getNodeState(node))];
+  return [...getChildren(getActiveNodeState(node))];
 }
 
 /** Returns every descendant in depth-first hierarchy order. */
 export function descendants(node: Node): readonly Node[] {
-  assertNodeActive(node);
   const result: Node[] = [];
-  const pending = [...getChildren(getNodeState(node))].reverse();
+  const pending = [...getChildren(getActiveNodeState(node))].reverse();
   while (pending.length > 0) {
     const descendant = pending.pop()!;
     result.push(descendant);
@@ -108,8 +109,7 @@ export function descendants(node: Node): readonly Node[] {
 
 /** Finds the first child with a matching name, optionally searching all descendants. */
 export function findFirstChild(node: Node, name: string, recursive = false): Node | undefined {
-  assertNodeActive(node);
-  const direct = getChildren(getNodeState(node)).find(
+  const direct = getChildren(getActiveNodeState(node)).find(
     (child) => getNodeState(child).properties.Name === name,
   );
   if (direct || !recursive) return direct;
@@ -118,7 +118,7 @@ export function findFirstChild(node: Node, name: string, recursive = false): Nod
 
 /** Returns the dot-separated hierarchy path from the root to this node. */
 export function getFullName(node: Node): string {
-  assertNodeActive(node);
+  getActiveNodeState(node);
   const names: string[] = [];
   for (let current: Node | undefined = node; current; current = getNodeState(current).parent) {
     names.push(getNodeState(current).properties.Name);
@@ -128,9 +128,8 @@ export function getFullName(node: Node): string {
 
 /** Formats a stable, human-readable snapshot of a node hierarchy. */
 export function toTreeString(node: Node): string {
-  assertNodeActive(node);
   const lines = [formatNode(node)];
-  const rootChildren = getChildren(getNodeState(node));
+  const rootChildren = getChildren(getActiveNodeState(node));
   const pending: TreeLine[] = [];
   pushTreeLines(pending, rootChildren, '');
 
@@ -159,34 +158,6 @@ function pushTreeLines(pending: TreeLine[], nodes: readonly Node[], prefix: stri
 function formatNode(node: Node): string {
   const state = getNodeState(node);
   return `${state.properties.Name} [${state.className}]`;
-}
-
-function unlinkFromParent(node: Node, state: NodeState): void {
-  if (!state.parent) return;
-  const parentState = getNodeState(state.parent);
-  const siblings = getChildren(parentState);
-  const index = siblings.indexOf(node);
-  if (index >= 0) siblings.splice(index, 1);
-  if (isModifierState(state) && parentState.kind === 'gui') {
-    parentState.modifiers.delete(state.modifierKey);
-  }
-  state.parent = undefined;
-}
-
-function linkToParent(
-  parent: Node,
-  parentState: NodeState,
-  child: Node,
-  childState: NodeState,
-  index = getChildren(parentState).length,
-): void {
-  childState.parent = parent;
-  const siblings = getChildren(parentState);
-  siblings.splice(Math.max(0, Math.min(index, siblings.length)), 0, child);
-  if (isModifierState(childState) && parentState.kind === 'gui') {
-    parentState.modifiers.set(childState.modifierKey, child as ModifierNode);
-  }
-  placeChildElement(parent, parentState, child);
 }
 
 function placeChildElement(parent: Node, parentState: NodeState, child: Node): void {

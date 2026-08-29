@@ -50,7 +50,7 @@ export function numberSequence(
 
 export function assertColorSequence(value: unknown): asserts value is ColorSequence {
   assertSequence(value, 'ColorSequence', (keypoint, index) => {
-    assertColor3(keypoint.Value as Color3, `ColorSequence[${index}].Value`);
+    assertColor3(keypoint.Value, `ColorSequence[${index}].Value`);
   });
 }
 
@@ -76,10 +76,10 @@ function assertSequence(
 
   let previousTime = -1;
   for (const [index, candidate] of value.entries()) {
-    if (typeof candidate !== 'object' || candidate === null) {
+    if (!isRecord(candidate)) {
       throw new TypeError(`${name}[${index}] must be a keypoint.`);
     }
-    const keypoint = candidate as unknown as Record<string, unknown>;
+    const keypoint = candidate;
     assertFiniteNumber(keypoint.Time, `${name}[${index}].Time`);
     if (keypoint.Time < 0 || keypoint.Time > 1 || keypoint.Time <= previousTime) {
       throw new RangeError(`${name} times must increase from 0 to 1.`);
@@ -92,6 +92,10 @@ function assertSequence(
   if (keypoints[0]!.Time !== 0 || keypoints.at(-1)!.Time !== 1) {
     throw new RangeError(`${name} must begin at 0 and end at 1.`);
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function isColorSequenceKeypoint(

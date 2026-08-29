@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { groupNode } from '../group-node';
+import { groupNode } from '../../test-support/group-node';
 
 describe('tree', () => {
   it('tracks, reparents, finds, and destroys children', () => {

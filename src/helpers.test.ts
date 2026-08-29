@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk, fkh } from '../..';
+import { fk, fkh } from '.';
 
 describe('public helpers', () => {
   afterEach(() => {

@@ -1,8 +1,8 @@
 import { connectHoverEvents } from '../../shared/dom/hover-events';
 import { guiEventMethods } from '../../shared/runtime/gui-events';
 import type { NodeProperties } from '../../shared/runtime/node';
-import { addCleanup, assertNodeActive } from '../../shared/runtime/node-lifecycle';
-import { mergeProperties } from '../../shared/runtime/node-state';
+import { addCleanup } from '../../shared/runtime/node-lifecycle';
+import { getActiveNodeState, mergeProperties } from '../../shared/runtime/node-state';
 import { createGuiNode, type GuiNode } from '../../shared/runtime/render';
 import { assertBoolean, assertInteger } from '../../shared/runtime/validation';
 
@@ -80,7 +80,7 @@ function validateScreenGuiProperties(properties: Readonly<ScreenGuiProperties>):
 
 /** Mounts a full-viewport ScreenGui beneath the supplied DOM owner. */
 function mountScreenGui(gui: ScreenGuiNode, target: string | HTMLElement): void {
-  assertNodeActive(gui);
+  getActiveNodeState(gui);
   const element = resolveMountTarget(target);
   if (mountTargets.get(gui) === element && gui.element.parentElement === element) return;
 
@@ -90,13 +90,13 @@ function mountScreenGui(gui: ScreenGuiNode, target: string | HTMLElement): void 
 }
 
 function unmountScreenGui(gui: ScreenGuiNode): void {
-  assertNodeActive(gui);
+  getActiveNodeState(gui);
   gui.element.remove();
   mountTargets.delete(gui);
 }
 
 function isScreenGuiMounted(gui: ScreenGuiNode): boolean {
-  assertNodeActive(gui);
+  getActiveNodeState(gui);
   const target = mountTargets.get(gui);
   if (!target || gui.element.parentElement !== target) {
     mountTargets.delete(gui);

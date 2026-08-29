@@ -1,4 +1,4 @@
-import type { LayoutNodeState, StyleModifierState } from './modifier';
+import type { LayoutNodeState, ModifierNode, StyleModifierState } from './modifier';
 import type { Node, NodeProperties } from './node';
 import type { GuiNodeState } from './render';
 import { assertString } from './validation';
@@ -93,10 +93,51 @@ export function getNodeState<Properties extends NodeProperties>(
   return state as NodeState<Properties>;
 }
 
+/** Returns the authoritative state for a node whose lifecycle is still active. */
+export function getActiveNodeState<Properties extends NodeProperties>(
+  node: Node<Properties>,
+): NodeState<Properties> {
+  const state = getNodeState(node);
+  if (state.destroyed) throw new Error(`${state.properties.Name} has been destroyed.`);
+  return state;
+}
+
 export function getChildren<Properties extends NodeProperties>(
   state: NodeState<Properties>,
 ): Node[] {
   return state.kind === 'group' || state.kind === 'gui' ? state.children : [];
+}
+
+/** Links a child into the authoritative hierarchy state. DOM placement remains the tree's job. */
+export function linkNodeToParent(
+  parent: Node,
+  parentState: NodeState,
+  child: Node,
+  childState: NodeState,
+  index = getChildren(parentState).length,
+): void {
+  childState.parent = parent;
+  const siblings = getChildren(parentState);
+  siblings.splice(Math.max(0, Math.min(index, siblings.length)), 0, child);
+  if (isModifierState(childState) && parentState.kind === 'gui') {
+    parentState.modifiers.set(childState.modifierKey, child as ModifierNode);
+  }
+}
+
+/** Removes a node from the authoritative hierarchy state and returns its previous parent. */
+export function unlinkNodeFromParent(node: Node, state: NodeState): Node | undefined {
+  const previousParent = state.parent;
+  if (!previousParent) return undefined;
+
+  const parentState = getNodeState(previousParent);
+  const siblings = getChildren(parentState);
+  const index = siblings.indexOf(node);
+  if (index >= 0) siblings.splice(index, 1);
+  if (isModifierState(state) && parentState.kind === 'gui') {
+    parentState.modifiers.delete(state.modifierKey);
+  }
+  state.parent = undefined;
+  return previousParent;
 }
 
 export function isModifierState<Properties extends NodeProperties>(

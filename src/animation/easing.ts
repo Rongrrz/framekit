@@ -31,15 +31,11 @@ const easingStyles: readonly EasingStyle[] = [
 const easingDirections: readonly EasingDirection[] = ['In', 'Out', 'InOut'];
 
 export function assertEasingStyle(value: unknown): asserts value is EasingStyle {
-  if (!easingStyles.includes(value as EasingStyle)) {
-    throw new TypeError('Unknown tween easing style.');
-  }
+  assertAllowedValue(value, easingStyles, 'tween easing style');
 }
 
 export function assertEasingDirection(value: unknown): asserts value is EasingDirection {
-  if (!easingDirections.includes(value as EasingDirection)) {
-    throw new TypeError('Unknown tween easing direction.');
-  }
+  assertAllowedValue(value, easingDirections, 'tween easing direction');
 }
 
 export function ease(alpha: number, style: EasingStyle, direction: EasingDirection): number {
@@ -88,3 +84,4 @@ function bounceOut(alpha: number): number {
   if (alpha < 2.5 / divisor) return scale * (alpha - 2.25 / divisor) ** 2 + 0.9375;
   return scale * (alpha - 2.625 / divisor) ** 2 + 0.984375;
 }
+import { assertAllowedValue } from '../shared/runtime/validation';

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../..';
-import { groupNode } from '../group-node';
+import { fk } from '../..';
+import { groupNode } from '../../test-support/group-node';
 
 const { createSignal, createValue } = fk;
 

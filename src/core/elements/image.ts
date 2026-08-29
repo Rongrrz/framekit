@@ -41,7 +41,11 @@ export type ImageButtonProperties = ImageLabelProperties & ButtonProperties;
 /** An image node with typed button events. */
 export type ImageButtonNode = ButtonNode<ImageButtonProperties>;
 
-const objectFit = { Stretch: 'fill', Fit: 'contain', Crop: 'cover' } as const;
+const objectFit = {
+  Stretch: 'fill',
+  Fit: 'contain',
+  Crop: 'cover',
+} satisfies Record<ScaleType, string>;
 const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../..';
-import { setupAnimationClock } from '../shared/animation-clock';
+import { fk, fka } from '..';
+import { setupAnimationClock } from '../test-support/animation-clock';
 
 const { advance } = setupAnimationClock();
 
@@ -232,6 +232,9 @@ describe('tweens', () => {
       /repeat count/,
     );
     expect(() => fka.createTween(frame, { Duration: 1 }, {})).toThrow(/goal property/);
+    expect(() => fka.createTween(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
+      /Unknown tween property "Missing"/,
+    );
     expect(() =>
       fka.createTween(
         frame,

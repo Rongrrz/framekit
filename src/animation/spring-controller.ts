@@ -4,9 +4,11 @@ import {
   type AnimationOwner,
 } from '../shared/runtime/animation-ownership';
 import type { Node, NodeProperties } from '../shared/runtime/node';
-import { addCleanup, assertNodeActive, isDestroyed } from '../shared/runtime/node-lifecycle';
+import { addCleanup, isDestroyed } from '../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
+import { getActiveNodeState } from '../shared/runtime/node-state';
 import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
+import { prepareAnimationGoal } from './goal';
 import {
   defaultSpringOptions,
   resolveSpringOptions,
@@ -15,12 +17,7 @@ import {
   type SpringOptions,
 } from './spring-physics';
 import type { AnimationGoal } from './types';
-import {
-  assertCompatibleAnimationValues,
-  composeAnimationValue,
-  decomposeAnimationValue,
-  type AnimationValueKind,
-} from './value';
+import { composeAnimationValue, type AnimationValueKind } from './value';
 
 export type { SpringOptions } from './spring-physics';
 
@@ -52,7 +49,7 @@ type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
 export function createSpringBinding<Properties extends NodeProperties>(
   node: Node<Properties>,
 ): SpringBinding<Properties> {
-  assertNodeActive(node);
+  getActiveNodeState(node);
   const springsByProperty = new Map<keyof Properties, PropertySpringState>();
   const completedEmitter = createSignal<[]>();
   const completed = readonlySignal(completedEmitter);
@@ -67,48 +64,25 @@ export function createSpringBinding<Properties extends NodeProperties>(
   function animate(goal: AnimationGoal<Properties>, options?: SpringOptions): void {
     assertUsable();
     const springOptions = resolveSpringOptions(options ?? {}, defaultSpringOptions);
-    const goalEntries = Object.entries(goal) as [keyof Properties, unknown][];
-    if (goalEntries.length === 0) throw new TypeError('A spring needs at least one goal property.');
-
-    const currentProperties = getPropertiesSnapshot(node);
+    const preparedGoal = prepareAnimationGoal(node, goal, 'spring', (property, currentValue) => {
+      const existingSpring = springsByProperty.get(property);
+      return existingSpring
+        ? composeAnimationValue(existingSpring.kind, existingSpring.currentComponents)
+        : currentValue;
+    });
     const preparedSprings = new Map<
       keyof Properties,
       { kind: AnimationValueKind; goalComponents: number[]; startComponents: number[] }
     >();
-    for (const [property, goalValue] of goalEntries) {
-      if (!Object.hasOwn(currentProperties, property)) {
-        throw new TypeError(
-          `Unknown spring property "${String(property)}" on ${currentProperties.Name}.`,
-        );
-      }
-      const decomposedGoal = decomposeAnimationValue(goalValue, String(property));
-      const existingSpring = springsByProperty.get(property);
-      if (existingSpring) {
-        assertCompatibleAnimationValues(
-          { kind: existingSpring.kind, numbers: existingSpring.currentComponents },
-          decomposedGoal,
-          String(property),
-        );
-        preparedSprings.set(property, {
-          kind: decomposedGoal.kind,
-          goalComponents: decomposedGoal.numbers,
-          startComponents: existingSpring.currentComponents,
-        });
-      } else {
-        const decomposedStart = decomposeAnimationValue(
-          currentProperties[property],
-          String(property),
-        );
-        assertCompatibleAnimationValues(decomposedStart, decomposedGoal, String(property));
-        preparedSprings.set(property, {
-          kind: decomposedGoal.kind,
-          goalComponents: decomposedGoal.numbers,
-          startComponents: decomposedStart.numbers,
-        });
-      }
+    for (const { property, start, goal: propertyGoal } of preparedGoal) {
+      preparedSprings.set(property, {
+        kind: propertyGoal.kind,
+        goalComponents: propertyGoal.numbers,
+        startComponents: start.numbers,
+      });
     }
 
-    const goalProperties = goalEntries.map(([property]) => property);
+    const goalProperties = preparedGoal.map(({ property }) => property);
     claimAnimationProperties(node, goalProperties, animationOwner);
     for (const [property, preparedSpring] of preparedSprings) {
       const existingSpring = springsByProperty.get(property);

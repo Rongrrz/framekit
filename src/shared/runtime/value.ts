@@ -1,5 +1,6 @@
 import type { Node } from './node';
-import { addCleanup, assertNodeActive, isDestroyed } from './node-lifecycle';
+import { addCleanup, isDestroyed } from './node-lifecycle';
+import { getActiveNodeState } from './node-state';
 import { createSignal, type Unsubscribe } from './signal';
 
 type ValueListener<T> = (value: T) => void;
@@ -45,7 +46,7 @@ export function watchValue<T>(
   value: Value<T>,
   listener: ValueListener<T>,
 ): Unsubscribe {
-  assertNodeActive(owner);
+  getActiveNodeState(owner);
   listener(value.get());
   if (isDestroyed(owner)) return doNothing;
 

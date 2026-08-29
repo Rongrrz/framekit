@@ -47,22 +47,22 @@ export function udimToCss(value: UDim): string {
   return `calc(${percent}% ${operator} ${Math.abs(value.Offset)}px)`;
 }
 
-export function assertUDim(value: UDim, name = 'UDim'): void {
-  if (typeof value !== 'object' || value === null) {
+export function assertUDim(value: unknown, name = 'UDim'): asserts value is UDim {
+  if (typeof value !== 'object' || value === null || !('Scale' in value) || !('Offset' in value)) {
     throw new TypeError(`${name} must contain finite Scale and Offset values.`);
   }
   assertFinite(value.Scale, 'scale');
   assertFinite(value.Offset, 'offset');
 }
 
-export function assertUDim2(value: UDim2, name = 'UDim2'): void {
-  if (typeof value !== 'object' || value === null) {
+export function assertUDim2(value: unknown, name = 'UDim2'): asserts value is UDim2 {
+  if (typeof value !== 'object' || value === null || !('X' in value) || !('Y' in value)) {
     throw new TypeError(`${name} must contain X and Y UDim values.`);
   }
   assertUDim(value.X, `${name}.X`);
   assertUDim(value.Y, `${name}.Y`);
 }
 
-function assertFinite(value: number, name: string): void {
+function assertFinite(value: unknown, name: string): asserts value is number {
   assertFiniteNumber(value, `UDim ${name}`);
 }

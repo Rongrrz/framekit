@@ -1,5 +1,5 @@
 import type { Node } from './node';
-import { getNodeState } from './node-state';
+import { getActiveNodeState, getNodeState } from './node-state';
 
 /** Stops a subscription or unregisters cleanup work. Safe to call repeatedly. */
 export type Unsubscribe = () => void;
@@ -53,8 +53,7 @@ export function subscribeToNodeEvent<Arguments extends unknown[]>(
   eventKey: PropertyKey,
   listener: (...args: Arguments) => void,
 ): Unsubscribe {
-  const state = getNodeState(node);
-  if (state.destroyed) throw new Error(`${state.properties.Name} has been destroyed.`);
+  const state = getActiveNodeState(node);
   let signalsByEvent = eventSignalsByNode.get(node);
   if (!signalsByEvent) {
     signalsByEvent = new Map();

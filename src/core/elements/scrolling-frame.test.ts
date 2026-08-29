@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../../..';
-import { resetDocumentAfterEach } from '../../shared/reset-document';
+import { fk, fka } from '../..';
+import { resetDocumentAfterEach } from '../../test-support/reset-document';
 
 const { createScrollingFrame } = fk;
 resetDocumentAfterEach();

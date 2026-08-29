@@ -33,12 +33,15 @@ export function color3ToCss(value: Color3, transparency = 0): string {
   return `rgb(${value.R} ${value.G} ${value.B} / ${alpha})`;
 }
 
-export function assertColor3(value: Color3, name = 'Color3'): void {
+export function assertColor3(value: unknown, name = 'Color3'): asserts value is Color3 {
   if (typeof value !== 'object' || value === null) {
     throw new TypeError(`${name} must contain valid R, G, and B channels.`);
   }
+  if (!('R' in value) || !('G' in value) || !('B' in value)) {
+    throw new TypeError(`${name} must contain valid R, G, and B channels.`);
+  }
   for (const channel of [value.R, value.G, value.B]) {
-    if (!Number.isInteger(channel) || channel < 0 || channel > 255) {
+    if (typeof channel !== 'number' || !Number.isInteger(channel) || channel < 0 || channel > 255) {
       throw new TypeError(`${name} channels must be integers from 0 to 255.`);
     }
   }

@@ -1,10 +1,12 @@
 /** Rejects a runtime value that is not one of a property's supported string values. */
 export function assertAllowedValue<Value extends string>(
-  value: Value,
+  value: unknown,
   allowedValues: readonly Value[],
   propertyName: string,
-): void {
-  if (!allowedValues.includes(value)) throw new TypeError(`Unknown ${propertyName}.`);
+): asserts value is Value {
+  if (!allowedValues.some((allowedValue) => allowedValue === value)) {
+    throw new TypeError(`Unknown ${propertyName}.`);
+  }
 }
 
 export function assertBoolean(value: unknown, propertyName: string): asserts value is boolean {

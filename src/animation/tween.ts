@@ -4,8 +4,9 @@ import {
   type AnimationOwner,
 } from '../shared/runtime/animation-ownership';
 import type { Node, NodeProperties } from '../shared/runtime/node';
-import { addCleanup, assertNodeActive, isDestroyed } from '../shared/runtime/node-lifecycle';
+import { addCleanup, isDestroyed } from '../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
+import { getActiveNodeState } from '../shared/runtime/node-state';
 import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
 import { assertNonNegativeFinite } from '../shared/runtime/validation';
 import {
@@ -15,6 +16,7 @@ import {
   type EasingDirection,
   type EasingStyle,
 } from './easing';
+import { prepareAnimationGoal } from './goal';
 import type { AnimationGoal } from './types';
 import { interpolateAnimationValue } from './value';
 
@@ -72,20 +74,15 @@ export function createTween<Properties extends NodeProperties>(
   options: TweenOptions,
   goal: TweenGoal<Properties>,
 ): Tween {
-  assertNodeActive(node);
+  getActiveNodeState(node);
   const resolvedOptions = resolveOptions(options);
 
-  const goalEntries = Object.entries(goal) as [keyof Properties, unknown][];
-  if (goalEntries.length === 0) throw new TypeError('A tween needs at least one goal property.');
-  const goalKeys = goalEntries.map(([key]) => key);
-  const goalValuesByProperty = new Map(goalEntries);
+  const preparedGoal = prepareAnimationGoal(node, goal, 'tween');
+  const goalKeys = preparedGoal.map(({ property }) => property);
+  const goalValuesByProperty = new Map(
+    preparedGoal.map(({ property, goalValue }) => [property, goalValue]),
+  );
   const initialProperties = getPropertiesSnapshot(node);
-  for (const key of goalKeys) {
-    if (!Object.hasOwn(initialProperties, key)) {
-      throw new TypeError(`Unknown tween property "${String(key)}" on ${initialProperties.Name}.`);
-    }
-    assertTweenable(initialProperties[key], goalValuesByProperty.get(key), String(key));
-  }
 
   const completedEmitter = createSignal<[TweenPlaybackState]>();
   const completed = readonlySignal(completedEmitter);
@@ -266,14 +263,6 @@ export function createTween<Properties extends NodeProperties>(
   });
 
   return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
-}
-
-function assertTweenable(start: unknown, goal: unknown, property: string): void {
-  try {
-    interpolateAnimationValue(start, goal, 0, property);
-  } catch {
-    throw new TypeError(`Property "${property}" does not contain compatible tweenable values.`);
-  }
 }
 
 function now(): number {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../..';
-import { resetDocumentAfterEach } from '../../shared/reset-document';
+import { fk } from '../..';
+import { resetDocumentAfterEach } from '../../test-support/reset-document';
 
 const { createImageButton, createTextButton } = fk;
 resetDocumentAfterEach();

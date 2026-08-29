@@ -1,8 +1,7 @@
 import { cancelAnimationProperties } from './animation-ownership';
 import type { Node, NodeProperties } from './node';
-import { assertNodeActive } from './node-lifecycle';
-import { getNodeState, isModifierState, validatePropertyPatch } from './node-state';
-import { hasLayoutModifier, renderNode } from './render';
+import { getActiveNodeState, getNodeState, validatePropertyPatch } from './node-state';
+import { renderPropertyChanges } from './render';
 import { emitNodeEvent, subscribeToNodeEvent, type Unsubscribe } from './signal';
 
 /** Applies a user-requested property change, taking control from active animations. */
@@ -20,8 +19,7 @@ export function applyPropertyPatch<Properties extends NodeProperties>(
   node: Node<Properties>,
   patch: Partial<Properties>,
 ): void {
-  assertNodeActive(node);
-  const state = getNodeState(node);
+  const state = getActiveNodeState(node);
   validatePropertyPatch(state.properties, patch);
 
   const previousProperties = state.properties;
@@ -66,8 +64,7 @@ export function subscribeToPropertyChange<
 export function getPropertiesSnapshot<Properties extends NodeProperties>(
   node: Node<Properties>,
 ): Readonly<Properties> {
-  assertNodeActive(node);
-  return { ...getNodeState(node).properties };
+  return { ...getActiveNodeState(node).properties };
 }
 
 /** Reads one current property without allocating a snapshot. */
@@ -75,24 +72,5 @@ export function getNodeProperty<
   Properties extends NodeProperties,
   Property extends keyof Properties,
 >(node: Node<Properties>, property: Property): Properties[Property] {
-  assertNodeActive(node);
-  return getNodeState(node).properties[property];
-}
-
-function renderPropertyChanges<Properties extends NodeProperties>(
-  node: Node<Properties>,
-  changedProperties: readonly (keyof Properties)[],
-): void {
-  const state = getNodeState(node);
-  if (isModifierState(state)) {
-    if (!state.parent) return;
-    renderNode(state.parent);
-    const modifierTargetState = getNodeState(state.parent);
-    if (modifierTargetState.parent && hasLayoutModifier(modifierTargetState.parent)) {
-      renderNode(modifierTargetState.parent);
-    }
-    return;
-  }
-  if (state.kind === 'gui') renderNode(node, new Set(changedProperties));
-  if (state.parent && hasLayoutModifier(state.parent)) renderNode(state.parent);
+  return getActiveNodeState(node).properties[property];
 }

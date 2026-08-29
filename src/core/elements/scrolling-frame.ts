@@ -1,7 +1,8 @@
 import { cancelAnimationProperties } from '../../shared/runtime/animation-ownership';
 import { guiEventMethods } from '../../shared/runtime/gui-events';
-import { addCleanup, assertNodeActive } from '../../shared/runtime/node-lifecycle';
+import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/node-properties';
+import { getActiveNodeState } from '../../shared/runtime/node-state';
 import type { GuiNode } from '../../shared/runtime/render';
 import {
   assertAllowedValue,
@@ -70,12 +71,12 @@ const documentsWithScrollbarStyles = new WeakSet<Document>();
 const scrollingFrameMethodTable = {
   ...guiEventMethods,
   scrollTo(this: ScrollingFrameNode, position: Vector2): void {
-    assertNodeActive(this);
+    getActiveNodeState(this);
     assertVector2(position, 'position');
     this.CanvasPosition = position;
   },
   scrollBy(this: ScrollingFrameNode, offset: Vector2): void {
-    assertNodeActive(this);
+    getActiveNodeState(this);
     assertVector2(offset, 'offset');
     this.CanvasPosition = vector2(
       this.CanvasPosition.X + offset.X,
@@ -87,13 +88,13 @@ const scrollingFrameMethodTable = {
 Object.defineProperties(scrollingFrameMethodTable, {
   AbsoluteCanvasSize: {
     get(this: ScrollingFrameNode): Vector2 {
-      assertNodeActive(this);
+      getActiveNodeState(this);
       return vector2(this.element.scrollWidth, this.element.scrollHeight);
     },
   },
   MaxCanvasPosition: {
     get(this: ScrollingFrameNode): Vector2 {
-      assertNodeActive(this);
+      getActiveNodeState(this);
       return vector2(
         Math.max(0, this.element.scrollWidth - this.element.clientWidth),
         Math.max(0, this.element.scrollHeight - this.element.clientHeight),

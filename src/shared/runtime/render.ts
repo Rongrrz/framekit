@@ -9,8 +9,10 @@ import {
   type NodeProperties,
 } from './node';
 import {
+  getActiveNodeState,
   createBaseState,
   getNodeState,
+  isModifierState,
   registerNode,
   type BaseNodeState,
   type PropertyValidator,
@@ -102,14 +104,14 @@ function getGuiNodeMethods(): object {
   Object.defineProperties(methodTable, {
     AbsolutePosition: {
       get(this: GuiNode): Vector2 {
-        assertGuiNodeActive(this);
+        getActiveNodeState(this);
         const bounds = this.element.getBoundingClientRect();
         return vector2(bounds.left, bounds.top);
       },
     },
     AbsoluteSize: {
       get(this: GuiNode): Vector2 {
-        assertGuiNodeActive(this);
+        getActiveNodeState(this);
         const bounds = this.element.getBoundingClientRect();
         return vector2(bounds.width, bounds.height);
       },
@@ -117,11 +119,6 @@ function getGuiNodeMethods(): object {
   });
   guiNodeMethods = Object.freeze(methodTable);
   return guiNodeMethods;
-}
-
-function assertGuiNodeActive(node: GuiNode): void {
-  const state = getNodeState(node);
-  if (state.destroyed) throw new Error(`${state.properties.Name} has been destroyed.`);
 }
 
 export function isGuiNode(node: Node): node is GuiNode {
@@ -135,6 +132,25 @@ export function hasLayoutModifier(node: Node): boolean {
     if (getNodeState(modifier).kind === 'layout') return true;
   }
   return false;
+}
+
+/** Renders the node surfaces affected by a committed property change. */
+export function renderPropertyChanges<Properties extends NodeProperties>(
+  node: Node<Properties>,
+  changedProperties: readonly (keyof Properties)[],
+): void {
+  const state = getNodeState(node);
+  if (isModifierState(state)) {
+    if (!state.parent) return;
+    renderNode(state.parent);
+    const modifierTargetState = getNodeState(state.parent);
+    if (modifierTargetState.parent && hasLayoutModifier(modifierTargetState.parent)) {
+      renderNode(modifierTargetState.parent);
+    }
+    return;
+  }
+  if (state.kind === 'gui') renderNode(node, new Set(changedProperties));
+  if (state.parent && hasLayoutModifier(state.parent)) renderNode(state.parent);
 }
 
 /** Renders base properties first, followed by attached modifiers. */
