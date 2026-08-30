@@ -333,7 +333,7 @@ npm run test:playground     # playground integration tests
 npm run check               # formatting, types, lint, tests, and both builds
 ```
 
-Package tests mirror the implementation domains under `src/tests`; playground integration tests stay under `playground/tests`. Cross-domain test utilities live under `src/tests/shared` and are not part of the package API.
+Package tests mirror the implementation domains under `src/test`; playground integration tests stay under `playground/tests`. Test-only utilities live under `src/test/support` and are excluded from the published package.
 
 ## Inspiration
 

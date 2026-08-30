@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '..';
-import { setupAnimationClock } from '../test-support/animation-clock';
+import { fk, fka } from '../..';
+import { setupAnimationClock } from '../support/animation-clock';
 
 const { advance } = setupAnimationClock();
 

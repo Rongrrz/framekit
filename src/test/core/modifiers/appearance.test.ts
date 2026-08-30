@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../..';
-import { createStyleModifier } from '../../shared/runtime/modifier';
-import { groupNode } from '../../test-support/group-node';
-import { resetDocumentAfterEach } from '../../test-support/reset-document';
+import { fk } from '../../..';
+import { createStyleModifier } from '../../../shared/runtime/modifier';
+import { groupNode } from '../../support/group-node';
+import { resetDocumentAfterEach } from '../../support/reset-document';
 
 const {
   color3FromRGB,

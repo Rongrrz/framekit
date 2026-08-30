@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import * as framekit from '.';
-import { fk, fka, fkh } from '.';
+import * as framekit from '..';
+import { fk, fka, fkh } from '..';
 
 describe('package API', () => {
   it('separates core, animation, and helper APIs', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../..';
+import { fk } from '../../..';
 
 const { color3FromHex, color3FromRGB, colorSequence, numberSequence, udim2FromOffset, vector2 } =
   fk;

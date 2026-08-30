@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../..';
-import { resetDocumentAfterEach } from '../../test-support/reset-document';
+import { fk } from '../../..';
+import { resetDocumentAfterEach } from '../../support/reset-document';
 
 const { createFrame, createUIListLayout, createUIPadding, udim } = fk;
 resetDocumentAfterEach();
