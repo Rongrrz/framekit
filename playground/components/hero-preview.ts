@@ -33,7 +33,7 @@ const previewModes = {
 const previewModeOrder: readonly PreviewMode[] = ['NODE', 'STATE', 'MOTION'];
 
 /** Creates the interactive mental-model preview shown inside the hero. */
-export function createHeroPreview(): fk.FrameNode {
+export function createHeroPreview(): fk.Frame {
   const selectedMode = fk.createValue<PreviewMode>('NODE');
   const preview = fk.createFrame({
     Name: 'HeroPreview',
@@ -43,7 +43,7 @@ export function createHeroPreview(): fk.FrameNode {
   });
   addRoundedBorder(preview, 24, colors.violet, 2);
 
-  const controls = new Map<PreviewMode, fk.TextButtonNode>();
+  const controls = new Map<PreviewMode, fk.TextButton>();
   for (const [index, mode] of previewModeOrder.entries()) {
     const control = createButton(
       mode,

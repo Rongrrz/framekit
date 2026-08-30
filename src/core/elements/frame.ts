@@ -1,4 +1,4 @@
-import type { GuiNode } from '../../shared/runtime/render';
+import type { GuiElement } from '../../shared/runtime/render';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -9,10 +9,10 @@ import {
 export type FrameProperties = GuiObjectProperties;
 
 /** A rectangular DOM-backed GUI container. */
-export type FrameNode = GuiNode<FrameProperties>;
+export type Frame = GuiElement<FrameProperties>;
 
 /** Creates a rectangular GUI container. */
-export function createFrame(initial: Partial<FrameProperties> = {}): FrameNode {
+export function createFrame(initial: Partial<FrameProperties> = {}): Frame {
   return createGuiObjectNode(
     'Frame',
     document.createElement('div'),

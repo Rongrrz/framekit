@@ -1,9 +1,9 @@
 import {
   createStyleModifier,
-  type StyleModifierNode,
+  type StyleModifier,
   type Styles,
 } from '../../shared/runtime/modifier';
-import type { NodeProperties } from '../../shared/runtime/node';
+import type { InstanceProperties } from '../../shared/runtime/node';
 import { mergeProperties } from '../../shared/runtime/node-state';
 import { assertAllowedValue, assertFiniteNumber } from '../../shared/runtime/validation';
 import type { GuiObjectProperties } from '../gui-object';
@@ -16,7 +16,7 @@ export type AspectType = 'FitWithinMaxSize' | 'ScaleWithParentSize';
 export type DominantAxis = 'Width' | 'Height';
 
 /** Properties for maintaining a fixed width-to-height ratio. */
-export type UIAspectRatioConstraintProperties = NodeProperties & {
+export type UIAspectRatioConstraintProperties = InstanceProperties & {
   /** Required width divided by height. */
   AspectRatio: number;
   /** How the constraint uses the parent's available size. */
@@ -26,7 +26,7 @@ export type UIAspectRatioConstraintProperties = NodeProperties & {
 };
 
 /** An element-less aspect-ratio constraint. */
-export type UIAspectRatioConstraintNode = StyleModifierNode<UIAspectRatioConstraintProperties>;
+export type UIAspectRatioConstraint = StyleModifier<UIAspectRatioConstraintProperties>;
 
 const aspectTypes: readonly AspectType[] = ['FitWithinMaxSize', 'ScaleWithParentSize'];
 const dominantAxes: readonly DominantAxis[] = ['Width', 'Height'];
@@ -34,7 +34,7 @@ const dominantAxes: readonly DominantAxis[] = ['Width', 'Height'];
 /** Creates a constraint that maintains its GUI parent's width-to-height ratio. */
 export function createUIAspectRatioConstraint(
   initial: Partial<UIAspectRatioConstraintProperties> = {},
-): UIAspectRatioConstraintNode {
+): UIAspectRatioConstraint {
   return createStyleModifier(
     'UIAspectRatioConstraint',
     mergeProperties(
@@ -53,7 +53,7 @@ export function createUIAspectRatioConstraint(
 
 function resolveAspectRatio(
   properties: Readonly<UIAspectRatioConstraintProperties>,
-  parentProperties: Readonly<NodeProperties>,
+  parentProperties: Readonly<InstanceProperties>,
 ): Styles {
   const aspectRatio =
     Number.isFinite(properties.AspectRatio) && properties.AspectRatio > 0
@@ -92,7 +92,7 @@ function validateAspectRatioProperties(
 }
 
 function hasSize(
-  properties: Readonly<NodeProperties>,
+  properties: Readonly<InstanceProperties>,
 ): properties is Readonly<GuiObjectProperties> {
   return 'Size' in properties;
 }

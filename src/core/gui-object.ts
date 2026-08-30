@@ -1,8 +1,8 @@
 import { connectHoverEvents } from '../shared/dom/hover-events';
 import type { GuiEventMethodTable } from '../shared/runtime/gui-events';
-import type { NodeProperties } from '../shared/runtime/node';
+import type { InstanceProperties } from '../shared/runtime/node';
 import { mergeProperties, type PropertyValidator } from '../shared/runtime/node-state';
-import { createGuiNode, type GuiNode, type PropertyRenderer } from '../shared/runtime/render';
+import { createGuiNode, type GuiElement, type PropertyRenderer } from '../shared/runtime/render';
 import {
   assertAllowedValue,
   assertBoolean,
@@ -17,7 +17,7 @@ import { assertVector2, vector2, type Vector2 } from './values/vector2';
 export type AutomaticSize = 'None' | 'X' | 'Y' | 'XY';
 
 /** Layout and appearance properties shared by rectangular GUI objects. */
-export type GuiObjectProperties = NodeProperties & {
+export type GuiObjectProperties = InstanceProperties & {
   /** Width and height relative to the parent. */
   Size: UDim2;
   /** Position relative to the parent. */
@@ -42,9 +42,9 @@ export type GuiObjectProperties = NodeProperties & {
   ClipsDescendants: boolean;
 };
 
-/** Shared node shape for rectangular GUI objects. */
-export type GuiObjectNode<Properties extends GuiObjectProperties = GuiObjectProperties> =
-  GuiNode<Properties>;
+/** Shared instance shape for rectangular GUI objects. */
+export type GuiObject<Properties extends GuiObjectProperties = GuiObjectProperties> =
+  GuiElement<Properties>;
 
 const automaticSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
 
@@ -75,7 +75,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>(
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
   validateAdditionalProperties?: PropertyValidator<Properties>,
-): GuiObjectNode<Properties> {
+): GuiObject<Properties> {
   element.dataset.framekit = className;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
 

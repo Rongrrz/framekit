@@ -1,37 +1,37 @@
-import type { LayoutNodeState, ModifierNode, StyleModifierState } from './modifier';
-import type { Node, NodeProperties } from './node';
+import type { LayoutNodeState, Modifier, StyleModifierState } from './modifier';
+import type { Instance, InstanceProperties } from './node';
 import type { GuiNodeState } from './render';
 import { assertString } from './validation';
 
-export type PropertyValidator<Properties extends NodeProperties> = (
+export type PropertyValidator<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
 ) => void;
 
-export type BaseNodeState<Properties extends NodeProperties = NodeProperties> = {
+export type BaseNodeState<Properties extends InstanceProperties = InstanceProperties> = {
   className: string;
   properties: Properties;
   validateProperties: PropertyValidator<Properties> | undefined;
-  parent: Node | undefined;
+  parent: Instance | undefined;
   destroyed: boolean;
   cleanups: Set<() => void>;
 };
 
 /** Internal tree-only state used by lightweight test nodes. */
-export type GroupNodeState<Properties extends NodeProperties = NodeProperties> =
+export type GroupNodeState<Properties extends InstanceProperties = InstanceProperties> =
   BaseNodeState<Properties> & {
     kind: 'group';
-    children: Node[];
+    children: Instance[];
   };
 
-export type NodeState<Properties extends NodeProperties = NodeProperties> =
+export type NodeState<Properties extends InstanceProperties = InstanceProperties> =
   | GroupNodeState<Properties>
   | GuiNodeState<Properties>
   | StyleModifierState<Properties>
   | LayoutNodeState<Properties>;
 
-const states = new WeakMap<Node, NodeState>();
+const states = new WeakMap<Instance, NodeState>();
 
-export function createBaseState<Properties extends NodeProperties>(
+export function createBaseState<Properties extends InstanceProperties>(
   className: string,
   properties: Properties,
   validateProperties?: PropertyValidator<Properties>,
@@ -48,7 +48,7 @@ export function createBaseState<Properties extends NodeProperties>(
 }
 
 /** Merges constructor properties while rejecting misspelled or unsupported keys. */
-export function mergeProperties<Properties extends NodeProperties>(
+export function mergeProperties<Properties extends InstanceProperties>(
   defaultProperties: Properties,
   initial: Partial<Properties>,
 ): Properties {
@@ -57,7 +57,7 @@ export function mergeProperties<Properties extends NodeProperties>(
 }
 
 /** Rejects unknown, missing, and non-finite property values. */
-export function validatePropertyPatch<Properties extends NodeProperties>(
+export function validatePropertyPatch<Properties extends InstanceProperties>(
   current: Readonly<Properties>,
   patch: Partial<Properties>,
 ): void {
@@ -77,16 +77,16 @@ export function validatePropertyPatch<Properties extends NodeProperties>(
   }
 }
 
-export function registerNode<Properties extends NodeProperties>(
-  node: Node<Properties>,
+export function registerNode<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
   state: NodeState<Properties>,
 ): void {
   states.set(node, state as NodeState);
 }
 
 /** Returns the private state behind a public node handle. */
-export function getNodeState<Properties extends NodeProperties>(
-  node: Node<Properties>,
+export function getNodeState<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
 ): NodeState<Properties> {
   const state = states.get(node);
   if (!state) throw new TypeError('Expected a FrameKit node.');
@@ -94,25 +94,25 @@ export function getNodeState<Properties extends NodeProperties>(
 }
 
 /** Returns the authoritative state for a node whose lifecycle is still active. */
-export function getActiveNodeState<Properties extends NodeProperties>(
-  node: Node<Properties>,
+export function getActiveNodeState<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
 ): NodeState<Properties> {
   const state = getNodeState(node);
   if (state.destroyed) throw new Error(`${state.properties.Name} has been destroyed.`);
   return state;
 }
 
-export function getChildren<Properties extends NodeProperties>(
+export function getChildren<Properties extends InstanceProperties>(
   state: NodeState<Properties>,
-): Node[] {
+): Instance[] {
   return state.kind === 'group' || state.kind === 'gui' ? state.children : [];
 }
 
 /** Links a child into the authoritative hierarchy state. DOM placement remains the tree's job. */
 export function linkNodeToParent(
-  parent: Node,
+  parent: Instance,
   parentState: NodeState,
-  child: Node,
+  child: Instance,
   childState: NodeState,
   index = getChildren(parentState).length,
 ): void {
@@ -120,12 +120,12 @@ export function linkNodeToParent(
   const siblings = getChildren(parentState);
   siblings.splice(Math.max(0, Math.min(index, siblings.length)), 0, child);
   if (isModifierState(childState) && parentState.kind === 'gui') {
-    parentState.modifiers.set(childState.modifierKey, child as ModifierNode);
+    parentState.modifiers.set(childState.modifierKey, child as Modifier);
   }
 }
 
 /** Removes a node from the authoritative hierarchy state and returns its previous parent. */
-export function unlinkNodeFromParent(node: Node, state: NodeState): Node | undefined {
+export function unlinkNodeFromParent(node: Instance, state: NodeState): Instance | undefined {
   const previousParent = state.parent;
   if (!previousParent) return undefined;
 
@@ -140,7 +140,7 @@ export function unlinkNodeFromParent(node: Node, state: NodeState): Node | undef
   return previousParent;
 }
 
-export function isModifierState<Properties extends NodeProperties>(
+export function isModifierState<Properties extends InstanceProperties>(
   state: NodeState<Properties>,
 ): state is StyleModifierState<Properties> | LayoutNodeState<Properties> {
   return state.kind === 'style' || state.kind === 'layout';

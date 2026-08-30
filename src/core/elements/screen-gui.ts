@@ -1,13 +1,13 @@
 import { connectHoverEvents } from '../../shared/dom/hover-events';
 import { guiEventMethods } from '../../shared/runtime/gui-events';
-import type { NodeProperties } from '../../shared/runtime/node';
+import type { InstanceProperties } from '../../shared/runtime/node';
 import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { getActiveNodeState, mergeProperties } from '../../shared/runtime/node-state';
-import { createGuiNode, type GuiNode } from '../../shared/runtime/render';
+import { createGuiNode, type GuiElement } from '../../shared/runtime/render';
 import { assertBoolean, assertInteger } from '../../shared/runtime/validation';
 
 /** Properties controlling a full-viewport GUI root. */
-export type ScreenGuiProperties = NodeProperties & {
+export type ScreenGuiProperties = InstanceProperties & {
   /** Whether this GUI is rendered while mounted. */
   Enabled: boolean;
   /** Stacking order relative to other mounted ScreenGuis. */
@@ -25,25 +25,25 @@ export type ScreenGuiMethods = {
 };
 
 /** A mountable full-viewport hierarchy root. */
-export type ScreenGuiNode = GuiNode<ScreenGuiProperties> & ScreenGuiMethods;
+export type ScreenGui = GuiElement<ScreenGuiProperties> & ScreenGuiMethods;
 
 const screenGuiMethods = Object.freeze({
   ...guiEventMethods,
-  mount(this: ScreenGuiNode, target: string | HTMLElement): void {
+  mount(this: ScreenGui, target: string | HTMLElement): void {
     mountScreenGui(this, target);
   },
-  unmount(this: ScreenGuiNode): void {
+  unmount(this: ScreenGui): void {
     unmountScreenGui(this);
   },
-  isMounted(this: ScreenGuiNode): boolean {
+  isMounted(this: ScreenGui): boolean {
     return isScreenGuiMounted(this);
   },
 } satisfies typeof guiEventMethods & ScreenGuiMethods);
 
-const mountTargets = new WeakMap<ScreenGuiNode, HTMLElement>();
+const mountTargets = new WeakMap<ScreenGui, HTMLElement>();
 
 /** Creates an unmounted full-viewport GUI root. */
-export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): ScreenGuiNode {
+export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): ScreenGui {
   const element = document.createElement('div');
   element.dataset.framekit = 'ScreenGui';
   Object.assign(element.style, {
@@ -66,7 +66,7 @@ export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): Scr
     },
     validateScreenGuiProperties,
     screenGuiMethods,
-  ) as ScreenGuiNode;
+  ) as ScreenGui;
 
   connectHoverEvents(gui, element);
   addCleanup(gui, () => mountTargets.delete(gui));
@@ -79,7 +79,7 @@ function validateScreenGuiProperties(properties: Readonly<ScreenGuiProperties>):
 }
 
 /** Mounts a full-viewport ScreenGui beneath the supplied DOM owner. */
-function mountScreenGui(gui: ScreenGuiNode, target: string | HTMLElement): void {
+function mountScreenGui(gui: ScreenGui, target: string | HTMLElement): void {
   getActiveNodeState(gui);
   const element = resolveMountTarget(target);
   if (mountTargets.get(gui) === element && gui.element.parentElement === element) return;
@@ -89,13 +89,13 @@ function mountScreenGui(gui: ScreenGuiNode, target: string | HTMLElement): void 
   element.append(gui.element);
 }
 
-function unmountScreenGui(gui: ScreenGuiNode): void {
+function unmountScreenGui(gui: ScreenGui): void {
   getActiveNodeState(gui);
   gui.element.remove();
   mountTargets.delete(gui);
 }
 
-function isScreenGuiMounted(gui: ScreenGuiNode): boolean {
+function isScreenGuiMounted(gui: ScreenGui): boolean {
   getActiveNodeState(gui);
   const target = mountTargets.get(gui);
   if (!target || gui.element.parentElement !== target) {

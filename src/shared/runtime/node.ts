@@ -16,8 +16,8 @@ import {
 } from './tree';
 import { watchValue, type Value } from './value';
 
-/** Properties shared by every FrameKit node. */
-export type NodeProperties = {
+/** Properties shared by every FrameKit instance. */
+export type InstanceProperties = {
   /** The editable hierarchy name used by lookup and debug paths. */
   Name: string;
 };
@@ -26,17 +26,17 @@ declare const nodeProperties: unique symbol;
 const propertyTablesByMethodTable = new WeakMap<object, Map<string, object>>();
 
 /** A persistent typed object in the FrameKit hierarchy. */
-export type Node<Properties extends NodeProperties = NodeProperties> = {
+export type Instance<Properties extends InstanceProperties = InstanceProperties> = {
   readonly [nodeProperties]: Properties;
-  /** The concrete FrameKit node type, such as `Frame` or `TextButton`. */
+  /** The concrete FrameKit class, such as `Frame` or `TextButton`. */
   readonly ClassName: string;
-  /** This node's hierarchy parent. Assigning it reparents or detaches the node. */
-  Parent: Node | undefined;
+  /** This instance's hierarchy parent. Assigning it reparents or detaches the instance. */
+  Parent: Instance | undefined;
 } & Properties &
-  NodeMethods<Properties>;
+  InstanceMethods<Properties>;
 
-/** Operations shared by every FrameKit node. */
-export type NodeMethods<Properties extends NodeProperties = NodeProperties> = {
+/** Operations shared by every FrameKit instance. */
+export type InstanceMethods<Properties extends InstanceProperties = InstanceProperties> = {
   /** Validates and applies several properties in one render pass. */
   setProperties(patch: Partial<Properties>): void;
   /** Subscribes to one property and reports its new and previous values. */
@@ -45,15 +45,15 @@ export type NodeMethods<Properties extends NodeProperties = NodeProperties> = {
     listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
   ): Unsubscribe;
   /** Reparents a child beneath this node. */
-  addChild(child: Node): void;
+  addChild(child: Instance): void;
   /** Detaches this node without destroying it. */
   removeFromParent(): void;
   /** Returns a snapshot of the direct children. */
-  getChildren(): readonly Node[];
+  getChildren(): readonly Instance[];
   /** Returns a depth-first snapshot of every nested child. */
-  getDescendants(): readonly Node[];
+  getDescendants(): readonly Instance[];
   /** Finds a direct child by Name, or any descendant when recursive is true. */
-  findFirstChild(name: string, recursive?: boolean): Node | undefined;
+  findFirstChild(name: string, recursive?: boolean): Instance | undefined;
   /** Returns the dot-separated Name path from the hierarchy root. */
   getFullName(): string;
   /** Formats this node and its descendants as a readable tree. */
@@ -71,17 +71,17 @@ export type NodeMethods<Properties extends NodeProperties = NodeProperties> = {
 };
 
 /** Creates a node handle with direct property access. */
-export function createNodeHandle<Properties extends NodeProperties>(
+export function createNodeHandle<Properties extends InstanceProperties>(
   initialProperties: Readonly<Properties>,
   methods: object = nodeMethods,
   fields: object = {},
-): Node<Properties> {
+): Instance<Properties> {
   const propertyTable = createNodeHandlePropertyTable(initialProperties, methods);
   const handle = Object.assign(Object.create(propertyTable) as object, fields);
-  return Object.freeze(handle) as Node<Properties>;
+  return Object.freeze(handle) as Instance<Properties>;
 }
 
-function createNodeHandlePropertyTable<Properties extends NodeProperties>(
+function createNodeHandlePropertyTable<Properties extends InstanceProperties>(
   properties: Readonly<Properties>,
   methodTable: object,
 ): object {
@@ -100,10 +100,10 @@ function createNodeHandlePropertyTable<Properties extends NodeProperties>(
   for (const propertyName of propertyNames) {
     Object.defineProperty(propertyTable, propertyName, {
       enumerable: true,
-      get(this: Node<Properties>) {
+      get(this: Instance<Properties>) {
         return getNodeProperty(this, propertyName as keyof Properties);
       },
-      set(this: Node<Properties>, value: Properties[keyof Properties]) {
+      set(this: Instance<Properties>, value: Properties[keyof Properties]) {
         setNodeProperties(this, { [propertyName]: value } as Partial<Properties>);
       },
     });
@@ -126,68 +126,68 @@ export function extendMethodTable<Base extends object, Extension extends object>
 
 /** Shared prototype for node handles, keeping methods out of each instance allocation. */
 const methodTable = {
-  setProperties<Properties extends NodeProperties>(
-    this: Node<Properties>,
+  setProperties<Properties extends InstanceProperties>(
+    this: Instance<Properties>,
     patch: Partial<Properties>,
   ): void {
     setNodeProperties(this, patch);
   },
-  onPropertyChanged<Properties extends NodeProperties, Property extends keyof Properties>(
-    this: Node<Properties>,
+  onPropertyChanged<Properties extends InstanceProperties, Property extends keyof Properties>(
+    this: Instance<Properties>,
     property: Property,
     listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
   ): Unsubscribe {
     return subscribeToPropertyChange(this, property, listener);
   },
-  addChild(this: Node, child: Node): void {
+  addChild(this: Instance, child: Instance): void {
     append(this, child);
   },
-  removeFromParent(this: Node): void {
+  removeFromParent(this: Instance): void {
     detach(this);
   },
-  getChildren(this: Node): readonly Node[] {
+  getChildren(this: Instance): readonly Instance[] {
     return children(this);
   },
-  getDescendants(this: Node): readonly Node[] {
+  getDescendants(this: Instance): readonly Instance[] {
     return descendants(this);
   },
-  findFirstChild(this: Node, name: string, recursive = false): Node | undefined {
+  findFirstChild(this: Instance, name: string, recursive = false): Instance | undefined {
     return findFirstChild(this, name, recursive);
   },
-  getFullName(this: Node): string {
+  getFullName(this: Instance): string {
     return getFullName(this);
   },
-  toTreeString(this: Node): string {
+  toTreeString(this: Instance): string {
     return toTreeString(this);
   },
-  printTree(this: Node): void {
+  printTree(this: Instance): void {
     printTree(this);
   },
-  destroy(this: Node): void {
+  destroy(this: Instance): void {
     destroy(this);
   },
-  isDestroyed(this: Node): boolean {
+  isDestroyed(this: Instance): boolean {
     return isDestroyed(this);
   },
-  onDestroy(this: Node, callback: () => void): Unsubscribe {
+  onDestroy(this: Instance, callback: () => void): Unsubscribe {
     return onDestroy(this, callback);
   },
-  watch<T>(this: Node, value: Value<T>, listener: (value: T) => void): Unsubscribe {
+  watch<T>(this: Instance, value: Value<T>, listener: (value: T) => void): Unsubscribe {
     return watchValue(this, value, listener);
   },
-} satisfies NodeMethods;
+} satisfies InstanceMethods;
 
 Object.defineProperties(methodTable, {
   ClassName: {
-    get(this: Node): string {
+    get(this: Instance): string {
       return getClassName(this);
     },
   },
   Parent: {
-    get(this: Node): Node | undefined {
+    get(this: Instance): Instance | undefined {
       return getParent(this);
     },
-    set(this: Node, newParent: Node | undefined) {
+    set(this: Instance, newParent: Instance | undefined) {
       setParent(this, newParent);
     },
   },

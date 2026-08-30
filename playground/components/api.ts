@@ -6,7 +6,7 @@ import { colors } from '../theme';
 import { createApiExplorer } from './api-explorer';
 
 /** Creates the public-API tour section. */
-export function createApi(): fk.FrameNode {
+export function createApi(): fk.Frame {
   const section = createSection('Api', sectionLayout.api, colors.ink);
   const content = createSectionContent();
 

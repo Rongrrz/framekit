@@ -28,7 +28,7 @@ describe('playground application', () => {
     vi.stubGlobal('innerWidth', 900);
     const app = createPlaygroundApp();
     const content = app.findFirstChild('FrameKitPlaygroundContent', true)!;
-    const contentScale = content.findFirstChild('UIScale') as fk.UIScaleNode;
+    const contentScale = content.findFirstChild('UIScale') as fk.UIScale;
     const motion = app.findFirstChild('Motion', true);
 
     expect(contentScale.Scale).toBe(1.5);
@@ -47,7 +47,7 @@ describe('playground application', () => {
     vi.stubGlobal('innerWidth', 900);
     const app = createPlaygroundApp('mobile');
     const content = app.findFirstChild('FrameKitPlaygroundContent', true)!;
-    const contentScale = content.findFirstChild('UIScale') as fk.UIScaleNode;
+    const contentScale = content.findFirstChild('UIScale') as fk.UIScale;
 
     window.dispatchEvent(new Event('resize'));
 

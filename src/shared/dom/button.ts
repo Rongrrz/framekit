@@ -1,7 +1,7 @@
 import type { GuiObjectProperties } from '../../core/gui-object';
 import { guiEventKeys, type ButtonEventMethods } from '../runtime/gui-events';
 import { addCleanup } from '../runtime/node-lifecycle';
-import type { GuiNode } from '../runtime/render';
+import type { GuiElement } from '../runtime/render';
 import { emitNodeEvent } from '../runtime/signal';
 
 export type ButtonProperties = {
@@ -9,18 +9,18 @@ export type ButtonProperties = {
   Disabled: boolean;
 };
 
-/** Shared node shape for text and image buttons. */
-export type ButtonNode<
+/** Shared instance shape for text and image buttons. */
+export type ButtonElement<
   Properties extends GuiObjectProperties & ButtonProperties = GuiObjectProperties &
     ButtonProperties,
-> = GuiNode<Properties> &
+> = GuiElement<Properties> &
   ButtonEventMethods & {
     /** The underlying browser button element. */
     readonly element: HTMLButtonElement;
   };
 
 export function initializeButtonElement<Properties extends GuiObjectProperties & ButtonProperties>(
-  node: ButtonNode<Properties>,
+  node: ButtonElement<Properties>,
   element: HTMLButtonElement,
 ): void {
   const listenerController = new AbortController();

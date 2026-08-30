@@ -6,7 +6,7 @@ import { colors } from '../theme';
 import { createGuideDemo } from './guide-demo';
 
 /** Creates the guided first-component section. */
-export function createGuide(): fk.FrameNode {
+export function createGuide(): fk.Frame {
   const section = createSection('Guide', sectionLayout.guide, colors.paper);
   const content = createSectionContent();
 

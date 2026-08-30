@@ -24,7 +24,7 @@ const motionPositions = {
   orbit: fk.udim2FromOffset(86, 204),
 } satisfies MotionPositions;
 
-export function createMotion(): fk.FrameNode {
+export function createMotion(): fk.Frame {
   const section = createSection('Motion', sectionLayout.motion, colors.ink);
 
   const content = createSectionContent();
@@ -152,8 +152,8 @@ export function createMotion(): fk.FrameNode {
 }
 
 function bindMotionDemo(options: {
-  card: fk.FrameNode;
-  scale: fk.UIScaleNode;
+  card: fk.Frame;
+  scale: fk.UIScale;
   selectedMode: fk.Value<MotionMode>;
   positions: MotionPositions;
   onMoving: (goal: MotionGoal) => void;

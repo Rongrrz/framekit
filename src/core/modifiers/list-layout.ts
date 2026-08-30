@@ -1,11 +1,11 @@
 import {
   createLayoutModifier,
   type LayoutChild,
-  type LayoutNode,
+  type LayoutModifier,
   type LayoutStyles,
   type Styles,
 } from '../../shared/runtime/modifier';
-import type { NodeProperties } from '../../shared/runtime/node';
+import type { InstanceProperties } from '../../shared/runtime/node';
 import { mergeProperties } from '../../shared/runtime/node-state';
 import { assertAllowedValue, assertBoolean } from '../../shared/runtime/validation';
 import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
@@ -23,7 +23,7 @@ export type VerticalAlignment = 'Top' | 'Center' | 'Bottom';
 export type SortOrder = 'LayoutOrder' | 'Name';
 
 /** Properties controlling automatic list layout. */
-export type UIListLayoutProperties = NodeProperties & {
+export type UIListLayoutProperties = InstanceProperties & {
   /** Primary axis used to arrange children. */
   FillDirection: FillDirection;
   /** Horizontal alignment of the arranged group. */
@@ -39,7 +39,7 @@ export type UIListLayoutProperties = NodeProperties & {
 };
 
 /** An element-less layout node for direct GUI children. */
-export type UIListLayoutNode = LayoutNode<UIListLayoutProperties>;
+export type UIListLayout = LayoutModifier<UIListLayoutProperties>;
 
 const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
 const horizontalAlignments: readonly HorizontalAlignment[] = ['Left', 'Center', 'Right'];
@@ -47,9 +47,7 @@ const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bott
 const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a list layout that arranges its parent's direct GUI children. */
-export function createUIListLayout(
-  initial: Partial<UIListLayoutProperties> = {},
-): UIListLayoutNode {
+export function createUIListLayout(initial: Partial<UIListLayoutProperties> = {}): UIListLayout {
   return createLayoutModifier(
     'UIListLayout',
     mergeProperties(

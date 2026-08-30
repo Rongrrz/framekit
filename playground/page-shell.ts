@@ -4,9 +4,9 @@ import { designWidth, maximumPageScale, pageHeight, type PlaygroundLayout } from
 import { colors } from './theme';
 
 type PageShell = Readonly<{
-  app: fk.ScreenGuiNode;
-  page: fk.ScrollingFrameNode;
-  content: fk.FrameNode;
+  app: fk.ScreenGui;
+  page: fk.ScrollingFrame;
+  content: fk.Frame;
   navigate: (offset: number) => void;
 }>;
 

@@ -1,15 +1,15 @@
 import type { PropertyValidator } from '../shared/runtime/node-state';
-import type { GuiNode } from '../shared/runtime/render';
 import { assertString } from '../shared/runtime/validation';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
+  type GuiObject,
   type GuiObjectProperties,
 } from './gui-object';
 
 type CustomProperties = object;
 
-/** Description used to create one reusable GUI node class. */
+/** Description used to create one reusable GUI class. */
 export type GuiObjectDefinition<Properties extends CustomProperties> = {
   /** ClassName shown in the FrameKit hierarchy and debug output. */
   className: string;
@@ -32,9 +32,9 @@ export type GuiObjectDefinition<Properties extends CustomProperties> = {
 /** Constructor returned by defineGuiObject. */
 export type GuiObjectConstructor<Properties extends CustomProperties> = (
   initial?: Partial<GuiObjectProperties & Properties>,
-) => GuiNode<GuiObjectProperties & Properties>;
+) => GuiObject<GuiObjectProperties & Properties>;
 
-/** Defines a reusable GUI node class without exposing FrameKit runtime internals. */
+/** Defines a reusable GUI class without exposing FrameKit runtime internals. */
 export function defineGuiObject<Properties extends CustomProperties>(
   definition: GuiObjectDefinition<Properties>,
 ): GuiObjectConstructor<Properties> {

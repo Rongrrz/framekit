@@ -1,9 +1,9 @@
 import {
   createStyleModifier,
-  type StyleModifierNode,
+  type StyleModifier,
   type Styles,
 } from '../../shared/runtime/modifier';
-import type { NodeProperties } from '../../shared/runtime/node';
+import type { InstanceProperties } from '../../shared/runtime/node';
 import { mergeProperties } from '../../shared/runtime/node-state';
 import { assertBoolean, assertFiniteNumber } from '../../shared/runtime/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
@@ -18,7 +18,7 @@ import {
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
 /** Properties for a gradient applied to a GUI parent's background. */
-export type UIGradientProperties = NodeProperties & {
+export type UIGradientProperties = InstanceProperties & {
   /** Whether the gradient currently affects its parent. */
   Enabled: boolean;
   /** Colors sampled from the beginning to the end of the gradient. */
@@ -32,10 +32,10 @@ export type UIGradientProperties = NodeProperties & {
 };
 
 /** An element-less background gradient modifier. */
-export type UIGradientNode = StyleModifierNode<UIGradientProperties>;
+export type UIGradient = StyleModifier<UIGradientProperties>;
 
 /** Creates a gradient modifier for a GUI parent's background. */
-export function createUIGradient(initial: Partial<UIGradientProperties> = {}): UIGradientNode {
+export function createUIGradient(initial: Partial<UIGradientProperties> = {}): UIGradient {
   return createStyleModifier(
     'UIGradient',
     mergeProperties(
@@ -56,7 +56,7 @@ export function createUIGradient(initial: Partial<UIGradientProperties> = {}): U
 
 function resolveGradientStyles(
   properties: Readonly<UIGradientProperties>,
-  targetProperties: Readonly<NodeProperties>,
+  targetProperties: Readonly<InstanceProperties>,
 ): Styles {
   if (!properties.Enabled) return {};
 
@@ -132,7 +132,7 @@ function gradientOffset(offset: Vector2, rotation: number): number {
   return offset.X * Math.cos(radians) + offset.Y * Math.sin(radians);
 }
 
-function readTargetColor(properties: Readonly<NodeProperties>): Color3 {
+function readTargetColor(properties: Readonly<InstanceProperties>): Color3 {
   if ('BackgroundColor3' in properties) {
     const color = properties.BackgroundColor3 as Color3;
     assertColor3(color, 'BackgroundColor3');
@@ -141,7 +141,7 @@ function readTargetColor(properties: Readonly<NodeProperties>): Color3 {
   return color3FromRGB(255, 255, 255);
 }
 
-function readTargetTransparency(properties: Readonly<NodeProperties>): number {
+function readTargetTransparency(properties: Readonly<InstanceProperties>): number {
   return 'BackgroundTransparency' in properties &&
     typeof properties.BackgroundTransparency === 'number'
     ? properties.BackgroundTransparency

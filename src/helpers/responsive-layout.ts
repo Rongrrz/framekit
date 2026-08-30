@@ -1,4 +1,4 @@
-import type { Node } from '../shared/runtime/node';
+import type { Instance } from '../shared/runtime/node';
 import { assertNonNegativeFinite } from '../shared/runtime/validation';
 
 export type ResponsiveLayoutOptions = Readonly<{
@@ -10,7 +10,7 @@ export type ResponsiveLayoutOptions = Readonly<{
 type ResponsiveLayout = 'mobile' | 'desktop';
 
 /** Applies a viewport layout now and again whenever its breakpoint is crossed. */
-export function bindResponsiveLayout(owner: Node, options: ResponsiveLayoutOptions): void {
+export function bindResponsiveLayout(owner: Instance, options: ResponsiveLayoutOptions): void {
   assertNonNegativeFinite(options.breakpoint, 'Breakpoint');
 
   if (typeof options.mobile !== 'function') {

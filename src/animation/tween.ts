@@ -3,7 +3,7 @@ import {
   releaseAnimationProperties,
   type AnimationOwner,
 } from '../shared/runtime/animation-ownership';
-import type { Node, NodeProperties } from '../shared/runtime/node';
+import type { Instance, InstanceProperties } from '../shared/runtime/node';
 import { addCleanup, isDestroyed } from '../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
 import { getActiveNodeState } from '../shared/runtime/node-state';
@@ -50,7 +50,7 @@ export type TweenPlaybackState =
   | 'Cancelled';
 
 /** Animatable property targets for a tween. */
-export type TweenGoal<Properties extends NodeProperties> = AnimationGoal<Properties>;
+export type TweenGoal<Properties extends InstanceProperties> = AnimationGoal<Properties>;
 
 /** Explicit playback controls for a tween. */
 export type Tween = {
@@ -69,8 +69,8 @@ export type Tween = {
 type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
 
 /** Creates a controllable tween that applies interpolated property values. */
-export function createTween<Properties extends NodeProperties>(
-  node: Node<Properties>,
+export function createTween<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
   options: TweenOptions,
   goal: TweenGoal<Properties>,
 ): Tween {

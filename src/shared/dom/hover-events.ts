@@ -1,10 +1,10 @@
 import { guiEventKeys } from '../runtime/gui-events';
 import { addCleanup } from '../runtime/node-lifecycle';
-import type { GuiNode } from '../runtime/render';
+import type { GuiElement } from '../runtime/render';
 import { emitNodeEvent } from '../runtime/signal';
 
 /** Connects the hover events shared by every DOM-backed GUI node. */
-export function connectHoverEvents(node: GuiNode, element: HTMLElement): void {
+export function connectHoverEvents(node: GuiElement, element: HTMLElement): void {
   const listenerController = new AbortController();
   const listenerOptions = { signal: listenerController.signal };
 

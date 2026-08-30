@@ -1,10 +1,10 @@
 import {
   initializeButtonElement,
-  type ButtonNode,
+  type ButtonElement,
   type ButtonProperties,
 } from '../../shared/dom/button';
 import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
-import { type GuiNode, type PropertyRenderer } from '../../shared/runtime/render';
+import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
 import {
   assertAllowedValue,
   assertBoolean,
@@ -33,13 +33,13 @@ export type ImageLabelProperties = GuiObjectProperties & {
 };
 
 /** A non-interactive image node. */
-export type ImageLabelNode = GuiNode<ImageLabelProperties>;
+export type ImageLabel = GuiElement<ImageLabelProperties>;
 
 /** Properties for an interactive image button. */
 export type ImageButtonProperties = ImageLabelProperties & ButtonProperties;
 
 /** An image node with typed button events. */
-export type ImageButtonNode = ButtonNode<ImageButtonProperties>;
+export type ImageButton = ButtonElement<ImageButtonProperties>;
 
 const objectFit = {
   Stretch: 'fill',
@@ -50,7 +50,7 @@ const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
 /** Creates a non-interactive image node. */
-export function createImageLabel(initial: Partial<ImageLabelProperties> = {}): ImageLabelNode {
+export function createImageLabel(initial: Partial<ImageLabelProperties> = {}): ImageLabel {
   return createImageNode(
     'ImageLabel',
     document.createElement('div'),
@@ -60,7 +60,7 @@ export function createImageLabel(initial: Partial<ImageLabelProperties> = {}): I
 }
 
 /** Creates an image node with button events. */
-export function createImageButton(initial: Partial<ImageButtonProperties> = {}): ImageButtonNode {
+export function createImageButton(initial: Partial<ImageButtonProperties> = {}): ImageButton {
   const element = document.createElement('button');
   const node = createImageNode(
     'ImageButton',
@@ -72,7 +72,7 @@ export function createImageButton(initial: Partial<ImageButtonProperties> = {}):
       element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
     },
     buttonEventMethods,
-  ) as ImageButtonNode;
+  ) as ImageButton;
 
   initializeButtonElement(node, element);
   return node;
@@ -97,7 +97,7 @@ function createImageNode<Properties extends ImageLabelProperties>(
   initial: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Properties> {
+): GuiElement<Properties> {
   const image = document.createElement('img');
   image.draggable = false;
   image.decoding = 'async';

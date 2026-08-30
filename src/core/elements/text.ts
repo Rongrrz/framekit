@@ -1,6 +1,6 @@
 import {
   initializeButtonElement,
-  type ButtonNode,
+  type ButtonElement,
   type ButtonProperties,
 } from '../../shared/dom/button';
 import {
@@ -12,7 +12,7 @@ import {
   type TextStyleProperties,
 } from '../../shared/dom/text-style';
 import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
-import { type GuiNode, type PropertyRenderer } from '../../shared/runtime/render';
+import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
 import { assertBoolean } from '../../shared/runtime/validation';
 import {
   createDefaultGuiObjectProperties,
@@ -26,16 +26,16 @@ export type { TextXAlignment, TextYAlignment } from '../../shared/dom/text-style
 export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
 
 /** A non-interactive text node. */
-export type TextLabelNode = GuiNode<TextLabelProperties>;
+export type TextLabel = GuiElement<TextLabelProperties>;
 
 /** Properties for an interactive text button. */
 export type TextButtonProperties = TextLabelProperties & ButtonProperties;
 
 /** A text node with typed button events. */
-export type TextButtonNode = ButtonNode<TextButtonProperties>;
+export type TextButton = ButtonElement<TextButtonProperties>;
 
 /** Creates a non-interactive text node. */
-export function createTextLabel(initial: Partial<TextLabelProperties> = {}): TextLabelNode {
+export function createTextLabel(initial: Partial<TextLabelProperties> = {}): TextLabel {
   return createTextNode(
     'TextLabel',
     document.createElement('div'),
@@ -45,7 +45,7 @@ export function createTextLabel(initial: Partial<TextLabelProperties> = {}): Tex
 }
 
 /** Creates a text node with button events. */
-export function createTextButton(initial: Partial<TextButtonProperties> = {}): TextButtonNode {
+export function createTextButton(initial: Partial<TextButtonProperties> = {}): TextButton {
   const element = document.createElement('button');
   const node = createTextNode(
     'TextButton',
@@ -57,7 +57,7 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
       element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
     },
     buttonEventMethods,
-  ) as TextButtonNode;
+  ) as TextButton;
 
   initializeButtonElement(node, element);
   return node;
@@ -78,7 +78,7 @@ function createTextNode<Properties extends TextLabelProperties>(
   initial: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Properties> {
+): GuiElement<Properties> {
   const text = document.createElement('span');
   text.dataset.framekitText = '';
   Object.assign(text.style, {

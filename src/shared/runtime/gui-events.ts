@@ -1,4 +1,4 @@
-import type { Node } from './node';
+import type { Instance } from './node';
 import { subscribeToNodeEvent, type Unsubscribe } from './signal';
 
 /** Mouse events available on every DOM-backed GUI node. */
@@ -48,39 +48,39 @@ export const guiEventKeys = Object.freeze({
 
 // Nodes share frozen method tables so event methods are allocated once rather than per node.
 export const guiEventMethods = Object.freeze({
-  onMouseEnter(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onMouseEnter(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.mouseEnter, listener);
   },
-  onMouseLeave(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onMouseLeave(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.mouseLeave, listener);
   },
 } satisfies GuiEventMethods);
 
 export const buttonEventMethods = Object.freeze({
   ...guiEventMethods,
-  onClick(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onClick(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.click, listener);
   },
-  onPrimaryButtonDown(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onPrimaryButtonDown(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.primaryButtonDown, listener);
   },
-  onPrimaryButtonUp(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onPrimaryButtonUp(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.primaryButtonUp, listener);
   },
-  onSecondaryClick(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onSecondaryClick(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.secondaryClick, listener);
   },
-  onSecondaryButtonDown(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onSecondaryButtonDown(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.secondaryButtonDown, listener);
   },
-  onSecondaryButtonUp(this: Node, listener: (event: MouseEvent) => void): Unsubscribe {
+  onSecondaryButtonUp(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.secondaryButtonUp, listener);
   },
 } satisfies ButtonEventMethods);
 
 export const textBoxEventMethods = Object.freeze({
   ...guiEventMethods,
-  onTextChanged(this: Node, listener: (text: string, event: InputEvent) => void): Unsubscribe {
+  onTextChanged(this: Instance, listener: (text: string, event: InputEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.textChanged, listener);
   },
 } satisfies TextBoxEventMethods);

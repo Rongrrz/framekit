@@ -1,4 +1,4 @@
-import type { Node, NodeProperties } from '../shared/runtime/node';
+import type { Instance, InstanceProperties } from '../shared/runtime/node';
 import { getPropertiesSnapshot } from '../shared/runtime/node-properties';
 import type { AnimationGoal } from './types';
 import {
@@ -25,21 +25,21 @@ const messagesByKind = {
   },
 } satisfies Record<AnimationKind, AnimationGoalMessages>;
 
-type PreparedAnimationProperty<Properties extends NodeProperties> = Readonly<{
+type PreparedAnimationProperty<Properties extends InstanceProperties> = Readonly<{
   property: keyof Properties;
   goalValue: unknown;
   start: DecomposedAnimationValue;
   goal: DecomposedAnimationValue;
 }>;
 
-type ResolveStartValue<Properties extends NodeProperties> = (
+type ResolveStartValue<Properties extends InstanceProperties> = (
   property: keyof Properties,
   currentValue: Properties[keyof Properties],
 ) => unknown;
 
 /** Validates and decomposes an animation goal once at the node boundary. */
-export const prepareAnimationGoal = <Properties extends NodeProperties>(
-  node: Node<Properties>,
+export const prepareAnimationGoal = <Properties extends InstanceProperties>(
+  node: Instance<Properties>,
   goal: AnimationGoal<Properties>,
   kind: AnimationKind,
   resolveStartValue?: ResolveStartValue<Properties>,

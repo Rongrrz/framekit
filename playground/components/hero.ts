@@ -9,7 +9,7 @@ import { createButton, createPill, createText } from '../ui';
 import { createHeroPreview } from './hero-preview';
 
 /** Creates the playground introduction and its primary actions. */
-export function createHero(onExplore: () => void): fk.FrameNode {
+export function createHero(onExplore: () => void): fk.Frame {
   const section = createSection('Hero', sectionLayout.hero, colors.ink);
   const content = createSectionContent();
 

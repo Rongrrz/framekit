@@ -11,7 +11,7 @@ import {
 } from '../../shared/runtime/gui-events';
 import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/node-properties';
-import type { GuiNode } from '../../shared/runtime/render';
+import type { GuiElement } from '../../shared/runtime/render';
 import { emitNodeEvent } from '../../shared/runtime/signal';
 import { assertBoolean, assertFiniteNumber, assertString } from '../../shared/runtime/validation';
 import {
@@ -37,14 +37,14 @@ export type TextBoxProperties = GuiObjectProperties &
   };
 
 /** An editable text node with typed change events. */
-export type TextBoxNode = GuiNode<TextBoxProperties> &
+export type TextBox = GuiElement<TextBoxProperties> &
   TextBoxEventMethods & {
     /** The outer browser element containing the editable surface. */
     readonly element: HTMLDivElement;
   };
 
 /** Creates an editable text node whose Text property stays synchronized with the DOM. */
-export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBoxNode {
+export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox {
   const element = document.createElement('div');
   const editor = document.createElement('div');
   const placeholder = document.createElement('span');
@@ -107,7 +107,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
     },
     textBoxEventMethods,
     validateTextBoxProperties,
-  ) as TextBoxNode;
+  ) as TextBox;
 
   const listenerController = new AbortController();
   const listenerOptions = { signal: listenerController.signal };

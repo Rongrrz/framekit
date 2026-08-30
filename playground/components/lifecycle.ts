@@ -42,7 +42,7 @@ const lifecycleStates = [
   },
 ] as const;
 
-export function createLifecycle(): fk.FrameNode {
+export function createLifecycle(): fk.Frame {
   const section = createSection('Lifecycle', sectionLayout.lifecycle, colors.ink);
 
   const content = createSectionContent();

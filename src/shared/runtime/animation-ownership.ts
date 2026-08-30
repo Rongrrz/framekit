@@ -1,13 +1,13 @@
-import type { Node } from './node';
+import type { Instance } from './node';
 
 export type AnimationOwner = {
   cancelPropertyFromConflict(property: PropertyKey): void;
 };
 
-const ownersByNode = new WeakMap<Node, Map<PropertyKey, AnimationOwner>>();
+const ownersByNode = new WeakMap<Instance, Map<PropertyKey, AnimationOwner>>();
 
 export function claimAnimationProperties(
-  node: Node,
+  node: Instance,
   properties: readonly PropertyKey[],
   owner: AnimationOwner,
 ): void {
@@ -18,12 +18,15 @@ export function claimAnimationProperties(
 }
 
 /** Cancels every current owner of the requested properties without claiming replacements. */
-export function cancelAnimationProperties(node: Node, properties: readonly PropertyKey[]): void {
+export function cancelAnimationProperties(
+  node: Instance,
+  properties: readonly PropertyKey[],
+): void {
   for (const property of properties) cancelConflictingPropertyOwner(node, property);
 }
 
 export function releaseAnimationProperties(
-  node: Node,
+  node: Instance,
   properties: readonly PropertyKey[],
   owner: AnimationOwner,
 ): void {
@@ -35,7 +38,7 @@ export function releaseAnimationProperties(
   if (propertyOwners.size === 0) ownersByNode.delete(node);
 }
 
-function getOrCreateNodeOwners(node: Node): Map<PropertyKey, AnimationOwner> {
+function getOrCreateNodeOwners(node: Instance): Map<PropertyKey, AnimationOwner> {
   const existing = ownersByNode.get(node);
   if (existing) return existing;
   const created = new Map<PropertyKey, AnimationOwner>();
@@ -44,7 +47,7 @@ function getOrCreateNodeOwners(node: Node): Map<PropertyKey, AnimationOwner> {
 }
 
 function cancelConflictingPropertyOwner(
-  node: Node,
+  node: Instance,
   property: PropertyKey,
   ownerToKeep?: AnimationOwner,
 ): void {

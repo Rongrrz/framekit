@@ -1,4 +1,4 @@
-import type { Node } from './node';
+import type { Instance } from './node';
 import { getActiveNodeState, getNodeState } from './node-state';
 
 /** Stops a subscription or unregisters cleanup work. Safe to call repeatedly. */
@@ -45,11 +45,11 @@ export function readonlySignal<Arguments extends unknown[]>(
   return Object.freeze({ subscribe: emitter.subscribe });
 }
 
-const eventSignalsByNode = new WeakMap<Node, Map<PropertyKey, SignalEmitter<unknown[]>>>();
+const eventSignalsByNode = new WeakMap<Instance, Map<PropertyKey, SignalEmitter<unknown[]>>>();
 
 /** Subscribes to an event whose listeners are cleared with the node. */
 export function subscribeToNodeEvent<Arguments extends unknown[]>(
-  node: Node,
+  node: Instance,
   eventKey: PropertyKey,
   listener: (...args: Arguments) => void,
 ): Unsubscribe {
@@ -74,7 +74,7 @@ export function subscribeToNodeEvent<Arguments extends unknown[]>(
 }
 
 export function emitNodeEvent<Arguments extends unknown[]>(
-  node: Node,
+  node: Instance,
   eventKey: PropertyKey,
   ...args: Arguments
 ): void {

@@ -31,7 +31,7 @@ const principles = [
   },
 ] as const;
 
-export function createPrinciples(): fk.FrameNode {
+export function createPrinciples(): fk.Frame {
   const section = createSection('Principles', sectionLayout.principles, colors.paper);
 
   const content = createSectionContent();

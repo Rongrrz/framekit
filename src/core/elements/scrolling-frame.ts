@@ -3,7 +3,7 @@ import { guiEventMethods } from '../../shared/runtime/gui-events';
 import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/node-properties';
 import { getActiveNodeState } from '../../shared/runtime/node-state';
-import type { GuiNode } from '../../shared/runtime/render';
+import type { GuiElement } from '../../shared/runtime/render';
 import {
   assertAllowedValue,
   assertBoolean,
@@ -50,7 +50,7 @@ export type ScrollingFrameMethods = {
 };
 
 /** A native scrolling container synchronized through CanvasPosition. */
-export type ScrollingFrameNode = GuiNode<ScrollingFrameProperties> & ScrollingFrameMethods;
+export type ScrollingFrame = GuiElement<ScrollingFrameProperties> & ScrollingFrameMethods;
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
@@ -70,12 +70,12 @@ const documentsWithScrollbarStyles = new WeakSet<Document>();
 
 const scrollingFrameMethodTable = {
   ...guiEventMethods,
-  scrollTo(this: ScrollingFrameNode, position: Vector2): void {
+  scrollTo(this: ScrollingFrame, position: Vector2): void {
     getActiveNodeState(this);
     assertVector2(position, 'position');
     this.CanvasPosition = position;
   },
-  scrollBy(this: ScrollingFrameNode, offset: Vector2): void {
+  scrollBy(this: ScrollingFrame, offset: Vector2): void {
     getActiveNodeState(this);
     assertVector2(offset, 'offset');
     this.CanvasPosition = vector2(
@@ -87,13 +87,13 @@ const scrollingFrameMethodTable = {
 
 Object.defineProperties(scrollingFrameMethodTable, {
   AbsoluteCanvasSize: {
-    get(this: ScrollingFrameNode): Vector2 {
+    get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
       return vector2(this.element.scrollWidth, this.element.scrollHeight);
     },
   },
   MaxCanvasPosition: {
-    get(this: ScrollingFrameNode): Vector2 {
+    get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
       return vector2(
         Math.max(0, this.element.scrollWidth - this.element.clientWidth),
@@ -108,7 +108,7 @@ const scrollingFrameMethods = Object.freeze(scrollingFrameMethodTable);
 /** Creates a native scrolling container with an animatable CanvasPosition. */
 export function createScrollingFrame(
   initial: Partial<ScrollingFrameProperties> = {},
-): ScrollingFrameNode {
+): ScrollingFrame {
   const element = document.createElement('div');
   const canvasBounds = document.createElement('div');
 
@@ -174,7 +174,7 @@ export function createScrollingFrame(
     },
     scrollingFrameMethods,
     validateScrollingFrameProperties,
-  ) as ScrollingFrameNode;
+  ) as ScrollingFrame;
 
   const syncCanvasPositionFromBrowser = (): void => {
     const browserPosition = readCanvasPosition(element);

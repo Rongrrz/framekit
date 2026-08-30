@@ -17,9 +17,9 @@ describe('modifier demo', () => {
     const tags = card.findFirstChild('FeatureTags', true)!;
     const stroke = card.findFirstChild('UIStroke', true)!;
     const shadow = card.findFirstChild('UIShadow', true)!;
-    const strokeControl = demo.findFirstChild('STROKEButton', true) as fk.TextButtonNode;
-    const shadowControl = demo.findFirstChild('SHADOWButton', true) as fk.TextButtonNode;
-    const paddingControl = demo.findFirstChild('PADDINGButton', true) as fk.TextButtonNode;
+    const strokeControl = demo.findFirstChild('STROKEButton', true) as fk.TextButton;
+    const shadowControl = demo.findFirstChild('SHADOWButton', true) as fk.TextButton;
+    const paddingControl = demo.findFirstChild('PADDINGButton', true) as fk.TextButton;
 
     settle();
     for (const [modifier, control] of [

@@ -1,41 +1,41 @@
 export { createFrame } from './core/elements/frame';
-export type { FrameNode, FrameProperties } from './core/elements/frame';
+export type { Frame, FrameProperties } from './core/elements/frame';
 export { defineGuiObject } from './core/custom-gui-object';
 export type { GuiObjectConstructor, GuiObjectDefinition } from './core/custom-gui-object';
-export type { AutomaticSize, GuiObjectNode, GuiObjectProperties } from './core/gui-object';
+export type { AutomaticSize, GuiObject, GuiObjectProperties } from './core/gui-object';
 
 export { createImageButton, createImageLabel } from './core/elements/image';
 export type {
-  ImageButtonNode,
+  ImageButton,
   ImageButtonProperties,
-  ImageLabelNode,
+  ImageLabel,
   ImageLabelProperties,
   ScaleType,
 } from './core/elements/image';
 
 export { createScreenGui } from './core/elements/screen-gui';
-export type { ScreenGuiNode, ScreenGuiProperties } from './core/elements/screen-gui';
+export type { ScreenGui, ScreenGuiProperties } from './core/elements/screen-gui';
 
 export { createScrollingFrame } from './core/elements/scrolling-frame';
 export type {
   ScrollingDirection,
   ScrollingFrameMethods,
-  ScrollingFrameNode,
+  ScrollingFrame,
   ScrollingFrameProperties,
 } from './core/elements/scrolling-frame';
 
 export { createTextButton, createTextLabel } from './core/elements/text';
 export type {
-  TextButtonNode,
+  TextButton,
   TextButtonProperties,
-  TextLabelNode,
+  TextLabel,
   TextLabelProperties,
   TextXAlignment,
   TextYAlignment,
 } from './core/elements/text';
 
 export { createTextBox } from './core/elements/text-box';
-export type { TextBoxNode, TextBoxProperties } from './core/elements/text-box';
+export type { TextBox, TextBoxProperties } from './core/elements/text-box';
 
 export * from './core/modifiers/aspect-ratio';
 export * from './core/modifiers/corner';
@@ -65,6 +65,6 @@ export type {
   NumberSequenceKeypoint,
 } from './core/values/sequence';
 
-export type { LayoutNode, StyleModifierNode } from './shared/runtime/modifier';
-export type { GuiGeometry, GuiNode } from './shared/runtime/render';
-export type { Node, NodeProperties } from './shared/runtime/node';
+export type { LayoutModifier, StyleModifier } from './shared/runtime/modifier';
+export type { GuiGeometry, GuiElement } from './shared/runtime/render';
+export type { Instance, InstanceProperties } from './shared/runtime/node';

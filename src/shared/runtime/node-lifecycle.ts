@@ -1,4 +1,4 @@
-import type { Node } from './node';
+import type { Instance } from './node';
 import {
   getActiveNodeState,
   getChildren,
@@ -6,10 +6,10 @@ import {
   isModifierState,
   unlinkNodeFromParent,
 } from './node-state';
-import { hasLayoutModifier, renderNode, type GuiNode } from './render';
+import { hasLayoutModifier, renderNode, type GuiElement } from './render';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */
-export function destroy(node: Node): void {
+export function destroy(node: Instance): void {
   const errors: unknown[] = [];
   destroyRecursively(node, errors, false);
   if (errors.length === 1) throw errors[0];
@@ -18,23 +18,27 @@ export function destroy(node: Node): void {
   }
 }
 
-export function isDestroyed(node: Node): boolean {
+export function isDestroyed(node: Instance): boolean {
   return getNodeState(node).destroyed;
 }
 
 /** Registers a resource to release when the node is destroyed. */
-export function addCleanup(node: Node, callback: () => void): () => void {
+export function addCleanup(node: Instance, callback: () => void): () => void {
   const cleanups = getActiveNodeState(node).cleanups;
   cleanups.add(callback);
   return () => cleanups.delete(callback);
 }
 
 /** Runs a callback during destruction unless the returned function unregisters it first. */
-export function onDestroy(node: Node, callback: () => void): () => void {
+export function onDestroy(node: Instance, callback: () => void): () => void {
   return addCleanup(node, callback);
 }
 
-function destroyRecursively(node: Node, errors: unknown[], parentIsBeingDestroyed: boolean): void {
+function destroyRecursively(
+  node: Instance,
+  errors: unknown[],
+  parentIsBeingDestroyed: boolean,
+): void {
   const state = getNodeState(node);
   if (state.destroyed) return;
   for (const child of Array.from(getChildren(state))) destroyRecursively(child, errors, true);
@@ -61,7 +65,7 @@ function destroyRecursively(node: Node, errors: unknown[], parentIsBeingDestroye
   state.cleanups.clear();
   if (state.kind === 'gui') {
     try {
-      (node as GuiNode).element.remove();
+      (node as GuiElement).element.remove();
     } catch (error) {
       errors.push(error);
     }

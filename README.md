@@ -285,7 +285,7 @@ The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree fol
 Core types are available through `fk`, while animation types are available through `fka`:
 
 ```ts
-function show(panel: fk.FrameNode): void {
+function show(panel: fk.Frame): void {
   fka.spring(panel, { BackgroundTransparency: 0 });
 }
 ```
@@ -316,7 +316,7 @@ Use `defaultGuiProperties` to customize inherited defaults such as `Size`, and `
 
 FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, missing values, non-finite numbers, and invalid runtime enum members. Tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
 
-`GuiNode.element` is an intentional low-level escape hatch for integrations FrameKit does not cover. Prefer FrameKit properties and operations for normal application behavior.
+`GuiElement.element` is an intentional low-level escape hatch for integrations FrameKit does not cover. Prefer FrameKit properties and operations for normal application behavior.
 
 ## Playground and development
 

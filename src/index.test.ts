@@ -28,9 +28,15 @@ describe('package API', () => {
   });
 
   it('keeps the core API object-centric', () => {
-    const frame = fk.createFrame({ Name: 'Inventory' });
+    const frame: fk.Frame = fk.createFrame({ Name: 'Inventory' });
+    const instance: fk.Instance = frame;
+    const guiElement: fk.GuiElement = frame;
+    const guiObject: fk.GuiObject = frame;
 
     expect(frame.Name).toBe('Inventory');
+    expect(instance).toBe(frame);
+    expect(guiElement).toBe(frame);
+    expect(guiObject).toBe(frame);
     expect(frame.ClassName).toBe('Frame');
     expect(frame.Parent).toBeUndefined();
 

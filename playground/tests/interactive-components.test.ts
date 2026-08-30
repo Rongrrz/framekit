@@ -8,7 +8,7 @@ import { createHeroPreview } from '../components/hero-preview';
 describe('interactive playground components', () => {
   it('updates the hero preview without recreating it', () => {
     const preview = createHeroPreview();
-    const motion = preview.findFirstChild('MOTIONButton') as fk.TextButtonNode;
+    const motion = preview.findFirstChild('MOTIONButton') as fk.TextButton;
 
     expect(preview.element.textContent).toContain('TYPED NODE');
 
@@ -20,7 +20,7 @@ describe('interactive playground components', () => {
 
   it('switches the API explorer topic in place', () => {
     const explorer = createApiExplorer();
-    const state = explorer.findFirstChild('STATEButton') as fk.TextButtonNode;
+    const state = explorer.findFirstChild('STATEButton') as fk.TextButton;
 
     expect(explorer.element.textContent).toContain('Inspect the hierarchy.');
 
@@ -33,7 +33,7 @@ describe('interactive playground components', () => {
   it('attaches guide modifiers at the decorate step', () => {
     const guide = createGuideDemo();
     const card = guide.findFirstChild('ProfileCard', true)!;
-    const decorate = guide.findFirstChild('2  DECORATEButton') as fk.TextButtonNode;
+    const decorate = guide.findFirstChild('2  DECORATEButton') as fk.TextButton;
 
     expect(card.findFirstChild('UICorner')).toBeUndefined();
 

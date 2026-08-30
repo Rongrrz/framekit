@@ -9,7 +9,7 @@ export function createSection(
   name: string,
   metrics: SectionMetrics,
   backgroundColor: fk.Color3,
-): fk.FrameNode {
+): fk.Frame {
   return fk.createFrame({
     Name: name,
     Size: fk.udim2FromOffset(designWidth, metrics.height),
@@ -18,7 +18,7 @@ export function createSection(
   });
 }
 
-export function createSectionContent(): fk.FrameNode {
+export function createSectionContent(): fk.Frame {
   return fk.createFrame({
     Name: 'Content',
     Size: fk.udim2FromOffset(contentWidth, 1),
@@ -28,7 +28,7 @@ export function createSectionContent(): fk.FrameNode {
 }
 
 export function appendSectionHeading(
-  parent: fk.GuiNode,
+  parent: fk.GuiElement,
   heading: string,
   body: string,
   tone: 'dark' | 'light',

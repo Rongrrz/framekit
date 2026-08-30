@@ -3,7 +3,7 @@ import { fk } from 'framekit';
 import { colors } from '../theme';
 
 const feedbackTimers = new WeakMap<
-  fk.TextButtonNode,
+  fk.TextButton,
   Readonly<{
     timer: number;
     unregisterCleanup: () => void;
@@ -12,7 +12,7 @@ const feedbackTimers = new WeakMap<
 
 /** Copies a command and temporarily reports the result through the source button. */
 export async function copyCommand(
-  button: fk.TextButtonNode,
+  button: fk.TextButton,
   command: string,
   idleLabel: string,
   idleBackground = colors.inkRaised,

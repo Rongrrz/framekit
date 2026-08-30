@@ -1,12 +1,12 @@
 import { vector2, type Vector2 } from '../../core/values/vector2';
 import { guiEventMethods, type GuiEventMethodTable, type GuiEventMethods } from './gui-events';
-import type { LayoutChild, LayoutNodeState, ModifierNode, Styles } from './modifier';
+import type { LayoutChild, LayoutNodeState, Modifier, Styles } from './modifier';
 import {
   createNodeHandle,
   extendMethodTable,
   nodeMethods,
-  type Node,
-  type NodeProperties,
+  type Instance,
+  type InstanceProperties,
 } from './node';
 import {
   getActiveNodeState,
@@ -18,7 +18,7 @@ import {
   type PropertyValidator,
 } from './node-state';
 
-/** Browser-computed geometry available on every GUI node. */
+/** Browser-computed geometry available on every GUI element. */
 export type GuiGeometry = {
   /** Current viewport position in pixels after layout and transforms. */
   readonly AbsolutePosition: Vector2;
@@ -26,38 +26,39 @@ export type GuiGeometry = {
   readonly AbsoluteSize: Vector2;
 };
 
-/** A FrameKit node backed by a browser HTMLElement. */
-export type GuiNode<Properties extends NodeProperties = NodeProperties> = Node<Properties> &
-  GuiEventMethods &
-  GuiGeometry & {
-    /** The low-level DOM escape hatch for browser integrations. */
-    readonly element: HTMLElement;
-  };
+/** A FrameKit instance backed by a browser HTMLElement. */
+export type GuiElement<Properties extends InstanceProperties = InstanceProperties> =
+  Instance<Properties> &
+    GuiEventMethods &
+    GuiGeometry & {
+      /** The low-level DOM escape hatch for browser integrations. */
+      readonly element: HTMLElement;
+    };
 
-export type PropertyRenderer<Properties extends NodeProperties> = (
+export type PropertyRenderer<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
 ) => void;
 
-export type GuiNodeState<Properties extends NodeProperties = NodeProperties> =
+export type GuiNodeState<Properties extends InstanceProperties = InstanceProperties> =
   BaseNodeState<Properties> & {
     kind: 'gui';
-    children: Node[];
+    children: Instance[];
     renderProperties: PropertyRenderer<Properties> | undefined;
-    modifiers: Map<string, ModifierNode>;
+    modifiers: Map<string, Modifier>;
     appliedModifierStyles: Set<string>;
-    appliedLayoutStylesByChild: Map<GuiNode, Set<string>>;
+    appliedLayoutStylesByChild: Map<GuiElement, Set<string>>;
   };
 
 /** Creates a DOM-backed node and renders its initial properties. */
-export function createGuiNode<Properties extends NodeProperties>(
+export function createGuiNode<Properties extends InstanceProperties>(
   className: string,
   properties: Properties,
   element: HTMLElement,
   renderProperties?: PropertyRenderer<Properties>,
   validateProperties?: PropertyValidator<Properties>,
   eventMethods?: GuiEventMethodTable,
-): GuiNode<Properties> {
+): GuiElement<Properties> {
   const node = createGuiNodeHandle<Properties>(
     properties,
     element,
@@ -76,13 +77,13 @@ export function createGuiNode<Properties extends NodeProperties>(
   return node;
 }
 
-function createGuiNodeHandle<Properties extends NodeProperties>(
+function createGuiNodeHandle<Properties extends InstanceProperties>(
   properties: Readonly<Properties>,
   element: HTMLElement,
   eventMethods: GuiEventMethodTable,
-): GuiNode<Properties> {
+): GuiElement<Properties> {
   const methodTable = getGuiMethodTable(eventMethods);
-  return createNodeHandle(properties, methodTable, { element }) as GuiNode<Properties>;
+  return createNodeHandle(properties, methodTable, { element }) as GuiElement<Properties>;
 }
 
 const guiMethodTables = new WeakMap<object, object>();
@@ -103,14 +104,14 @@ function getGuiNodeMethods(): object {
   const methodTable = Object.create(nodeMethods) as object;
   Object.defineProperties(methodTable, {
     AbsolutePosition: {
-      get(this: GuiNode): Vector2 {
+      get(this: GuiElement): Vector2 {
         getActiveNodeState(this);
         const bounds = this.element.getBoundingClientRect();
         return vector2(bounds.left, bounds.top);
       },
     },
     AbsoluteSize: {
-      get(this: GuiNode): Vector2 {
+      get(this: GuiElement): Vector2 {
         getActiveNodeState(this);
         const bounds = this.element.getBoundingClientRect();
         return vector2(bounds.width, bounds.height);
@@ -121,11 +122,11 @@ function getGuiNodeMethods(): object {
   return guiNodeMethods;
 }
 
-export function isGuiNode(node: Node): node is GuiNode {
+export function isGuiNode(node: Instance): node is GuiElement {
   return getNodeState(node).kind === 'gui';
 }
 
-export function hasLayoutModifier(node: Node): boolean {
+export function hasLayoutModifier(node: Instance): boolean {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return false;
   for (const modifier of state.modifiers.values()) {
@@ -135,8 +136,8 @@ export function hasLayoutModifier(node: Node): boolean {
 }
 
 /** Renders the node surfaces affected by a committed property change. */
-export function renderPropertyChanges<Properties extends NodeProperties>(
-  node: Node<Properties>,
+export function renderPropertyChanges<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
   changedProperties: readonly (keyof Properties)[],
 ): void {
   const state = getNodeState(node);
@@ -154,13 +155,13 @@ export function renderPropertyChanges<Properties extends NodeProperties>(
 }
 
 /** Renders base properties first, followed by attached modifiers. */
-export function renderNode<Properties extends NodeProperties>(
-  node: Node<Properties>,
+export function renderNode<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties> = new Set(),
 ): void {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return;
-  const guiNode = node as GuiNode<Properties>;
+  const guiNode = node as GuiElement<Properties>;
 
   clearLayoutStyles(state);
   clearStyles(guiNode.element, state.appliedModifierStyles);
@@ -202,7 +203,7 @@ function mergeStyles(target: Record<string, string>, source: Styles): void {
   }
 }
 
-function clearLayoutStyles<Properties extends NodeProperties>(
+function clearLayoutStyles<Properties extends InstanceProperties>(
   state: GuiNodeState<Properties>,
 ): void {
   for (const [child, properties] of state.appliedLayoutStylesByChild) {
@@ -213,12 +214,14 @@ function clearLayoutStyles<Properties extends NodeProperties>(
   state.appliedLayoutStylesByChild.clear();
 }
 
-function applyLayout(parent: GuiNode, layout: LayoutNodeState, isHidden: boolean): void {
+function applyLayout(parent: GuiElement, layout: LayoutNodeState, isHidden: boolean): void {
   const parentState = getNodeState(parent);
   if (parentState.kind !== 'gui') return;
   const children = parentState.children.filter(isGuiNode);
   const childProperties = children.map((child): LayoutChild => {
-    const properties = getNodeState(child).properties as NodeProperties & { LayoutOrder?: unknown };
+    const properties = getNodeState(child).properties as InstanceProperties & {
+      LayoutOrder?: unknown;
+    };
     return {
       Name: properties.Name,
       LayoutOrder: typeof properties.LayoutOrder === 'number' ? properties.LayoutOrder : 0,

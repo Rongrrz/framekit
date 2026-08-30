@@ -59,7 +59,7 @@ const valueExamples = [
   },
 ] as const;
 
-export function createValues(): fk.FrameNode {
+export function createValues(): fk.Frame {
   const section = createSection('Values', sectionLayout.values, colors.mint);
 
   const content = createSectionContent();

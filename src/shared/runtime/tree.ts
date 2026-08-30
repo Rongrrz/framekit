@@ -1,4 +1,4 @@
-import type { Node } from './node';
+import type { Instance } from './node';
 import {
   getActiveNodeState,
   getChildren,
@@ -11,7 +11,7 @@ import {
 import { hasLayoutModifier, isGuiNode, renderNode } from './render';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
-export function append(parent: Node, child: Node): void {
+export function append(parent: Instance, child: Instance): void {
   const parentState = getActiveNodeState(parent);
   const childState = getActiveNodeState(child);
   if (parent === child || isAncestor(child, parent)) {
@@ -64,7 +64,7 @@ export function append(parent: Node, child: Node): void {
 }
 
 /** Detaches a node without destroying it or its descendants. */
-export function detach(node: Node): void {
+export function detach(node: Instance): void {
   const state = getActiveNodeState(node);
   const previousParent = unlinkNodeFromParent(node, state);
   if (isGuiNode(node)) node.element.remove();
@@ -73,28 +73,28 @@ export function detach(node: Node): void {
   }
 }
 
-export function getParent(node: Node): Node | undefined {
+export function getParent(node: Instance): Instance | undefined {
   return getActiveNodeState(node).parent;
 }
 
-export function getClassName(node: Node): string {
+export function getClassName(node: Instance): string {
   return getActiveNodeState(node).className;
 }
 
 /** Reparents a node, or detaches it when `newParent` is undefined. */
-export function setParent(node: Node, newParent: Node | undefined): void {
+export function setParent(node: Instance, newParent: Instance | undefined): void {
   if (newParent) append(newParent, node);
   else detach(node);
 }
 
 /** Returns a snapshot of the node's direct children. */
-export function children(node: Node): readonly Node[] {
+export function children(node: Instance): readonly Instance[] {
   return [...getChildren(getActiveNodeState(node))];
 }
 
 /** Returns every descendant in depth-first hierarchy order. */
-export function descendants(node: Node): readonly Node[] {
-  const result: Node[] = [];
+export function descendants(node: Instance): readonly Instance[] {
+  const result: Instance[] = [];
   const pending = [...getChildren(getActiveNodeState(node))].reverse();
   while (pending.length > 0) {
     const descendant = pending.pop()!;
@@ -108,7 +108,11 @@ export function descendants(node: Node): readonly Node[] {
 }
 
 /** Finds the first child with a matching name, optionally searching all descendants. */
-export function findFirstChild(node: Node, name: string, recursive = false): Node | undefined {
+export function findFirstChild(
+  node: Instance,
+  name: string,
+  recursive = false,
+): Instance | undefined {
   const direct = getChildren(getActiveNodeState(node)).find(
     (child) => getNodeState(child).properties.Name === name,
   );
@@ -117,17 +121,17 @@ export function findFirstChild(node: Node, name: string, recursive = false): Nod
 }
 
 /** Returns the dot-separated hierarchy path from the root to this node. */
-export function getFullName(node: Node): string {
+export function getFullName(node: Instance): string {
   getActiveNodeState(node);
   const names: string[] = [];
-  for (let current: Node | undefined = node; current; current = getNodeState(current).parent) {
+  for (let current: Instance | undefined = node; current; current = getNodeState(current).parent) {
     names.push(getNodeState(current).properties.Name);
   }
   return names.reverse().join('.');
 }
 
 /** Formats a stable, human-readable snapshot of a node hierarchy. */
-export function toTreeString(node: Node): string {
+export function toTreeString(node: Instance): string {
   const lines = [formatNode(node)];
   const rootChildren = getChildren(getActiveNodeState(node));
   const pending: TreeLine[] = [];
@@ -143,24 +147,24 @@ export function toTreeString(node: Node): string {
 }
 
 /** Prints the current hierarchy snapshot to the console. */
-export function printTree(node: Node): void {
+export function printTree(node: Instance): void {
   console.log(toTreeString(node));
 }
 
-type TreeLine = { current: Node; prefix: string; isLast: boolean };
+type TreeLine = { current: Instance; prefix: string; isLast: boolean };
 
-function pushTreeLines(pending: TreeLine[], nodes: readonly Node[], prefix: string): void {
+function pushTreeLines(pending: TreeLine[], nodes: readonly Instance[], prefix: string): void {
   for (let index = nodes.length - 1; index >= 0; index -= 1) {
     pending.push({ current: nodes[index]!, prefix, isLast: index === nodes.length - 1 });
   }
 }
 
-function formatNode(node: Node): string {
+function formatNode(node: Instance): string {
   const state = getNodeState(node);
   return `${state.properties.Name} [${state.className}]`;
 }
 
-function placeChildElement(parent: Node, parentState: NodeState, child: Node): void {
+function placeChildElement(parent: Instance, parentState: NodeState, child: Instance): void {
   if (!isGuiNode(child) || !isGuiNode(parent) || child.element.parentElement === parent.element) {
     return;
   }
@@ -170,8 +174,8 @@ function placeChildElement(parent: Node, parentState: NodeState, child: Node): v
 }
 
 function restoreRendering(
-  parent: Node,
-  previousParent: Node | undefined,
+  parent: Instance,
+  previousParent: Instance | undefined,
   originalError: unknown,
 ): never {
   try {
@@ -186,7 +190,7 @@ function restoreRendering(
   throw originalError;
 }
 
-function isAncestor(candidate: Node, node: Node): boolean {
+function isAncestor(candidate: Instance, node: Instance): boolean {
   for (let current = getNodeState(node).parent; current; current = getNodeState(current).parent) {
     if (current === candidate) return true;
   }

@@ -11,7 +11,7 @@ type ComposerState = Readonly<Record<ModifierKey, boolean>>;
 const modifierKeys: readonly ModifierKey[] = ['corner', 'stroke', 'shadow', 'padding', 'layout'];
 
 /** Creates the live modifier controls, preview, and generated explanation. */
-export function createModifierDemo(): fk.FrameNode {
+export function createModifierDemo(): fk.Frame {
   const demo = fk.createFrame({
     Name: 'ModifierDemo',
     Size: fk.udim2FromOffset(contentWidth, 1054),
@@ -27,7 +27,7 @@ export function createModifierDemo(): fk.FrameNode {
     layout: true,
   });
 
-  const controls = new Map<ModifierKey, fk.TextButtonNode>();
+  const controls = new Map<ModifierKey, fk.TextButton>();
   for (const [index, key] of modifierKeys.entries()) {
     const control = createButton(
       key.toUpperCase(),

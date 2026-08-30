@@ -14,7 +14,7 @@ import { mobileBreakpoint, sectionLayout, type PlaygroundLayout } from './layout
 import { createPageShell } from './page-shell';
 
 /** Creates the playground as one persistent hierarchy shared by every viewport. */
-export function createPlaygroundApp(forcedLayout?: PlaygroundLayout): fk.ScreenGuiNode {
+export function createPlaygroundApp(forcedLayout?: PlaygroundLayout): fk.ScreenGui {
   const initialLayout =
     forcedLayout ?? (window.innerWidth < mobileBreakpoint ? 'mobile' : 'desktop');
   const layout = fk.createValue<PlaygroundLayout>(initialLayout);

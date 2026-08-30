@@ -1,4 +1,4 @@
-import type { Node } from './node';
+import type { Instance } from './node';
 import { addCleanup, isDestroyed } from './node-lifecycle';
 import { getActiveNodeState } from './node-state';
 import { createSignal, type Unsubscribe } from './signal';
@@ -42,7 +42,7 @@ export function createValue<T>(initialValue: T): Value<T> {
 
 /** Watches a value until manually stopped or the owning node is destroyed. */
 export function watchValue<T>(
-  owner: Node,
+  owner: Instance,
   value: Value<T>,
   listener: ValueListener<T>,
 ): Unsubscribe {

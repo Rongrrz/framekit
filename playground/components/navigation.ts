@@ -6,10 +6,10 @@ import { colors, fonts } from '../theme';
 import { createButton, createText } from '../ui';
 
 export function createNavigation(
-  page: fk.ScrollingFrameNode,
+  page: fk.ScrollingFrame,
   navigate: (offset: number) => void,
   layout: fk.Value<PlaygroundLayout>,
-): fk.FrameNode {
+): fk.Frame {
   const navigation = fk.createFrame({
     Name: 'Navigation',
     Size: fk.udim2(1, 0, 0, 64),

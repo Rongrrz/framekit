@@ -1,11 +1,7 @@
 import { fk, fka } from 'framekit';
 
 /** Adds retained hover color and scale motion to a playground button. */
-export function bindButtonMotion(
-  node: fk.TextButtonNode,
-  idle: fk.Color3,
-  hovered: fk.Color3,
-): void {
+export function bindButtonMotion(node: fk.TextButton, idle: fk.Color3, hovered: fk.Color3): void {
   const scale = fk.createUIScale();
 
   node.addChild(scale);
@@ -21,7 +17,7 @@ export function bindButtonMotion(
 }
 
 /** Adds retained hover rotation and scale motion to a playground card. */
-export function bindCardMotion(node: fk.FrameNode, rotation = -1.25, scaleGoal = 1.025): void {
+export function bindCardMotion(node: fk.Frame, rotation = -1.25, scaleGoal = 1.025): void {
   const scale = fk.createUIScale();
 
   node.addChild(scale);

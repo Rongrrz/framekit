@@ -3,7 +3,7 @@ import {
   releaseAnimationProperties,
   type AnimationOwner,
 } from '../shared/runtime/animation-ownership';
-import type { Node, NodeProperties } from '../shared/runtime/node';
+import type { Instance, InstanceProperties } from '../shared/runtime/node';
 import { addCleanup, isDestroyed } from '../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
 import { getActiveNodeState } from '../shared/runtime/node-state';
@@ -22,7 +22,7 @@ import { composeAnimationValue, type AnimationValueKind } from './value';
 export type { SpringOptions } from './spring-physics';
 
 /** Playback controls for the spring retained by one node. */
-export type SpringController<Properties extends NodeProperties = NodeProperties> = {
+export type SpringController<Properties extends InstanceProperties = InstanceProperties> = {
   /** Stops one property, or every property when omitted, at its current value. */
   stop(property?: keyof AnimationGoal<Properties>): void;
   /** Reports whether any property is currently moving. */
@@ -31,7 +31,7 @@ export type SpringController<Properties extends NodeProperties = NodeProperties>
   readonly completed: Signal<[]>;
 };
 
-export type SpringBinding<Properties extends NodeProperties> = {
+export type SpringBinding<Properties extends InstanceProperties> = {
   controller: SpringController<Properties>;
   animate(goal: AnimationGoal<Properties>, options?: SpringOptions): void;
 };
@@ -46,8 +46,8 @@ type PropertySpringState = {
 type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
 
 /** Creates the internal retained spring state for a node. */
-export function createSpringBinding<Properties extends NodeProperties>(
-  node: Node<Properties>,
+export function createSpringBinding<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
 ): SpringBinding<Properties> {
   getActiveNodeState(node);
   const springsByProperty = new Map<keyof Properties, PropertySpringState>();
@@ -207,7 +207,7 @@ export function createSpringBinding<Properties extends NodeProperties>(
   return { controller, animate };
 }
 
-function nodeName(node: Node): string {
-  if (isDestroyed(node)) return 'Node';
+function nodeName(node: Instance): string {
+  if (isDestroyed(node)) return 'Instance';
   return getPropertiesSnapshot(node).Name;
 }

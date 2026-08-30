@@ -48,7 +48,7 @@ const guideSteps = [
 ] as const;
 
 /** Creates the interactive four-step profile-card walkthrough. */
-export function createGuideDemo(): fk.FrameNode {
+export function createGuideDemo(): fk.Frame {
   const demo = fk.createFrame({
     Name: 'GuideDemo',
     Size: fk.udim2FromOffset(contentWidth, 1040),

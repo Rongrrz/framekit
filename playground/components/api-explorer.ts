@@ -64,7 +64,7 @@ const apiTopics = [
 ] as const;
 
 /** Creates the tabbed API explanation and code explorer. */
-export function createApiExplorer(): fk.FrameNode {
+export function createApiExplorer(): fk.Frame {
   const explorer = fk.createFrame({
     Name: 'ApiExplorer',
     Size: fk.udim2FromOffset(contentWidth, 926),

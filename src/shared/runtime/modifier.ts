@@ -1,4 +1,4 @@
-import { createNodeHandle, type Node, type NodeProperties } from './node';
+import { createNodeHandle, type Instance, type InstanceProperties } from './node';
 import {
   createBaseState,
   registerNode,
@@ -11,20 +11,21 @@ declare const layoutBrand: unique symbol;
 
 export type Styles = Readonly<Record<string, string>>;
 
-/** An element-less node that styles its GUI parent. */
-export type StyleModifierNode<Properties extends NodeProperties = NodeProperties> =
-  Node<Properties> & {
+/** An element-less instance that styles its GUI parent. */
+export type StyleModifier<Properties extends InstanceProperties = InstanceProperties> =
+  Instance<Properties> & {
     readonly [styleModifierBrand]: true;
   };
 
-/** An element-less node that lays out its GUI parent's direct children. */
-export type LayoutNode<Properties extends NodeProperties = NodeProperties> = Node<Properties> & {
-  readonly [layoutBrand]: true;
-};
+/** An element-less instance that lays out its GUI parent's direct children. */
+export type LayoutModifier<Properties extends InstanceProperties = InstanceProperties> =
+  Instance<Properties> & {
+    readonly [layoutBrand]: true;
+  };
 
-export type ResolveStyles<Properties extends NodeProperties> = (
+export type ResolveStyles<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
-  targetProperties: Readonly<NodeProperties>,
+  targetProperties: Readonly<InstanceProperties>,
 ) => Styles;
 
 export type LayoutChild = Readonly<{
@@ -37,35 +38,35 @@ export type LayoutStyles = Readonly<{
   children: readonly Styles[];
 }>;
 
-export type ResolveLayout<Properties extends NodeProperties> = (
+export type ResolveLayout<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
   children: readonly LayoutChild[],
 ) => LayoutStyles;
 
-export type StyleModifierState<Properties extends NodeProperties = NodeProperties> =
+export type StyleModifierState<Properties extends InstanceProperties = InstanceProperties> =
   BaseNodeState<Properties> & {
     kind: 'style';
     modifierKey: string;
     resolveStyles: ResolveStyles<Properties>;
   };
 
-export type LayoutNodeState<Properties extends NodeProperties = NodeProperties> =
+export type LayoutNodeState<Properties extends InstanceProperties = InstanceProperties> =
   BaseNodeState<Properties> & {
     kind: 'layout';
     modifierKey: string;
     resolveLayout: ResolveLayout<Properties>;
   };
 
-export type ModifierNode = StyleModifierNode | LayoutNode;
+export type Modifier = StyleModifier | LayoutModifier;
 
 /** Creates an element-less modifier that styles its parent. */
-export function createStyleModifier<Properties extends NodeProperties>(
+export function createStyleModifier<Properties extends InstanceProperties>(
   modifierKey: string,
   properties: Properties,
   resolveStyles: ResolveStyles<Properties>,
   validateProperties?: PropertyValidator<Properties>,
-): StyleModifierNode<Properties> {
-  const node = createNodeHandle(properties) as StyleModifierNode<Properties>;
+): StyleModifier<Properties> {
+  const node = createNodeHandle(properties) as StyleModifier<Properties>;
   const state: StyleModifierState<Properties> = {
     ...createBaseState(modifierKey, properties, validateProperties),
     kind: 'style',
@@ -77,13 +78,13 @@ export function createStyleModifier<Properties extends NodeProperties>(
 }
 
 /** Creates an element-less modifier that lays out its parent's children. */
-export function createLayoutModifier<Properties extends NodeProperties>(
+export function createLayoutModifier<Properties extends InstanceProperties>(
   modifierKey: string,
   properties: Properties,
   resolveLayout: ResolveLayout<Properties>,
   validateProperties?: PropertyValidator<Properties>,
-): LayoutNode<Properties> {
-  const node = createNodeHandle(properties) as LayoutNode<Properties>;
+): LayoutModifier<Properties> {
+  const node = createNodeHandle(properties) as LayoutModifier<Properties>;
   const state: LayoutNodeState<Properties> = {
     ...createBaseState(modifierKey, properties, validateProperties),
     kind: 'layout',

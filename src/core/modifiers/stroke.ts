@@ -1,9 +1,9 @@
 import {
   createStyleModifier,
-  type StyleModifierNode,
+  type StyleModifier,
   type Styles,
 } from '../../shared/runtime/modifier';
-import type { NodeProperties } from '../../shared/runtime/node';
+import type { InstanceProperties } from '../../shared/runtime/node';
 import { mergeProperties } from '../../shared/runtime/node-state';
 import {
   assertAllowedValue,
@@ -16,7 +16,7 @@ import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
 
 /** Properties for a border stroke around a GUI parent. */
-export type UIStrokeProperties = NodeProperties & {
+export type UIStrokeProperties = InstanceProperties & {
   /** Whether the modifier currently affects its parent. */
   Enabled: boolean;
   /** Stroke color before transparency is applied. */
@@ -30,12 +30,12 @@ export type UIStrokeProperties = NodeProperties & {
 };
 
 /** An element-less border-stroke modifier. */
-export type UIStrokeNode = StyleModifierNode<UIStrokeProperties>;
+export type UIStroke = StyleModifier<UIStrokeProperties>;
 
 const borderStrokePositions: readonly BorderStrokePosition[] = ['Inner', 'Center', 'Outer'];
 
 /** Creates a stroke modifier that applies a border effect to its GUI parent. */
-export function createUIStroke(initial: Partial<UIStrokeProperties> = {}): UIStrokeNode {
+export function createUIStroke(initial: Partial<UIStrokeProperties> = {}): UIStroke {
   return createStyleModifier(
     'UIStroke',
     mergeProperties(

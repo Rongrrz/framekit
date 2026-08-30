@@ -7,7 +7,7 @@ import { createSection, createSectionContent } from '../section';
 import { colors, fonts } from '../theme';
 import { createButton, addRoundedBorder, createText } from '../ui';
 
-export function createFooter(onBackToTop: () => void): fk.FrameNode {
+export function createFooter(onBackToTop: () => void): fk.Frame {
   const section = createSection('Footer', sectionLayout.footer, colors.coral);
 
   const content = createSectionContent();

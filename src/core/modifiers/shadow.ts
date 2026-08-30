@@ -1,9 +1,9 @@
 import {
   createStyleModifier,
-  type StyleModifierNode,
+  type StyleModifier,
   type Styles,
 } from '../../shared/runtime/modifier';
-import type { NodeProperties } from '../../shared/runtime/node';
+import type { InstanceProperties } from '../../shared/runtime/node';
 import { mergeProperties } from '../../shared/runtime/node-state';
 import {
   assertBoolean,
@@ -14,7 +14,7 @@ import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
 /** Properties for an outer or inset surface shadow. */
-export type UIShadowProperties = NodeProperties & {
+export type UIShadowProperties = InstanceProperties & {
   /** Whether the modifier currently affects its parent. */
   Enabled: boolean;
   /** Shadow color before transparency is applied. */
@@ -32,10 +32,10 @@ export type UIShadowProperties = NodeProperties & {
 };
 
 /** An element-less box-shadow modifier. */
-export type UIShadowNode = StyleModifierNode<UIShadowProperties>;
+export type UIShadow = StyleModifier<UIShadowProperties>;
 
 /** Creates a shadow modifier that composes with strokes and other style modifiers. */
-export function createUIShadow(initial: Partial<UIShadowProperties> = {}): UIShadowNode {
+export function createUIShadow(initial: Partial<UIShadowProperties> = {}): UIShadow {
   return createStyleModifier(
     'UIShadow',
     mergeProperties(
