@@ -245,9 +245,9 @@ fka.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
 
 `fka.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
 
-Assigning a property or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue. A direct write always wins; there is no hidden animation priority to remember.
+Assigning a property directly or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue, and the write takes control even when it assigns the property's current value.
 
-For scrolling frames, wheel, touch, keyboard, and assigning `scrollingFrame.CanvasPosition` immediately take control from an active animation. Scroll events produced by the animation itself do not interrupt it.
+For scrolling frames, native scrolling takes control once it changes `CanvasPosition`. Scroll events produced by the animation itself do not interrupt it.
 
 Scaling with `UIScale` is useful for hover effects because it changes visual size without asking a `UIListLayout` to reposition neighboring items.
 

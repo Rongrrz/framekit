@@ -304,11 +304,27 @@ describe('tweens', () => {
     transparency.play();
 
     expect(() => frame.setProperties({ Rotation: 10, BackgroundTransparency: 0.5 })).toThrow(
-      /Multiple animations failed/,
+      /Multiple property callbacks failed/,
     );
     expect(frame).toMatchObject({ Rotation: 10, BackgroundTransparency: 0.5 });
     expect(rotation.playbackState()).toBe('Cancelled');
     expect(transparency.playbackState()).toBe('Cancelled');
+  });
+
+  it('cancels after earlier property listeners fail', () => {
+    const frame = fk.createFrame({ Rotation: 0 });
+
+    frame.onPropertyChanged('Rotation', () => {
+      throw new Error('property listener failed');
+    });
+
+    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+
+    tween.play();
+
+    expect(() => (frame.Rotation = 10)).toThrow(/property listener failed/);
+    expect(frame.Rotation).toBe(10);
+    expect(tween.playbackState()).toBe('Cancelled');
   });
 
   it('validates tween configuration and goal values', () => {

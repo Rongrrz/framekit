@@ -43,6 +43,19 @@ describe('signals', () => {
     expect(firstSubscriber).toHaveBeenCalledTimes(2);
     expect(lateSubscriber).toHaveBeenCalledOnce();
   });
+
+  it('notifies later subscribers when an earlier subscriber fails', () => {
+    const event = createSignal();
+    const laterSubscriber = vi.fn();
+
+    event.subscribe(() => {
+      throw new Error('first failed');
+    });
+    event.subscribe(laterSubscriber);
+
+    expect(() => event.emit()).toThrow(/first failed/);
+    expect(laterSubscriber).toHaveBeenCalledOnce();
+  });
 });
 
 describe('values', () => {

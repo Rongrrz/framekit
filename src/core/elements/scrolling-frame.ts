@@ -1,4 +1,3 @@
-import { cancelAnimationProperties } from '../../shared/runtime/animation-ownership';
 import { guiEventMethods } from '../../shared/runtime/gui-events';
 import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/node-properties';
@@ -54,18 +53,6 @@ export type ScrollingFrame = GuiElement<ScrollingFrameProperties> & ScrollingFra
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
-const keyboardScrollKeys = new Set([
-  'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowUp',
-  'End',
-  'Home',
-  'PageDown',
-  'PageUp',
-  ' ',
-]);
-const canvasPositionProperty = ['CanvasPosition'] as const;
 const documentsWithScrollbarStyles = new WeakSet<Document>();
 
 const scrollingFrameMethodTable = {
@@ -184,27 +171,12 @@ export function createScrollingFrame(
       lastRenderedCanvasPosition = browserPosition;
       return;
     }
-    cancelAnimationProperties(node, canvasPositionProperty);
     applyPropertyPatch(node, { CanvasPosition: browserPosition });
-  };
-
-  const stopCanvasPositionAnimation = (): void => {
-    cancelAnimationProperties(node, canvasPositionProperty);
-  };
-
-  const stopAnimationForScrollKey = (event: KeyboardEvent): void => {
-    if (keyboardScrollKeys.has(event.key)) stopCanvasPositionAnimation();
   };
 
   const listenerController = new AbortController();
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
   element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
-  element.addEventListener('wheel', stopCanvasPositionAnimation, passiveListenerOptions);
-  element.addEventListener('touchstart', stopCanvasPositionAnimation, passiveListenerOptions);
-  element.addEventListener('touchmove', stopCanvasPositionAnimation, passiveListenerOptions);
-  element.addEventListener('keydown', stopAnimationForScrollKey, {
-    signal: listenerController.signal,
-  });
 
   addCleanup(node, () => listenerController.abort());
   return node;

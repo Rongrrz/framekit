@@ -103,11 +103,12 @@ describe('scrolling frames', () => {
 
     springTarget.element.dispatchEvent(new WheelEvent('wheel', { deltaY: -10 }));
 
-    expect(controller.isAnimating()).toBe(false);
+    expect(controller.isAnimating()).toBe(true);
 
     springTarget.element.scrollTop = 40;
     springTarget.element.dispatchEvent(new Event('scroll'));
 
+    expect(controller.isAnimating()).toBe(false);
     expect(springTarget.CanvasPosition).toEqual(fk.vector2(0, 40));
 
     const tweenTarget = createScrollingFrame();
@@ -127,7 +128,7 @@ describe('scrolling frames', () => {
     expect(tweenTarget.CanvasPosition).toEqual(fk.vector2(30, 0));
   });
 
-  it('allows keyboard input from focused descendants to interrupt animation', () => {
+  it('waits for keyboard scrolling to change CanvasPosition before interrupting animation', () => {
     vi.stubGlobal(
       'requestAnimationFrame',
       vi.fn(() => 1),
@@ -145,6 +146,11 @@ describe('scrolling frames', () => {
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
 
     expect(scrolling.element.tabIndex).toBe(0);
+    expect(controller.isAnimating()).toBe(true);
+
+    scrolling.element.scrollTop = 20;
+    scrolling.element.dispatchEvent(new Event('scroll'));
+
     expect(controller.isAnimating()).toBe(false);
   });
 

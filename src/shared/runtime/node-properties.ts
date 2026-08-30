@@ -1,8 +1,9 @@
-import { cancelAnimationProperties } from './animation-ownership';
 import type { Instance, InstanceProperties } from './node';
 import { getActiveNodeState, getNodeState, validatePropertyPatch } from './node-state';
 import { renderPropertyChanges } from './render';
 import { emitNodeEvent, subscribeToNodeEvent, type Unsubscribe } from './signal';
+
+const propertyWriteEventKeys = new Map<PropertyKey, symbol>();
 
 type PropertyCommit<Properties extends InstanceProperties> = Readonly<{
   previousProperties: Properties;
@@ -10,42 +11,33 @@ type PropertyCommit<Properties extends InstanceProperties> = Readonly<{
   changedProperties: readonly (keyof Properties)[];
 }>;
 
-/** Applies a user-requested property change, taking control from active animations. */
+/** Validates, renders, and publishes a user-requested property write. */
 export function setNodeProperties<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
 ): void {
-  const requestedProperties = Object.keys(patch);
+  applyPropertyPatch(node, patch);
+}
+
+/** Applies a property patch produced by browser or other internal synchronization. */
+export function applyPropertyPatch<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
+  patch: Partial<Properties>,
+): void {
+  const requestedProperties = Object.keys(patch) as (keyof Properties)[];
   const commit = commitPropertyPatch(node, patch);
   const errors: unknown[] = [];
 
-  try {
-    cancelAnimationProperties(node, requestedProperties);
-  } catch (error) {
-    errors.push(error);
-  }
-
-  if (commit) {
+  for (const property of requestedProperties) {
     try {
-      emitPropertyChanges(node, commit);
+      emitNodeEvent(node, getPropertyWriteEventKey(property), patch[property]);
     } catch (error) {
       errors.push(error);
     }
   }
 
-  if (errors.length === 1) throw errors[0];
-  if (errors.length > 1) {
-    throw new AggregateError(errors, 'A property changed, but related callbacks failed.');
-  }
-}
-
-/** Applies a property patch without changing animation ownership. */
-export function applyPropertyPatch<Properties extends InstanceProperties>(
-  node: Instance<Properties>,
-  patch: Partial<Properties>,
-): void {
-  const commit = commitPropertyPatch(node, patch);
-  if (commit) emitPropertyChanges(node, commit);
+  if (commit) emitPropertyChanges(node, commit, errors);
+  throwCallbackErrors(errors);
 }
 
 function commitPropertyPatch<Properties extends InstanceProperties>(
@@ -85,15 +77,32 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
 function emitPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   commit: PropertyCommit<Properties>,
+  errors: unknown[],
 ): void {
   for (const property of commit.changedProperties) {
-    emitNodeEvent(
-      node,
-      property,
-      commit.nextProperties[property],
-      commit.previousProperties[property],
-    );
+    try {
+      emitNodeEvent(
+        node,
+        property,
+        commit.nextProperties[property],
+        commit.previousProperties[property],
+      );
+    } catch (error) {
+      errors.push(error);
+    }
   }
+}
+
+/** Observes every successful write, including writes that keep the current value. */
+export function subscribeToPropertyWrite<
+  Properties extends InstanceProperties,
+  Property extends keyof Properties,
+>(
+  node: Instance<Properties>,
+  property: Property,
+  listener: (value: Properties[Property]) => void,
+): Unsubscribe {
+  return subscribeToNodeEvent(node, getPropertyWriteEventKey(property), listener);
 }
 
 /** Subscribes to one property and returns an idempotent unsubscribe function. */
@@ -112,7 +121,7 @@ export function subscribeToPropertyChange<
   return subscribeToNodeEvent(node, property, listener);
 }
 
-/** Returns a readonly snapshot used by rendering and animation internals. */
+/** Returns a readonly snapshot for consumers that need several current properties. */
 export function getPropertiesSnapshot<Properties extends InstanceProperties>(
   node: Instance<Properties>,
 ): Readonly<Properties> {
@@ -125,4 +134,19 @@ export function getNodeProperty<
   Property extends keyof Properties,
 >(node: Instance<Properties>, property: Property): Properties[Property] {
   return getActiveNodeState(node).properties[property];
+}
+
+function getPropertyWriteEventKey(property: PropertyKey): symbol {
+  const existing = propertyWriteEventKeys.get(property);
+  if (existing) return existing;
+  const created = Symbol(`Property write: ${String(property)}`);
+  propertyWriteEventKeys.set(property, created);
+  return created;
+}
+
+function throwCallbackErrors(errors: readonly unknown[]): void {
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) {
+    throw new AggregateError(errors, 'Multiple property callbacks failed.');
+  }
 }

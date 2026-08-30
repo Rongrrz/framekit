@@ -1,14 +1,15 @@
-import {
-  claimAnimationProperties,
-  releaseAnimationProperties,
-  type AnimationOwner,
-} from '../shared/runtime/animation-ownership';
 import type { Instance, InstanceProperties } from '../shared/runtime/node';
 import { addCleanup, isDestroyed } from '../shared/runtime/node-lifecycle';
-import { applyPropertyPatch, getPropertiesSnapshot } from '../shared/runtime/node-properties';
+import { getPropertiesSnapshot } from '../shared/runtime/node-properties';
 import { getActiveNodeState } from '../shared/runtime/node-state';
 import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
 import { prepareAnimationGoal } from './goal';
+import {
+  applyAnimationProperties,
+  claimAnimationProperties,
+  releaseAnimationProperties,
+  type AnimationOwner,
+} from './ownership';
 import {
   defaultSpringOptions,
   resolveSpringOptions,
@@ -171,7 +172,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     }
 
     try {
-      applyPropertyPatch(node, patch);
+      applyAnimationProperties(node, patch, animationOwner);
     } catch (error) {
       stopAllProperties();
       throw error;

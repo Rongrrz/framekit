@@ -32,7 +32,18 @@ export function createSignal<Arguments extends unknown[] = []>(): SignalEmitter<
       };
     },
     emit: (...args) => {
-      for (const listener of Array.from(listeners)) listener(...args);
+      const errors: unknown[] = [];
+      for (const listener of Array.from(listeners)) {
+        try {
+          listener(...args);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1) {
+        throw new AggregateError(errors, 'Multiple signal listeners failed.');
+      }
     },
     clear: () => listeners.clear(),
   });

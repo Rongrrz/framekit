@@ -144,6 +144,17 @@ describe('springs', () => {
     expect(frame.BackgroundTransparency).toBe(0.4);
   });
 
+  it('stops when a direct assignment keeps the current value', () => {
+    const frame = fk.createFrame({ Rotation: 0 });
+    const controller = fka.spring(frame);
+
+    fka.spring(frame, { Rotation: 90 });
+    frame.Rotation = 0;
+
+    expect(controller.isAnimating()).toBe(false);
+    expect(frame.Rotation).toBe(0);
+  });
+
   it('keeps an animation when a rejected assignment never takes effect', () => {
     const scale = fk.createUIScale();
     const controller = fka.spring(scale);
