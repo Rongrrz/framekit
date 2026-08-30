@@ -1,21 +1,21 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
-import {
-  bindMotionDemo,
-  motionModes,
-  type MotionMode,
-  type MotionPositions,
-} from '../features/motion';
-import { sectionLayout } from '../layout';
-import {
-  contentWidth,
-  createSection,
-  createSectionContent,
-  appendSectionHeading,
-} from '../section';
-import { bindButtonMotion } from '../shared/interaction';
-import { createButton, appendCodeLine, addRoundedBorder, createText } from '../shared/ui';
+import { bindButtonMotion } from '../behaviors/hover-motion';
+import { contentWidth, sectionLayout } from '../layout';
+import { createSection, createSectionContent, appendSectionHeading } from '../section';
 import { colors, fonts } from '../theme';
+import { createButton, appendCodeLine, addRoundedBorder, createText } from '../ui';
+
+const motionModes = [
+  { key: 'calm', label: 'CALM', accent: colors.mint, rotation: 0, scale: 1 },
+  { key: 'focus', label: 'FOCUS', accent: colors.violet, rotation: -5, scale: 1.08 },
+  { key: 'play', label: 'PLAY', accent: colors.coral, rotation: 7, scale: 0.94 },
+  { key: 'orbit', label: 'ORBIT', accent: colors.amber, rotation: 11, scale: 0.86 },
+] as const;
+
+type MotionMode = (typeof motionModes)[number]['key'];
+type MotionGoal = (typeof motionModes)[number];
+type MotionPositions = Readonly<Record<MotionMode, fk.UDim2>>;
 
 const motionPositions = {
   calm: fk.udim2FromOffset(48, 110),
@@ -24,7 +24,7 @@ const motionPositions = {
   orbit: fk.udim2FromOffset(86, 204),
 } satisfies MotionPositions;
 
-export function createMotionSection(): fk.FrameNode {
+export function createMotion(): fk.FrameNode {
   const section = createSection('Motion', sectionLayout.motion, colors.ink);
 
   const content = createSectionContent();
@@ -32,7 +32,7 @@ export function createMotionSection(): fk.FrameNode {
     content,
     'RETARGET IT.\nTHE SPRING CONTINUES.',
     'Tap goals quickly. Position, size, rotation, color, and scale remain continuous.',
-    false,
+    'light',
   );
 
   const lab = fk.createFrame({
@@ -149,4 +149,29 @@ export function createMotionSection(): fk.FrameNode {
 
   section.addChild(content);
   return section;
+}
+
+function bindMotionDemo(options: {
+  card: fk.FrameNode;
+  scale: fk.UIScaleNode;
+  selectedMode: fk.Value<MotionMode>;
+  positions: MotionPositions;
+  onMoving: (goal: MotionGoal) => void;
+  onSettled: () => void;
+}): void {
+  const controller = fka.spring(options.card);
+  controller.completed.subscribe(options.onSettled);
+
+  options.card.watch(options.selectedMode, (mode) => {
+    const goal = motionModes.find((candidate) => candidate.key === mode);
+    if (!goal) return;
+
+    options.onMoving(goal);
+    fka.spring(options.card, {
+      Position: options.positions[mode],
+      Rotation: goal.rotation,
+      BackgroundColor3: goal.accent,
+    });
+    fka.spring(options.scale, { Scale: goal.scale });
+  });
 }

@@ -15,7 +15,6 @@ export const colors = {
   mint: fk.color3FromRGB(115, 215, 177),
   violet: fk.color3FromRGB(174, 145, 255),
   amber: fk.color3FromRGB(247, 197, 92),
-  white: fk.color3FromRGB(255, 255, 255),
 } as const;
 
 export const fonts = {

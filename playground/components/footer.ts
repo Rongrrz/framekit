@@ -1,10 +1,11 @@
 import { fk } from 'framekit';
 
-import { sectionLayout } from '../layout';
-import { contentWidth, createSection, createSectionContent } from '../section';
-import { bindButtonMotion, copyCommand } from '../shared/interaction';
-import { createButton, addRoundedBorder, createText } from '../shared/ui';
+import { copyCommand } from '../behaviors/copy-button';
+import { bindButtonMotion } from '../behaviors/hover-motion';
+import { contentWidth, sectionLayout } from '../layout';
+import { createSection, createSectionContent } from '../section';
 import { colors, fonts } from '../theme';
+import { createButton, addRoundedBorder, createText } from '../ui';
 
 export function createFooter(onBackToTop: () => void): fk.FrameNode {
   const section = createSection('Footer', sectionLayout.footer, colors.coral);

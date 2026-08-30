@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { defineSectionLayout } from '../shared/section-layout';
+import { defineSectionLayout } from '../section-layout';
 
 describe('section layout', () => {
   it('derives offsets and page height from ordered section heights', () => {

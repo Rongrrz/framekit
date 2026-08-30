@@ -1,4 +1,4 @@
-import { defineSectionLayout, type SectionMetrics } from './shared/section-layout';
+import { defineSectionLayout } from './section-layout';
 
 export const designWidth = 390;
 export const contentWidth = 358;
@@ -25,4 +25,3 @@ const layout = defineSectionLayout({
 
 export const sectionLayout = layout.sections;
 export const pageHeight = layout.pageHeight;
-export type { SectionMetrics };

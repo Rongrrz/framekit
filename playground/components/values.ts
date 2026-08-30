@@ -1,21 +1,10 @@
 import { fk, fka } from 'framekit';
 
-import { sectionLayout } from '../layout';
-import {
-  contentWidth,
-  createSection,
-  createSectionContent,
-  appendSectionHeading,
-} from '../section';
-import { bindButtonMotion } from '../shared/interaction';
-import {
-  createButton,
-  appendCodeLine,
-  addRoundedBorder,
-  createText,
-  updateTextLines,
-} from '../shared/ui';
+import { bindButtonMotion } from '../behaviors/hover-motion';
+import { contentWidth, sectionLayout } from '../layout';
+import { createSection, createSectionContent, appendSectionHeading } from '../section';
 import { colors, fonts } from '../theme';
+import { createButton, appendCodeLine, addRoundedBorder, createText, updateTextLines } from '../ui';
 
 const valueExamples = [
   {
@@ -78,7 +67,7 @@ export function createValues(): fk.FrameNode {
     content,
     'ONE VALUE MODEL.\nEVERYWHERE.',
     'Inspect the same immutable values used by construction, updates, tweens, and springs.',
-    true,
+    'dark',
   );
 
   const selected = fk.createValue(0);

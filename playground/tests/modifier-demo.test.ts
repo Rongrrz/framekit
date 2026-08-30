@@ -2,7 +2,7 @@ import { fk } from 'framekit';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { setupAnimationClock } from '../../src/test-support/animation-clock';
-import { createComposer } from '../components/composer';
+import { createModifierDemo } from '../components/modifier-demo';
 
 const { settle } = setupAnimationClock();
 
@@ -10,16 +10,16 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-describe('modifier composer', () => {
+describe('modifier demo', () => {
   it('keeps stroke, shadow, and padding controls live across repeated clicks', () => {
-    const section = createComposer();
-    const card = section.findFirstChild('NotificationCard', true)!;
+    const demo = createModifierDemo();
+    const card = demo.findFirstChild('NotificationCard', true)!;
     const tags = card.findFirstChild('FeatureTags', true)!;
     const stroke = card.findFirstChild('UIStroke', true)!;
     const shadow = card.findFirstChild('UIShadow', true)!;
-    const strokeControl = section.findFirstChild('STROKEButton', true) as fk.TextButtonNode;
-    const shadowControl = section.findFirstChild('SHADOWButton', true) as fk.TextButtonNode;
-    const paddingControl = section.findFirstChild('PADDINGButton', true) as fk.TextButtonNode;
+    const strokeControl = demo.findFirstChild('STROKEButton', true) as fk.TextButtonNode;
+    const shadowControl = demo.findFirstChild('SHADOWButton', true) as fk.TextButtonNode;
+    const paddingControl = demo.findFirstChild('PADDINGButton', true) as fk.TextButtonNode;
 
     settle();
     for (const [modifier, control] of [

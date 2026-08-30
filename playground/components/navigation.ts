@@ -1,9 +1,9 @@
 import { fk } from 'framekit';
 
+import { bindButtonMotion } from '../behaviors/hover-motion';
 import { sectionLayout, type PlaygroundLayout } from '../layout';
-import { bindButtonMotion } from '../shared/interaction';
-import { createButton, createText } from '../shared/ui';
 import { colors, fonts } from '../theme';
+import { createButton, createText } from '../ui';
 
 export function createNavigation(
   page: fk.ScrollingFrameNode,

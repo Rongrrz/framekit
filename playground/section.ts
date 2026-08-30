@@ -1,20 +1,20 @@
 import { fk } from 'framekit';
 
-import { contentWidth, designWidth, type SectionMetrics } from './layout';
-import { createText } from './shared/ui';
+import { contentWidth, designWidth } from './layout';
+import type { SectionMetrics } from './section-layout';
 import { colors } from './theme';
-export { contentWidth } from './layout';
+import { createText } from './ui';
 
 export function createSection(
   name: string,
   metrics: SectionMetrics,
-  color: fk.Color3,
+  backgroundColor: fk.Color3,
 ): fk.FrameNode {
   return fk.createFrame({
     Name: name,
     Size: fk.udim2FromOffset(designWidth, metrics.height),
     Position: fk.udim2FromOffset(0, metrics.top),
-    BackgroundColor3: color,
+    BackgroundColor3: backgroundColor,
   });
 }
 
@@ -31,8 +31,9 @@ export function appendSectionHeading(
   parent: fk.GuiNode,
   heading: string,
   body: string,
-  usesDarkText: boolean,
+  tone: 'dark' | 'light',
 ): void {
+  const usesDarkText = tone === 'dark';
   parent.addChild(
     createText({
       text: heading,

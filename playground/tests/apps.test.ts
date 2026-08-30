@@ -16,6 +16,10 @@ describe('playground application', () => {
     expect(document.querySelectorAll('[data-framekit="ScreenGui"]')).toHaveLength(1);
     expect(app.findFirstChild('Motion', true)).toBeDefined();
     expect(app.findFirstChild('Composer', true)).toBeDefined();
+    expect(app.findFirstChild('HeroPreview', true)).toBeDefined();
+    expect(app.findFirstChild('ModifierDemo', true)).toBeDefined();
+    expect(app.findFirstChild('ApiExplorer', true)).toBeDefined();
+    expect(app.findFirstChild('GuideDemo', true)).toBeDefined();
 
     app.destroy();
   });

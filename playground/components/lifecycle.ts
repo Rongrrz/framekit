@@ -1,15 +1,10 @@
 import { fk } from 'framekit';
 
-import { sectionLayout } from '../layout';
-import {
-  contentWidth,
-  createSection,
-  createSectionContent,
-  appendSectionHeading,
-} from '../section';
-import { bindButtonMotion } from '../shared/interaction';
-import { createButton, appendCodeLine, addRoundedBorder, createText } from '../shared/ui';
+import { bindButtonMotion } from '../behaviors/hover-motion';
+import { contentWidth, sectionLayout } from '../layout';
+import { createSection, createSectionContent, appendSectionHeading } from '../section';
 import { colors, fonts } from '../theme';
+import { createButton, appendCodeLine, addRoundedBorder, createText } from '../ui';
 
 const lifecycleStates = [
   {
@@ -53,9 +48,9 @@ export function createLifecycle(): fk.FrameNode {
   const content = createSectionContent();
   appendSectionHeading(
     content,
-    'REMOVE TO REUSE.\nDESTROY TO RELEASE.',
+    'REMOVE = REUSE.\nDESTROY = RELEASE.',
     'Lifecycle is explicit, testable, and owned by the node—not scattered across cleanup callbacks.',
-    false,
+    'light',
   );
 
   const phase = fk.createValue(0);

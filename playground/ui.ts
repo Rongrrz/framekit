@@ -1,6 +1,6 @@
 import { fk } from 'framekit';
 
-import { colors, fonts } from '../theme';
+import { colors, fonts } from './theme';
 
 type TextOptions = Readonly<{
   text: string;

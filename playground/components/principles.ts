@@ -1,15 +1,11 @@
 import { fk } from 'framekit';
 
-import { sectionLayout } from '../layout';
-import {
-  contentWidth,
-  createSection,
-  createSectionContent,
-  appendSectionHeading,
-} from '../section';
-import { bindCardMotion, copyCommand } from '../shared/interaction';
-import { createButton, addRoundedBorder, createText } from '../shared/ui';
+import { copyCommand } from '../behaviors/copy-button';
+import { bindCardMotion } from '../behaviors/hover-motion';
+import { contentWidth, sectionLayout } from '../layout';
+import { createSection, createSectionContent, appendSectionHeading } from '../section';
 import { colors, fonts } from '../theme';
+import { createButton, addRoundedBorder, createText } from '../ui';
 
 const principles = [
   {
@@ -43,7 +39,7 @@ export function createPrinciples(): fk.FrameNode {
     content,
     'A SMALL SYSTEM.\nREAL BUILDING BLOCKS.',
     'Every concept has one job and one visible place in the tree.',
-    true,
+    'dark',
   );
   for (const [index, principle] of principles.entries()) {
     const card = fk.createFrame({
