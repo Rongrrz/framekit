@@ -66,6 +66,7 @@ export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): Scr
     },
     validateScreenGuiProperties,
     screenGuiMethods,
+    { canHaveParent: false },
   ) as ScreenGui;
 
   connectHoverEvents(gui, element);

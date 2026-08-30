@@ -224,6 +224,93 @@ describe('tweens', () => {
     expect(listener).toHaveBeenCalledOnce();
   });
 
+  it('keeps a direct property write in control when tween cancellation listeners fail', () => {
+    const frame = fk.createFrame({ Rotation: 0 });
+    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const changed = vi.fn();
+
+    tween.completed.subscribe(() => {
+      throw new Error('cancel listener failed');
+    });
+    frame.onPropertyChanged('Rotation', changed);
+    tween.play();
+
+    expect(() => (frame.Rotation = 10)).toThrow(/cancel listener failed/);
+    expect(frame.Rotation).toBe(10);
+    expect(tween.playbackState()).toBe('Cancelled');
+    expect(changed).toHaveBeenCalledWith(10, 0);
+  });
+
+  it('releases partial ownership when a multi-property claim fails', () => {
+    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
+    const existing = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const interrupted = fka.createTween(
+      frame,
+      { Duration: 1 },
+      { Rotation: 90, BackgroundTransparency: 0.5 },
+    );
+
+    existing.completed.subscribe(() => {
+      throw new Error('cancel listener failed');
+    });
+    existing.play();
+
+    expect(() => interrupted.play()).toThrow(/cancel listener failed/);
+
+    const replacement = fka.createTween(frame, { Duration: 1 }, { Rotation: 45 });
+
+    expect(() => replacement.play()).not.toThrow();
+    expect(replacement.playbackState()).toBe('Playing');
+  });
+
+  it('keeps ownership that a retained spring had before a failed claim', () => {
+    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
+    const controller = fka.spring(frame);
+    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+
+    fka.spring(frame, { Rotation: 90 });
+    tween.completed.subscribe(() => {
+      throw new Error('cancel listener failed');
+    });
+    tween.play();
+
+    expect(() =>
+      fka.spring(frame, {
+        Rotation: 45,
+        BackgroundTransparency: 0.5,
+      }),
+    ).toThrow(/cancel listener failed/);
+
+    const replacement = fka.createTween(frame, { Duration: 1 }, { Rotation: 20 });
+
+    replacement.play();
+
+    expect(controller.isAnimating()).toBe(false);
+    expect(replacement.playbackState()).toBe('Playing');
+  });
+
+  it('releases every directly assigned property when several cancellation listeners fail', () => {
+    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
+    const rotation = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const transparency = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+
+    rotation.completed.subscribe(() => {
+      throw new Error('rotation cancellation failed');
+    });
+    transparency.completed.subscribe(() => {
+      throw new Error('transparency cancellation failed');
+    });
+    rotation.play();
+    transparency.play();
+
+    expect(() => frame.setProperties({ Rotation: 10, BackgroundTransparency: 0.5 })).toThrow(
+      /Multiple animations failed/,
+    );
+    expect(frame).toMatchObject({ Rotation: 10, BackgroundTransparency: 0.5 });
+    expect(rotation.playbackState()).toBe('Cancelled');
+    expect(transparency.playbackState()).toBe('Cancelled');
+  });
+
   it('validates tween configuration and goal values', () => {
     const frame = fk.createFrame();
 

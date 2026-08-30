@@ -11,9 +11,17 @@ export function claimAnimationProperties(
   properties: readonly PropertyKey[],
   owner: AnimationOwner,
 ): void {
-  for (const property of properties) {
-    cancelConflictingPropertyOwner(node, property, owner);
-    getOrCreateNodeOwners(node).set(property, owner);
+  const claimedProperties: PropertyKey[] = [];
+  try {
+    for (const property of properties) {
+      const alreadyOwned = ownersByNode.get(node)?.get(property) === owner;
+      cancelConflictingPropertyOwner(node, property, owner);
+      getOrCreateNodeOwners(node).set(property, owner);
+      if (!alreadyOwned) claimedProperties.push(property);
+    }
+  } catch (error) {
+    releaseAnimationProperties(node, claimedProperties, owner);
+    throw error;
   }
 }
 
@@ -22,7 +30,18 @@ export function cancelAnimationProperties(
   node: Instance,
   properties: readonly PropertyKey[],
 ): void {
-  for (const property of properties) cancelConflictingPropertyOwner(node, property);
+  const errors: unknown[] = [];
+  for (const property of properties) {
+    try {
+      cancelConflictingPropertyOwner(node, property);
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) {
+    throw new AggregateError(errors, 'Multiple animations failed while releasing properties.');
+  }
 }
 
 export function releaseAnimationProperties(

@@ -17,6 +17,9 @@ export function append(parent: Instance, child: Instance): void {
   if (parent === child || isAncestor(child, parent)) {
     throw new Error('A node cannot be appended to itself or one of its descendants.');
   }
+  if (!childState.canHaveParent) {
+    throw new TypeError(`${childState.properties.Name} must remain a hierarchy root.`);
+  }
 
   if (isModifierState(parentState)) {
     throw new TypeError('UI modifiers cannot contain child nodes.');
@@ -66,6 +69,7 @@ export function append(parent: Instance, child: Instance): void {
 /** Detaches a node without destroying it or its descendants. */
 export function detach(node: Instance): void {
   const state = getActiveNodeState(node);
+  if (!state.canHaveParent) return;
   const previousParent = unlinkNodeFromParent(node, state);
   if (isGuiNode(node)) node.element.remove();
   if (previousParent && (isModifierState(state) || hasLayoutModifier(previousParent))) {

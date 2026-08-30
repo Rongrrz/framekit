@@ -11,6 +11,7 @@ export type BaseNodeState<Properties extends InstanceProperties = InstanceProper
   className: string;
   properties: Properties;
   validateProperties: PropertyValidator<Properties> | undefined;
+  canHaveParent: boolean;
   parent: Instance | undefined;
   destroyed: boolean;
   cleanups: Set<() => void>;
@@ -35,12 +36,14 @@ export function createBaseState<Properties extends InstanceProperties>(
   className: string,
   properties: Properties,
   validateProperties?: PropertyValidator<Properties>,
+  canHaveParent = true,
 ): BaseNodeState<Properties> {
   validateProperties?.(properties);
   return {
     className,
     properties,
     validateProperties,
+    canHaveParent,
     parent: undefined,
     destroyed: false,
     cleanups: new Set(),

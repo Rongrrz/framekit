@@ -4,14 +4,39 @@ import { getActiveNodeState, getNodeState, validatePropertyPatch } from './node-
 import { renderPropertyChanges } from './render';
 import { emitNodeEvent, subscribeToNodeEvent, type Unsubscribe } from './signal';
 
+type PropertyCommit<Properties extends InstanceProperties> = Readonly<{
+  previousProperties: Properties;
+  nextProperties: Properties;
+  changedProperties: readonly (keyof Properties)[];
+}>;
+
 /** Applies a user-requested property change, taking control from active animations. */
 export function setNodeProperties<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
 ): void {
-  const changedProperties = Object.keys(patch);
-  applyPropertyPatch(node, patch);
-  cancelAnimationProperties(node, changedProperties);
+  const requestedProperties = Object.keys(patch);
+  const commit = commitPropertyPatch(node, patch);
+  const errors: unknown[] = [];
+
+  try {
+    cancelAnimationProperties(node, requestedProperties);
+  } catch (error) {
+    errors.push(error);
+  }
+
+  if (commit) {
+    try {
+      emitPropertyChanges(node, commit);
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) {
+    throw new AggregateError(errors, 'A property changed, but related callbacks failed.');
+  }
 }
 
 /** Applies a property patch without changing animation ownership. */
@@ -19,6 +44,14 @@ export function applyPropertyPatch<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
 ): void {
+  const commit = commitPropertyPatch(node, patch);
+  if (commit) emitPropertyChanges(node, commit);
+}
+
+function commitPropertyPatch<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
+  patch: Partial<Properties>,
+): PropertyCommit<Properties> | undefined {
   const state = getActiveNodeState(node);
   validatePropertyPatch(state.properties, patch);
 
@@ -35,12 +68,31 @@ export function applyPropertyPatch<Properties extends InstanceProperties>(
     renderPropertyChanges(node, changedProperties);
   } catch (error) {
     state.properties = previousProperties;
-    renderPropertyChanges(node, changedProperties);
+    try {
+      renderPropertyChanges(node, changedProperties);
+    } catch (rollbackError) {
+      throw new AggregateError(
+        [error, rollbackError],
+        'A property update failed, and rendering could not be fully restored.',
+      );
+    }
     throw error;
   }
 
-  for (const property of changedProperties) {
-    emitNodeEvent(node, property, nextProperties[property], previousProperties[property]);
+  return { previousProperties, nextProperties, changedProperties };
+}
+
+function emitPropertyChanges<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
+  commit: PropertyCommit<Properties>,
+): void {
+  for (const property of commit.changedProperties) {
+    emitNodeEvent(
+      node,
+      property,
+      commit.nextProperties[property],
+      commit.previousProperties[property],
+    );
   }
 }
 

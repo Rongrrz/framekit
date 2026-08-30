@@ -1,4 +1,5 @@
 import type { Instance } from '../shared/runtime/node';
+import { getActiveNodeState } from '../shared/runtime/node-state';
 import { assertNonNegativeFinite } from '../shared/runtime/validation';
 
 export type ResponsiveLayoutOptions = Readonly<{
@@ -11,6 +12,7 @@ type ResponsiveLayout = 'mobile' | 'desktop';
 
 /** Applies a viewport layout now and again whenever its breakpoint is crossed. */
 export function bindResponsiveLayout(owner: Instance, options: ResponsiveLayoutOptions): void {
+  getActiveNodeState(owner);
   assertNonNegativeFinite(options.breakpoint, 'Breakpoint');
 
   if (typeof options.mobile !== 'function') {
@@ -33,6 +35,7 @@ export function bindResponsiveLayout(owner: Instance, options: ResponsiveLayoutO
   };
 
   updateLayout();
+  if (owner.isDestroyed()) return;
 
   const listenerController = new AbortController();
   window.addEventListener('resize', updateLayout, {

@@ -58,6 +58,7 @@ export function createGuiNode<Properties extends InstanceProperties>(
   renderProperties?: PropertyRenderer<Properties>,
   validateProperties?: PropertyValidator<Properties>,
   eventMethods?: GuiEventMethodTable,
+  options: Readonly<{ canHaveParent?: boolean }> = {},
 ): GuiElement<Properties> {
   const node = createGuiNodeHandle<Properties>(
     properties,
@@ -65,7 +66,7 @@ export function createGuiNode<Properties extends InstanceProperties>(
     eventMethods ?? guiEventMethods,
   );
   registerNode(node, {
-    ...createBaseState(className, properties, validateProperties),
+    ...createBaseState(className, properties, validateProperties, options.canHaveParent ?? true),
     kind: 'gui',
     children: [],
     renderProperties,

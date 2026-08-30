@@ -64,4 +64,41 @@ describe('public helpers', () => {
     window.dispatchEvent(new Event('resize'));
     expect(mobile).toHaveBeenCalledOnce();
   });
+
+  it('rejects destroyed responsive owners before applying a layout', () => {
+    const owner = fk.createFrame();
+    const mobile = vi.fn();
+    const desktop = vi.fn();
+
+    owner.destroy();
+
+    expect(() =>
+      fkh.bindResponsiveLayout(owner, {
+        breakpoint: 700,
+        mobile,
+        desktop,
+      }),
+    ).toThrow(/destroyed/);
+    expect(mobile).not.toHaveBeenCalled();
+    expect(desktop).not.toHaveBeenCalled();
+  });
+
+  it('does not retain a resize listener when the initial layout destroys its owner', () => {
+    const owner = fk.createFrame();
+    const mobile = vi.fn(() => owner.destroy());
+    const desktop = vi.fn();
+
+    vi.stubGlobal('innerWidth', 640);
+    fkh.bindResponsiveLayout(owner, {
+      breakpoint: 700,
+      mobile,
+      desktop,
+    });
+
+    vi.stubGlobal('innerWidth', 900);
+    window.dispatchEvent(new Event('resize'));
+
+    expect(mobile).toHaveBeenCalledOnce();
+    expect(desktop).not.toHaveBeenCalled();
+  });
 });

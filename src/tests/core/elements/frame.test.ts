@@ -69,6 +69,25 @@ describe('screen GUIs and frames', () => {
     expect(gui.element.parentElement).toBe(target);
   });
 
+  it('keeps ScreenGui instances at the hierarchy root', () => {
+    const target = document.body.appendChild(document.createElement('main'));
+    const gui = createScreenGui();
+    const frame = createFrame();
+
+    gui.mount(target);
+
+    expect(() => frame.addChild(gui)).toThrow(/hierarchy root/);
+    expect(gui.Parent).toBeUndefined();
+    expect(gui.element.parentElement).toBe(target);
+    expect(gui.isMounted()).toBe(true);
+
+    gui.Parent = undefined;
+    gui.removeFromParent();
+
+    expect(gui.element.parentElement).toBe(target);
+    expect(gui.isMounted()).toBe(true);
+  });
+
   it('always covers the viewport regardless of its mount target', () => {
     const gui = createScreenGui();
 
