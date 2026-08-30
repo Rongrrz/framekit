@@ -4,6 +4,7 @@ import {
   type ButtonProperties,
 } from '../../shared/dom/button';
 import {
+  bindTextScaleResize,
   createDefaultTextStyleProperties,
   horizontalFlexAlignment,
   renderTextStyle,
@@ -12,6 +13,7 @@ import {
   type TextStyleProperties,
 } from '../../shared/dom/text-style';
 import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
+import { getPropertiesSnapshot } from '../../shared/runtime/node-properties';
 import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
 import { assertBoolean } from '../../shared/runtime/validation';
 import {
@@ -90,7 +92,7 @@ function createTextNode<Properties extends TextLabelProperties>(
   });
   element.prepend(text);
 
-  return createGuiObjectNode(
+  const node = createGuiObjectNode(
     nodeType,
     element,
     defaultProperties,
@@ -105,6 +107,8 @@ function createTextNode<Properties extends TextLabelProperties>(
     eventMethods,
     validateTextProperties,
   );
+  bindTextScaleResize(node, element, () => renderTextStyle(text, getPropertiesSnapshot(node)));
+  return node;
 }
 
 function validateTextProperties(

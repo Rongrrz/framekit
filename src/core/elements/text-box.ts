@@ -1,5 +1,7 @@
 import {
+  bindTextScaleResize,
   createDefaultTextStyleProperties,
+  renderTextSize,
   renderTextStyle,
   type TextStyleProperties,
   validateTextStyleProperties,
@@ -108,6 +110,12 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
     textBoxEventMethods,
     validateTextBoxProperties,
   ) as TextBox;
+
+  bindTextScaleResize(node, element, () => {
+    const current = getPropertiesSnapshot(node);
+    renderTextSize(editor, current);
+    renderTextSize(placeholder, { ...current, Text: current.PlaceholderText });
+  });
 
   const listenerController = new AbortController();
   const listenerOptions = { signal: listenerController.signal };

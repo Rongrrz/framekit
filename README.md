@@ -161,6 +161,16 @@ button.onClick(() => console.log('equipped'));
 
 Event connections belong to the node and are released when it is destroyed. Each event method also returns an unsubscribe function for stopping it earlier.
 
+Text labels, text buttons, and text boxes support `TextScaled`. When enabled, FrameKit chooses the largest whole-pixel font size that fits the object's current bounds and recalculates it when those bounds change. `TextSize` remains the fallback while an object has no measurable browser size.
+
+```ts
+const title = fk.createTextLabel({
+  Text: 'Inventory',
+  TextScaled: true,
+  TextWrapped: true,
+});
+```
+
 Subscribe to a particular property when another object needs to react to it. Property names are autocomplete-safe, and the callback receives correctly typed new and previous values:
 
 ```ts
