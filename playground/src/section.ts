@@ -2,9 +2,7 @@ import { fk } from 'framekit';
 
 import {
   bindLayoutProperties,
-  contentInset,
   contentWidth,
-  pageWidth,
   sectionLayout,
   type PlaygroundLayout,
   type SectionName,
@@ -24,11 +22,11 @@ export function createSection(
 
   bindLayoutProperties(section, layout, section, {
     desktop: {
-      Size: fk.udim2FromOffset(pageWidth.desktop, sectionLayout.desktop[name].height),
+      Size: fk.udim2(1, 0, 0, sectionLayout.desktop[name].height),
       Position: fk.udim2FromOffset(0, sectionLayout.desktop[name].top),
     },
     mobile: {
-      Size: fk.udim2FromOffset(pageWidth.mobile, sectionLayout.mobile[name].height),
+      Size: fk.udim2(1, 0, 0, sectionLayout.mobile[name].height),
       Position: fk.udim2FromOffset(0, sectionLayout.mobile[name].top),
     },
   });
@@ -40,16 +38,20 @@ export function createSectionContent(
   owner: fk.Instance,
   layout: fk.Value<PlaygroundLayout>,
 ): fk.Frame {
-  const content = fk.createFrame({ Name: 'Content', BackgroundTransparency: 1 });
+  const content = fk.createFrame({
+    Name: 'Content',
+    AnchorPoint: fk.vector2(0.5, 0),
+    BackgroundTransparency: 1,
+  });
 
   bindLayoutProperties(owner, layout, content, {
     desktop: {
       Size: fk.udim2FromOffset(contentWidth.desktop, 1),
-      Position: fk.udim2FromOffset(contentInset.desktop, 0),
+      Position: fk.udim2FromScale(0.5, 0),
     },
     mobile: {
       Size: fk.udim2FromOffset(contentWidth.mobile, 1),
-      Position: fk.udim2FromOffset(contentInset.mobile, 0),
+      Position: fk.udim2FromScale(0.5, 0),
     },
   });
 

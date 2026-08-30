@@ -17,7 +17,7 @@ type PageShell = Readonly<{
 }>;
 
 const appName = 'FrameKitPlayground';
-const navigationHeight = 64;
+const navigationHeight = 72;
 
 /** Owns the centered responsive canvas and spring-driven section navigation. */
 export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
@@ -29,6 +29,7 @@ export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
     Position: fk.udim2FromOffset(0, navigationHeight),
     BackgroundColor3: colors.ink,
     ScrollingDirection: 'Y',
+    ScrollBarThickness: 0,
   });
   const scrollSizer = fk.createFrame({
     Name: `${appName}ScrollSizer`,
@@ -41,6 +42,8 @@ export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
   });
   const contentScale = fk.createUIScale({ Scale: currentScale });
 
+  page.element.classList.add('fk-noise');
+
   content.addChild(contentScale);
   scrollSizer.addChild(content);
   page.addChild(scrollSizer);
@@ -52,15 +55,18 @@ export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
 
   function navigate(section: SectionName | 'top'): void {
     const offset = section === 'top' ? 0 : sectionLayout[layout.get()][section].top;
-    fka.spring(page).stop('CanvasPosition');
-    fka.spring(page, { CanvasPosition: fk.vector2(0, offset * currentScale) });
+    fka.spring(
+      page,
+      { CanvasPosition: fk.vector2(0, offset * currentScale) },
+      { tension: 190, friction: 28 },
+    );
   }
 
   function updateCanvas(): void {
     const currentLayout = layout.get();
     currentScale = calculateScale(currentLayout);
     const height = pageHeight[currentLayout];
-    const width = pageWidth[currentLayout];
+    const width = Math.max(pageWidth[currentLayout], window.innerWidth / currentScale);
 
     contentScale.Scale = currentScale;
     scrollSizer.Size = fk.udim2(1, 0, 0, height * currentScale);

@@ -85,6 +85,7 @@ export function createButton(
     FontWeight: 750,
   });
   addRoundedBorder(button, 12, background);
+  button.element.classList.add('fk-button');
   return button;
 }
 

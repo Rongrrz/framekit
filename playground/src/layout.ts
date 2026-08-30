@@ -8,36 +8,36 @@ export type Responsive<Value> = Readonly<Record<PlaygroundLayout, Value>>;
 export const mobileBreakpoint = 720;
 
 export const pageWidth: Responsive<number> = {
-  desktop: 1180,
+  desktop: 1280,
   mobile: 390,
 };
 
 export const contentWidth: Responsive<number> = {
-  desktop: 1080,
+  desktop: 1160,
   mobile: 358,
 };
 
 export const contentInset: Responsive<number> = {
-  desktop: 50,
+  desktop: 60,
   mobile: 16,
 };
 
 const sectionHeights: Responsive<Readonly<Record<SectionName, number>>> = {
   desktop: {
-    hero: 720,
-    motion: 840,
-    modifiers: 900,
+    hero: 900,
+    motion: 980,
+    modifiers: 1060,
     api: 820,
     lifecycle: 760,
-    footer: 480,
+    footer: 680,
   },
   mobile: {
-    hero: 900,
-    motion: 1060,
-    modifiers: 1300,
-    api: 1080,
-    lifecycle: 1080,
-    footer: 620,
+    hero: 1120,
+    motion: 1260,
+    modifiers: 1900,
+    api: 1040,
+    lifecycle: 980,
+    footer: 820,
   },
 };
 

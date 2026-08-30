@@ -2,209 +2,173 @@ import { fk, fka } from 'framekit';
 
 import { bindButtonMotion } from '../behaviors/hover-motion';
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
-import { appendSectionHeading, createSection, createSectionContent } from '../section';
+import { createSection, createSectionContent } from '../section';
 import { colors, fonts } from '../theme';
-import { addRoundedBorder, appendCodeLine, createButton, createText } from '../ui';
-
-type LifecyclePhase = 'attached' | 'detached' | 'destroyed';
-
-const lifecycleCopy = {
-  attached: {
-    accent: colors.mint,
-    title: 'ATTACHED',
-    body: 'ItemDetails is beneath Inventory and all lifecycle-owned resources are active.',
-    child: '    ● ItemDetails',
-    resources: '      3 resources owned',
-    code: 'details.Parent = inventory;',
-  },
-  detached: {
-    accent: colors.amber,
-    title: 'DETACHED, STILL REUSABLE',
-    body: 'The instance left the visible tree, but it remains valid and can be parented again.',
-    child: '    ○ ItemDetails',
-    resources: '      resources still owned',
-    code: 'details.Parent = undefined;',
-  },
-  destroyed: {
-    accent: colors.coral,
-    title: 'DESTROYED AND RELEASED',
-    body: 'The instance is permanently invalid. Descendants, listeners, watchers, and animations are released.',
-    child: '    × ItemDetails',
-    resources: '      0 resources owned',
-    code: 'details.destroy();',
-  },
-} as const;
+import { addRoundedBorder, createButton, createText } from '../ui';
 
 export function createLifecycle(layout: fk.Value<PlaygroundLayout>): fk.Frame {
-  const section = createSection('lifecycle', layout, colors.ink);
+  const section = createSection('lifecycle', layout, colors.coral);
   const content = createSectionContent(section, layout);
-  appendSectionHeading(
-    content,
-    layout,
-    'REMOVE TO REUSE. DESTROY TO RELEASE.',
-    'These controls operate on a real instance. Remove keeps it valid; destroy closes its entire ownership boundary.',
-    'light',
-  );
-
-  const phase = fk.createValue<LifecyclePhase>('attached');
-  const inventory = fk.createFrame({
-    Name: 'Inventory',
-    Size: fk.udim2FromOffset(0, 0),
-    BackgroundTransparency: 1,
+  const eyebrow = createText({
+    text: 'OWNERSHIP / CLEANUP / SILENCE',
+    size: fk.udim2FromOffset(330, 28),
+    position: fk.udim2FromOffset(0, 70),
+    color: colors.darkText,
+    textSize: 9,
+    font: fonts.mono,
+    weight: 800,
   });
-  let details = createDetails();
-  inventory.addChild(details);
-  content.addChild(inventory);
-
-  const actions = [
-    {
-      label: 'ADD',
-      accent: colors.mint,
-      run: () => {
-        if (details.isDestroyed()) details = createDetails();
-        details.Parent = inventory;
-        phase.set('attached');
-      },
-    },
-    {
-      label: 'REMOVE',
-      accent: colors.amber,
-      run: () => {
-        if (details.isDestroyed()) return;
-        details.Parent = undefined;
-        phase.set('detached');
-      },
-    },
-    {
-      label: 'DESTROY',
-      accent: colors.coral,
-      run: () => {
-        if (!details.isDestroyed()) details.destroy();
-        phase.set('destroyed');
-      },
-    },
-  ] as const;
-
-  for (const [index, action] of actions.entries()) {
-    const control = createButton(
-      action.label,
-      fk.udim2FromOffset(106, 44),
-      fk.udim2FromOffset(index * 126, 232),
-      colors.inkRaised,
-      colors.text,
-    );
-    control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
-    bindLayoutProperties(section, layout, control, {
-      desktop: {
-        Size: fk.udim2FromOffset(160, 48),
-        Position: fk.udim2FromOffset(index * 176, 232),
-      },
-      mobile: {
-        Size: fk.udim2FromOffset(106, 44),
-        Position: fk.udim2FromOffset(index * 126, 232),
-      },
-    });
-    bindButtonMotion(control, colors.inkRaised, action.accent);
-    control.onClick(action.run);
-    content.addChild(control);
-  }
-
-  const tree = createPanel(colors.inkRaised);
-  const result = createPanel(colors.paperRaised);
-  const code = createPanel(colors.inkRaised);
-  bindLayoutProperties(section, layout, tree, {
-    desktop: {
-      Size: fk.udim2FromOffset(340, 330),
-      Position: fk.udim2FromOffset(0, 324),
-    },
-    mobile: {
-      Size: fk.udim2FromOffset(358, 226),
-      Position: fk.udim2FromOffset(0, 314),
-    },
+  const title = createText({
+    text: 'MOTION SHOULD\nKNOW WHEN\nTO LEAVE.',
+    size: fk.udim2FromOffset(540, 270),
+    position: fk.udim2FromOffset(0, 118),
+    color: colors.ink,
+    textSize: 58,
+    font: fonts.display,
+    weight: 950,
+    wrapped: true,
+    yAlignment: 'Top',
   });
-  bindLayoutProperties(section, layout, result, {
-    desktop: {
-      Size: fk.udim2FromOffset(340, 330),
-      Position: fk.udim2FromOffset(370, 324),
-    },
-    mobile: {
-      Size: fk.udim2FromOffset(358, 220),
-      Position: fk.udim2FromOffset(0, 570),
-    },
+  const body = createText({
+    text: 'Destroy one owner. Its watchers, listeners, descendants, and active animations disappear with it. The exit is as intentional as the entrance.',
+    size: fk.udim2FromOffset(500, 98),
+    position: fk.udim2FromOffset(0, 438),
+    color: colors.darkMuted,
+    textSize: 15,
+    wrapped: true,
+    yAlignment: 'Top',
   });
-  bindLayoutProperties(section, layout, code, {
+  bindLayoutProperties(section, layout, eyebrow, {
+    desktop: { Position: fk.udim2FromOffset(0, 70) },
+    mobile: { Position: fk.udim2FromOffset(0, 52) },
+  });
+  bindLayoutProperties(section, layout, title, {
     desktop: {
-      Size: fk.udim2FromOffset(340, 330),
-      Position: fk.udim2FromOffset(740, 324),
+      Size: fk.udim2FromOffset(540, 270),
+      Position: fk.udim2FromOffset(0, 118),
+      TextSize: 58,
     },
     mobile: {
       Size: fk.udim2FromOffset(358, 210),
-      Position: fk.udim2FromOffset(0, 820),
+      Position: fk.udim2FromOffset(0, 96),
+      TextSize: 42,
+    },
+  });
+  bindLayoutProperties(section, layout, body, {
+    desktop: {
+      Size: fk.udim2FromOffset(500, 98),
+      Position: fk.udim2FromOffset(0, 438),
+      TextSize: 15,
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(358, 116),
+      Position: fk.udim2FromOffset(0, 322),
+      TextSize: 13,
     },
   });
 
-  appendCodeLine(tree, '▼ ScreenGui', 28, colors.violet);
-  appendCodeLine(tree, '  ▼ Inventory', 76, colors.mint);
-  const child = appendCodeLine(tree, '', 124, colors.coral);
-  const resources = appendCodeLine(tree, '', 172, colors.textMuted);
-  const resultTitle = createText({
-    text: '',
-    size: fk.udim2(1, -48, 0, 56),
-    position: fk.udim2FromOffset(24, 26),
-    color: colors.darkText,
-    textSize: 22,
-    weight: 900,
-    wrapped: true,
-    yAlignment: 'Top',
-  });
-  const resultBody = createText({
-    text: '',
-    size: fk.udim2(1, -48, 0, 170),
-    position: fk.udim2FromOffset(24, 104),
-    color: colors.darkMuted,
-    textSize: 13,
-    wrapped: true,
-    yAlignment: 'Top',
-  });
-  result.addChild(resultTitle);
-  result.addChild(resultBody);
-  const actionLine = appendCodeLine(code, '', 44, colors.coral);
-  appendCodeLine(code, '// no framework unmount phase', 104, colors.mint);
-  appendCodeLine(code, '// ownership follows the instance', 164, colors.violet);
-
-  content.addChild(tree);
-  content.addChild(result);
-  content.addChild(code);
-  result.watch(phase, (currentPhase) => {
-    const copy = lifecycleCopy[currentPhase];
-    resultTitle.Text = copy.title;
-    resultBody.Text = copy.body;
-    child.setProperties({ Text: copy.child, TextColor3: copy.accent });
-    resources.Text = copy.resources;
-    actionLine.Text = copy.code;
-  });
-
+  const scene = createLifecycleScene(layout);
+  for (const child of [eyebrow, title, body, scene]) content.addChild(child);
   section.addChild(content);
   return section;
 }
 
-function createDetails(): fk.Frame {
-  const details = fk.createFrame({
-    Name: 'ItemDetails',
-    Size: fk.udim2FromOffset(0, 0),
-    BackgroundTransparency: 1,
+function createLifecycleScene(layout: fk.Value<PlaygroundLayout>): fk.Frame {
+  const scene = fk.createFrame({ Name: 'LifecycleScene', BackgroundColor3: colors.ink });
+  addRoundedBorder(scene, 30, colors.darkText, 3);
+  scene.element.classList.add('fk-grid');
+  bindLayoutProperties(scene, layout, scene, {
+    desktop: { Size: fk.udim2FromOffset(570, 620), Position: fk.udim2FromOffset(590, 66) },
+    mobile: { Size: fk.udim2FromOffset(358, 480), Position: fk.udim2FromOffset(0, 466) },
   });
-  const visible = fk.createValue(true);
-  details.watch(visible, (isVisible) => {
-    details.Visible = isVisible;
-  });
-  details.onMouseEnter(() => visible.set(!visible.get()));
-  fka.spring(details);
-  return details;
-}
 
-function createPanel(background: fk.Color3): fk.Frame {
-  const panel = fk.createFrame({ BackgroundColor3: background });
-  addRoundedBorder(panel, 18, colors.inkSoft);
-  return panel;
+  const state = createText({
+    text: '● OWNER ACTIVE / 06 RESOURCES',
+    size: fk.udim2(1, -44, 0, 30),
+    position: fk.udim2FromOffset(22, 20),
+    color: colors.mint,
+    textSize: 8,
+    font: fonts.mono,
+    weight: 800,
+  });
+  scene.addChild(state);
+
+  const field = fk.createFrame({
+    Name: 'OwnershipField',
+    Size: fk.udim2(1, -44, 0, 420),
+    Position: fk.udim2FromOffset(22, 70),
+    BackgroundColor3: colors.inkRaised,
+    ClipsDescendants: true,
+  });
+  addRoundedBorder(field, 20, colors.inkSoft);
+  bindLayoutProperties(scene, layout, field, {
+    desktop: { Size: fk.udim2(1, -44, 0, 420), Position: fk.udim2FromOffset(22, 70) },
+    mobile: { Size: fk.udim2(1, -40, 0, 292), Position: fk.udim2FromOffset(20, 64) },
+  });
+  scene.addChild(field);
+
+  const palette = [colors.mint, colors.violet, colors.cyan, colors.amber, colors.coral] as const;
+  const particles: fk.Frame[] = [];
+  function rebuild(): void {
+    for (const particle of particles.splice(0)) {
+      if (!particle.isDestroyed()) particle.destroy();
+    }
+    for (let index = 0; index < 5; index += 1) {
+      const particle = fk.createFrame({
+        Name: `OwnedResource${index + 1}`,
+        Size: fk.udim2FromOffset(86 - index * 6, 86 - index * 6),
+        Position: fk.udim2FromOffset(66 + index * 56, 146 + ((index % 2) * 52 - 26)),
+        BackgroundColor3: palette[index]!,
+        Rotation: index * 7 - 14,
+      });
+      particle.addChild(fk.createUICorner({ CornerRadius: index % 2 === 0 ? 999 : 18 }));
+      field.addChild(particle);
+      particles.push(particle);
+    }
+    state.setProperties({ Text: '● OWNER ACTIVE / 06 RESOURCES', TextColor3: colors.mint });
+  }
+  rebuild();
+
+  const action = createButton(
+    'DESTROY OWNER',
+    fk.udim2FromOffset(250, 52),
+    fk.udim2FromOffset(22, 530),
+    colors.coral,
+    colors.ink,
+  );
+  action.Name = 'DESTROYOWNERButton';
+  action.setProperties({ TextSize: 9, FontFamily: fonts.mono });
+  bindButtonMotion(action, colors.coral, colors.mint);
+  bindLayoutProperties(scene, layout, action, {
+    desktop: { Size: fk.udim2FromOffset(250, 52), Position: fk.udim2FromOffset(22, 530) },
+    mobile: { Size: fk.udim2FromOffset(318, 48), Position: fk.udim2FromOffset(20, 394) },
+  });
+  let active = true;
+  action.onClick(() => {
+    if (!active) {
+      rebuild();
+      action.Text = 'DESTROY OWNER';
+      active = true;
+      return;
+    }
+    for (const [index, particle] of particles.entries()) {
+      const controller = fka.spring(
+        particle,
+        {
+          Position: fk.udim2FromOffset(30 + index * 94, index % 2 === 0 ? -120 : 430),
+          Rotation: 80 - index * 34,
+          BackgroundTransparency: 1,
+        },
+        { tension: 180, friction: 14 },
+      );
+      controller.completed.subscribe(() => {
+        if (!particle.isDestroyed()) particle.destroy();
+      });
+    }
+    state.setProperties({ Text: '○ OWNER DESTROYED / 00 RESOURCES', TextColor3: colors.textMuted });
+    action.Text = 'REBUILD OWNER';
+    active = false;
+  });
+  scene.addChild(action);
+  return scene;
 }

@@ -11,7 +11,7 @@ playground/
 │   ├── page-shell.ts        # canvas scaling, scrolling, and section navigation
 │   ├── section.ts           # responsive section and heading structure
 │   ├── ui.ts                # playground-specific text, button, and code factories
-│   ├── theme.ts             # color and typography tokens
+│   ├── theme.ts             # visual tokens and ambient motion styles
 │   ├── behaviors/           # reusable interaction behavior and cleanup
 │   └── components/          # page sections and stateful child components
 ├── tests/                   # composition, interaction, and responsive layout coverage
@@ -24,11 +24,13 @@ playground/
 
 `src/app.ts` is the composition root. It owns the responsive mode and creates each section once. `src/page-shell.ts` owns continuous canvas scaling and scroll navigation. `src/layout.ts` owns the two sets of geometry and the small binding helper that applies them to existing instances.
 
-Page sections own their copy and composition. A child module is extracted only when it owns a substantial interactive subtree:
+Page sections own their copy, composition, and interactive scene:
 
-- `hero-preview.ts` owns the hero's mental-model switcher.
-- `modifier-preview.ts` owns the live modifiers and their hierarchy.
-- `api-topic.ts` owns the selected API explanation and code panel.
+- `hero.ts` owns the cursor-driven motion field and its retained trail.
+- `motion.ts` owns the spring reactor and its selectable physics profiles.
+- `modifiers.ts` owns the three independent motion scenes.
+- `api.ts` owns the interactive one-call motion grammar.
+- `lifecycle.ts` owns the animated resource teardown and rebuild.
 
 There is deliberately no `shared/` folder. Reusable code is stored with a specific responsibility: interaction under `behaviors/`, visual factories in `ui.ts`, responsive geometry in `layout.ts`, and section structure in `section.ts`.
 

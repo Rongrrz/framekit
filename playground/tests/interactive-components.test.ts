@@ -1,68 +1,88 @@
 import { fk } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { createApi } from '../src/components/api';
-import { createHeroPreview } from '../src/components/hero-preview';
+import { setupAnimationClock } from '../../src/tests/support/animation-clock';
+import { createHero } from '../src/components/hero';
 import { createLifecycle } from '../src/components/lifecycle';
+import { createModifiers } from '../src/components/modifiers';
+import { createMotion } from '../src/components/motion';
 import type { PlaygroundLayout } from '../src/layout';
 
+const { settle } = setupAnimationClock();
+
 describe('interactive playground components', () => {
-  it('updates the hero preview without recreating it', () => {
-    const layout = fk.createValue<PlaygroundLayout>('mobile');
-    const preview = createHeroPreview(layout);
-    const motion = preview.findFirstChild('MOTIONButton') as fk.TextButton;
+  it('bursts the hero machine without recreating its motion core', () => {
+    const layout = fk.createValue<PlaygroundLayout>('desktop');
+    const hero = createHero(layout, () => undefined);
+    const core = hero.findFirstChild('MotionCore', true) as fk.Frame;
+    const burst = hero.findFirstChild('BURSTButton', true) as fk.TextButton;
 
-    expect(preview.element.textContent).toContain('DIRECT INSTANCES');
+    burst.element.click();
+    settle();
 
-    motion.element.click();
-
-    expect(preview.element.textContent).toContain('RETAINED MOTION');
-    preview.destroy();
+    expect(hero.findFirstChild('MotionCore', true)).toBe(core);
+    expect(core.BackgroundColor3).toEqual(fk.color3FromRGB(255, 77, 112));
+    expect(core.Rotation).toBe(13);
+    hero.destroy();
   });
 
-  it('switches the API topic in place', () => {
+  it('switches spring personality in place', () => {
     const layout = fk.createValue<PlaygroundLayout>('mobile');
-    const section = createApi(layout);
-    const explorer = section.findFirstChild('ApiExplorer', true) as fk.Frame;
-    const state = explorer.findFirstChild('STATEButton') as fk.TextButton;
+    const section = createMotion(layout);
+    const reactor = section.findFirstChild('SpringReactor', true) as fk.Frame;
+    const orb = reactor.findFirstChild('ReactorOrb', true) as fk.Frame;
+    const zeroG = reactor.findFirstChild('ZEROGButton', true) as fk.TextButton;
 
-    expect(explorer.element.textContent).toContain('Build a hierarchy.');
+    zeroG.element.click();
+    settle();
 
-    state.element.click();
-
-    expect(explorer.element.textContent).toContain('Share state when useful.');
+    expect(reactor.element.textContent).toContain('ZERO G');
+    expect(orb.BackgroundColor3).toEqual(fk.color3FromRGB(139, 117, 255));
     section.destroy();
   });
 
-  it('reflows the same hero preview between mobile and desktop', () => {
-    const layout = fk.createValue<PlaygroundLayout>('mobile');
-    const preview = createHeroPreview(layout);
+  it('shuffles the same kinetic stack cards', () => {
+    const section = createModifiers(fk.createValue<PlaygroundLayout>('desktop'));
+    const first = section.findFirstChild('StackCard1', true) as fk.Frame;
+    const shuffle = section.findFirstChild('SHUFFLEButton', true) as fk.TextButton;
+    const initialPosition = first.Position;
 
-    expect(preview.Size).toEqual(fk.udim2FromOffset(358, 340));
+    shuffle.element.click();
+    settle();
+
+    expect(section.findFirstChild('StackCard1', true)).toBe(first);
+    expect(first.Position).not.toEqual(initialPosition);
+    section.destroy();
+  });
+
+  it('destroys and rebuilds lifecycle-owned resources', () => {
+    const section = createLifecycle(fk.createValue<PlaygroundLayout>('mobile'));
+    const scene = section.findFirstChild('LifecycleScene', true) as fk.Frame;
+    const action = scene.findFirstChild('DESTROYOWNERButton', true) as fk.TextButton;
+    const first = scene.findFirstChild('OwnedResource1', true)!;
+
+    action.element.click();
+    settle();
+
+    expect(first.isDestroyed()).toBe(true);
+    expect(scene.element.textContent).toContain('00 RESOURCES');
+
+    action.element.click();
+
+    expect(scene.findFirstChild('OwnedResource1', true)).toBeDefined();
+    section.destroy();
+  });
+
+  it('reflows the same hero machine between viewport layouts', () => {
+    const layout = fk.createValue<PlaygroundLayout>('mobile');
+    const hero = createHero(layout, () => undefined);
+    const machine = hero.findFirstChild('HeroMachine', true) as fk.Frame;
+
+    expect(machine.Size).toEqual(fk.udim2FromOffset(358, 470));
 
     layout.set('desktop');
 
-    expect(preview.Size).toEqual(fk.udim2FromOffset(500, 480));
-    preview.destroy();
-  });
-
-  it('destroys and recreates the lifecycle demo instance', () => {
-    const layout = fk.createValue<PlaygroundLayout>('mobile');
-    const section = createLifecycle(layout);
-    const firstDetails = section.findFirstChild('ItemDetails', true)!;
-    const destroy = section.findFirstChild('DESTROYButton', true) as fk.TextButton;
-    const add = section.findFirstChild('ADDButton', true) as fk.TextButton;
-
-    destroy.element.click();
-
-    expect(firstDetails.isDestroyed()).toBe(true);
-    expect(section.element.textContent).toContain('DESTROYED AND RELEASED');
-
-    add.element.click();
-
-    const replacement = section.findFirstChild('ItemDetails', true)!;
-    expect(replacement).not.toBe(firstDetails);
-    expect(replacement.Parent?.Name).toBe('Inventory');
-    section.destroy();
+    expect(machine.Size).toEqual(fk.udim2FromOffset(540, 666));
+    hero.destroy();
   });
 });

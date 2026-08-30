@@ -14,12 +14,14 @@ describe('playground application', () => {
     app.mount(document.body);
 
     expect(document.querySelectorAll('[data-framekit="ScreenGui"]')).toHaveLength(1);
-    expect(app.findFirstChild('Motion', true)).toBeDefined();
-    expect(app.findFirstChild('Modifiers', true)).toBeDefined();
-    expect(app.findFirstChild('HeroPreview', true)).toBeDefined();
-    expect(app.findFirstChild('ModifierDemo', true)).toBeDefined();
-    expect(app.findFirstChild('ApiExplorer', true)).toBeDefined();
-    expect(app.findFirstChild('Lifecycle', true)).toBeDefined();
+    expect(app.findFirstChild('HeroMachine', true)).toBeDefined();
+    expect(app.findFirstChild('SpringReactor', true)).toBeDefined();
+    expect(app.findFirstChild('MagneticMenu', true)).toBeDefined();
+    expect(app.findFirstChild('MotionGrammar', true)).toBeDefined();
+    expect(app.findFirstChild('LifecycleScene', true)).toBeDefined();
+    expect(
+      (app.findFirstChild('FrameKitPlaygroundPage', true) as fk.ScrollingFrame).ScrollBarThickness,
+    ).toBe(0);
 
     app.destroy();
   });
@@ -31,7 +33,7 @@ describe('playground application', () => {
     const contentScale = content.findFirstChild('UIScale') as fk.UIScale;
     const motion = app.findFirstChild('Motion', true);
 
-    expect(contentScale.Scale).toBeCloseTo(900 / 1180);
+    expect(contentScale.Scale).toBeCloseTo(900 / 1280);
 
     vi.stubGlobal('innerWidth', 640);
     window.dispatchEvent(new Event('resize'));
@@ -52,6 +54,20 @@ describe('playground application', () => {
     window.dispatchEvent(new Event('resize'));
 
     expect(contentScale.Scale).toBe(1);
+
+    app.destroy();
+  });
+
+  it('extends section backgrounds across wide viewports', () => {
+    vi.stubGlobal('innerWidth', 1600);
+    const app = createPlaygroundApp('desktop');
+    const content = app.findFirstChild('FrameKitPlaygroundContent', true) as fk.Frame;
+    const hero = app.findFirstChild('Hero', true) as fk.Frame;
+    const heroContent = hero.findFirstChild('Content') as fk.Frame;
+
+    expect(content.Size).toEqual(fk.udim2FromOffset(1600, content.Size.Y.Offset));
+    expect(hero.Size.X).toEqual(fk.udim(1, 0));
+    expect(heroContent.Position.X).toEqual(fk.udim(0.5, 0));
 
     app.destroy();
   });
