@@ -25,7 +25,7 @@
     "build": "npm run build:library",
     "build:all": "npm run build:library && npm run build:playground",
     "build:library": "tsc -b tsconfig.app.json tsconfig.node.json && vite build && tsc -p tsconfig.build.json",
-    "build:playground": "tsc -b playground/tsconfig.json && vite build --config playground/vite.config.ts",
+    "build:playground": "tsc -b playground/tsconfig.json tsconfig.node.json && vite build --config playground/vite.config.ts",
     "watch": "tsc -b tsconfig.app.json tsconfig.node.json && vite build --watch",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
@@ -34,7 +34,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:all": "npm test && npm run test:playground",
-    "test:playground": "vitest run --config playground/vitest.config.ts",
+    "test:playground": "vitest run --config playground/vite.config.ts",
     "preview": "vite preview --config playground/vite.config.ts",
     "prepare": "husky"
   },

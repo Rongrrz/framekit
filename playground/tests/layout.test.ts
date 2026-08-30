@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pageHeight, sectionLayout } from '../layout';
+import { pageHeight, sectionLayout } from '../src/layout';
 
 describe('playground layout', () => {
   it('keeps ordered section offsets and page height consistent for each viewport', () => {

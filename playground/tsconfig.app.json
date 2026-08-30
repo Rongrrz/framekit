@@ -1,8 +1,0 @@
-{
-  "extends": "../tsconfig.app.json",
-  "compilerOptions": {
-    "tsBuildInfoFile": "../node_modules/.tmp/tsconfig.playground.app.tsbuildinfo"
-  },
-  "include": ["./**/*.ts"],
-  "exclude": ["vite.config.ts", "vitest.config.ts"]
-}

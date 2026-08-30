@@ -1,7 +1,7 @@
 import { fk } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createPlaygroundApp } from '../app';
+import { createPlaygroundApp } from '../src/app';
 
 afterEach(() => {
   document.body.replaceChildren();

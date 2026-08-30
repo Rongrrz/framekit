@@ -4,21 +4,25 @@ The playground is one persistent FrameKit hierarchy. Desktop and mobile never cr
 
 ```text
 playground/
-├── main.ts                  # mounts the app and reads local preview options
-├── app.ts                   # composes the six page sections
-├── layout.ts                # breakpoints, geometry, and responsive property binding
-├── page-shell.ts            # canvas scaling, scrolling, and section navigation
-├── section.ts               # responsive section and heading structure
-├── ui.ts                    # playground-specific text, button, and code factories
-├── theme.ts                 # color and typography tokens
-├── behaviors/               # reusable interaction behavior and cleanup
-├── components/              # page sections and stateful child components
-└── tests/                   # composition, interaction, and responsive layout coverage
+├── src/
+│   ├── main.ts              # mounts the app and reads local preview options
+│   ├── app.ts               # composes the six page sections
+│   ├── layout.ts            # breakpoints, geometry, and responsive property binding
+│   ├── page-shell.ts        # canvas scaling, scrolling, and section navigation
+│   ├── section.ts           # responsive section and heading structure
+│   ├── ui.ts                # playground-specific text, button, and code factories
+│   ├── theme.ts             # color and typography tokens
+│   ├── behaviors/           # reusable interaction behavior and cleanup
+│   └── components/          # page sections and stateful child components
+├── tests/                   # composition, interaction, and responsive layout coverage
+├── index.html               # browser entry point
+├── tsconfig.json            # playground TypeScript boundary
+└── vite.config.ts           # development, build, and test configuration
 ```
 
 ## Ownership
 
-`app.ts` is the composition root. It owns the responsive mode and creates each section once. `page-shell.ts` owns continuous canvas scaling and scroll navigation. `layout.ts` owns the two sets of geometry and the small binding helper that applies them to existing instances.
+`src/app.ts` is the composition root. It owns the responsive mode and creates each section once. `src/page-shell.ts` owns continuous canvas scaling and scroll navigation. `src/layout.ts` owns the two sets of geometry and the small binding helper that applies them to existing instances.
 
 Page sections own their copy and composition. A child module is extracted only when it owns a substantial interactive subtree:
 

@@ -1,10 +1,10 @@
 import { fk } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { createApi } from '../components/api';
-import { createHeroPreview } from '../components/hero-preview';
-import { createLifecycle } from '../components/lifecycle';
-import type { PlaygroundLayout } from '../layout';
+import { createApi } from '../src/components/api';
+import { createHeroPreview } from '../src/components/hero-preview';
+import { createLifecycle } from '../src/components/lifecycle';
+import type { PlaygroundLayout } from '../src/layout';
 
 describe('interactive playground components', () => {
   it('updates the hero preview without recreating it', () => {

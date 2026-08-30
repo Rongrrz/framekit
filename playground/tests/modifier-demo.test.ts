@@ -2,7 +2,7 @@ import { fk } from 'framekit';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { setupAnimationClock } from '../../src/tests/support/animation-clock';
-import { createModifierDemo } from '../components/modifier-demo';
+import { createModifierDemo } from '../src/components/modifier-demo';
 
 const { settle } = setupAnimationClock();
 
