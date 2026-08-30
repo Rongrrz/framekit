@@ -12,7 +12,7 @@ afterEach(() => {
 
 describe('modifier demo', () => {
   it('keeps stroke, shadow, and padding controls live across repeated clicks', () => {
-    const demo = createModifierDemo();
+    const demo = createModifierDemo(fk.createValue('mobile'));
     const card = demo.findFirstChild('NotificationCard', true)!;
     const tags = card.findFirstChild('FeatureTags', true)!;
     const stroke = card.findFirstChild('UIStroke', true)!;

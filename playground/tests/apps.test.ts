@@ -15,11 +15,11 @@ describe('playground application', () => {
 
     expect(document.querySelectorAll('[data-framekit="ScreenGui"]')).toHaveLength(1);
     expect(app.findFirstChild('Motion', true)).toBeDefined();
-    expect(app.findFirstChild('Composer', true)).toBeDefined();
+    expect(app.findFirstChild('Modifiers', true)).toBeDefined();
     expect(app.findFirstChild('HeroPreview', true)).toBeDefined();
     expect(app.findFirstChild('ModifierDemo', true)).toBeDefined();
     expect(app.findFirstChild('ApiExplorer', true)).toBeDefined();
-    expect(app.findFirstChild('GuideDemo', true)).toBeDefined();
+    expect(app.findFirstChild('Lifecycle', true)).toBeDefined();
 
     app.destroy();
   });
@@ -31,7 +31,7 @@ describe('playground application', () => {
     const contentScale = content.findFirstChild('UIScale') as fk.UIScale;
     const motion = app.findFirstChild('Motion', true);
 
-    expect(contentScale.Scale).toBe(1.5);
+    expect(contentScale.Scale).toBeCloseTo(900 / 1180);
 
     vi.stubGlobal('innerWidth', 640);
     window.dispatchEvent(new Event('resize'));

@@ -1,146 +1,210 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 import { bindButtonMotion } from '../behaviors/hover-motion';
-import { contentWidth, sectionLayout } from '../layout';
-import { createSection, createSectionContent, appendSectionHeading } from '../section';
+import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
+import { appendSectionHeading, createSection, createSectionContent } from '../section';
 import { colors, fonts } from '../theme';
-import { createButton, appendCodeLine, addRoundedBorder, createText } from '../ui';
+import { addRoundedBorder, appendCodeLine, createButton, createText } from '../ui';
 
-const lifecycleStates = [
-  {
-    buttonLabel: 'ADD',
+type LifecyclePhase = 'attached' | 'detached' | 'destroyed';
+
+const lifecycleCopy = {
+  attached: {
     accent: colors.mint,
     title: 'ATTACHED',
-    body: 'The node is visible beneath Inventory and all three lifecycle-owned resources are active.',
+    body: 'ItemDetails is beneath Inventory and all lifecycle-owned resources are active.',
     child: '    ● ItemDetails',
     resources: '      3 resources owned',
-    action: 'inventory.addChild(details);',
-    outcome: '// visible and interactive',
-    ownership: '// details.Parent === inventory',
+    code: 'details.Parent = inventory;',
   },
-  {
-    buttonLabel: 'REMOVE',
+  detached: {
     accent: colors.amber,
     title: 'DETACHED, STILL REUSABLE',
-    body: 'The node leaves the visible tree, but remains valid and can be added again.',
+    body: 'The instance left the visible tree, but it remains valid and can be parented again.',
     child: '    ○ ItemDetails',
     resources: '      resources still owned',
-    action: 'details.removeFromParent();',
-    outcome: '// reusable node retained',
-    ownership: '// details.isDestroyed() === false',
+    code: 'details.Parent = undefined;',
   },
-  {
-    buttonLabel: 'DESTROY',
+  destroyed: {
     accent: colors.coral,
     title: 'DESTROYED AND RELEASED',
-    body: 'The object is permanently invalidated. Descendants, listeners, watched values, and animations are released.',
+    body: 'The instance is permanently invalid. Descendants, listeners, watchers, and animations are released.',
     child: '    × ItemDetails',
     resources: '      0 resources owned',
-    action: 'details.destroy();',
-    outcome: '// complete owned subtree released',
-    ownership: '// details.isDestroyed() === true',
+    code: 'details.destroy();',
   },
-] as const;
+} as const;
 
-export function createLifecycle(): fk.Frame {
-  const section = createSection('Lifecycle', sectionLayout.lifecycle, colors.ink);
-
-  const content = createSectionContent();
+export function createLifecycle(layout: fk.Value<PlaygroundLayout>): fk.Frame {
+  const section = createSection('lifecycle', layout, colors.ink);
+  const content = createSectionContent(section, layout);
   appendSectionHeading(
     content,
-    'REMOVE = REUSE.\nDESTROY = RELEASE.',
-    'Lifecycle is explicit, testable, and owned by the node—not scattered across cleanup callbacks.',
+    layout,
+    'REMOVE TO REUSE. DESTROY TO RELEASE.',
+    'These controls operate on a real instance. Remove keeps it valid; destroy closes its entire ownership boundary.',
     'light',
   );
 
-  const phase = fk.createValue(0);
-  for (const [index, state] of lifecycleStates.entries()) {
+  const phase = fk.createValue<LifecyclePhase>('attached');
+  const inventory = fk.createFrame({
+    Name: 'Inventory',
+    Size: fk.udim2FromOffset(0, 0),
+    BackgroundTransparency: 1,
+  });
+  let details = createDetails();
+  inventory.addChild(details);
+  content.addChild(inventory);
+
+  const actions = [
+    {
+      label: 'ADD',
+      accent: colors.mint,
+      run: () => {
+        if (details.isDestroyed()) details = createDetails();
+        details.Parent = inventory;
+        phase.set('attached');
+      },
+    },
+    {
+      label: 'REMOVE',
+      accent: colors.amber,
+      run: () => {
+        if (details.isDestroyed()) return;
+        details.Parent = undefined;
+        phase.set('detached');
+      },
+    },
+    {
+      label: 'DESTROY',
+      accent: colors.coral,
+      run: () => {
+        if (!details.isDestroyed()) details.destroy();
+        phase.set('destroyed');
+      },
+    },
+  ] as const;
+
+  for (const [index, action] of actions.entries()) {
     const control = createButton(
-      state.buttonLabel,
+      action.label,
       fk.udim2FromOffset(106, 44),
-      fk.udim2FromOffset(index * 126, 226),
+      fk.udim2FromOffset(index * 126, 232),
       colors.inkRaised,
       colors.text,
     );
     control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
-    bindButtonMotion(control, colors.inkRaised, state.accent);
-    control.onClick(() => phase.set(index));
+    bindLayoutProperties(section, layout, control, {
+      desktop: {
+        Size: fk.udim2FromOffset(160, 48),
+        Position: fk.udim2FromOffset(index * 176, 232),
+      },
+      mobile: {
+        Size: fk.udim2FromOffset(106, 44),
+        Position: fk.udim2FromOffset(index * 126, 232),
+      },
+    });
+    bindButtonMotion(control, colors.inkRaised, action.accent);
+    control.onClick(action.run);
     content.addChild(control);
   }
 
-  const tree = fk.createFrame({
-    Size: fk.udim2FromOffset(contentWidth, 246),
-    Position: fk.udim2FromOffset(0, 304),
-    BackgroundColor3: colors.inkRaised,
+  const tree = createPanel(colors.inkRaised);
+  const result = createPanel(colors.paperRaised);
+  const code = createPanel(colors.inkRaised);
+  bindLayoutProperties(section, layout, tree, {
+    desktop: {
+      Size: fk.udim2FromOffset(340, 330),
+      Position: fk.udim2FromOffset(0, 324),
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(358, 226),
+      Position: fk.udim2FromOffset(0, 314),
+    },
   });
-  addRoundedBorder(tree, 18, colors.inkSoft);
-  appendCodeLine(tree, '▼ ScreenGui', 24, colors.violet);
-  appendCodeLine(tree, '  ▼ Inventory', 64, colors.mint);
-
-  const child = appendCodeLine(tree, '    ● ItemDetails', 104, colors.coral);
-
-  const resources = appendCodeLine(tree, '      3 resources owned', 146, colors.textMuted);
-
-  content.addChild(tree);
-
-  const result = fk.createFrame({
-    Size: fk.udim2FromOffset(contentWidth, 220),
-    Position: fk.udim2FromOffset(0, 582),
-    BackgroundColor3: colors.paperRaised,
+  bindLayoutProperties(section, layout, result, {
+    desktop: {
+      Size: fk.udim2FromOffset(340, 330),
+      Position: fk.udim2FromOffset(370, 324),
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(358, 220),
+      Position: fk.udim2FromOffset(0, 570),
+    },
   });
-  addRoundedBorder(result, 18, colors.paperMuted);
+  bindLayoutProperties(section, layout, code, {
+    desktop: {
+      Size: fk.udim2FromOffset(340, 330),
+      Position: fk.udim2FromOffset(740, 324),
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(358, 210),
+      Position: fk.udim2FromOffset(0, 820),
+    },
+  });
 
+  appendCodeLine(tree, '▼ ScreenGui', 28, colors.violet);
+  appendCodeLine(tree, '  ▼ Inventory', 76, colors.mint);
+  const child = appendCodeLine(tree, '', 124, colors.coral);
+  const resources = appendCodeLine(tree, '', 172, colors.textMuted);
   const resultTitle = createText({
     text: '',
-    size: fk.udim2FromOffset(310, 42),
-    position: fk.udim2FromOffset(24, 24),
+    size: fk.udim2(1, -48, 0, 56),
+    position: fk.udim2FromOffset(24, 26),
     color: colors.darkText,
     textSize: 22,
     weight: 900,
+    wrapped: true,
+    yAlignment: 'Top',
   });
-
   const resultBody = createText({
     text: '',
-    size: fk.udim2FromOffset(310, 108),
-    position: fk.udim2FromOffset(24, 78),
+    size: fk.udim2(1, -48, 0, 170),
+    position: fk.udim2FromOffset(24, 104),
     color: colors.darkMuted,
     textSize: 13,
     wrapped: true,
     yAlignment: 'Top',
   });
-
   result.addChild(resultTitle);
-
   result.addChild(resultBody);
+  const actionLine = appendCodeLine(code, '', 44, colors.coral);
+  appendCodeLine(code, '// no framework unmount phase', 104, colors.mint);
+  appendCodeLine(code, '// ownership follows the instance', 164, colors.violet);
 
+  content.addChild(tree);
   content.addChild(result);
-
-  const code = fk.createFrame({
-    Size: fk.udim2FromOffset(contentWidth, 214),
-    Position: fk.udim2FromOffset(0, 834),
-    BackgroundColor3: colors.inkRaised,
-  });
-  addRoundedBorder(code, 16, colors.inkSoft);
-
-  const action = appendCodeLine(code, '', 30, colors.coral);
-
-  const outcome = appendCodeLine(code, '', 82, colors.mint);
-
-  const ownership = appendCodeLine(code, '', 134, colors.violet);
-
   content.addChild(code);
-  result.watch(phase, (value) => {
-    const state = lifecycleStates[value];
-    if (!state) return;
-    resultTitle.setProperties({ Text: state.title });
-    resultBody.setProperties({ Text: state.body });
-    child.setProperties({ Text: state.child, TextColor3: state.accent });
-    resources.setProperties({ Text: state.resources });
-    action.setProperties({ Text: state.action });
-    outcome.setProperties({ Text: state.outcome });
-    ownership.setProperties({ Text: state.ownership });
+  result.watch(phase, (currentPhase) => {
+    const copy = lifecycleCopy[currentPhase];
+    resultTitle.Text = copy.title;
+    resultBody.Text = copy.body;
+    child.setProperties({ Text: copy.child, TextColor3: copy.accent });
+    resources.Text = copy.resources;
+    actionLine.Text = copy.code;
   });
 
   section.addChild(content);
   return section;
+}
+
+function createDetails(): fk.Frame {
+  const details = fk.createFrame({
+    Name: 'ItemDetails',
+    Size: fk.udim2FromOffset(0, 0),
+    BackgroundTransparency: 1,
+  });
+  const visible = fk.createValue(true);
+  details.watch(visible, (isVisible) => {
+    details.Visible = isVisible;
+  });
+  details.onMouseEnter(() => visible.set(!visible.get()));
+  fka.spring(details);
+  return details;
+}
+
+function createPanel(background: fk.Color3): fk.Frame {
+  const panel = fk.createFrame({ BackgroundColor3: background });
+  addRoundedBorder(panel, 18, colors.inkSoft);
+  return panel;
 }

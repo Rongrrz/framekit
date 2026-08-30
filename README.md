@@ -1,6 +1,6 @@
 # FrameKit
 
-FrameKit brings an engine-style UI object model to the browser. Create typed nodes, arrange them in an explicit tree, change their properties, and connect events. If you have used Roblox Instances—or scene trees in other engines—the ownership model should feel familiar.
+FrameKit brings an engine-style UI object model to the browser. Create typed instances, arrange them in an explicit tree, change their properties, and connect events. If you have used Roblox Instances—or scene trees in other engines—the ownership model should feel familiar.
 
 ```ts
 import { fk } from 'framekit';

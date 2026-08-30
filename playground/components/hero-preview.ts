@@ -1,47 +1,56 @@
 import { fk, fka, fkh } from 'framekit';
 
-import { contentWidth } from '../layout';
+import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { colors, fonts } from '../theme';
-import { createButton, addRoundedBorder, createText } from '../ui';
+import { addRoundedBorder, createButton, createText } from '../ui';
 
-type PreviewMode = 'NODE' | 'STATE' | 'MOTION';
+type PreviewMode = 'INSTANCE' | 'STATE' | 'MOTION';
 
 const previewModes = {
-  NODE: {
-    title: 'TYPED NODE',
-    description: 'Factories create persistent nodes with a strict property contract.',
+  INSTANCE: {
+    title: 'DIRECT INSTANCES',
+    description:
+      'Factories create persistent objects with typed properties and an explicit Parent.',
     accent: colors.coral,
-    code: 'const card = fk.createFrame({ ... });',
+    code: 'const card: fk.Frame = fk.createFrame({ ... });',
   },
   STATE: {
-    title: 'DIRECT STATE',
-    description: 'An explicit shared value updates the same node without a component framework.',
+    title: 'PLAIN STATE',
+    description:
+      'Values are optional. Watch one when objects need to share state; skip it when they do not.',
     accent: colors.mint,
-    code: 'const open = fk.createValue(false);',
+    code: 'card.watch(open, value => card.Visible = value);',
   },
   MOTION: {
     title: 'RETAINED MOTION',
-    description: 'A spring keeps current position and velocity when you give it a new goal.',
+    description:
+      'Springs keep their velocity when a new goal arrives, so interaction stays continuous.',
     accent: colors.violet,
-    code: 'fka.spring(card, { Rotation: 4 });',
+    code: 'fka.spring(card, { Position: nextPosition });',
   },
 } as const satisfies Record<
   PreviewMode,
   Readonly<{ title: string; description: string; accent: fk.Color3; code: string }>
 >;
 
-const previewModeOrder: readonly PreviewMode[] = ['NODE', 'STATE', 'MOTION'];
+const previewModeOrder: readonly PreviewMode[] = ['INSTANCE', 'STATE', 'MOTION'];
 
-/** Creates the interactive mental-model preview shown inside the hero. */
-export function createHeroPreview(): fk.Frame {
-  const selectedMode = fk.createValue<PreviewMode>('NODE');
-  const preview = fk.createFrame({
-    Name: 'HeroPreview',
-    Size: fk.udim2FromOffset(contentWidth, 360),
-    Position: fk.udim2FromOffset(0, 548),
-    BackgroundColor3: colors.paper,
-  });
+/** Shows the three ideas a new FrameKit user needs before building anything. */
+export function createHeroPreview(layout: fk.Value<PlaygroundLayout>): fk.Frame {
+  const selectedMode = fk.createValue<PreviewMode>('INSTANCE');
+  const preview = fk.createFrame({ Name: 'HeroPreview', BackgroundColor3: colors.paper });
   addRoundedBorder(preview, 24, colors.violet, 2);
+
+  bindLayoutProperties(preview, layout, preview, {
+    desktop: {
+      Size: fk.udim2FromOffset(500, 480),
+      Position: fk.udim2FromOffset(580, 120),
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(358, 340),
+      Position: fk.udim2FromOffset(0, 520),
+    },
+  });
 
   const controls = new Map<PreviewMode, fk.TextButton>();
   for (const [index, mode] of previewModeOrder.entries()) {
@@ -53,45 +62,98 @@ export function createHeroPreview(): fk.Frame {
       colors.darkText,
     );
     control.setProperties({ TextSize: 9, FontFamily: fonts.mono });
+    bindLayoutProperties(preview, layout, control, {
+      desktop: {
+        Size: fk.udim2FromOffset(142, 42),
+        Position: fk.udim2FromOffset(18 + index * 160, 18),
+      },
+      mobile: {
+        Size: fk.udim2FromOffset(98, 38),
+        Position: fk.udim2FromOffset(18 + index * 112, 18),
+      },
+    });
     fkh.bindHoverScale(control, 1.04);
     control.onClick(() => selectedMode.set(mode));
     controls.set(mode, control);
     preview.addChild(control);
   }
 
-  const card = fk.createFrame({
-    Size: fk.udim2FromOffset(322, 160),
-    Position: fk.udim2FromOffset(18, 78),
-    BackgroundColor3: colors.coral,
-  });
+  const card = fk.createFrame({ BackgroundColor3: colors.coral });
   addRoundedBorder(card, 18, colors.ink, 2);
+  bindLayoutProperties(preview, layout, card, {
+    desktop: {
+      Size: fk.udim2FromOffset(464, 270),
+      Position: fk.udim2FromOffset(18, 84),
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(322, 154),
+      Position: fk.udim2FromOffset(18, 74),
+    },
+  });
 
   const title = createText({
     text: '',
     size: fk.udim2FromOffset(274, 46),
-    position: fk.udim2FromOffset(24, 20),
+    position: fk.udim2FromOffset(24, 18),
     color: colors.ink,
-    textSize: 22,
+    textSize: 21,
     weight: 900,
   });
   const description = createText({
     text: '',
-    size: fk.udim2FromOffset(274, 62),
-    position: fk.udim2FromOffset(24, 72),
+    size: fk.udim2FromOffset(274, 70),
+    position: fk.udim2FromOffset(24, 70),
     color: colors.inkSoft,
     textSize: 12,
     wrapped: true,
     yAlignment: 'Top',
   });
+  bindLayoutProperties(preview, layout, title, {
+    desktop: {
+      Size: fk.udim2FromOffset(404, 54),
+      Position: fk.udim2FromOffset(30, 34),
+      TextSize: 28,
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(274, 46),
+      Position: fk.udim2FromOffset(24, 18),
+      TextSize: 21,
+    },
+  });
+  bindLayoutProperties(preview, layout, description, {
+    desktop: {
+      Size: fk.udim2FromOffset(404, 96),
+      Position: fk.udim2FromOffset(30, 104),
+      TextSize: 15,
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(274, 70),
+      Position: fk.udim2FromOffset(24, 70),
+      TextSize: 12,
+    },
+  });
+
   const code = createText({
     text: '',
     size: fk.udim2FromOffset(322, 74),
-    position: fk.udim2FromOffset(18, 262),
+    position: fk.udim2FromOffset(18, 250),
     color: colors.violet,
     textSize: 11,
     font: fonts.mono,
     wrapped: true,
     yAlignment: 'Top',
+  });
+  bindLayoutProperties(preview, layout, code, {
+    desktop: {
+      Size: fk.udim2FromOffset(464, 72),
+      Position: fk.udim2FromOffset(18, 382),
+      TextSize: 12,
+    },
+    mobile: {
+      Size: fk.udim2FromOffset(322, 74),
+      Position: fk.udim2FromOffset(18, 250),
+      TextSize: 11,
+    },
   });
 
   card.addChild(title);
@@ -109,7 +171,11 @@ export function createHeroPreview(): fk.Frame {
     });
 
     for (const [controlMode, control] of controls) {
-      control.BackgroundColor3 = controlMode === modeName ? mode.accent : colors.paperMuted;
+      const selected = controlMode === modeName;
+      control.setProperties({
+        BackgroundColor3: selected ? mode.accent : colors.paperMuted,
+        TextColor3: colors.darkText,
+      });
     }
   });
 

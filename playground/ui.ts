@@ -34,14 +34,14 @@ export function createText(options: TextOptions): fk.TextLabel {
 }
 
 export function addRoundedBorder(
-  node: fk.GuiElement,
+  instance: fk.GuiElement,
   radius: number,
   strokeColor: fk.Color3,
   thickness = 1,
 ): void {
-  node.addChild(fk.createUICorner({ CornerRadius: radius }));
+  instance.addChild(fk.createUICorner({ CornerRadius: radius }));
 
-  node.addChild(fk.createUIStroke({ Color: strokeColor, Thickness: thickness }));
+  instance.addChild(fk.createUIStroke({ Color: strokeColor, Thickness: thickness }));
 }
 
 export function createPill(
@@ -50,7 +50,7 @@ export function createPill(
   position: fk.UDim2,
   accent: fk.Color3,
 ): fk.TextLabel {
-  const node = fk.createTextLabel({
+  const pill = fk.createTextLabel({
     Name: `${label}Pill`,
     Size: size,
     Position: position,
@@ -62,8 +62,8 @@ export function createPill(
     FontFamily: fonts.mono,
     FontWeight: 700,
   });
-  addRoundedBorder(node, 18, accent);
-  return node;
+  addRoundedBorder(pill, 18, accent);
+  return pill;
 }
 
 export function createButton(
@@ -73,7 +73,7 @@ export function createButton(
   background: fk.Color3,
   foreground: fk.Color3,
 ): fk.TextButton {
-  const node = fk.createTextButton({
+  const button = fk.createTextButton({
     Name: `${label}Button`,
     Size: size,
     Position: position,
@@ -84,8 +84,8 @@ export function createButton(
     FontFamily: fonts.sans,
     FontWeight: 750,
   });
-  addRoundedBorder(node, 12, background);
-  return node;
+  addRoundedBorder(button, 12, background);
+  return button;
 }
 
 export function appendCodeLine(
@@ -94,7 +94,7 @@ export function appendCodeLine(
   y: number,
   color = colors.textMuted,
 ): fk.TextLabel {
-  const node = createText({
+  const label = createText({
     text: line,
     size: fk.udim2(1, -36, 0, 24),
     position: fk.udim2FromOffset(18, y),
@@ -103,12 +103,12 @@ export function appendCodeLine(
     font: fonts.mono,
   });
 
-  parent.addChild(node);
-  return node;
+  parent.addChild(label);
+  return label;
 }
 
-export function updateTextLines(nodes: readonly fk.TextLabel[], lines: readonly string[]): void {
-  for (const [index, node] of nodes.entries()) {
-    node.setProperties({ Text: lines[index] ?? '' });
+export function updateTextLines(labels: readonly fk.TextLabel[], lines: readonly string[]): void {
+  for (const [index, label] of labels.entries()) {
+    label.Text = lines[index] ?? '';
   }
 }

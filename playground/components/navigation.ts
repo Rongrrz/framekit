@@ -1,13 +1,13 @@
 import { fk } from 'framekit';
 
 import { bindButtonMotion } from '../behaviors/hover-motion';
-import { sectionLayout, type PlaygroundLayout } from '../layout';
+import type { PlaygroundLayout, SectionName } from '../layout';
 import { colors, fonts } from '../theme';
 import { createButton, createText } from '../ui';
 
 export function createNavigation(
   page: fk.ScrollingFrame,
-  navigate: (offset: number) => void,
+  navigate: (section: SectionName | 'top') => void,
   layout: fk.Value<PlaygroundLayout>,
 ): fk.Frame {
   const navigation = fk.createFrame({
@@ -26,7 +26,7 @@ export function createNavigation(
   );
   mark.setProperties({ TextSize: 18, FontWeight: 900 });
   bindButtonMotion(mark, colors.coral, colors.amber);
-  mark.onClick(() => navigate(0));
+  mark.onClick(() => navigate('top'));
 
   navigation.addChild(mark);
 
@@ -56,12 +56,12 @@ export function createNavigation(
   navigation.addChild(source);
 
   const links = [
-    { label: 'MOTION', offset: sectionLayout.motion.top },
-    { label: 'COMPOSER', offset: sectionLayout.composer.top },
-    { label: 'API', offset: sectionLayout.api.top },
+    { label: 'MOTION', section: 'motion' },
+    { label: 'MODIFIERS', section: 'modifiers' },
+    { label: 'API', section: 'api' },
   ] as const;
 
-  const linkButtons = links.map(({ label, offset }, index) => {
+  const linkButtons = links.map(({ label, section }, index) => {
     const link = createButton(
       label,
       fk.udim2FromOffset(96, 36),
@@ -71,7 +71,7 @@ export function createNavigation(
     );
     link.setProperties({ TextSize: 9, FontFamily: fonts.mono });
     bindButtonMotion(link, colors.ink, colors.inkSoft);
-    link.onClick(() => navigate(offset));
+    link.onClick(() => navigate(section));
     navigation.addChild(link);
     return link;
   });
