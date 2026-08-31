@@ -1,13 +1,14 @@
 import { fk } from 'framekit';
 
-import { colors, fonts } from './theme';
+import { bindThemeProperties, fonts, themeColor, type ThemeMode, type ThemeToken } from './theme';
 
 type TextOptions = Readonly<{
   text: string;
   size: fk.UDim2;
   position?: fk.UDim2;
-  color?: fk.Color3;
+  color?: ThemeToken;
   textSize?: number;
+  scaled?: boolean;
   weight?: string | number;
   xAlignment?: fk.TextXAlignment;
   yAlignment?: fk.TextYAlignment;
@@ -16,100 +17,142 @@ type TextOptions = Readonly<{
   name?: string;
 }>;
 
-export function createText(options: TextOptions): fk.TextLabel {
-  return fk.createTextLabel({
+type ButtonOptions = Readonly<{
+  label: string;
+  size: fk.UDim2;
+  position: fk.UDim2;
+  background?: ThemeToken;
+  foreground?: ThemeToken;
+  name?: string;
+  textSize?: number;
+  scaled?: boolean;
+  font?: string;
+}>;
+
+type SurfaceOptions = Readonly<{
+  name: string;
+  size?: fk.UDim2;
+  position?: fk.UDim2;
+  background?: ThemeToken;
+  border?: ThemeToken;
+  radius?: number;
+  clipsDescendants?: boolean;
+}>;
+
+export const createText = (theme: fk.Value<ThemeMode>, options: TextOptions): fk.TextLabel => {
+  const color = options.color ?? 'text';
+  const label = fk.createTextLabel({
     Name: options.name ?? 'Text',
     Size: options.size,
     Position: options.position ?? fk.udim2FromOffset(0, 0),
     BackgroundTransparency: 1,
     Text: options.text,
-    TextColor3: options.color ?? colors.text,
+    TextColor3: themeColor(theme, color),
     TextSize: options.textSize ?? 16,
+    TextScaled: options.scaled ?? false,
     TextWrapped: options.wrapped ?? false,
     TextXAlignment: options.xAlignment ?? 'Left',
     TextYAlignment: options.yAlignment ?? 'Center',
     FontFamily: options.font ?? fonts.sans,
     FontWeight: options.weight ?? 500,
   });
-}
+  bindThemeProperties(label, theme, (palette) => ({ TextColor3: palette[color] }));
+  return label;
+};
 
-export function addRoundedBorder(
+export const addRoundedBorder = (
+  theme: fk.Value<ThemeMode>,
   instance: fk.GuiElement,
   radius: number,
-  strokeColor: fk.Color3,
+  strokeColor: ThemeToken = 'border',
   thickness = 1,
-): void {
+): void => {
   instance.addChild(fk.createUICorner({ CornerRadius: radius }));
+  const stroke = fk.createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
+  bindThemeProperties(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
+  instance.addChild(stroke);
+};
 
-  instance.addChild(fk.createUIStroke({ Color: strokeColor, Thickness: thickness }));
-}
-
-export function createPill(
-  label: string,
-  size: fk.UDim2,
-  position: fk.UDim2,
-  accent: fk.Color3,
-): fk.TextLabel {
-  const pill = fk.createTextLabel({
-    Name: `${label}Pill`,
-    Size: size,
-    Position: position,
-    BackgroundColor3: accent,
-    BackgroundTransparency: 0.82,
-    Text: label,
-    TextColor3: accent,
-    TextSize: 12,
-    FontFamily: fonts.mono,
-    FontWeight: 700,
+export const createSurface = (theme: fk.Value<ThemeMode>, options: SurfaceOptions): fk.Frame => {
+  const background = options.background ?? 'surface';
+  const frame = fk.createFrame({
+    Name: options.name,
+    ...(options.size ? { Size: options.size } : {}),
+    ...(options.position ? { Position: options.position } : {}),
+    BackgroundColor3: themeColor(theme, background),
+    ClipsDescendants: options.clipsDescendants ?? false,
   });
-  addRoundedBorder(pill, 18, accent);
-  return pill;
-}
+  bindThemeProperties(frame, theme, (palette) => ({ BackgroundColor3: palette[background] }));
+  addRoundedBorder(theme, frame, options.radius ?? 20, options.border ?? 'border');
+  return frame;
+};
 
-export function createButton(
-  label: string,
-  size: fk.UDim2,
-  position: fk.UDim2,
-  background: fk.Color3,
-  foreground: fk.Color3,
-): fk.TextButton {
+export const createButton = (theme: fk.Value<ThemeMode>, options: ButtonOptions): fk.TextButton => {
+  const background = options.background ?? 'surfaceRaised';
+  const foreground = options.foreground ?? 'text';
   const button = fk.createTextButton({
-    Name: `${label}Button`,
-    Size: size,
-    Position: position,
-    BackgroundColor3: background,
-    Text: label,
-    TextColor3: foreground,
-    TextSize: 14,
-    FontFamily: fonts.sans,
+    Name: options.name ?? `${options.label.replaceAll(/\s+/g, '')}Button`,
+    Size: options.size,
+    Position: options.position,
+    BackgroundColor3: themeColor(theme, background),
+    Text: options.label,
+    TextColor3: themeColor(theme, foreground),
+    TextSize: options.textSize ?? 13,
+    TextScaled: options.scaled ?? false,
+    FontFamily: options.font ?? fonts.sans,
     FontWeight: 750,
   });
-  addRoundedBorder(button, 12, background);
-  button.element.classList.add('fk-button');
+  bindThemeProperties(button, theme, (palette) => ({
+    BackgroundColor3: palette[background],
+    TextColor3: palette[foreground],
+  }));
+  addRoundedBorder(theme, button, 11, background);
+  button.element.classList.add('pg-button');
   return button;
-}
+};
 
-export function appendCodeLine(
-  parent: fk.GuiElement,
-  line: string,
-  y: number,
-  color = colors.textMuted,
-): fk.TextLabel {
-  const label = createText({
-    text: line,
-    size: fk.udim2(1, -36, 0, 24),
-    position: fk.udim2FromOffset(18, y),
+export const createPill = (
+  theme: fk.Value<ThemeMode>,
+  label: string,
+  size: fk.UDim2,
+  position: fk.UDim2,
+  color: ThemeToken = 'accent',
+): fk.TextLabel => {
+  const pill = createText(theme, {
+    text: label,
+    size,
+    position,
     color,
-    textSize: 13,
+    textSize: 10,
     font: fonts.mono,
+    weight: 750,
+    xAlignment: 'Center',
   });
+  pill.Name = `${label.replaceAll(/\s+/g, '')}Pill`;
+  pill.BackgroundTransparency = 0.88;
+  bindThemeProperties(pill, theme, (palette) => ({ BackgroundColor3: palette[color] }));
+  addRoundedBorder(theme, pill, 999, color);
+  return pill;
+};
 
-  parent.addChild(label);
-  return label;
-}
-
-export function updateTextLines(labels: readonly fk.TextLabel[], lines: readonly string[]): void {
-  for (const [index, label] of labels.entries()) {
-    label.Text = lines[index] ?? '';
-  }
-}
+export const appendCodeLines = (
+  parent: fk.GuiElement,
+  theme: fk.Value<ThemeMode>,
+  lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
+  startY: number,
+  lineHeight = 28,
+): readonly fk.TextLabel[] =>
+  lines.map((line, index) => {
+    const label = createText(theme, {
+      text: line.text,
+      size: fk.udim2(1, -40, 0, lineHeight),
+      position: fk.udim2FromOffset(20, startY + index * lineHeight),
+      color: line.color ?? 'textMuted',
+      textSize: 11,
+      font: fonts.mono,
+      name: `CodeLine${index + 1}`,
+    });
+    label.element.classList.add('pg-code');
+    parent.addChild(label);
+    return label;
+  });

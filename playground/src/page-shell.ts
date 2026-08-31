@@ -7,7 +7,7 @@ import {
   type PlaygroundLayout,
   type SectionName,
 } from './layout';
-import { colors } from './theme';
+import { bindThemeProperties, scrollbarThickness, type ThemeMode } from './theme';
 
 type PageShell = Readonly<{
   app: fk.ScreenGui;
@@ -18,18 +18,19 @@ type PageShell = Readonly<{
 
 const appName = 'FrameKitPlayground';
 const navigationHeight = 72;
-
-/** Owns the centered responsive canvas and spring-driven section navigation. */
-export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
+/** Owns the responsive canvas, native scrolling, and section navigation. */
+export const createPageShell = (
+  layout: fk.Value<PlaygroundLayout>,
+  theme: fk.Value<ThemeMode>,
+): PageShell => {
   let currentScale = calculateScale(layout.get());
   const app = fk.createScreenGui({ Name: appName, DisplayOrder: 10 });
   const page = fk.createScrollingFrame({
     Name: `${appName}Page`,
     Size: fk.udim2(1, 0, 1, -navigationHeight),
     Position: fk.udim2FromOffset(0, navigationHeight),
-    BackgroundColor3: colors.ink,
     ScrollingDirection: 'Y',
-    ScrollBarThickness: 0,
+    ScrollBarThickness: scrollbarThickness,
   });
   const scrollSizer = fk.createFrame({
     Name: `${appName}ScrollSizer`,
@@ -42,31 +43,33 @@ export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
   });
   const contentScale = fk.createUIScale({ Scale: currentScale });
 
-  page.element.classList.add('fk-noise');
-
+  page.element.classList.add('pg-scroll');
+  bindThemeProperties(page, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
   content.addChild(contentScale);
   scrollSizer.addChild(content);
   page.addChild(scrollSizer);
   app.addChild(page);
 
   function calculateScale(currentLayout: PlaygroundLayout): number {
-    return Math.min(1, window.innerWidth / pageWidth[currentLayout]);
+    const availableWidth = Math.max(1, window.innerWidth - scrollbarThickness);
+    return Math.min(1, availableWidth / pageWidth[currentLayout]);
   }
 
-  function navigate(section: SectionName | 'top'): void {
+  const navigate = (section: SectionName | 'top'): void => {
     const offset = section === 'top' ? 0 : sectionLayout[layout.get()][section].top;
     fka.spring(
       page,
       { CanvasPosition: fk.vector2(0, offset * currentScale) },
-      { tension: 190, friction: 28 },
+      { tension: 210, friction: 30 },
     );
-  }
+  };
 
-  function updateCanvas(): void {
+  const updateCanvas = (): void => {
     const currentLayout = layout.get();
     currentScale = calculateScale(currentLayout);
     const height = pageHeight[currentLayout];
-    const width = Math.max(pageWidth[currentLayout], window.innerWidth / currentScale);
+    const availableWidth = Math.max(1, window.innerWidth - scrollbarThickness);
+    const width = Math.max(pageWidth[currentLayout], availableWidth / currentScale);
 
     contentScale.Scale = currentScale;
     scrollSizer.Size = fk.udim2(1, 0, 0, height * currentScale);
@@ -79,7 +82,7 @@ export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
         -((1 - currentScale) * height) / 2,
       ),
     });
-  }
+  };
 
   const listenerController = new AbortController();
   window.addEventListener('resize', updateCanvas, { signal: listenerController.signal });
@@ -87,4 +90,4 @@ export function createPageShell(layout: fk.Value<PlaygroundLayout>): PageShell {
   app.watch(layout, updateCanvas);
 
   return Object.freeze({ app, page, content, navigate });
-}
+};

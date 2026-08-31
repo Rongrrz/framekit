@@ -1,23 +1,57 @@
 import { fk } from 'framekit';
 
-export const colors = {
-  ink: fk.color3FromRGB(8, 8, 14),
-  inkRaised: fk.color3FromRGB(18, 17, 29),
-  inkSoft: fk.color3FromRGB(40, 38, 57),
-  paper: fk.color3FromRGB(242, 239, 255),
-  paperRaised: fk.color3FromRGB(255, 253, 255),
-  paperMuted: fk.color3FromRGB(211, 206, 230),
-  text: fk.color3FromRGB(249, 247, 255),
-  textMuted: fk.color3FromRGB(166, 160, 191),
-  darkText: fk.color3FromRGB(14, 13, 22),
-  darkMuted: fk.color3FromRGB(82, 76, 103),
-  coral: fk.color3FromRGB(255, 77, 112),
-  mint: fk.color3FromRGB(197, 255, 83),
-  violet: fk.color3FromRGB(139, 117, 255),
-  amber: fk.color3FromRGB(255, 184, 76),
-  cyan: fk.color3FromRGB(74, 226, 255),
-  lilac: fk.color3FromRGB(197, 188, 255),
-} as const;
+export type ThemeMode = 'dark' | 'light';
+
+export type ThemePalette = Readonly<{
+  canvas: fk.Color3;
+  surface: fk.Color3;
+  surfaceRaised: fk.Color3;
+  border: fk.Color3;
+  text: fk.Color3;
+  textMuted: fk.Color3;
+  textFaint: fk.Color3;
+  accent: fk.Color3;
+  accentMuted: fk.Color3;
+  onAccent: fk.Color3;
+  blue: fk.Color3;
+  purple: fk.Color3;
+  orange: fk.Color3;
+}>;
+
+export type ThemeToken = keyof ThemePalette;
+
+export const themes = {
+  dark: {
+    canvas: fk.color3FromRGB(10, 13, 18),
+    surface: fk.color3FromRGB(17, 22, 29),
+    surfaceRaised: fk.color3FromRGB(23, 30, 39),
+    border: fk.color3FromRGB(48, 61, 76),
+    text: fk.color3FromRGB(244, 247, 250),
+    textMuted: fk.color3FromRGB(165, 177, 190),
+    textFaint: fk.color3FromRGB(105, 120, 137),
+    accent: fk.color3FromRGB(118, 237, 173),
+    accentMuted: fk.color3FromRGB(36, 87, 62),
+    onAccent: fk.color3FromRGB(7, 22, 14),
+    blue: fk.color3FromRGB(112, 178, 255),
+    purple: fk.color3FromRGB(175, 142, 255),
+    orange: fk.color3FromRGB(255, 183, 94),
+  },
+  light: {
+    canvas: fk.color3FromRGB(245, 247, 250),
+    surface: fk.color3FromRGB(255, 255, 255),
+    surfaceRaised: fk.color3FromRGB(249, 251, 253),
+    border: fk.color3FromRGB(207, 216, 226),
+    text: fk.color3FromRGB(20, 27, 35),
+    textMuted: fk.color3FromRGB(76, 91, 107),
+    textFaint: fk.color3FromRGB(121, 136, 151),
+    accent: fk.color3FromRGB(18, 153, 98),
+    accentMuted: fk.color3FromRGB(210, 241, 225),
+    onAccent: fk.color3FromRGB(255, 255, 255),
+    blue: fk.color3FromRGB(33, 111, 203),
+    purple: fk.color3FromRGB(111, 72, 191),
+    orange: fk.color3FromRGB(183, 101, 8),
+  },
+} satisfies Readonly<Record<ThemeMode, ThemePalette>>;
 
 export const fonts = {
   sans: 'Inter, Avenir Next, ui-sans-serif, system-ui, sans-serif',
@@ -25,59 +59,127 @@ export const fonts = {
   mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
 } as const;
 
-/** Installs the ambient visual layer shared by the whole motion playground. */
-export function installPlaygroundStyles(): void {
+export const scrollbarThickness = 12;
+
+const themeStorageKey = 'framekit-playground-theme';
+const documentThemeColors = {
+  dark: '#0a0d12',
+  light: '#f5f7fa',
+} satisfies Readonly<Record<ThemeMode, string>>;
+
+/** Applies properties derived from the current palette for the lifetime of the instance. */
+export const bindThemeProperties = <Properties extends fk.InstanceProperties>(
+  instance: fk.Instance<Properties>,
+  theme: fk.Value<ThemeMode>,
+  derive: (palette: ThemePalette) => Partial<Properties>,
+): void => {
+  instance.watch(theme, (mode) => instance.setProperties(derive(themes[mode])));
+};
+
+export const themeColor = (theme: fk.Value<ThemeMode>, token: ThemeToken): fk.Color3 =>
+  themes[theme.get()][token];
+
+export const resolveInitialTheme = (): ThemeMode => {
+  try {
+    const stored = window.localStorage.getItem(themeStorageKey);
+    if (stored === 'dark' || stored === 'light') return stored;
+  } catch {
+    // Storage can be unavailable in embedded previews. The system preference is still useful.
+  }
+
+  return typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: light)').matches
+    ? 'light'
+    : 'dark';
+};
+
+/** Keeps DOM-only styling and persistence synchronized with the FrameKit theme value. */
+export const bindDocumentTheme = (owner: fk.Instance, theme: fk.Value<ThemeMode>): void => {
+  const root = document.documentElement;
+  const themeColorMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  const previousTheme = root.getAttribute('data-framekit-theme');
+  const previousThemeColor = themeColorMeta?.content;
+
+  owner.watch(theme, (mode) => {
+    root.setAttribute('data-framekit-theme', mode);
+    if (themeColorMeta) themeColorMeta.content = documentThemeColors[mode];
+    try {
+      window.localStorage.setItem(themeStorageKey, mode);
+    } catch {
+      // Theme switching remains functional when storage is unavailable.
+    }
+  });
+  owner.onDestroy(() => {
+    if (previousTheme === null) root.removeAttribute('data-framekit-theme');
+    else root.setAttribute('data-framekit-theme', previousTheme);
+    if (themeColorMeta && previousThemeColor !== undefined) {
+      themeColorMeta.content = previousThemeColor;
+    }
+  });
+};
+
+/** Installs the DOM styling needed for fonts, scrollbars, and focus states. */
+export const installPlaygroundStyles = (): void => {
   if (document.querySelector('[data-framekit-playground-styles]')) return;
   const style = document.createElement('style');
   style.dataset.framekitPlaygroundStyles = '';
   style.textContent = `
-    :root { color-scheme: dark; font-synthesis: none; }
+    :root {
+      color-scheme: dark;
+      font-synthesis: none;
+      --pg-canvas: #0a0d12;
+      --pg-grid: rgba(118, 237, 173, .055);
+      --pg-scroll-track: #0a0d12;
+      --pg-scroll-thumb: #526174;
+      --pg-scroll-hover: #76edad;
+      --pg-focus: #76edad;
+    }
+    :root[data-framekit-theme="light"] {
+      color-scheme: light;
+      --pg-canvas: #f5f7fa;
+      --pg-grid: rgba(18, 153, 98, .07);
+      --pg-scroll-track: #f5f7fa;
+      --pg-scroll-thumb: #9cabbc;
+      --pg-scroll-hover: #129962;
+      --pg-focus: #129962;
+    }
     * { box-sizing: border-box; }
-    html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #08080e; }
+    html, body, #root {
+      width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--pg-canvas);
+    }
     body { font-family: ${fonts.sans}; }
-    ::selection { color: #08080e; background: #c5ff53; }
-    .fk-grid {
+    ::selection { color: #07160e; background: #76edad; }
+    .pg-scroll {
+      scrollbar-color: var(--pg-scroll-thumb) var(--pg-scroll-track);
+      scrollbar-gutter: stable;
+    }
+    .pg-scroll::-webkit-scrollbar { width: ${scrollbarThickness}px; height: ${scrollbarThickness}px; }
+    .pg-scroll::-webkit-scrollbar-track { background: var(--pg-scroll-track); }
+    .pg-scroll::-webkit-scrollbar-thumb {
+      min-height: 48px;
+      border: 3px solid var(--pg-scroll-track);
+      border-radius: 999px;
+      background: var(--pg-scroll-thumb);
+      background-clip: padding-box;
+    }
+    .pg-scroll::-webkit-scrollbar-thumb:hover {
+      background: var(--pg-scroll-hover); background-clip: padding-box;
+    }
+    .pg-scroll::-webkit-scrollbar-corner { background: var(--pg-scroll-track); }
+    .pg-grid {
       background-image:
-        linear-gradient(rgba(197,255,83,.075) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(197,255,83,.075) 1px, transparent 1px),
-        radial-gradient(circle at 50% 38%, rgba(139,117,255,.28), transparent 48%);
-      background-size: 32px 32px, 32px 32px, 100% 100%;
-      animation: fk-grid-drift 14s linear infinite;
+        linear-gradient(var(--pg-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--pg-grid) 1px, transparent 1px);
+      background-size: 28px 28px;
     }
-    .fk-noise::after {
-      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
-      mix-blend-mode: soft-light;
+    .pg-button { cursor: pointer; transition: filter 140ms ease; }
+    .pg-button:hover { filter: brightness(1.06); }
+    .pg-button:active { filter: brightness(.92); }
+    .pg-button:focus-visible { outline: 3px solid var(--pg-focus); outline-offset: 3px; }
+    .pg-code { font-variant-ligatures: none; }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
     }
-    .fk-shimmer {
-      color: transparent !important;
-      background: linear-gradient(100deg, #f9f7ff 5%, #c5ff53 42%, #4ae2ff 58%, #f9f7ff 95%);
-      background-size: 220% 100%; background-clip: text; -webkit-background-clip: text;
-      animation: fk-shimmer 6s ease-in-out infinite;
-    }
-    .fk-float-a { animation: fk-float-a 4.6s ease-in-out infinite; }
-    .fk-float-b { animation: fk-float-b 5.8s ease-in-out infinite; }
-    .fk-ring { animation: fk-spin 18s linear infinite; }
-    .fk-ring-reverse { animation: fk-spin-reverse 12s linear infinite; }
-    .fk-breathe { animation: fk-breathe 2.8s ease-in-out infinite; }
-    .fk-scan {
-      background: linear-gradient(90deg, transparent, rgba(197,255,83,.42), transparent);
-      background-size: 35% 100%; background-repeat: no-repeat;
-      animation: fk-scan 2.6s ease-in-out infinite;
-    }
-    .fk-glow { animation: fk-glow 3.4s ease-in-out infinite; }
-    .fk-button { cursor: pointer; transition: filter 160ms ease; }
-    .fk-button:active { filter: brightness(.86); }
-    @keyframes fk-grid-drift { to { background-position: 32px 32px, 32px 32px, 0 0; } }
-    @keyframes fk-shimmer { 0%,100% { background-position: 100% 0; } 50% { background-position: 0 0; } }
-    @keyframes fk-float-a { 0%,100% { translate: 0 0; } 50% { translate: 0 -12px; } }
-    @keyframes fk-float-b { 0%,100% { translate: 0 0; } 50% { translate: 0 15px; } }
-    @keyframes fk-spin { to { transform: rotate(360deg); } }
-    @keyframes fk-spin-reverse { to { transform: rotate(-360deg); } }
-    @keyframes fk-breathe { 0%,100% { opacity: .45; } 50% { opacity: 1; } }
-    @keyframes fk-scan { 0% { background-position: -70% 0; } 100% { background-position: 170% 0; } }
-    @keyframes fk-glow { 0%,100% { filter: drop-shadow(0 0 8px rgba(139,117,255,.35)); } 50% { filter: drop-shadow(0 0 24px rgba(197,255,83,.72)); } }
-    @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; } }
   `;
   document.head.append(style);
-}
+};

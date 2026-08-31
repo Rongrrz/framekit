@@ -1,29 +1,29 @@
 import { fk, fkh } from 'framekit';
 
-import { createApi } from './components/api';
 import { createFooter } from './components/footer';
+import { createGuide } from './components/guide';
 import { createHero } from './components/hero';
-import { createLifecycle } from './components/lifecycle';
-import { createModifiers } from './components/modifiers';
-import { createMotion } from './components/motion';
 import { createNavigation } from './components/navigation';
 import { mobileBreakpoint, type PlaygroundLayout } from './layout';
 import { createPageShell } from './page-shell';
+import { bindDocumentTheme, resolveInitialTheme, type ThemeMode } from './theme';
 
-/** Creates the playground as one persistent hierarchy shared by every viewport. */
-export function createPlaygroundApp(forcedLayout?: PlaygroundLayout): fk.ScreenGui {
+/** Creates one persistent FrameKit hierarchy shared by every layout and theme. */
+export const createPlaygroundApp = (
+  forcedLayout?: PlaygroundLayout,
+  initialTheme: ThemeMode = resolveInitialTheme(),
+): fk.ScreenGui => {
   const initialLayout =
     forcedLayout ?? (window.innerWidth < mobileBreakpoint ? 'mobile' : 'desktop');
   const layout = fk.createValue<PlaygroundLayout>(initialLayout);
-  const { app, page, content, navigate } = createPageShell(layout);
+  const theme = fk.createValue<ThemeMode>(initialTheme);
+  const { app, page, content, navigate } = createPageShell(layout, theme);
 
-  content.addChild(createHero(layout, () => navigate('motion')));
-  content.addChild(createMotion(layout));
-  content.addChild(createModifiers(layout));
-  content.addChild(createApi(layout));
-  content.addChild(createLifecycle(layout));
-  content.addChild(createFooter(layout, () => navigate('top')));
-  app.addChild(createNavigation(page, navigate, layout));
+  bindDocumentTheme(app, theme);
+  content.addChild(createHero(layout, theme, () => navigate('guide')));
+  content.addChild(createGuide(layout, theme));
+  content.addChild(createFooter(layout, theme, () => navigate('top')));
+  app.addChild(createNavigation(page, navigate, layout, theme));
 
   if (forcedLayout === undefined) {
     fkh.bindResponsiveLayout(app, {
@@ -32,6 +32,5 @@ export function createPlaygroundApp(forcedLayout?: PlaygroundLayout): fk.ScreenG
       desktop: () => layout.set('desktop'),
     });
   }
-
   return app;
-}
+};
