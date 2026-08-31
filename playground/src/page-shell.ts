@@ -1,27 +1,24 @@
-import { fk, fka } from 'framekit';
+import { fk } from 'framekit';
 
-import {
-  pageHeight,
-  pageWidth,
-  sectionLayout,
-  type PlaygroundLayout,
-  type SectionName,
-} from './layout';
+import { pageHeight, pageWidth, type PlaygroundLayout } from './layout';
+import type { SitePage } from './router';
 import { bindThemeProperties, scrollbarThickness, type ThemeMode } from './theme';
 
 type PageShell = Readonly<{
   app: fk.ScreenGui;
   page: fk.ScrollingFrame;
   content: fk.Frame;
-  navigate: (section: SectionName | 'top') => void;
+  scrollTo: (offset: number) => void;
 }>;
 
 const appName = 'FrameKitPlayground';
-const navigationHeight = 72;
-/** Owns the responsive canvas, native scrolling, and section navigation. */
+export const navigationHeight = 64;
+
+/** Owns the responsive canvas, native scrolling, and route-specific page height. */
 export const createPageShell = (
   layout: fk.Value<PlaygroundLayout>,
   theme: fk.Value<ThemeMode>,
+  route: fk.Value<SitePage>,
 ): PageShell => {
   let currentScale = calculateScale(layout.get());
   const app = fk.createScreenGui({ Name: appName, DisplayOrder: 10 });
@@ -55,19 +52,10 @@ export const createPageShell = (
     return Math.min(1, availableWidth / pageWidth[currentLayout]);
   }
 
-  const navigate = (section: SectionName | 'top'): void => {
-    const offset = section === 'top' ? 0 : sectionLayout[layout.get()][section].top;
-    fka.spring(
-      page,
-      { CanvasPosition: fk.vector2(0, offset * currentScale) },
-      { tension: 210, friction: 30 },
-    );
-  };
-
   const updateCanvas = (): void => {
     const currentLayout = layout.get();
+    const height = pageHeight[currentLayout][route.get()];
     currentScale = calculateScale(currentLayout);
-    const height = pageHeight[currentLayout];
     const availableWidth = Math.max(1, window.innerWidth - scrollbarThickness);
     const width = Math.max(pageWidth[currentLayout], availableWidth / currentScale);
 
@@ -88,6 +76,15 @@ export const createPageShell = (
   window.addEventListener('resize', updateCanvas, { signal: listenerController.signal });
   app.onDestroy(() => listenerController.abort());
   app.watch(layout, updateCanvas);
+  app.watch(route, () => {
+    page.CanvasPosition = fk.vector2(0, 0);
+    updateCanvas();
+  });
 
-  return Object.freeze({ app, page, content, navigate });
+  return Object.freeze({
+    app,
+    page,
+    content,
+    scrollTo: (offset: number) => page.scrollTo(fk.vector2(0, offset * currentScale)),
+  });
 };

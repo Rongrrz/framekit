@@ -1,6 +1,13 @@
 import { fk } from 'framekit';
 
-import { bindThemeProperties, fonts, themeColor, type ThemeMode, type ThemeToken } from './theme';
+import {
+  bindThemeProperties,
+  fonts,
+  themeColor,
+  typeScale,
+  type ThemeMode,
+  type ThemeToken,
+} from './theme';
 
 type TextOptions = Readonly<{
   text: string;
@@ -48,7 +55,7 @@ export const createText = (theme: fk.Value<ThemeMode>, options: TextOptions): fk
     BackgroundTransparency: 1,
     Text: options.text,
     TextColor3: themeColor(theme, color),
-    TextSize: options.textSize ?? 16,
+    TextSize: options.textSize ?? typeScale.body,
     TextScaled: options.scaled ?? false,
     TextWrapped: options.wrapped ?? false,
     TextXAlignment: options.xAlignment ?? 'Left',
@@ -97,7 +104,7 @@ export const createButton = (theme: fk.Value<ThemeMode>, options: ButtonOptions)
     BackgroundColor3: themeColor(theme, background),
     Text: options.label,
     TextColor3: themeColor(theme, foreground),
-    TextSize: options.textSize ?? 13,
+    TextSize: options.textSize ?? typeScale.small,
     TextScaled: options.scaled ?? false,
     FontFamily: options.font ?? fonts.sans,
     FontWeight: 750,
@@ -123,7 +130,7 @@ export const createPill = (
     size,
     position,
     color,
-    textSize: 10,
+    textSize: typeScale.caption,
     font: fonts.mono,
     weight: 750,
     xAlignment: 'Center',
@@ -148,7 +155,7 @@ export const appendCodeLines = (
       size: fk.udim2(1, -40, 0, lineHeight),
       position: fk.udim2FromOffset(20, startY + index * lineHeight),
       color: line.color ?? 'textMuted',
-      textSize: 11,
+      textSize: typeScale.code,
       font: fonts.mono,
       name: `CodeLine${index + 1}`,
     });

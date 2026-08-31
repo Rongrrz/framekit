@@ -54,9 +54,24 @@ export const themes = {
 } satisfies Readonly<Record<ThemeMode, ThemePalette>>;
 
 export const fonts = {
-  sans: 'Inter, Avenir Next, ui-sans-serif, system-ui, sans-serif',
-  display: 'Arial Black, Inter, Avenir Next, ui-sans-serif, system-ui, sans-serif',
-  mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+  sans: 'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  display:
+    'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  mono: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
+} as const;
+
+/** The shared type scale keeps navigation, prose, headings, and code visually related. */
+export const typeScale = {
+  code: 12,
+  caption: 12,
+  small: 14,
+  body: 16,
+  lead: 18,
+  subsection: 20,
+  section: 28,
+  page: 42,
+  hero: 56,
+  product: 72,
 } as const;
 
 export const scrollbarThickness = 12;
@@ -128,7 +143,9 @@ export const installPlaygroundStyles = (): void => {
       color-scheme: dark;
       font-synthesis: none;
       --pg-canvas: #0a0d12;
+      --pg-border: rgb(48 61 76);
       --pg-grid: rgba(118, 237, 173, .055);
+      --pg-glow: rgba(112, 178, 255, .16);
       --pg-scroll-track: #0a0d12;
       --pg-scroll-thumb: #526174;
       --pg-scroll-hover: #76edad;
@@ -137,7 +154,9 @@ export const installPlaygroundStyles = (): void => {
     :root[data-framekit-theme="light"] {
       color-scheme: light;
       --pg-canvas: #f5f7fa;
+      --pg-border: rgb(207 216 226);
       --pg-grid: rgba(18, 153, 98, .07);
+      --pg-glow: rgba(33, 111, 203, .12);
       --pg-scroll-track: #f5f7fa;
       --pg-scroll-thumb: #9cabbc;
       --pg-scroll-hover: #129962;
@@ -172,6 +191,7 @@ export const installPlaygroundStyles = (): void => {
         linear-gradient(90deg, var(--pg-grid) 1px, transparent 1px);
       background-size: 28px 28px;
     }
+    .pg-glow { box-shadow: 0 24px 90px var(--pg-glow); }
     .pg-button { cursor: pointer; transition: filter 140ms ease; }
     .pg-button:hover { filter: brightness(1.06); }
     .pg-button:active { filter: brightness(.92); }

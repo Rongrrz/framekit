@@ -1,114 +1,102 @@
 import { fk } from 'framekit';
 
-import type { PlaygroundLayout, SectionName } from '../layout';
-import { guideUrl } from '../links';
-import { bindThemeProperties, fonts, themes, type ThemeMode } from '../theme';
+import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
+import { repositoryUrl } from '../links';
+import type { SitePage } from '../router';
+import { bindThemeProperties, fonts, themes, typeScale, type ThemeMode } from '../theme';
 import { createButton, createText } from '../ui';
 
 export const createNavigation = (
   page: fk.ScrollingFrame,
-  navigate: (section: SectionName | 'top') => void,
+  route: fk.Value<SitePage>,
+  navigate: (page: SitePage) => void,
   layout: fk.Value<PlaygroundLayout>,
   theme: fk.Value<ThemeMode>,
 ): fk.Frame => {
   const navigation = fk.createFrame({
     Name: 'Navigation',
-    Size: fk.udim2(1, 0, 0, 72),
-    BackgroundTransparency: 0.04,
+    Size: fk.udim2(1, 0, 0, 64),
+    BackgroundTransparency: 0.05,
     ZIndex: 100,
   });
   navigation.element.style.backdropFilter = 'blur(18px) saturate(1.15)';
-  bindThemeProperties(navigation, theme, (palette) => ({ BackgroundColor3: palette.surface }));
+  bindThemeProperties(navigation, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
 
   const mark = createButton(theme, {
     label: 'F',
     name: 'HomeButton',
-    size: fk.udim2FromOffset(40, 40),
-    position: fk.udim2FromOffset(18, 15),
+    size: fk.udim2FromOffset(36, 36),
+    position: fk.udim2FromOffset(18, 14),
     background: 'accent',
     foreground: 'onAccent',
-    textSize: 18,
+    textSize: 17,
   });
-  mark.onClick(() => navigate('top'));
+  const brand = createText(theme, {
+    text: 'FrameKit',
+    name: 'BrandName',
+    size: fk.udim2FromOffset(110, 36),
+    position: fk.udim2FromOffset(66, 14),
+    textSize: typeScale.body,
+    weight: 850,
+  });
+  mark.onClick(() => navigate('home'));
   navigation.addChild(mark);
-  navigation.addChild(
-    createText(theme, {
-      text: 'FRAMEKIT',
-      size: fk.udim2FromOffset(120, 28),
-      position: fk.udim2FromOffset(70, 10),
-      textSize: 14,
-      weight: 900,
-    }),
-  );
-  navigation.addChild(
-    createText(theme, {
-      text: 'TYPED UI OBJECTS',
-      size: fk.udim2FromOffset(170, 22),
-      position: fk.udim2FromOffset(70, 36),
-      color: 'textFaint',
-      textSize: 8,
-      font: fonts.mono,
-      weight: 700,
-    }),
-  );
+  navigation.addChild(brand);
 
+  const guide = createButton(theme, {
+    label: 'Guide',
+    name: 'GuideNavButton',
+    size: fk.udim2FromOffset(74, 36),
+    position: fk.udim2(1, -360, 0, 14),
+    background: 'canvas',
+    foreground: 'textMuted',
+    textSize: typeScale.small,
+  });
   const api = createButton(theme, {
     label: 'API',
     name: 'ApiNavButton',
-    size: fk.udim2FromOffset(88, 38),
-    position: fk.udim2(0.5, -98, 0, 17),
-    background: 'surface',
+    size: fk.udim2FromOffset(66, 36),
+    position: fk.udim2(1, -280, 0, 14),
+    background: 'canvas',
     foreground: 'textMuted',
-    font: fonts.mono,
-    textSize: 8,
+    textSize: typeScale.small,
   });
-  const guide = createButton(theme, {
-    label: 'GUIDE  📚',
-    name: 'GuideNavButton',
-    size: fk.udim2FromOffset(108, 38),
-    position: fk.udim2(0.5, 10, 0, 17),
-    background: 'surface',
+  const source = createButton(theme, {
+    label: 'GitHub',
+    name: 'SourceNavButton',
+    size: fk.udim2FromOffset(78, 36),
+    position: fk.udim2(1, -208, 0, 14),
+    background: 'canvas',
     foreground: 'textMuted',
-    font: fonts.mono,
-    textSize: 8,
+    textSize: typeScale.small,
   });
-  api.onClick(() => navigate('guide'));
-  guide.onClick(() => window.open(guideUrl, '_blank', 'noopener,noreferrer'));
-  navigation.addChild(api);
+  guide.onClick(() => navigate('guide'));
+  api.onClick(() => navigate('api'));
+  source.onClick(() => window.open(repositoryUrl, '_blank', 'noopener,noreferrer'));
   navigation.addChild(guide);
+  navigation.addChild(api);
+  navigation.addChild(source);
 
   const themeToggle = createButton(theme, {
-    label: '🌞  LIGHT',
+    label: '🌞  Light',
     name: 'ThemeToggleButton',
-    size: fk.udim2FromOffset(108, 40),
-    position: fk.udim2(1, -126, 0, 15),
+    size: fk.udim2FromOffset(104, 36),
+    position: fk.udim2(1, -122, 0, 14),
     background: 'surfaceRaised',
     foreground: 'text',
     font: fonts.mono,
-    textSize: 8,
+    textSize: typeScale.caption,
   });
   themeToggle.onClick(() => theme.set(theme.get() === 'dark' ? 'light' : 'dark'));
-  themeToggle.watch(theme, (mode) => {
-    themeToggle.Text = mode === 'dark' ? '🌞  LIGHT' : '🌙  DARK';
-    themeToggle.element.setAttribute(
-      'aria-label',
-      `Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`,
-    );
-    themeToggle.element.setAttribute('aria-pressed', String(mode === 'light'));
-  });
   navigation.addChild(themeToggle);
 
   const track = fk.createFrame({
     Name: 'ScrollProgressTrack',
     Size: fk.udim2(1, 0, 0, 2),
-    Position: fk.udim2FromOffset(0, 70),
+    Position: fk.udim2FromOffset(0, 62),
     ZIndex: 101,
   });
-  const progress = fk.createFrame({
-    Name: 'ScrollProgress',
-    Size: fk.udim2FromScale(0, 1),
-    ZIndex: 102,
-  });
+  const progress = fk.createFrame({ Name: 'ScrollProgress', Size: fk.udim2FromScale(0, 1) });
   bindThemeProperties(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
   bindThemeProperties(progress, theme, (palette) => ({ BackgroundColor3: palette.accent }));
   track.addChild(progress);
@@ -119,22 +107,50 @@ export const createNavigation = (
     'scroll',
     () => {
       const maximum = Math.max(1, page.element.scrollHeight - page.element.clientHeight);
-      const scrollProgress = Math.min(1, Math.max(0, page.element.scrollTop / maximum));
-      progress.Size = fk.udim2FromScale(scrollProgress, 1);
+      progress.Size = fk.udim2FromScale(
+        Math.min(1, Math.max(0, page.element.scrollTop / maximum)),
+        1,
+      );
     },
     { passive: true, signal: listenerController.signal },
   );
   navigation.onDestroy(() => listenerController.abort());
 
-  navigation.watch(layout, (currentLayout) => {
-    const desktop = currentLayout === 'desktop';
-    api.Visible = desktop;
-    guide.Visible = desktop;
-    themeToggle.Position = fk.udim2(1, desktop ? -126 : -120, 0, 15);
-  });
+  const updateNavigation = (): void => {
+    const palette = themes[theme.get()];
+    guide.TextColor3 = route.get() === 'guide' ? palette.accent : palette.textMuted;
+    api.TextColor3 = route.get() === 'api' ? palette.accent : palette.textMuted;
+  };
+  navigation.watch(route, updateNavigation);
   navigation.watch(theme, (mode) => {
+    themeToggle.Text = mode === 'dark' ? '🌞  Light' : '🌙  Dark';
+    themeToggle.element.setAttribute(
+      'aria-label',
+      `Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`,
+    );
     const border = themes[mode].border;
     navigation.element.style.borderBottom = `1px solid rgb(${border.R} ${border.G} ${border.B})`;
+    updateNavigation();
+  });
+  bindLayoutProperties(navigation, layout, brand, {
+    desktop: { Visible: true },
+    mobile: { Visible: false },
+  });
+  bindLayoutProperties(navigation, layout, guide, {
+    desktop: { Position: fk.udim2(1, -360, 0, 14), Size: fk.udim2FromOffset(74, 36) },
+    mobile: { Position: fk.udim2FromOffset(70, 14), Size: fk.udim2FromOffset(68, 36) },
+  });
+  bindLayoutProperties(navigation, layout, api, {
+    desktop: { Position: fk.udim2(1, -280, 0, 14), Size: fk.udim2FromOffset(66, 36) },
+    mobile: { Position: fk.udim2FromOffset(142, 14), Size: fk.udim2FromOffset(58, 36) },
+  });
+  bindLayoutProperties(navigation, layout, source, {
+    desktop: { Visible: true },
+    mobile: { Visible: false },
+  });
+  bindLayoutProperties(navigation, layout, themeToggle, {
+    desktop: { Position: fk.udim2(1, -122, 0, 14), Size: fk.udim2FromOffset(104, 36) },
+    mobile: { Position: fk.udim2(1, -116, 0, 14), Size: fk.udim2FromOffset(104, 36) },
   });
   return navigation;
 };

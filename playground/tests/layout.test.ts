@@ -1,18 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { pageHeight, sectionLayout } from '../src/layout';
+import { contentWidth, pageHeight, pageWidth } from '../src/layout';
 
 describe('playground layout', () => {
-  it('keeps ordered section offsets and page height consistent for each viewport', () => {
+  it('provides deliberate dimensions for every page and viewport', () => {
     for (const layout of ['mobile', 'desktop'] as const) {
-      let expectedTop = 0;
-
-      for (const section of Object.values(sectionLayout[layout])) {
-        expect(section.top).toBe(expectedTop);
-        expectedTop += section.height;
-      }
-
-      expect(pageHeight[layout]).toBe(expectedTop);
+      expect(contentWidth[layout]).toBeLessThan(pageWidth[layout]);
+      expect(pageHeight[layout].home).toBeGreaterThan(1000);
+      expect(pageHeight[layout].guide).toBeGreaterThan(pageHeight[layout].home);
+      expect(pageHeight[layout].api).toBeGreaterThan(pageHeight[layout].guide);
     }
   });
 });
