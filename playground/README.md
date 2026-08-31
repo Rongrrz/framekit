@@ -25,7 +25,7 @@ playground/src/
 
 `docs-shell.ts` owns the layout shared by Guide and API: left navigation, the main article, and an on-page outline. Each page owns only its content. `page-shell.ts` owns scrolling and scaling for every route.
 
-`theme.ts` is the single source of truth for color and typography. Components use semantic colors and a shared type scale. Interface and reading text use the same system sans stack; code uses the shared monospace stack.
+`theme.ts` is the single source of truth for color and typography. One retained spring drives a shared palette, so every FrameKit surface and DOM-only color retargets together without overlapping animations. Components use semantic colors and a shared type scale. Interface and reading text use the same system sans stack; code uses the shared monospace stack.
 
 ## Conventions
 

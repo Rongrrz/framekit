@@ -2,7 +2,7 @@ import { fk } from 'framekit';
 
 import type { PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
-import type { ThemeMode } from '../theme';
+import type { ThemeValue } from '../theme';
 import { createButton } from '../ui';
 import {
   appendArticleSection,
@@ -29,7 +29,7 @@ const outlineItems = [...introductionItems, ...essentialItems] as const;
 
 export const createGuidePage = (
   layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   route: fk.Value<SitePage>,
   scrollTo: (offset: number) => void,
   navigate: (page: SitePage) => void,

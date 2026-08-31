@@ -2,7 +2,7 @@ import { fk } from 'framekit';
 
 import { bindLayoutProperties, contentWidth, pageHeight, type PlaygroundLayout } from '../layout';
 import { createRoutedPage, type SitePage } from '../router';
-import { fonts, typeScale, type ThemeMode, type ThemeToken } from '../theme';
+import { fonts, typeScale, type ThemeToken, type ThemeValue } from '../theme';
 import { appendCodeLines, createButton, createSurface, createText } from '../ui';
 
 export type DocsShell = Readonly<{
@@ -111,7 +111,7 @@ export const createDocsShell = (
 
 export const appendSidebarGroup = (
   parent: fk.Frame,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   title: string,
   items: readonly NavigationItem[],
   startY: number,
@@ -144,7 +144,7 @@ export const appendSidebarGroup = (
 
 export const appendOutline = (
   parent: fk.Frame,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   items: readonly NavigationItem[],
   onNavigate: (offset: number) => void,
 ): void => {
@@ -175,7 +175,7 @@ export const appendOutline = (
 
 export const appendArticleTitle = (
   parent: fk.Frame,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   eyebrow: string,
   title: string,
   body: string,
@@ -216,7 +216,7 @@ export const appendArticleTitle = (
 
 export const appendArticleSection = (
   parent: fk.Frame,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   title: string,
   body: string,
   y: number,
@@ -246,7 +246,7 @@ export const appendArticleSection = (
 
 export const appendCodeBlock = (
   parent: fk.Frame,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   name: string,
   lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
   y: number,
@@ -265,7 +265,7 @@ export const appendCodeBlock = (
 
 export const appendCallout = (
   parent: fk.Frame,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   text: string,
   y: number,
 ): void => {

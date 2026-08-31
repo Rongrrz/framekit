@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -19,6 +19,7 @@ export type ThemePalette = Readonly<{
 }>;
 
 export type ThemeToken = keyof ThemePalette;
+export type ThemeValue = fk.Value<ThemePalette>;
 
 export const themes = {
   dark: {
@@ -82,17 +83,70 @@ const documentThemeColors = {
   light: '#f5f7fa',
 } satisfies Readonly<Record<ThemeMode, string>>;
 
-/** Applies properties derived from the current palette for the lifetime of the instance. */
-export const bindThemeProperties = <Properties extends fk.InstanceProperties>(
+const themeSpringOptions = {
+  tension: 100,
+  friction: 18,
+  precision: 0.002,
+  restVelocity: 0.03,
+} satisfies fka.SpringOptions;
+
+const documentPaletteProperties = [
+  '--pg-canvas',
+  '--pg-border',
+  '--pg-grid',
+  '--pg-glow',
+  '--pg-scroll-track',
+  '--pg-scroll-thumb',
+  '--pg-scroll-hover',
+  '--pg-focus',
+  '--pg-selection-text',
+] as const;
+
+/** Applies colors from the shared animated palette for the lifetime of the instance. */
+export const bindThemeColors = <Properties extends fk.InstanceProperties>(
   instance: fk.Instance<Properties>,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   derive: (palette: ThemePalette) => Partial<Properties>,
 ): void => {
-  instance.watch(theme, (mode) => instance.setProperties(derive(themes[mode])));
+  instance.watch(theme, (palette) => instance.setProperties(derive(palette)));
 };
 
-export const themeColor = (theme: fk.Value<ThemeMode>, token: ThemeToken): fk.Color3 =>
-  themes[theme.get()][token];
+export const themeColor = (theme: ThemeValue, token: ThemeToken): fk.Color3 => theme.get()[token];
+
+/** Drives every theme consumer from one retained spring so colors stay synchronized. */
+export const bindThemeTransition = (
+  owner: fk.Instance,
+  mode: fk.Value<ThemeMode>,
+  palette: ThemeValue,
+): void => {
+  const transition = fk.createFrame({
+    Name: 'ThemeTransition',
+    Rotation: mode.get() === 'light' ? 1 : 0,
+    Visible: false,
+  });
+  const state = { initialized: false };
+
+  transition.onPropertyChanged('Rotation', (progress) => {
+    palette.set(interpolatePalette(progress));
+  });
+  owner.watch(mode, (nextMode) => {
+    const goal = nextMode === 'light' ? 1 : 0;
+    if (!state.initialized || prefersReducedMotion()) {
+      state.initialized = true;
+      transition.Rotation = goal;
+      palette.set(themes[nextMode]);
+      return;
+    }
+    fka.spring(transition, { Rotation: goal }, themeSpringOptions);
+  });
+  owner.watch(palette, applyDocumentPalette);
+  owner.onDestroy(() => {
+    transition.destroy();
+    for (const property of documentPaletteProperties) {
+      document.documentElement.style.removeProperty(property);
+    }
+  });
+};
 
 export const resolveInitialTheme = (): ThemeMode => {
   try {
@@ -133,6 +187,54 @@ export const bindDocumentTheme = (owner: fk.Instance, theme: fk.Value<ThemeMode>
   });
 };
 
+const prefersReducedMotion = (): boolean =>
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const interpolatePalette = (progress: number): ThemePalette => {
+  const alpha = Math.min(1, Math.max(0, progress));
+  const color = (token: ThemeToken): fk.Color3 =>
+    interpolateColor(themes.dark[token], themes.light[token], alpha);
+  return Object.freeze({
+    canvas: color('canvas'),
+    surface: color('surface'),
+    surfaceRaised: color('surfaceRaised'),
+    border: color('border'),
+    text: color('text'),
+    textMuted: color('textMuted'),
+    textFaint: color('textFaint'),
+    accent: color('accent'),
+    accentMuted: color('accentMuted'),
+    onAccent: color('onAccent'),
+    blue: color('blue'),
+    purple: color('purple'),
+    orange: color('orange'),
+  });
+};
+
+const interpolateColor = (from: fk.Color3, to: fk.Color3, progress: number): fk.Color3 =>
+  fk.color3FromRGB(
+    from.R + (to.R - from.R) * progress,
+    from.G + (to.G - from.G) * progress,
+    from.B + (to.B - from.B) * progress,
+  );
+
+const applyDocumentPalette = (palette: ThemePalette): void => {
+  const root = document.documentElement.style;
+  root.setProperty('--pg-canvas', colorToCss(palette.canvas));
+  root.setProperty('--pg-border', colorToCss(palette.border));
+  root.setProperty('--pg-grid', colorToCss(palette.accent, 0.06));
+  root.setProperty('--pg-glow', colorToCss(palette.blue, 0.14));
+  root.setProperty('--pg-scroll-track', colorToCss(palette.canvas));
+  root.setProperty('--pg-scroll-thumb', colorToCss(palette.textFaint));
+  root.setProperty('--pg-scroll-hover', colorToCss(palette.accent));
+  root.setProperty('--pg-focus', colorToCss(palette.accent));
+  root.setProperty('--pg-selection-text', colorToCss(palette.onAccent));
+};
+
+const colorToCss = (color: fk.Color3, alpha = 1): string =>
+  `rgb(${color.R} ${color.G} ${color.B} / ${alpha})`;
+
 /** Installs the DOM styling needed for fonts, scrollbars, and focus states. */
 export const installPlaygroundStyles = (): void => {
   if (document.querySelector('[data-framekit-playground-styles]')) return;
@@ -167,7 +269,7 @@ export const installPlaygroundStyles = (): void => {
       width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--pg-canvas);
     }
     body { font-family: ${fonts.sans}; }
-    ::selection { color: #07160e; background: #76edad; }
+    ::selection { color: var(--pg-selection-text); background: var(--pg-focus); }
     .pg-scroll {
       scrollbar-color: var(--pg-scroll-thumb) var(--pg-scroll-track);
       scrollbar-gutter: stable;

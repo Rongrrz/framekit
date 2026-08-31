@@ -1,8 +1,8 @@
-import { fk } from 'framekit';
+import { fk, fka } from 'framekit';
 
 import { pageHeight, pageWidth, type PlaygroundLayout } from './layout';
 import type { SitePage } from './router';
-import { bindThemeProperties, scrollbarThickness, type ThemeMode } from './theme';
+import { bindThemeColors, scrollbarThickness, type ThemeValue } from './theme';
 
 type PageShell = Readonly<{
   app: fk.ScreenGui;
@@ -13,11 +13,17 @@ type PageShell = Readonly<{
 
 const appName = 'FrameKitPlayground';
 export const navigationHeight = 64;
+const scrollSpringOptions = {
+  tension: 150,
+  friction: 25,
+  precision: 0.25,
+  restVelocity: 1,
+} satisfies fka.SpringOptions;
 
 /** Owns the responsive canvas, native scrolling, and route-specific page height. */
 export const createPageShell = (
   layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   route: fk.Value<SitePage>,
 ): PageShell => {
   let currentScale = calculateScale(layout.get());
@@ -41,7 +47,7 @@ export const createPageShell = (
   const contentScale = fk.createUIScale({ Scale: currentScale });
 
   page.element.classList.add('pg-scroll');
-  bindThemeProperties(page, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
+  bindThemeColors(page, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
   content.addChild(contentScale);
   scrollSizer.addChild(content);
   page.addChild(scrollSizer);
@@ -85,6 +91,17 @@ export const createPageShell = (
     app,
     page,
     content,
-    scrollTo: (offset: number) => page.scrollTo(fk.vector2(0, offset * currentScale)),
+    scrollTo: (offset: number) => {
+      const goal = fk.vector2(0, offset * currentScale);
+      if (prefersReducedMotion()) {
+        page.scrollTo(goal);
+        return;
+      }
+      fka.spring(page, { CanvasPosition: goal }, scrollSpringOptions);
+    },
   });
 };
+
+const prefersReducedMotion = (): boolean =>
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;

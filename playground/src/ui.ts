@@ -1,12 +1,12 @@
 import { fk } from 'framekit';
 
 import {
-  bindThemeProperties,
+  bindThemeColors,
   fonts,
   themeColor,
   typeScale,
-  type ThemeMode,
   type ThemeToken,
+  type ThemeValue,
 } from './theme';
 
 type TextOptions = Readonly<{
@@ -46,7 +46,7 @@ type SurfaceOptions = Readonly<{
   clipsDescendants?: boolean;
 }>;
 
-export const createText = (theme: fk.Value<ThemeMode>, options: TextOptions): fk.TextLabel => {
+export const createText = (theme: ThemeValue, options: TextOptions): fk.TextLabel => {
   const color = options.color ?? 'text';
   const label = fk.createTextLabel({
     Name: options.name ?? 'Text',
@@ -63,12 +63,12 @@ export const createText = (theme: fk.Value<ThemeMode>, options: TextOptions): fk
     FontFamily: options.font ?? fonts.sans,
     FontWeight: options.weight ?? 500,
   });
-  bindThemeProperties(label, theme, (palette) => ({ TextColor3: palette[color] }));
+  bindThemeColors(label, theme, (palette) => ({ TextColor3: palette[color] }));
   return label;
 };
 
 export const addRoundedBorder = (
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   instance: fk.GuiElement,
   radius: number,
   strokeColor: ThemeToken = 'border',
@@ -76,11 +76,11 @@ export const addRoundedBorder = (
 ): void => {
   instance.addChild(fk.createUICorner({ CornerRadius: radius }));
   const stroke = fk.createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
-  bindThemeProperties(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
+  bindThemeColors(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
   instance.addChild(stroke);
 };
 
-export const createSurface = (theme: fk.Value<ThemeMode>, options: SurfaceOptions): fk.Frame => {
+export const createSurface = (theme: ThemeValue, options: SurfaceOptions): fk.Frame => {
   const background = options.background ?? 'surface';
   const frame = fk.createFrame({
     Name: options.name,
@@ -89,12 +89,12 @@ export const createSurface = (theme: fk.Value<ThemeMode>, options: SurfaceOption
     BackgroundColor3: themeColor(theme, background),
     ClipsDescendants: options.clipsDescendants ?? false,
   });
-  bindThemeProperties(frame, theme, (palette) => ({ BackgroundColor3: palette[background] }));
+  bindThemeColors(frame, theme, (palette) => ({ BackgroundColor3: palette[background] }));
   addRoundedBorder(theme, frame, options.radius ?? 20, options.border ?? 'border');
   return frame;
 };
 
-export const createButton = (theme: fk.Value<ThemeMode>, options: ButtonOptions): fk.TextButton => {
+export const createButton = (theme: ThemeValue, options: ButtonOptions): fk.TextButton => {
   const background = options.background ?? 'surfaceRaised';
   const foreground = options.foreground ?? 'text';
   const button = fk.createTextButton({
@@ -109,7 +109,7 @@ export const createButton = (theme: fk.Value<ThemeMode>, options: ButtonOptions)
     FontFamily: options.font ?? fonts.sans,
     FontWeight: 750,
   });
-  bindThemeProperties(button, theme, (palette) => ({
+  bindThemeColors(button, theme, (palette) => ({
     BackgroundColor3: palette[background],
     TextColor3: palette[foreground],
   }));
@@ -119,7 +119,7 @@ export const createButton = (theme: fk.Value<ThemeMode>, options: ButtonOptions)
 };
 
 export const createPill = (
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   label: string,
   size: fk.UDim2,
   position: fk.UDim2,
@@ -137,14 +137,14 @@ export const createPill = (
   });
   pill.Name = `${label.replaceAll(/\s+/g, '')}Pill`;
   pill.BackgroundTransparency = 0.88;
-  bindThemeProperties(pill, theme, (palette) => ({ BackgroundColor3: palette[color] }));
+  bindThemeColors(pill, theme, (palette) => ({ BackgroundColor3: palette[color] }));
   addRoundedBorder(theme, pill, 999, color);
   return pill;
 };
 
 export const appendCodeLines = (
   parent: fk.GuiElement,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
   startY: number,
   lineHeight = 28,

@@ -6,11 +6,11 @@ import { createGuidePage } from '../src/components/guide-page';
 import { createHomePage } from '../src/components/home';
 import type { PlaygroundLayout } from '../src/layout';
 import type { SitePage } from '../src/router';
-import type { ThemeMode } from '../src/theme';
+import { themes } from '../src/theme';
 
 const createState = (page: SitePage) => ({
   layout: fk.createValue<PlaygroundLayout>('desktop'),
-  theme: fk.createValue<ThemeMode>('dark'),
+  theme: fk.createValue(themes.dark),
   route: fk.createValue<SitePage>(page),
 });
 

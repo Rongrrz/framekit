@@ -4,7 +4,7 @@ import { copyCommand } from '../behaviors/copy-button';
 import { bindLayoutProperties, contentWidth, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
 import { createRoutedPage, type SitePage } from '../router';
-import { fonts, typeScale, type ThemeMode, type ThemeToken } from '../theme';
+import { fonts, typeScale, type ThemeToken, type ThemeValue } from '../theme';
 import { appendCodeLines, createButton, createSurface, createText } from '../ui';
 
 const features = [
@@ -21,7 +21,7 @@ const features = [
 
 export const createHomePage = (
   layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   route: fk.Value<SitePage>,
   navigate: (page: SitePage) => void,
 ): fk.Frame => {
@@ -130,10 +130,7 @@ export const createHomePage = (
   return page;
 };
 
-const createHomeVisual = (
-  layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
-): fk.Frame => {
+const createHomeVisual = (layout: fk.Value<PlaygroundLayout>, theme: ThemeValue): fk.Frame => {
   const visual = createSurface(theme, {
     name: 'HomeCodeVisual',
     background: 'surface',
@@ -201,7 +198,7 @@ const createHomeVisual = (
 };
 
 const createFeatureCard = (
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   icon: string,
   title: string,
   body: string,

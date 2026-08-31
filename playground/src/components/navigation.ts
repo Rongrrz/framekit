@@ -3,7 +3,7 @@ import { fk } from 'framekit';
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
 import type { SitePage } from '../router';
-import { bindThemeProperties, fonts, themes, typeScale, type ThemeMode } from '../theme';
+import { bindThemeColors, fonts, typeScale, type ThemeMode, type ThemeValue } from '../theme';
 import { createButton, createText } from '../ui';
 
 export const createNavigation = (
@@ -11,7 +11,8 @@ export const createNavigation = (
   route: fk.Value<SitePage>,
   navigate: (page: SitePage) => void,
   layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
+  mode: fk.Value<ThemeMode>,
+  theme: ThemeValue,
 ): fk.Frame => {
   const navigation = fk.createFrame({
     Name: 'Navigation',
@@ -20,7 +21,7 @@ export const createNavigation = (
     ZIndex: 100,
   });
   navigation.element.style.backdropFilter = 'blur(18px) saturate(1.15)';
-  bindThemeProperties(navigation, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
+  bindThemeColors(navigation, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
 
   const mark = createButton(theme, {
     label: 'F',
@@ -87,7 +88,7 @@ export const createNavigation = (
     font: fonts.mono,
     textSize: typeScale.caption,
   });
-  themeToggle.onClick(() => theme.set(theme.get() === 'dark' ? 'light' : 'dark'));
+  themeToggle.onClick(() => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
   navigation.addChild(themeToggle);
 
   const track = fk.createFrame({
@@ -97,8 +98,8 @@ export const createNavigation = (
     ZIndex: 101,
   });
   const progress = fk.createFrame({ Name: 'ScrollProgress', Size: fk.udim2FromScale(0, 1) });
-  bindThemeProperties(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
-  bindThemeProperties(progress, theme, (palette) => ({ BackgroundColor3: palette.accent }));
+  bindThemeColors(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
+  bindThemeColors(progress, theme, (palette) => ({ BackgroundColor3: palette.accent }));
   track.addChild(progress);
   navigation.addChild(track);
 
@@ -117,18 +118,20 @@ export const createNavigation = (
   navigation.onDestroy(() => listenerController.abort());
 
   const updateNavigation = (): void => {
-    const palette = themes[theme.get()];
+    const palette = theme.get();
     guide.TextColor3 = route.get() === 'guide' ? palette.accent : palette.textMuted;
     api.TextColor3 = route.get() === 'api' ? palette.accent : palette.textMuted;
   };
   navigation.watch(route, updateNavigation);
-  navigation.watch(theme, (mode) => {
-    themeToggle.Text = mode === 'dark' ? '🌞  Light' : '🌙  Dark';
+  navigation.watch(mode, (currentMode) => {
+    themeToggle.Text = currentMode === 'dark' ? '🌞  Light' : '🌙  Dark';
     themeToggle.element.setAttribute(
       'aria-label',
-      `Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`,
+      `Switch to ${currentMode === 'dark' ? 'light' : 'dark'} mode`,
     );
-    const border = themes[mode].border;
+  });
+  navigation.watch(theme, (palette) => {
+    const border = palette.border;
     navigation.element.style.borderBottom = `1px solid rgb(${border.R} ${border.G} ${border.B})`;
     updateNavigation();
   });

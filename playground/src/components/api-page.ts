@@ -2,7 +2,7 @@ import { fk } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
-import { fonts, typeScale, type ThemeMode, type ThemeToken } from '../theme';
+import { fonts, typeScale, type ThemeToken, type ThemeValue } from '../theme';
 import { createSurface, createText } from '../ui';
 import {
   appendArticleSection,
@@ -33,7 +33,7 @@ const outlineItems = [...coreItems, ...behaviorItems, ...optionalItems] as const
 
 export const createApiPage = (
   layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   route: fk.Value<SitePage>,
   scrollTo: (offset: number) => void,
 ): fk.Frame => {
@@ -275,7 +275,7 @@ export const createApiPage = (
 const appendReferenceCards = (
   parent: fk.Frame,
   layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   items: readonly (readonly [string, string, ThemeToken])[],
   startY: number,
 ): void => {
@@ -288,7 +288,7 @@ const appendReferenceCards = (
 
 const createReferenceCard = (
   layout: fk.Value<PlaygroundLayout>,
-  theme: fk.Value<ThemeMode>,
+  theme: ThemeValue,
   name: string,
   description: string,
   color: ThemeToken,
