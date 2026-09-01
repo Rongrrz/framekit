@@ -46,7 +46,6 @@ export const createPageShell = (
   });
   const contentScale = fk.createUIScale({ Scale: currentScale });
 
-  page.element.classList.add('pg-scroll');
   bindThemeColors(page, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
   content.addChild(contentScale);
   scrollSizer.addChild(content);

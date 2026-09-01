@@ -13,7 +13,7 @@ type TextOptions = Readonly<{
   text: string;
   size: fk.UDim2;
   position?: fk.UDim2;
-  color?: ThemeToken;
+  color?: ThemeToken | fk.Color3;
   textSize?: number;
   scaled?: boolean;
   weight?: string | number;
@@ -48,13 +48,14 @@ type SurfaceOptions = Readonly<{
 
 export const createText = (theme: ThemeValue, options: TextOptions): fk.TextLabel => {
   const color = options.color ?? 'text';
+  const usesThemeColor = typeof color === 'string';
   const label = fk.createTextLabel({
     Name: options.name ?? 'Text',
     Size: options.size,
     Position: options.position ?? fk.udim2FromOffset(0, 0),
     BackgroundTransparency: 1,
     Text: options.text,
-    TextColor3: themeColor(theme, color),
+    TextColor3: usesThemeColor ? themeColor(theme, color) : color,
     TextSize: options.textSize ?? typeScale.body,
     TextScaled: options.scaled ?? false,
     TextWrapped: options.wrapped ?? false,
@@ -63,7 +64,9 @@ export const createText = (theme: ThemeValue, options: TextOptions): fk.TextLabe
     FontFamily: options.font ?? fonts.sans,
     FontWeight: options.weight ?? 500,
   });
-  bindThemeColors(label, theme, (palette) => ({ TextColor3: palette[color] }));
+  if (usesThemeColor) {
+    bindThemeColors(label, theme, (palette) => ({ TextColor3: palette[color] }));
+  }
   return label;
 };
 
@@ -114,7 +117,6 @@ export const createButton = (theme: ThemeValue, options: ButtonOptions): fk.Text
     TextColor3: palette[foreground],
   }));
   addRoundedBorder(theme, button, 11, background);
-  button.element.classList.add('pg-button');
   return button;
 };
 
@@ -159,7 +161,6 @@ export const appendCodeLines = (
       font: fonts.mono,
       name: `CodeLine${index + 1}`,
     });
-    label.element.classList.add('pg-code');
     parent.addChild(label);
     return label;
   });

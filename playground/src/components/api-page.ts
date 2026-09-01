@@ -37,7 +37,7 @@ export const createApiPage = (
   route: fk.Value<SitePage>,
   scrollTo: (offset: number) => void,
 ): fk.Frame => {
-  const shell = createDocsShell('ApiPage', 'api', layout, route);
+  const shell = createDocsShell('ApiPage', 'api', layout, theme, route);
   appendSidebarGroup(shell.sidebar, theme, 'CORE API', coreItems, 0, scrollTo);
   appendSidebarGroup(shell.sidebar, theme, 'STATE AND INPUT', behaviorItems, 220, scrollTo);
   appendSidebarGroup(shell.sidebar, theme, 'OPTIONAL MODULES', optionalItems, 350, scrollTo);
@@ -210,6 +210,7 @@ export const createApiPage = (
   const modifiers = [
     ['UICorner', 'Rounded corners using CornerRadius.', 'accent'],
     ['UIStroke', 'Inner, center, or outer borders.', 'blue'],
+    ['UITextStroke', 'Adjustable outlines around rendered text.', 'purple'],
     ['UIPadding', 'Independent top, right, bottom, and left padding.', 'purple'],
     ['UIListLayout', 'Horizontal or vertical ordered child layout.', 'orange'],
     ['UIGradient', 'Color and transparency sequences.', 'accent'],

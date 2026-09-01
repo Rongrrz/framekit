@@ -22,7 +22,7 @@ describe('playground application', () => {
     expect((app.findFirstChild('HomeProductName', true) as fk.TextLabel).TextScaled).toBe(true);
     const page = app.findFirstChild('FrameKitPlaygroundPage', true) as fk.ScrollingFrame;
     expect(page.ScrollBarThickness).toBe(12);
-    expect(page.element.classList.contains('pg-scroll')).toBe(true);
+    expect(page.element.dataset.framekitScrollingFrame).toBe('');
     app.destroy();
   });
 

@@ -2,7 +2,14 @@ import { fk } from 'framekit';
 
 import { bindLayoutProperties, contentWidth, pageHeight, type PlaygroundLayout } from '../layout';
 import { createRoutedPage, type SitePage } from '../router';
-import { fonts, typeScale, type ThemeToken, type ThemeValue } from '../theme';
+import {
+  bindThemeColors,
+  fonts,
+  themeColor,
+  typeScale,
+  type ThemeToken,
+  type ThemeValue,
+} from '../theme';
 import { appendCodeLines, createButton, createSurface, createText } from '../ui';
 
 export type DocsShell = Readonly<{
@@ -22,6 +29,7 @@ export const createDocsShell = (
   name: string,
   pageName: Exclude<SitePage, 'home'>,
   layout: fk.Value<PlaygroundLayout>,
+  theme: ThemeValue,
   route: fk.Value<SitePage>,
 ): DocsShell => {
   const page = createRoutedPage(name, pageName, layout, route);
@@ -46,7 +54,7 @@ export const createDocsShell = (
     Size: fk.udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
     BackgroundTransparency: 1,
   });
-  sidebarRail.element.style.borderRight = '1px solid var(--pg-border)';
+  sidebarRail.addChild(createRailDivider(theme, 'Right'));
   const sidebar = fk.createFrame({
     Name: `${name}Sidebar`,
     Size: fk.udim2FromOffset(243, 600),
@@ -65,7 +73,7 @@ export const createDocsShell = (
     Position: fk.udim2FromOffset(1020, 0),
     BackgroundTransparency: 1,
   });
-  outlineRail.element.style.borderLeft = '1px solid var(--pg-border)';
+  outlineRail.addChild(createRailDivider(theme, 'Left'));
   const outline = fk.createFrame({
     Name: `${name}Outline`,
     Size: fk.udim2FromOffset(196, 520),
@@ -107,6 +115,17 @@ export const createDocsShell = (
   outline.element.style.position = 'sticky';
   page.addChild(content);
   return Object.freeze({ page, sidebar, article, outline });
+};
+
+const createRailDivider = (theme: ThemeValue, edge: 'Left' | 'Right'): fk.Frame => {
+  const divider = fk.createFrame({
+    Name: `${edge}RailDivider`,
+    Size: fk.udim2(0, 1, 1, 0),
+    Position: edge === 'Right' ? fk.udim2(1, -1, 0, 0) : fk.udim2FromOffset(0, 0),
+    BackgroundColor3: themeColor(theme, 'border'),
+  });
+  bindThemeColors(divider, theme, (palette) => ({ BackgroundColor3: palette.border }));
+  return divider;
 };
 
 export const appendSidebarGroup = (

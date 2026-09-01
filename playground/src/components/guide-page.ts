@@ -34,7 +34,7 @@ export const createGuidePage = (
   scrollTo: (offset: number) => void,
   navigate: (page: SitePage) => void,
 ): fk.Frame => {
-  const shell = createDocsShell('GuidePage', 'guide', layout, route);
+  const shell = createDocsShell('GuidePage', 'guide', layout, theme, route);
   appendSidebarGroup(shell.sidebar, theme, 'INTRODUCTION', introductionItems, 0, scrollTo);
   appendSidebarGroup(shell.sidebar, theme, 'ESSENTIALS', essentialItems, 150, scrollTo);
   appendOutline(shell.outline, theme, outlineItems, scrollTo);

@@ -4,7 +4,14 @@ import { copyCommand } from '../behaviors/copy-button';
 import { bindLayoutProperties, contentWidth, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
 import { createRoutedPage, type SitePage } from '../router';
-import { fonts, typeScale, type ThemeToken, type ThemeValue } from '../theme';
+import {
+  bindThemeColors,
+  fonts,
+  themeColor,
+  typeScale,
+  type ThemeToken,
+  type ThemeValue,
+} from '../theme';
 import { appendCodeLines, createButton, createSurface, createText } from '../ui';
 
 const features = [
@@ -49,12 +56,27 @@ export const createHomePage = (
     textSize: typeScale.product,
     scaled: true,
     weight: 950,
+    color: fk.color3FromRGB(255, 255, 255),
   });
-  product.element.querySelector<HTMLElement>('[data-framekit-text]')!.style.background =
-    'linear-gradient(100deg, #76edad 5%, #70b2ff 45%, #af8eff 85%)';
-  product.element.querySelector<HTMLElement>('[data-framekit-text]')!.style.backgroundClip = 'text';
-  product.element.querySelector<HTMLElement>('[data-framekit-text]')!.style.webkitTextFillColor =
-    'transparent';
+  product.addChild(
+    fk.createUIGradient({
+      ApplyTo: 'Text',
+      Color: fk.colorSequence(
+        { Time: 0, Value: fk.color3FromHex('#76edad') },
+        { Time: 0.45, Value: fk.color3FromHex('#70b2ff') },
+        { Time: 0.85, Value: fk.color3FromHex('#af8eff') },
+        { Time: 1, Value: fk.color3FromHex('#af8eff') },
+      ),
+      Rotation: 10,
+    }),
+  );
+  const productStroke = fk.createUITextStroke({
+    Color: themeColor(theme, 'border'),
+    Transparency: 0,
+    Thickness: 5,
+  });
+  bindThemeColors(productStroke, theme, (palette) => ({ Color: palette.border }));
+  product.addChild(productStroke);
   const title = createText(theme, {
     text: 'Typed UI objects\nfor the web',
     size: fk.udim2FromOffset(650, 150),
@@ -137,7 +159,14 @@ const createHomeVisual = (layout: fk.Value<PlaygroundLayout>, theme: ThemeValue)
     radius: 28,
     clipsDescendants: true,
   });
-  visual.element.classList.add('pg-grid', 'pg-glow');
+  const glow = fk.createUIShadow({
+    Color: themeColor(theme, 'blue'),
+    Transparency: 0.86,
+    Offset: fk.vector2(0, 24),
+    BlurRadius: 90,
+  });
+  bindThemeColors(glow, theme, (palette) => ({ Color: palette.blue }));
+  visual.addChild(glow);
   bindLayoutProperties(visual, layout, visual, {
     desktop: { Size: fk.udim2FromOffset(440, 430), Position: fk.udim2FromOffset(776, 88) },
     mobile: { Size: fk.udim2FromOffset(358, 370), Position: fk.udim2FromOffset(0, 568) },

@@ -20,7 +20,6 @@ export const createNavigation = (
     BackgroundTransparency: 0.05,
     ZIndex: 100,
   });
-  navigation.element.style.backdropFilter = 'blur(18px) saturate(1.15)';
   bindThemeColors(navigation, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
 
   const mark = createButton(theme, {
@@ -125,16 +124,9 @@ export const createNavigation = (
   navigation.watch(route, updateNavigation);
   navigation.watch(mode, (currentMode) => {
     themeToggle.Text = currentMode === 'dark' ? '🌞  Light' : '🌙  Dark';
-    themeToggle.element.setAttribute(
-      'aria-label',
-      `Switch to ${currentMode === 'dark' ? 'light' : 'dark'} mode`,
-    );
+    themeToggle.AccessibleLabel = `Switch to ${currentMode === 'dark' ? 'light' : 'dark'} mode`;
   });
-  navigation.watch(theme, (palette) => {
-    const border = palette.border;
-    navigation.element.style.borderBottom = `1px solid rgb(${border.R} ${border.G} ${border.B})`;
-    updateNavigation();
-  });
+  navigation.watch(theme, updateNavigation);
   bindLayoutProperties(navigation, layout, brand, {
     desktop: { Visible: true },
     mobile: { Visible: false },
