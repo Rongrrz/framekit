@@ -11,6 +11,7 @@ describe('package API', () => {
     expect(typeof fk.color3FromRGB).toBe('function');
     expect(typeof fk.createValue).toBe('function');
     expect(typeof fk.createUIGradient).toBe('function');
+    expect(typeof fk.createUITextStroke).toBe('function');
     expect(typeof fk.defineGuiObject).toBe('function');
 
     expect(typeof fka.spring).toBe('function');

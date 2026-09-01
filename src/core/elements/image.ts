@@ -1,13 +1,14 @@
 import {
   initializeButtonElement,
+  renderButtonProperties,
   type ButtonElement,
   type ButtonProperties,
+  validateButtonProperties,
 } from '../../shared/dom/button';
 import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
 import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
 import {
   assertAllowedValue,
-  assertBoolean,
   assertFiniteNumber,
   assertString,
 } from '../../shared/runtime/validation';
@@ -65,12 +66,14 @@ export function createImageButton(initial: Partial<ImageButtonProperties> = {}):
   const node = createImageNode(
     'ImageButton',
     element,
-    { ...createDefaultImageProps(), Name: 'ImageButton', Disabled: false },
-    initial,
-    (properties) => {
-      element.disabled = properties.Disabled;
-      element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
+    {
+      ...createDefaultImageProps(),
+      Name: 'ImageButton',
+      Disabled: false,
+      AccessibleLabel: '',
     },
+    initial,
+    (properties) => renderButtonProperties(element, properties),
     buttonEventMethods,
   ) as ImageButton;
 
@@ -145,7 +148,7 @@ function validateImageProperties(
   assertString(properties.AltText, 'AltText');
   assertFiniteNumber(properties.ImageTransparency, 'ImageTransparency');
   assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
-  if ('Disabled' in properties) assertBoolean(properties.Disabled, 'Disabled');
+  if ('Disabled' in properties) validateButtonProperties(properties);
   validateImageSource(properties.Image);
 }
 

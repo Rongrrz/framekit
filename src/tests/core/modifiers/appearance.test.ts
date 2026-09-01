@@ -14,6 +14,7 @@ const {
   createUIScale,
   createUIShadow,
   createUIStroke,
+  createUITextStroke,
 } = fk;
 resetDocumentAfterEach();
 
@@ -25,6 +26,14 @@ describe('UI modifiers', () => {
     expect(() => group.addChild(corner)).toThrow(/DOM-backed/);
     expect(corner.Parent).toBeUndefined();
     expect(() => corner.addChild(createFrame())).toThrow(/cannot contain child nodes/);
+  });
+
+  it('only attaches text strokes to text-capable GUI objects', () => {
+    const frame = createFrame();
+    const stroke = createUITextStroke();
+
+    expect(() => frame.addChild(stroke)).toThrow(/TextLabel or TextButton/);
+    expect(stroke.Parent).toBeUndefined();
   });
 
   it('applies, updates, and removes corner and stroke styles through the tree', () => {
@@ -153,6 +162,44 @@ describe('UI modifiers', () => {
     expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
   });
 
+  it('applies, updates, disables, and removes text strokes', () => {
+    const label = createTextLabel({ Text: 'FrameKit' });
+    const stroke = createUITextStroke({
+      Color: color3FromRGB(10, 20, 30),
+      Transparency: 0.25,
+      Thickness: 2,
+    });
+
+    label.addChild(stroke);
+
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
+      'rgb(10 20 30 / 0.75)',
+    );
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-content')).toBe(
+      'attr(data-framekit-text-content)',
+    );
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('2px');
+    expect(label.element.querySelectorAll('[data-framekit-text-stroke]')).toHaveLength(0);
+
+    stroke.setProperties({ Thickness: 3, Transparency: 0.5 });
+
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
+      'rgb(10 20 30 / 0.5)',
+    );
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('3px');
+
+    stroke.Enabled = false;
+
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-content')).toBe('none');
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('0px');
+
+    stroke.Enabled = true;
+    stroke.removeFromParent();
+
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-content')).toBe('none');
+    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('0px');
+  });
+
   it('applies color and transparency sequences through UIGradient', () => {
     const frame = createFrame({ BackgroundColor3: fk.color3FromRGB(255, 255, 255) });
     const gradient = createUIGradient({
@@ -172,6 +219,46 @@ describe('UI modifiers', () => {
     gradient.Enabled = false;
 
     expect(frame.element.style.backgroundImage).toBe('');
+  });
+
+  it('applies a UIGradient to text without reaching into its rendered span', () => {
+    const label = createTextLabel({
+      BackgroundColor3: color3FromRGB(20, 30, 40),
+      Text: 'FrameKit',
+      TextColor3: color3FromRGB(255, 255, 255),
+    });
+    const gradient = createUIGradient({
+      ApplyTo: 'Text',
+      Color: fk.colorSequence(color3FromRGB(255, 0, 0), color3FromRGB(0, 0, 255)),
+    });
+
+    label.addChild(gradient);
+
+    expect(label.element.style.backgroundImage).toBe('');
+    expect(label.element.style.backgroundColor).not.toBe('transparent');
+    expect(label.element.style.getPropertyValue('--framekit-text-gradient-image')).toContain(
+      'linear-gradient(90deg',
+    );
+    expect(label.element.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
+      'transparent',
+    );
+    expect(label.element.querySelectorAll('[data-framekit-text]')).toHaveLength(1);
+
+    gradient.Enabled = false;
+
+    expect(label.element.style.getPropertyValue('--framekit-text-gradient-image')).toBe('none');
+    expect(label.element.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
+      'currentcolor',
+    );
+  });
+
+  it('rejects a text UIGradient on a non-text parent without changing either tree', () => {
+    const frame = createFrame();
+    const gradient = createUIGradient({ ApplyTo: 'Text' });
+
+    expect(() => frame.addChild(gradient)).toThrow(/TextLabel or TextButton/);
+    expect(gradient.Parent).toBeUndefined();
+    expect(frame.element.style.getPropertyValue('--framekit-text-gradient-image')).toBe('');
   });
 
   it('validates shadow geometry', () => {
@@ -210,6 +297,7 @@ describe('UI modifiers', () => {
 
   it('validates domain-specific modifier values while detached', () => {
     expect(() => createUIScale({ Scale: -1 })).toThrow(/non-negative finite/);
+    expect(() => createUITextStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
 
     const scale = createUIScale();
 

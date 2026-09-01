@@ -97,6 +97,7 @@ export function createScrollingFrame(
   initial: Partial<ScrollingFrameProperties> = {},
 ): ScrollingFrame {
   const element = document.createElement('div');
+  element.dataset.framekitScrollingFrame = '';
   const canvasBounds = document.createElement('div');
 
   canvasBounds.dataset.framekitCanvasBounds = '';

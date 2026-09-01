@@ -45,6 +45,7 @@ export * from './core/modifiers/padding';
 export * from './core/modifiers/scale';
 export * from './core/modifiers/shadow';
 export * from './core/modifiers/stroke';
+export * from './core/modifiers/text-stroke';
 
 export { createSignal } from './shared/runtime/signal';
 export type { Signal, SignalEmitter, Unsubscribe } from './shared/runtime/signal';

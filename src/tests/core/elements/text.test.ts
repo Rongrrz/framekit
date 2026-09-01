@@ -25,6 +25,8 @@ describe('text labels', () => {
 
     expect(text?.textContent).toBe('Inventory');
     expect(text?.style.fontSize).toBe('24px');
+    expect(label.element.dataset.framekitTextContent).toBe('Inventory');
+    expect(label.element.querySelectorAll('[data-framekit-text-stroke]')).toHaveLength(0);
     expect(text?.style.whiteSpace).toBe('pre-wrap');
     expect(label.element.contains(child.element)).toBe(true);
   });
@@ -64,6 +66,7 @@ describe('text labels', () => {
     label.TextScaled = true;
 
     expect(text.style.fontSize).toBe('20px');
+    expect(label.element.style.fontSize).toBe('20px');
 
     availableWidth = 50;
     resizeText?.([], {} as ResizeObserver);

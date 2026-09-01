@@ -52,6 +52,21 @@ describe('buttons', () => {
     expect(button.element.style.cursor).toBe('pointer');
   });
 
+  it('keeps its accessible label synchronized through a typed property', () => {
+    const button = createTextButton({ AccessibleLabel: 'Open settings' });
+
+    expect(button.element.getAttribute('aria-label')).toBe('Open settings');
+
+    button.AccessibleLabel = 'Close settings';
+
+    expect(button.element.getAttribute('aria-label')).toBe('Close settings');
+
+    button.AccessibleLabel = '';
+
+    expect(button.element.hasAttribute('aria-label')).toBe(false);
+    expect(() => button.setProperties({ AccessibleLabel: 42 as never })).toThrow(/AccessibleLabel/);
+  });
+
   it('exposes primary and secondary button events as discoverable methods', () => {
     const button = createTextButton();
     const primaryDown = vi.fn();

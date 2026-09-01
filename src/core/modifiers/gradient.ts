@@ -1,11 +1,19 @@
 import {
+  textGradientFillProperty,
+  textGradientImageProperty,
+} from '../../shared/dom/text-gradient';
+import {
   createStyleModifier,
   type StyleModifier,
   type Styles,
 } from '../../shared/runtime/modifier';
 import type { InstanceProperties } from '../../shared/runtime/node';
 import { mergeProperties } from '../../shared/runtime/node-state';
-import { assertBoolean, assertFiniteNumber } from '../../shared/runtime/validation';
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertFiniteNumber,
+} from '../../shared/runtime/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import {
   assertColorSequence,
@@ -16,6 +24,9 @@ import {
   type NumberSequence,
 } from '../values/sequence';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
+
+/** The visual surface painted by a UIGradient. */
+export type GradientTarget = 'Background' | 'Text';
 
 /** Properties for a gradient applied to a GUI parent's background. */
 export type UIGradientProperties = InstanceProperties & {
@@ -29,6 +40,8 @@ export type UIGradientProperties = InstanceProperties & {
   Rotation: number;
   /** Normalized translation of the gradient. */
   Offset: Vector2;
+  /** Whether the gradient paints the parent's background or rendered text. */
+  ApplyTo: GradientTarget;
 };
 
 /** An element-less background gradient modifier. */
@@ -46,6 +59,7 @@ export function createUIGradient(initial: Partial<UIGradientProperties> = {}): U
         Transparency: numberSequence(0, 0),
         Rotation: 0,
         Offset: vector2(0, 0),
+        ApplyTo: 'Background',
       },
       initial,
     ),
@@ -58,10 +72,13 @@ function resolveGradientStyles(
   properties: Readonly<UIGradientProperties>,
   targetProperties: Readonly<InstanceProperties>,
 ): Styles {
+  if (properties.ApplyTo === 'Text' && !isTextTarget(targetProperties)) {
+    throw new TypeError('A text UIGradient must be attached to a TextLabel or TextButton.');
+  }
   if (!properties.Enabled) return {};
 
-  const targetColor = readTargetColor(targetProperties);
-  const targetTransparency = readTargetTransparency(targetProperties);
+  const targetColor = readTargetColor(targetProperties, properties.ApplyTo);
+  const targetTransparency = readTargetTransparency(targetProperties, properties.ApplyTo);
   const times = mergeSequenceTimes(properties.Color, properties.Transparency);
   const offset = gradientOffset(properties.Offset, properties.Rotation);
   const cssAngle = properties.Rotation + 90;
@@ -72,10 +89,16 @@ function resolveGradientStyles(
     return `${color3ToCss(color, transparency)} ${formatPercentage(time + offset)}`;
   });
 
-  return {
-    'background-color': 'transparent',
-    'background-image': `linear-gradient(${cssAngle}deg, ${stops.join(', ')})`,
-  };
+  const image = `linear-gradient(${cssAngle}deg, ${stops.join(', ')})`;
+  return properties.ApplyTo === 'Text'
+    ? {
+        [textGradientFillProperty]: 'transparent',
+        [textGradientImageProperty]: image,
+      }
+    : {
+        'background-color': 'transparent',
+        'background-image': image,
+      };
 }
 
 function validateGradientProperties(properties: Readonly<UIGradientProperties>): void {
@@ -84,6 +107,7 @@ function validateGradientProperties(properties: Readonly<UIGradientProperties>):
   assertNumberSequence(properties.Transparency);
   assertFiniteNumber(properties.Rotation, 'Rotation');
   assertVector2(properties.Offset, 'Offset');
+  assertAllowedValue(properties.ApplyTo, ['Background', 'Text'], 'ApplyTo');
 }
 
 function mergeSequenceTimes(
@@ -132,20 +156,37 @@ function gradientOffset(offset: Vector2, rotation: number): number {
   return offset.X * Math.cos(radians) + offset.Y * Math.sin(radians);
 }
 
-function readTargetColor(properties: Readonly<InstanceProperties>): Color3 {
-  if ('BackgroundColor3' in properties) {
-    const color = properties.BackgroundColor3 as Color3;
+function readTargetColor(properties: Readonly<InstanceProperties>, target: GradientTarget): Color3 {
+  if (target === 'Text' && 'TextColor3' in properties) {
+    const color = properties.TextColor3;
+    assertColor3(color, 'TextColor3');
+    return color;
+  }
+  if (target === 'Background' && 'BackgroundColor3' in properties) {
+    const color = properties.BackgroundColor3;
     assertColor3(color, 'BackgroundColor3');
     return color;
   }
   return color3FromRGB(255, 255, 255);
 }
 
-function readTargetTransparency(properties: Readonly<InstanceProperties>): number {
-  return 'BackgroundTransparency' in properties &&
-    typeof properties.BackgroundTransparency === 'number'
-    ? properties.BackgroundTransparency
-    : 0;
+function readTargetTransparency(
+  properties: Readonly<InstanceProperties>,
+  target: GradientTarget,
+): number {
+  if (target === 'Text' && 'TextTransparency' in properties) {
+    return typeof properties.TextTransparency === 'number' ? properties.TextTransparency : 0;
+  }
+  if (target === 'Background' && 'BackgroundTransparency' in properties) {
+    return typeof properties.BackgroundTransparency === 'number'
+      ? properties.BackgroundTransparency
+      : 0;
+  }
+  return 0;
+}
+
+function isTextTarget(properties: Readonly<InstanceProperties>): boolean {
+  return 'Text' in properties && !('MultiLine' in properties);
 }
 
 function multiplyColors(first: Color3, second: Color3): Color3 {

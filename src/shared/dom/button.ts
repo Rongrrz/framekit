@@ -3,10 +3,13 @@ import { guiEventKeys, type ButtonEventMethods } from '../runtime/gui-events';
 import { addCleanup } from '../runtime/node-lifecycle';
 import type { GuiElement } from '../runtime/render';
 import { emitNodeEvent } from '../runtime/signal';
+import { assertBoolean, assertString } from '../runtime/validation';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */
   Disabled: boolean;
+  /** Optional accessible name when visible content is not descriptive enough. */
+  AccessibleLabel: string;
 };
 
 /** Shared instance shape for text and image buttons. */
@@ -87,4 +90,21 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
   element.addEventListener('contextmenu', (event) => event.preventDefault(), listenerOptions);
 
   addCleanup(node, () => listenerController.abort());
+}
+
+/** Synchronizes properties shared by every FrameKit button. */
+export function renderButtonProperties(
+  element: HTMLButtonElement,
+  properties: Readonly<ButtonProperties>,
+): void {
+  element.disabled = properties.Disabled;
+  element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
+  if (properties.AccessibleLabel === '') element.removeAttribute('aria-label');
+  else element.setAttribute('aria-label', properties.AccessibleLabel);
+}
+
+/** Validates properties shared by every FrameKit button. */
+export function validateButtonProperties(properties: Readonly<ButtonProperties>): void {
+  assertBoolean(properties.Disabled, 'Disabled');
+  assertString(properties.AccessibleLabel, 'AccessibleLabel');
 }

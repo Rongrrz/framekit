@@ -1,8 +1,16 @@
 import {
   initializeButtonElement,
+  renderButtonProperties,
   type ButtonElement,
   type ButtonProperties,
+  validateButtonProperties,
 } from '../../shared/dom/button';
+import { initializeTextGradient, resetTextGradientHost } from '../../shared/dom/text-gradient';
+import {
+  initializeTextStrokeHost,
+  resetTextStrokeHost,
+  syncTextStrokeHost,
+} from '../../shared/dom/text-stroke';
 import {
   bindTextScaleResize,
   createDefaultTextStyleProperties,
@@ -15,7 +23,6 @@ import {
 import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
 import { getPropertiesSnapshot } from '../../shared/runtime/node-properties';
 import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
-import { assertBoolean } from '../../shared/runtime/validation';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -52,12 +59,14 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
   const node = createTextNode(
     'TextButton',
     element,
-    { ...createDefaultTextProps(), Name: 'TextButton', Disabled: false },
-    initial,
-    (properties) => {
-      element.disabled = properties.Disabled;
-      element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
+    {
+      ...createDefaultTextProps(),
+      Name: 'TextButton',
+      Disabled: false,
+      AccessibleLabel: '',
     },
+    initial,
+    (properties) => renderButtonProperties(element, properties),
     buttonEventMethods,
   ) as TextButton;
 
@@ -91,6 +100,8 @@ function createTextNode<Properties extends TextLabelProperties>(
     lineHeight: '1.2',
   });
   element.prepend(text);
+  initializeTextGradient(text);
+  initializeTextStrokeHost(element);
 
   const node = createGuiObjectNode(
     nodeType,
@@ -98,8 +109,11 @@ function createTextNode<Properties extends TextLabelProperties>(
     defaultProperties,
     initial,
     (properties, changed) => {
+      resetTextGradientHost(element);
+      resetTextStrokeHost(element);
       text.textContent = properties.Text;
       renderTextStyle(text, properties);
+      syncTextStrokeHost(element, properties, text.style.fontSize);
       text.style.justifyContent = horizontalFlexAlignment[properties.TextXAlignment];
       text.style.alignItems = verticalFlexAlignment[properties.TextYAlignment];
       renderAdditionalProperties?.(properties, changed);
@@ -107,7 +121,11 @@ function createTextNode<Properties extends TextLabelProperties>(
     eventMethods,
     validateTextProperties,
   );
-  bindTextScaleResize(node, element, () => renderTextStyle(text, getPropertiesSnapshot(node)));
+  bindTextScaleResize(node, element, () => {
+    const properties = getPropertiesSnapshot(node);
+    renderTextStyle(text, properties);
+    syncTextStrokeHost(element, properties, text.style.fontSize);
+  });
   return node;
 }
 
@@ -115,5 +133,5 @@ function validateTextProperties(
   properties: Readonly<TextLabelProperties | TextButtonProperties>,
 ): void {
   validateTextStyleProperties(properties);
-  if ('Disabled' in properties) assertBoolean(properties.Disabled, 'Disabled');
+  if ('Disabled' in properties) validateButtonProperties(properties);
 }
