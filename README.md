@@ -102,6 +102,18 @@ A parent accepts one modifier of each kind. Duplicate modifiers throw without di
 
 Use `fkh` when its optional interaction conventions fit your UI. `bindHoverScale()` adds a retained `UIScale`, while `setModifierAttached()` toggles a modifier without recreating it.
 
+`createAutoYScrollingFrame()` creates a full-width vertical list with a `UDim` viewport height. Its canvas follows appended children, never becomes shorter than the viewport, and `gap` adds spacing only between adjacent items:
+
+```ts
+const list = fkh.createAutoYScrollingFrame({
+  viewportHeight: fk.udim(1, -64),
+  gap: 12,
+});
+
+list.addChild(firstRow);
+list.addChild(secondRow);
+```
+
 `bindResponsiveLayout()` applies one layout immediately, then switches only when the viewport crosses its breakpoint. Its resize listener is removed when the owner is destroyed.
 
 ```ts

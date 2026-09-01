@@ -20,6 +20,7 @@ describe('package API', () => {
     expect(fka).not.toHaveProperty('tweenInfo');
 
     expect(typeof fkh.bindHoverScale).toBe('function');
+    expect(typeof fkh.createAutoYScrollingFrame).toBe('function');
     expect(typeof fkh.setModifierAttached).toBe('function');
     expect(fkh).not.toHaveProperty('createSpringModifierToggle');
     expect(fk).not.toHaveProperty('createUIGlow');
