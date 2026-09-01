@@ -110,7 +110,7 @@ export function createScrollingFrame(
     visibility: 'hidden',
   });
   element.append(canvasBounds);
-  element.style.overscrollBehavior = 'contain';
+  element.style.overscrollBehavior = 'none';
   element.tabIndex = 0;
   ensureScrollbarStyles(document);
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the

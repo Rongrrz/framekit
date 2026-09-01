@@ -12,6 +12,7 @@ describe('scrolling frames', () => {
   it('maps scrolling direction to native overflow', () => {
     const scrolling = createScrollingFrame({ ScrollingDirection: 'Y' });
 
+    expect(scrolling.element.style.overscrollBehavior).toBe('none');
     expect(scrolling.element.style.overflowX).toBe('hidden');
     expect(scrolling.element.style.overflowY).toBe('auto');
 
