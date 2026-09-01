@@ -58,6 +58,10 @@ export const createHomePage = (
     weight: 950,
     color: fk.color3FromRGB(255, 255, 255),
   });
+  bindLayoutProperties(page, layout, product, {
+    desktop: { Size: fk.udim2FromOffset(620, 94), Position: fk.udim2FromOffset(0, 86) },
+    mobile: { Size: fk.udim2FromOffset(358, 70), Position: fk.udim2FromOffset(0, 58) },
+  });
   product.addChild(
     fk.createUIGradient({
       ApplyTo: 'Text',
@@ -86,6 +90,10 @@ export const createHomePage = (
     weight: 850,
     yAlignment: 'Top',
   });
+  bindLayoutProperties(page, layout, title, {
+    desktop: { Size: fk.udim2FromOffset(650, 150), Position: fk.udim2FromOffset(0, 170) },
+    mobile: { Size: fk.udim2FromOffset(358, 120), Position: fk.udim2FromOffset(0, 136) },
+  });
   const body = createText(theme, {
     text: 'Build interfaces as persistent objects with direct properties, explicit ownership, and optional animation.',
     size: fk.udim2FromOffset(610, 80),
@@ -93,6 +101,10 @@ export const createHomePage = (
     textSize: typeScale.lead,
     wrapped: true,
     yAlignment: 'Top',
+  });
+  bindLayoutProperties(page, layout, body, {
+    desktop: { Size: fk.udim2FromOffset(610, 80), Position: fk.udim2FromOffset(0, 338) },
+    mobile: { Size: fk.udim2FromOffset(358, 104), Position: fk.udim2FromOffset(0, 278) },
   });
   const start = createButton(theme, {
     label: 'GET STARTED  📚',
@@ -102,6 +114,10 @@ export const createHomePage = (
     background: 'accent',
     foreground: 'onAccent',
   });
+  bindLayoutProperties(page, layout, start, {
+    desktop: { Position: fk.udim2FromOffset(0, 446) },
+    mobile: { Size: fk.udim2FromOffset(358, 48), Position: fk.udim2FromOffset(0, 402) },
+  });
   const api = createButton(theme, {
     label: 'API REFERENCE  🔎',
     name: 'ApiReferenceButton',
@@ -109,6 +125,10 @@ export const createHomePage = (
     position: fk.udim2FromOffset(0, 0),
     background: 'surfaceRaised',
     foreground: 'text',
+  });
+  bindLayoutProperties(page, layout, api, {
+    desktop: { Position: fk.udim2FromOffset(188, 446) },
+    mobile: { Size: fk.udim2FromOffset(358, 48), Position: fk.udim2FromOffset(0, 462) },
   });
   const install = createButton(theme, {
     label: 'COPY  npm i framekit',
@@ -120,16 +140,28 @@ export const createHomePage = (
     font: fonts.mono,
     textSize: typeScale.code,
   });
+  bindLayoutProperties(page, layout, install, {
+    desktop: { Position: fk.udim2FromOffset(390, 446) },
+    mobile: { Size: fk.udim2FromOffset(358, 38), Position: fk.udim2FromOffset(0, 522) },
+  });
   start.onClick(() => navigate('guide'));
   api.onClick(() => navigate('api'));
   install.onClick(() => void copyCommand(install, 'npm i framekit', 'COPY  npm i framekit'));
-  bindHeroLayout(page, layout, { product, title, body, start, api, install });
   for (const child of [product, title, body, start, api, install]) content.addChild(child);
   content.addChild(createHomeVisual(layout, theme));
 
   for (const [index, [icon, title, description, accent]] of features.entries()) {
     const card = createFeatureCard(theme, icon, title, description, accent);
-    bindFeatureLayout(page, layout, card, index);
+    bindLayoutProperties(page, layout, card, {
+      desktop: {
+        Size: fk.udim2FromOffset(286, 260),
+        Position: fk.udim2FromOffset(index * 310, 690),
+      },
+      mobile: {
+        Size: fk.udim2FromOffset(171, 276),
+        Position: fk.udim2FromOffset((index % 2) * 187, 974 + Math.floor(index / 2) * 294),
+      },
+    });
     content.addChild(card);
   }
   const source = createButton(theme, {
@@ -269,60 +301,4 @@ const createFeatureCard = (
     }),
   );
   return card;
-};
-
-const bindHeroLayout = (
-  owner: fk.Instance,
-  layout: fk.Value<PlaygroundLayout>,
-  elements: Readonly<{
-    product: fk.TextLabel;
-    title: fk.TextLabel;
-    body: fk.TextLabel;
-    start: fk.TextButton;
-    api: fk.TextButton;
-    install: fk.TextButton;
-  }>,
-): void => {
-  bindLayoutProperties(owner, layout, elements.product, {
-    desktop: { Size: fk.udim2FromOffset(620, 94), Position: fk.udim2FromOffset(0, 86) },
-    mobile: { Size: fk.udim2FromOffset(358, 70), Position: fk.udim2FromOffset(0, 58) },
-  });
-  bindLayoutProperties(owner, layout, elements.title, {
-    desktop: { Size: fk.udim2FromOffset(650, 150), Position: fk.udim2FromOffset(0, 170) },
-    mobile: { Size: fk.udim2FromOffset(358, 120), Position: fk.udim2FromOffset(0, 136) },
-  });
-  bindLayoutProperties(owner, layout, elements.body, {
-    desktop: { Size: fk.udim2FromOffset(610, 80), Position: fk.udim2FromOffset(0, 338) },
-    mobile: { Size: fk.udim2FromOffset(358, 104), Position: fk.udim2FromOffset(0, 278) },
-  });
-  bindLayoutProperties(owner, layout, elements.start, {
-    desktop: { Position: fk.udim2FromOffset(0, 446) },
-    mobile: { Size: fk.udim2FromOffset(358, 48), Position: fk.udim2FromOffset(0, 402) },
-  });
-  bindLayoutProperties(owner, layout, elements.api, {
-    desktop: { Position: fk.udim2FromOffset(188, 446) },
-    mobile: { Size: fk.udim2FromOffset(358, 48), Position: fk.udim2FromOffset(0, 462) },
-  });
-  bindLayoutProperties(owner, layout, elements.install, {
-    desktop: { Position: fk.udim2FromOffset(390, 446) },
-    mobile: { Size: fk.udim2FromOffset(358, 38), Position: fk.udim2FromOffset(0, 522) },
-  });
-};
-
-const bindFeatureLayout = (
-  owner: fk.Instance,
-  layout: fk.Value<PlaygroundLayout>,
-  card: fk.Frame,
-  index: number,
-): void => {
-  bindLayoutProperties(owner, layout, card, {
-    desktop: {
-      Size: fk.udim2FromOffset(286, 260),
-      Position: fk.udim2FromOffset(index * 310, 690),
-    },
-    mobile: {
-      Size: fk.udim2FromOffset(171, 276),
-      Position: fk.udim2FromOffset((index % 2) * 187, 974 + Math.floor(index / 2) * 294),
-    },
-  });
 };
