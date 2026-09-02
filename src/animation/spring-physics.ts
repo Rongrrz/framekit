@@ -15,6 +15,7 @@ export type SpringOptions = Readonly<{
 }>;
 
 export type ResolvedSpringOptions = Required<SpringOptions>;
+export type SpringSolution = { value: number; velocity: number };
 
 export const defaultSpringOptions: ResolvedSpringOptions = {
   tension: 170,
@@ -56,8 +57,13 @@ export function solveSpring(
   goal: number,
   deltaTime: number,
   options: ResolvedSpringOptions,
-): { value: number; velocity: number } {
-  if (deltaTime === 0) return { value, velocity };
+  solution: SpringSolution = { value, velocity },
+): SpringSolution {
+  if (deltaTime === 0) {
+    solution.value = value;
+    solution.velocity = velocity;
+    return solution;
+  }
 
   const displacement = value - goal;
   const angularFrequency = Math.sqrt(options.tension / options.mass);
@@ -77,7 +83,9 @@ export function solveSpring(
       (-dampingRatio * angularFrequency * (displacement * cosine + sineCoefficient * sine) +
         -displacement * dampedFrequency * sine +
         sineCoefficient * dampedFrequency * cosine);
-    return { value: goal + nextDisplacement, velocity: nextVelocity };
+    solution.value = goal + nextDisplacement;
+    solution.velocity = nextVelocity;
+    return solution;
   }
 
   // Overdamped springs return without oscillating as two exponential terms.
@@ -89,18 +97,16 @@ export function solveSpring(
     const secondCoefficient = displacement - firstCoefficient;
     const firstDecay = Math.exp(firstRate * deltaTime);
     const secondDecay = Math.exp(secondRate * deltaTime);
-    return {
-      value: goal + firstCoefficient * firstDecay + secondCoefficient * secondDecay,
-      velocity:
-        firstRate * firstCoefficient * firstDecay + secondRate * secondCoefficient * secondDecay,
-    };
+    solution.value = goal + firstCoefficient * firstDecay + secondCoefficient * secondDecay;
+    solution.velocity =
+      firstRate * firstCoefficient * firstDecay + secondRate * secondCoefficient * secondDecay;
+    return solution;
   }
 
   // At critical damping, both exponential roots are equal.
   const decay = Math.exp(-angularFrequency * deltaTime);
   const coefficient = velocity + angularFrequency * displacement;
-  return {
-    value: goal + decay * (displacement + coefficient * deltaTime),
-    velocity: decay * (velocity - angularFrequency * coefficient * deltaTime),
-  };
+  solution.value = goal + decay * (displacement + coefficient * deltaTime);
+  solution.velocity = decay * (velocity - angularFrequency * coefficient * deltaTime);
+  return solution;
 }

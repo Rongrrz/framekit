@@ -67,21 +67,27 @@ export function applyAnimationProperties<Properties extends InstanceProperties>(
   }
 
   const writes = getOrCreateNodeWrites(node);
-  const previousWrites = properties.map((property) => ({
-    property,
-    hadValue: writes.has(property),
-    value: writes.get(property),
-  }));
+  const hasNestedWrites = writes.size > 0;
+  const previousWrites = hasNestedWrites
+    ? properties.map((property) => ({
+        property,
+        hadValue: writes.has(property),
+        value: writes.get(property),
+      }))
+    : undefined;
   for (const property of properties) writes.set(property, patch[property]);
 
   try {
     node.setProperties(patch);
   } finally {
-    for (const previous of previousWrites) {
-      if (previous.hadValue) writes.set(previous.property, previous.value);
-      else writes.delete(previous.property);
+    if (previousWrites) {
+      for (const previous of previousWrites) {
+        if (previous.hadValue) writes.set(previous.property, previous.value);
+        else writes.delete(previous.property);
+      }
+    } else {
+      writes.clear();
     }
-    if (writes.size === 0) writesByNode.delete(node);
   }
 }
 

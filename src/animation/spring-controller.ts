@@ -10,11 +10,13 @@ import {
   releaseAnimationProperties,
   type AnimationOwner,
 } from './ownership';
+import { cancelAnimationTask, scheduleAnimationTask } from './scheduler';
 import {
   defaultSpringOptions,
   resolveSpringOptions,
   solveSpring,
   type ResolvedSpringOptions,
+  type SpringSolution,
   type SpringOptions,
 } from './spring-physics';
 import type { AnimationGoal } from './types';
@@ -44,17 +46,18 @@ type PropertySpringState = {
   velocityComponents: number[];
   options: ResolvedSpringOptions;
 };
-type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
-
 /** Creates the internal retained spring state for a node. */
 export function createSpringBinding<Properties extends InstanceProperties>(
   node: Instance<Properties>,
 ): SpringBinding<Properties> {
   getActiveNodeState(node);
   const springsByProperty = new Map<keyof Properties, PropertySpringState>();
+  const animationPatch: Partial<Properties> = {};
+  const settledProperties: (keyof Properties)[] = [];
+  const springSolution: SpringSolution = { value: 0, velocity: 0 };
   const completedEmitter = createSignal<[]>();
   const completed = readonlySignal(completedEmitter);
-  let animationFrame: AnimationFrame | undefined;
+  let scheduled = false;
   let previousTimestampMs = 0;
   let disposed = false;
 
@@ -115,29 +118,33 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   function stopAllProperties(): void {
     const properties = Array.from(springsByProperty.keys());
     springsByProperty.clear();
+    for (const property of properties) delete animationPatch[property];
     releaseAnimationProperties(node, properties, animationOwner);
     cancelFrame();
   }
 
   function stopProperty(property: keyof Properties): void {
     if (!springsByProperty.delete(property)) return;
+    delete animationPatch[property];
     releaseAnimationProperties(node, [property], animationOwner);
     if (springsByProperty.size === 0) cancelFrame();
   }
 
   function scheduleNextFrame(): void {
-    if (animationFrame !== undefined) return;
+    if (scheduled) return;
     previousTimestampMs = performance.now();
-    animationFrame = requestAnimationFrame(advanceSprings);
+    scheduled = true;
+    scheduleAnimationTask(advanceSprings);
   }
 
   function advanceSprings(timestampMs: number): void {
-    animationFrame = undefined;
-    if (springsByProperty.size === 0 || isDestroyed(node)) return;
+    if (springsByProperty.size === 0 || isDestroyed(node)) {
+      cancelFrame();
+      return;
+    }
     const deltaTimeSeconds = Math.max(0, (timestampMs - previousTimestampMs) / 1000);
     previousTimestampMs = timestampMs;
-    const patch: Partial<Properties> = {};
-    const settledProperties: (keyof Properties)[] = [];
+    settledProperties.length = 0;
 
     for (const [property, springState] of springsByProperty) {
       let propertySettled = true;
@@ -148,6 +155,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
           springState.goalComponents[index]!,
           deltaTimeSeconds,
           springState.options,
+          springSolution,
         );
         springState.currentComponents[index] = nextComponent.value;
         springState.velocityComponents[index] = nextComponent.velocity;
@@ -165,28 +173,33 @@ export function createSpringBinding<Properties extends InstanceProperties>(
         springState.velocityComponents.fill(0);
         settledProperties.push(property);
       }
-      patch[property] = composeAnimationValue(
+      animationPatch[property] = composeAnimationValue(
         springState.kind,
         springState.currentComponents,
       ) as Properties[keyof Properties];
     }
 
     try {
-      applyAnimationProperties(node, patch, animationOwner);
+      applyAnimationProperties(node, animationPatch, animationOwner);
     } catch (error) {
       stopAllProperties();
       throw error;
     }
-    for (const property of settledProperties) springsByProperty.delete(property);
+    for (const property of settledProperties) {
+      springsByProperty.delete(property);
+      delete animationPatch[property];
+    }
     releaseAnimationProperties(node, settledProperties, animationOwner);
-    if (springsByProperty.size === 0) completedEmitter.emit();
-    else animationFrame = requestAnimationFrame(advanceSprings);
+    if (springsByProperty.size === 0) {
+      cancelFrame();
+      completedEmitter.emit();
+    }
   }
 
   function cancelFrame(): void {
-    if (animationFrame === undefined) return;
-    cancelAnimationFrame(animationFrame);
-    animationFrame = undefined;
+    if (!scheduled) return;
+    scheduled = false;
+    cancelAnimationTask(advanceSprings);
   }
 
   function assertUsable(): void {

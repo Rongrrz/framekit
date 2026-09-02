@@ -18,6 +18,7 @@ import {
   releaseAnimationProperties,
   type AnimationOwner,
 } from './ownership';
+import { cancelAnimationTask, scheduleAnimationTask } from './scheduler';
 import type { AnimationGoal } from './types';
 import { interpolateAnimationValue } from './value';
 
@@ -67,8 +68,6 @@ export type Tween = {
   readonly completed: Signal<[TweenPlaybackState]>;
 };
 
-type AnimationFrame = ReturnType<typeof requestAnimationFrame>;
-
 /** Creates a controllable tween that applies interpolated property values. */
 export function createTween<Properties extends InstanceProperties>(
   node: Instance<Properties>,
@@ -88,10 +87,11 @@ export function createTween<Properties extends InstanceProperties>(
   const completedEmitter = createSignal<[TweenPlaybackState]>();
   const completed = readonlySignal(completedEmitter);
   let playbackState: TweenPlaybackState = 'Idle';
-  let animationFrame: AnimationFrame | undefined;
+  let scheduled = false;
   let startedAtMs = 0;
   let elapsedBeforePauseMs = 0;
   let startValues: Partial<Properties> = {};
+  const animationPatch: Partial<Properties> = {};
   let ownedProperties: (keyof Properties)[] = [];
   let disposed = false;
 
@@ -120,7 +120,7 @@ export function createTween<Properties extends InstanceProperties>(
       finish('Completed');
       return;
     }
-    animationFrame = requestAnimationFrame(step);
+    scheduleFrame();
   }
 
   function pause(): void {
@@ -144,7 +144,6 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function step(timestamp: number): void {
-    animationFrame = undefined;
     if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
 
     const elapsedMs = Math.max(0, timestamp - startedAtMs);
@@ -152,7 +151,6 @@ export function createTween<Properties extends InstanceProperties>(
     const delayMs = resolvedOptions.Delay * 1000;
     if (elapsedMs < delayMs) {
       playbackState = 'Delayed';
-      animationFrame = requestAnimationFrame(step);
       return;
     }
 
@@ -179,7 +177,6 @@ export function createTween<Properties extends InstanceProperties>(
     const traversalProgress = (activeElapsedMs % durationMs) / durationMs;
     const isReverseTraversal = resolvedOptions.Reverses && traversalIndex % 2 === 1;
     applyProgressOrCancel(isReverseTraversal ? 1 - traversalProgress : traversalProgress);
-    animationFrame = requestAnimationFrame(step);
   }
 
   function applyProgressOrCancel(progress: number): void {
@@ -201,16 +198,15 @@ export function createTween<Properties extends InstanceProperties>(
   function applyProgress(progress: number): void {
     if (isDestroyed(node)) return;
     const eased = ease(progress, resolvedOptions.EasingStyle, resolvedOptions.EasingDirection);
-    const patch: Partial<Properties> = {};
     for (const key of goalKeys) {
-      patch[key] = interpolateAnimationValue(
+      animationPatch[key] = interpolateAnimationValue(
         startValues[key],
         goalValuesByProperty.get(key),
         eased,
         String(key),
       ) as Properties[keyof Properties];
     }
-    applyAnimationProperties(node, patch, animationOwner);
+    applyAnimationProperties(node, animationPatch, animationOwner);
   }
 
   function finalProgress(): number {
@@ -236,9 +232,15 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function cancelFrame(): void {
-    if (animationFrame === undefined) return;
-    cancelAnimationFrame(animationFrame);
-    animationFrame = undefined;
+    if (!scheduled) return;
+    scheduled = false;
+    cancelAnimationTask(step);
+  }
+
+  function scheduleFrame(): void {
+    if (scheduled) return;
+    scheduled = true;
+    scheduleAnimationTask(step);
   }
 
   function assertUsable(): void {
