@@ -21,7 +21,7 @@ import {
   type TextStyleProperties,
 } from '../../shared/dom/text-style';
 import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
-import { getPropertiesSnapshot } from '../../shared/runtime/node-properties';
+import { getNodeProperties } from '../../shared/runtime/node-properties';
 import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
 import {
   createDefaultGuiObjectProperties,
@@ -66,7 +66,11 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
       AccessibleLabel: '',
     },
     initial,
-    (properties) => renderButtonProperties(element, properties),
+    (properties, changed) => {
+      if (changed.has('Disabled') || changed.has('AccessibleLabel')) {
+        renderButtonProperties(element, properties);
+      }
+    },
     buttonEventMethods,
   ) as TextButton;
 
@@ -109,24 +113,46 @@ function createTextNode<Properties extends TextLabelProperties>(
     defaultProperties,
     initial,
     (properties, changed) => {
-      resetTextGradientHost(element);
-      resetTextStrokeHost(element);
-      text.textContent = properties.Text;
-      renderTextStyle(text, properties);
-      syncTextStrokeHost(element, properties, text.style.fontSize);
-      text.style.justifyContent = horizontalFlexAlignment[properties.TextXAlignment];
-      text.style.alignItems = verticalFlexAlignment[properties.TextYAlignment];
+      const textChanged = hasTextChange(changed);
+      if (textChanged) {
+        resetTextGradientHost(element);
+        resetTextStrokeHost(element);
+      }
+      if (changed.has('Text')) text.textContent = properties.Text;
+      renderTextStyle(text, properties, changed);
+      if (textChanged) syncTextStrokeHost(element, properties, text.style.fontSize);
+      if (changed.has('TextXAlignment')) {
+        text.style.justifyContent = horizontalFlexAlignment[properties.TextXAlignment];
+      }
+      if (changed.has('TextYAlignment')) {
+        text.style.alignItems = verticalFlexAlignment[properties.TextYAlignment];
+      }
       renderAdditionalProperties?.(properties, changed);
     },
     eventMethods,
     validateTextProperties,
   );
   bindTextScaleResize(node, element, () => {
-    const properties = getPropertiesSnapshot(node);
+    const properties = getNodeProperties(node);
     renderTextStyle(text, properties);
     syncTextStrokeHost(element, properties, text.style.fontSize);
   });
   return node;
+}
+
+function hasTextChange(changed: ReadonlySet<PropertyKey>): boolean {
+  return (
+    changed.has('Text') ||
+    changed.has('TextColor3') ||
+    changed.has('TextTransparency') ||
+    changed.has('TextSize') ||
+    changed.has('TextScaled') ||
+    changed.has('TextWrapped') ||
+    changed.has('TextXAlignment') ||
+    changed.has('TextYAlignment') ||
+    changed.has('FontFamily') ||
+    changed.has('FontWeight')
+  );
 }
 
 function validateTextProperties(

@@ -129,6 +129,22 @@ describe('screen GUIs and frames', () => {
     expect(frame.Rotation).toBe(30);
   });
 
+  it('writes only affected CSS and skips unchanged resolved output', () => {
+    const frame = createFrame();
+    const setProperty = vi.spyOn(frame.element.style, 'setProperty');
+
+    frame.Rotation = 15;
+
+    expect(setProperty).toHaveBeenCalledOnce();
+    expect(setProperty).toHaveBeenLastCalledWith('rotate', '15deg');
+
+    setProperty.mockClear();
+    frame.Name = 'Renamed';
+    frame.BackgroundColor3 = color3FromRGB(200, 200, 200);
+
+    expect(setProperty).not.toHaveBeenCalled();
+  });
+
   it('reports typed property changes after successful updates', () => {
     const frame = createFrame();
     const listener = vi.fn();
@@ -252,5 +268,25 @@ describe('screen GUIs and frames', () => {
 
     expect(document.body.childElementCount).toBe(0);
     expect(frame.isDestroyed()).toBe(true);
+  });
+
+  it('removes an owned DOM subtree once while cleaning externally moved descendants', () => {
+    const root = createFrame();
+    const nested = createFrame();
+    const moved = createFrame();
+    const nestedRemove = vi.spyOn(nested.element, 'remove');
+    const movedRemove = vi.spyOn(moved.element, 'remove');
+
+    root.addChild(nested);
+    root.addChild(moved);
+    document.body.append(moved.element);
+
+    root.destroy();
+
+    expect(nestedRemove).not.toHaveBeenCalled();
+    expect(movedRemove).toHaveBeenCalledOnce();
+    expect(document.body.contains(moved.element)).toBe(false);
+    expect(nested.isDestroyed()).toBe(true);
+    expect(moved.isDestroyed()).toBe(true);
   });
 });

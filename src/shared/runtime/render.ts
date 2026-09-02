@@ -44,11 +44,35 @@ export type GuiNodeState<Properties extends InstanceProperties = InstancePropert
   BaseNodeState<Properties> & {
     kind: 'gui';
     children: Instance[];
+    propertyNames: ReadonlySet<keyof Properties>;
     renderProperties: PropertyRenderer<Properties> | undefined;
     modifiers: Map<string, Modifier>;
     appliedModifierStyles: Set<string>;
     appliedLayoutStylesByChild: Map<GuiElement, Set<string>>;
   };
+
+const styleValuesByElement = new WeakMap<HTMLElement, Record<string, string>>();
+
+/** Writes an inline style only when FrameKit's resolved CSS output changed. */
+export function setStyle(element: HTMLElement, property: string, value: string): void {
+  let values = styleValuesByElement.get(element);
+  if (!values) {
+    values = Object.create(null) as Record<string, string>;
+    styleValuesByElement.set(element, values);
+  }
+  if (values[property] === value) return;
+  element.style.setProperty(property, value);
+  values[property] = value;
+}
+
+function removeStyle(element: HTMLElement, property: string): void {
+  const values = styleValuesByElement.get(element);
+  if (!(values && Object.hasOwn(values, property)) && !element.style.getPropertyValue(property)) {
+    return;
+  }
+  element.style.removeProperty(property);
+  if (values) delete values[property];
+}
 
 /** Creates a DOM-backed node and renders its initial properties. */
 export function createGuiNode<Properties extends InstanceProperties>(
@@ -60,6 +84,7 @@ export function createGuiNode<Properties extends InstanceProperties>(
   eventMethods?: GuiEventMethodTable,
   options: Readonly<{ canHaveParent?: boolean }> = {},
 ): GuiElement<Properties> {
+  const propertyNames = new Set(Object.keys(properties) as (keyof Properties)[]);
   const node = createGuiNodeHandle<Properties>(
     properties,
     element,
@@ -69,12 +94,13 @@ export function createGuiNode<Properties extends InstanceProperties>(
     ...createBaseState(className, properties, validateProperties, options.canHaveParent ?? true),
     kind: 'gui',
     children: [],
+    propertyNames,
     renderProperties,
     modifiers: new Map(),
     appliedModifierStyles: new Set(),
     appliedLayoutStylesByChild: new Map(),
   });
-  renderNode(node, new Set(Object.keys(properties) as (keyof Properties)[]));
+  renderNode(node, propertyNames);
   return node;
 }
 
@@ -139,11 +165,19 @@ export function hasLayoutModifier(node: Instance): boolean {
 /** Renders the node surfaces affected by a committed property change. */
 export function renderPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
-  changedProperties: readonly (keyof Properties)[],
+  changedProperties: ReadonlySet<keyof Properties>,
 ): void {
   const state = getNodeState(node);
   if (isModifierState(state)) {
     if (!state.parent) return;
+    if (state.kind === 'layout') {
+      renderLayouts(state.parent);
+      const modifierTargetState = getNodeState(state.parent);
+      if (modifierTargetState.parent && hasLayoutModifier(modifierTargetState.parent)) {
+        renderLayouts(modifierTargetState.parent);
+      }
+      return;
+    }
     renderNode(state.parent);
     const modifierTargetState = getNodeState(state.parent);
     if (modifierTargetState.parent && hasLayoutModifier(modifierTargetState.parent)) {
@@ -151,8 +185,20 @@ export function renderPropertyChanges<Properties extends InstanceProperties>(
     }
     return;
   }
-  if (state.kind === 'gui') renderNode(node, new Set(changedProperties));
-  if (state.parent && hasLayoutModifier(state.parent)) renderNode(state.parent);
+  if (state.kind === 'gui') renderNode(node, changedProperties);
+  if (state.parent && hasLayoutModifier(state.parent)) renderLayouts(state.parent);
+}
+
+/** Reapplies active layout output without clearing unchanged CSS first. */
+export function renderLayouts(node: Instance): void {
+  const state = getNodeState(node);
+  if (state.kind !== 'gui') return;
+  const guiNode = node as GuiElement;
+  const isHidden = guiNode.element.style.display === 'none';
+  for (const modifier of state.modifiers.values()) {
+    const modifierState = getNodeState(modifier);
+    if (modifierState.kind === 'layout') applyLayout(guiNode, modifierState, isHidden);
+  }
 }
 
 /** Renders base properties first, followed by attached modifiers. */
@@ -163,10 +209,23 @@ export function renderNode<Properties extends InstanceProperties>(
   const state = getNodeState(node);
   if (state.kind !== 'gui') return;
   const guiNode = node as GuiElement<Properties>;
+  const effectiveChanges = changedProperties.size === 0 ? state.propertyNames : changedProperties;
+  const hasDerivedStyles = !(
+    state.modifiers.size === 0 &&
+    state.appliedModifierStyles.size === 0 &&
+    state.appliedLayoutStylesByChild.size === 0
+  );
+  if (!hasDerivedStyles) {
+    state.renderProperties?.(state.properties, effectiveChanges);
+    return;
+  }
 
   clearLayoutStyles(state);
   clearStyles(guiNode.element, state.appliedModifierStyles);
-  state.renderProperties?.(state.properties, changedProperties);
+  // Derived styles can disappear after any dependency changes. Restore the complete base surface
+  // before recomposing them so a removed override always reveals the current base value.
+  state.renderProperties?.(state.properties, state.propertyNames);
+  if (state.modifiers.size === 0) return;
   const baseRenderHidesElement = guiNode.element.style.display === 'none';
   const resolvedModifierStyles: Record<string, string> = {};
   const layoutModifiers: LayoutNodeState[] = [];
@@ -249,12 +308,12 @@ function applyStyles(
 ): void {
   for (const [property, value] of Object.entries(styles)) {
     if (property === 'display' && preserveHiddenDisplay) continue;
-    element.style.setProperty(property, value);
+    setStyle(element, property, value);
     applied.add(property);
   }
 }
 
 function clearStyles(element: HTMLElement, properties: Set<string>): void {
-  for (const property of properties) element.style.removeProperty(property);
+  for (const property of properties) removeStyle(element, property);
   properties.clear();
 }

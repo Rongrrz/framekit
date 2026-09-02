@@ -12,7 +12,11 @@ import {
   type TextBoxEventMethods,
 } from '../../shared/runtime/gui-events';
 import { addCleanup } from '../../shared/runtime/node-lifecycle';
-import { applyPropertyPatch, getPropertiesSnapshot } from '../../shared/runtime/node-properties';
+import {
+  applyPropertyPatch,
+  getNodeProperties,
+  getNodeProperty,
+} from '../../shared/runtime/node-properties';
 import type { GuiElement } from '../../shared/runtime/render';
 import { emitNodeEvent } from '../../shared/runtime/signal';
 import { assertBoolean, assertFiniteNumber, assertString } from '../../shared/runtime/validation';
@@ -88,31 +92,48 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
       PlaceholderTransparency: 0,
     },
     initial,
-    (current) => {
-      renderTextStyle(editor, current);
-      renderTextStyle(placeholder, { ...current, Text: current.PlaceholderText });
-      editor.style.alignContent = textAlignment(current.TextYAlignment);
-      placeholder.style.alignContent = textAlignment(current.TextYAlignment);
-      placeholder.style.color = color3ToCss(
-        current.PlaceholderColor3,
-        current.PlaceholderTransparency,
-      );
-      editor.contentEditable = String(!current.Disabled);
-      editor.tabIndex = current.Disabled ? -1 : 0;
-      editor.setAttribute('aria-disabled', String(current.Disabled));
-      editor.setAttribute('aria-multiline', String(current.MultiLine));
-      editor.setAttribute('aria-placeholder', current.PlaceholderText);
-      editor.style.cursor = current.Disabled ? 'not-allowed' : 'text';
-      placeholder.textContent = current.PlaceholderText;
-      placeholder.style.display = current.Text.length === 0 ? '' : 'none';
-      if (!applyingEditorInput) editor.textContent = current.Text;
+    (current, changed) => {
+      renderTextStyle(editor, current, changed);
+      if (hasTextStyleChange(changed)) {
+        renderTextStyle(placeholder, { ...current, Text: current.PlaceholderText }, changed);
+      } else if (changed.has('PlaceholderText')) {
+        renderTextSize(placeholder, { ...current, Text: current.PlaceholderText });
+      }
+      if (changed.has('TextYAlignment')) {
+        const alignment = textAlignment(current.TextYAlignment);
+        editor.style.alignContent = alignment;
+        placeholder.style.alignContent = alignment;
+      }
+      if (changed.has('PlaceholderColor3') || changed.has('PlaceholderTransparency')) {
+        placeholder.style.color = color3ToCss(
+          current.PlaceholderColor3,
+          current.PlaceholderTransparency,
+        );
+      }
+      if (changed.has('Disabled')) {
+        editor.contentEditable = String(!current.Disabled);
+        editor.tabIndex = current.Disabled ? -1 : 0;
+        editor.setAttribute('aria-disabled', String(current.Disabled));
+        editor.style.cursor = current.Disabled ? 'not-allowed' : 'text';
+      }
+      if (changed.has('MultiLine')) {
+        editor.setAttribute('aria-multiline', String(current.MultiLine));
+      }
+      if (changed.has('PlaceholderText')) {
+        editor.setAttribute('aria-placeholder', current.PlaceholderText);
+        placeholder.textContent = current.PlaceholderText;
+      }
+      if (changed.has('Text')) {
+        placeholder.style.display = current.Text.length === 0 ? '' : 'none';
+        if (!applyingEditorInput) editor.textContent = current.Text;
+      }
     },
     textBoxEventMethods,
     validateTextBoxProperties,
   ) as TextBox;
 
   bindTextScaleResize(node, element, () => {
-    const current = getPropertiesSnapshot(node);
+    const current = getNodeProperties(node);
     renderTextSize(editor, current);
     renderTextSize(placeholder, { ...current, Text: current.PlaceholderText });
   });
@@ -122,7 +143,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
   editor.addEventListener(
     'input',
     (event) => {
-      const current = getPropertiesSnapshot(node);
+      const current = getNodeProperties(node);
       const editorText = readEditableText(editor);
       const text = current.MultiLine ? editorText : removeLineBreaks(editorText);
 
@@ -134,7 +155,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
       }
       if (text !== editorText) editor.textContent = text;
 
-      emitNodeEvent(node, guiEventKeys.textChanged, getPropertiesSnapshot(node).Text, event);
+      emitNodeEvent(node, guiEventKeys.textChanged, getNodeProperty(node, 'Text'), event);
     },
     listenerOptions,
   );
@@ -142,7 +163,7 @@ export function createTextBox(initial: Partial<TextBoxProperties> = {}): TextBox
   editor.addEventListener(
     'keydown',
     (event) => {
-      if (event.key === 'Enter' && !getPropertiesSnapshot(node).MultiLine) event.preventDefault();
+      if (event.key === 'Enter' && !getNodeProperty(node, 'MultiLine')) event.preventDefault();
     },
     listenerOptions,
   );
@@ -173,6 +194,21 @@ function textAlignment(alignment: TextBoxProperties['TextYAlignment']): string {
   if (alignment === 'Center') return 'center';
   if (alignment === 'Bottom') return 'end';
   return 'start';
+}
+
+function hasTextStyleChange(changed: ReadonlySet<PropertyKey>): boolean {
+  return (
+    changed.has('Text') ||
+    changed.has('TextColor3') ||
+    changed.has('TextTransparency') ||
+    changed.has('TextSize') ||
+    changed.has('TextScaled') ||
+    changed.has('TextWrapped') ||
+    changed.has('TextXAlignment') ||
+    changed.has('TextYAlignment') ||
+    changed.has('FontFamily') ||
+    changed.has('FontWeight')
+  );
 }
 
 function removeLineBreaks(value: string): string {

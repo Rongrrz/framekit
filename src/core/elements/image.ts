@@ -73,7 +73,11 @@ export function createImageButton(initial: Partial<ImageButtonProperties> = {}):
       AccessibleLabel: '',
     },
     initial,
-    (properties) => renderButtonProperties(element, properties),
+    (properties, changed) => {
+      if (changed.has('Disabled') || changed.has('AccessibleLabel')) {
+        renderButtonProperties(element, properties);
+      }
+    },
     buttonEventMethods,
   ) as ImageButton;
 

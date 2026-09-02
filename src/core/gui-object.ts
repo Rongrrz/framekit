@@ -2,7 +2,12 @@ import { connectHoverEvents } from '../shared/dom/hover-events';
 import type { GuiEventMethodTable } from '../shared/runtime/gui-events';
 import type { InstanceProperties } from '../shared/runtime/node';
 import { mergeProperties, type PropertyValidator } from '../shared/runtime/node-state';
-import { createGuiNode, type GuiElement, type PropertyRenderer } from '../shared/runtime/render';
+import {
+  createGuiNode,
+  setStyle,
+  type GuiElement,
+  type PropertyRenderer,
+} from '../shared/runtime/render';
 import {
   assertAllowedValue,
   assertBoolean,
@@ -84,7 +89,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>(
     mergeProperties(defaultProperties, initial),
     element,
     (properties, changed) => {
-      renderGuiObject(element, properties);
+      renderGuiObject(element, properties, changed);
       renderAdditionalProperties?.(properties, changed);
     },
     (properties) => {
@@ -98,27 +103,52 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>(
   return node;
 }
 
-function renderGuiObject(element: HTMLElement, properties: Readonly<GuiObjectProperties>): void {
-  element.style.position = 'absolute';
-  element.style.width =
-    properties.AutomaticSize === 'X' || properties.AutomaticSize === 'XY'
-      ? 'auto'
-      : udimToCss(properties.Size.X);
-  element.style.height =
-    properties.AutomaticSize === 'Y' || properties.AutomaticSize === 'XY'
-      ? 'auto'
-      : udimToCss(properties.Size.Y);
-  element.style.left = udimToCss(properties.Position.X);
-  element.style.top = udimToCss(properties.Position.Y);
-  element.style.transform = `translate(${-properties.AnchorPoint.X * 100}%, ${-properties.AnchorPoint.Y * 100}%)`;
-  element.style.setProperty('rotate', `${properties.Rotation}deg`);
-  element.style.display = properties.Visible ? '' : 'none';
-  element.style.backgroundColor = color3ToCss(
-    properties.BackgroundColor3,
-    properties.BackgroundTransparency,
-  );
-  element.style.zIndex = String(properties.ZIndex);
-  element.style.overflow = properties.ClipsDescendants ? 'hidden' : 'visible';
+function renderGuiObject(
+  element: HTMLElement,
+  properties: Readonly<GuiObjectProperties>,
+  changed: ReadonlySet<PropertyKey>,
+): void {
+  if (changed.has('Size') || changed.has('AutomaticSize')) {
+    setStyle(
+      element,
+      'width',
+      properties.AutomaticSize === 'X' || properties.AutomaticSize === 'XY'
+        ? 'auto'
+        : udimToCss(properties.Size.X),
+    );
+    setStyle(
+      element,
+      'height',
+      properties.AutomaticSize === 'Y' || properties.AutomaticSize === 'XY'
+        ? 'auto'
+        : udimToCss(properties.Size.Y),
+    );
+  }
+  if (changed.has('Position')) {
+    setStyle(element, 'position', 'absolute');
+    setStyle(element, 'left', udimToCss(properties.Position.X));
+    setStyle(element, 'top', udimToCss(properties.Position.Y));
+  }
+  if (changed.has('AnchorPoint')) {
+    setStyle(
+      element,
+      'transform',
+      `translate(${-properties.AnchorPoint.X * 100}%, ${-properties.AnchorPoint.Y * 100}%)`,
+    );
+  }
+  if (changed.has('Rotation')) setStyle(element, 'rotate', `${properties.Rotation}deg`);
+  if (changed.has('Visible')) setStyle(element, 'display', properties.Visible ? '' : 'none');
+  if (changed.has('BackgroundColor3') || changed.has('BackgroundTransparency')) {
+    setStyle(
+      element,
+      'background-color',
+      color3ToCss(properties.BackgroundColor3, properties.BackgroundTransparency),
+    );
+  }
+  if (changed.has('ZIndex')) setStyle(element, 'z-index', String(properties.ZIndex));
+  if (changed.has('ClipsDescendants')) {
+    setStyle(element, 'overflow', properties.ClipsDescendants ? 'hidden' : 'visible');
+  }
 }
 
 function validateGuiObjectProperties(properties: Readonly<GuiObjectProperties>): void {

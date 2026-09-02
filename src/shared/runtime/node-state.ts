@@ -118,13 +118,16 @@ export function linkNodeToParent(
   child: Instance,
   childState: NodeState,
   index = getChildren(parentState).length,
-): void {
+): number {
   childState.parent = parent;
   const siblings = getChildren(parentState);
-  siblings.splice(Math.max(0, Math.min(index, siblings.length)), 0, child);
+  const insertionIndex = Math.max(0, Math.min(index, siblings.length));
+  if (insertionIndex === siblings.length) siblings.push(child);
+  else siblings.splice(insertionIndex, 0, child);
   if (isModifierState(childState) && parentState.kind === 'gui') {
     parentState.modifiers.set(childState.modifierKey, child as Modifier);
   }
+  return insertionIndex;
 }
 
 /** Removes a node from the authoritative hierarchy state and returns its previous parent. */

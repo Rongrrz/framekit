@@ -3,7 +3,7 @@ import { guiEventMethods } from '../../shared/runtime/gui-events';
 import type { InstanceProperties } from '../../shared/runtime/node';
 import { addCleanup } from '../../shared/runtime/node-lifecycle';
 import { getActiveNodeState, mergeProperties } from '../../shared/runtime/node-state';
-import { createGuiNode, type GuiElement } from '../../shared/runtime/render';
+import { createGuiNode, setStyle, type GuiElement } from '../../shared/runtime/render';
 import { assertBoolean, assertInteger } from '../../shared/runtime/validation';
 
 /** Properties controlling a full-viewport GUI root. */
@@ -60,9 +60,11 @@ export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): Scr
     'ScreenGui',
     mergeProperties({ Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 }, initial),
     element,
-    (properties) => {
-      element.style.display = properties.Enabled ? '' : 'none';
-      element.style.zIndex = String(properties.DisplayOrder);
+    (properties, changed) => {
+      if (changed.has('Enabled')) setStyle(element, 'display', properties.Enabled ? '' : 'none');
+      if (changed.has('DisplayOrder')) {
+        setStyle(element, 'z-index', String(properties.DisplayOrder));
+      }
     },
     validateScreenGuiProperties,
     screenGuiMethods,

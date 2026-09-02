@@ -11,7 +11,7 @@ import { hasLayoutModifier, renderNode, type GuiElement } from './render';
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */
 export function destroy(node: Instance): void {
   const errors: unknown[] = [];
-  destroyRecursively(node, errors, false);
+  destroyRecursively(node, errors, false, undefined);
   if (errors.length === 1) throw errors[0];
   if (errors.length > 1) {
     throw new AggregateError(errors, 'Multiple errors occurred while destroying a node.');
@@ -38,12 +38,21 @@ function destroyRecursively(
   node: Instance,
   errors: unknown[],
   parentIsBeingDestroyed: boolean,
+  ancestorElementBeingRemoved: HTMLElement | undefined,
 ): void {
   const state = getNodeState(node);
   if (state.destroyed) return;
-  for (const child of Array.from(getChildren(state))) destroyRecursively(child, errors, true);
+  const children = getChildren(state);
+  const descendantElementOwner =
+    ancestorElementBeingRemoved ??
+    (state.kind === 'gui' ? (node as GuiElement).element : undefined);
+  for (const child of children) {
+    getNodeState(child).parent = undefined;
+    destroyRecursively(child, errors, true, descendantElementOwner);
+  }
+  children.length = 0;
 
-  if (state.parent) {
+  if (state.parent && !parentIsBeingDestroyed) {
     const previousParent = unlinkNodeFromParent(node, state)!;
     if (!parentIsBeingDestroyed && (isModifierState(state) || hasLayoutModifier(previousParent))) {
       try {
@@ -65,7 +74,8 @@ function destroyRecursively(
   state.cleanups.clear();
   if (state.kind === 'gui') {
     try {
-      (node as GuiElement).element.remove();
+      const element = (node as GuiElement).element;
+      if (!ancestorElementBeingRemoved?.contains(element)) element.remove();
     } catch (error) {
       errors.push(error);
     }

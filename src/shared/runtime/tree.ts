@@ -8,7 +8,7 @@ import {
   unlinkNodeFromParent,
   type NodeState,
 } from './node-state';
-import { hasLayoutModifier, isGuiNode, renderNode } from './render';
+import { hasLayoutModifier, isGuiNode, renderNode, type GuiElement } from './render';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
 export function append(parent: Instance, child: Instance): void {
@@ -28,7 +28,7 @@ export function append(parent: Instance, child: Instance): void {
     throw new TypeError('UI modifiers must be appended to a DOM-backed node.');
   }
   if (childState.parent === parent) {
-    placeChildElement(parent, parentState, child);
+    placeChildElement(parent, parentState, child, getChildren(parentState).indexOf(child));
     return;
   }
   if (
@@ -46,8 +46,8 @@ export function append(parent: Instance, child: Instance): void {
     ? getChildren(getNodeState(previousParent)).indexOf(child)
     : -1;
   unlinkNodeFromParent(child, childState);
-  linkNodeToParent(parent, parentState, child, childState);
-  placeChildElement(parent, parentState, child);
+  const insertionIndex = linkNodeToParent(parent, parentState, child, childState);
+  placeChildElement(parent, parentState, child, insertionIndex);
 
   try {
     if (previousParent && (isModifierState(childState) || hasLayoutModifier(previousParent))) {
@@ -59,8 +59,14 @@ export function append(parent: Instance, child: Instance): void {
     if (isGuiNode(child)) child.element.remove();
     if (previousParent) {
       const previousParentState = getNodeState(previousParent);
-      linkNodeToParent(previousParent, previousParentState, child, childState, previousIndex);
-      placeChildElement(previousParent, previousParentState, child);
+      const restoredIndex = linkNodeToParent(
+        previousParent,
+        previousParentState,
+        child,
+        childState,
+        previousIndex,
+      );
+      placeChildElement(previousParent, previousParentState, child, restoredIndex);
     }
     restoreRendering(parent, previousParent, error);
   }
@@ -168,12 +174,23 @@ function formatNode(node: Instance): string {
   return `${state.properties.Name} [${state.className}]`;
 }
 
-function placeChildElement(parent: Instance, parentState: NodeState, child: Instance): void {
+function placeChildElement(
+  parent: Instance,
+  parentState: NodeState,
+  child: Instance,
+  childIndex: number,
+): void {
   if (!isGuiNode(child) || !isGuiNode(parent) || child.element.parentElement === parent.element) {
     return;
   }
   const siblings = getChildren(parentState);
-  const nextGuiSibling = siblings.slice(siblings.indexOf(child) + 1).find(isGuiNode);
+  let nextGuiSibling: GuiElement | undefined;
+  for (let index = childIndex + 1; index < siblings.length; index += 1) {
+    const sibling = siblings[index]!;
+    if (!isGuiNode(sibling)) continue;
+    nextGuiSibling = sibling;
+    break;
+  }
   parent.element.insertBefore(child.element, nextGuiSibling?.element ?? null);
 }
 

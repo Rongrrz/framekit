@@ -288,6 +288,23 @@ describe('UI modifiers', () => {
     expect(frame.element.style.borderRadius).toBe('6px');
   });
 
+  it('restores a base style when a property change removes a derived override', () => {
+    const frame = createFrame({
+      Name: 'Override',
+      BackgroundColor3: color3FromRGB(20, 30, 40),
+    });
+    const conditional = createStyleModifier('Conditional', { Name: 'Conditional' }, (_, target) =>
+      target.Name === 'Override' ? { 'background-color': 'rgb(200 100 50)' } : {},
+    );
+
+    frame.addChild(conditional);
+    expect(frame.element.style.backgroundColor).toContain('200');
+
+    frame.Name = 'Base';
+
+    expect(frame.element.style.backgroundColor).toContain('20');
+  });
+
   it('rejects non-finite modifier properties at construction', () => {
     expect(() => createUIStroke({ Thickness: Number.NaN })).toThrow(/Thickness.*finite/);
     expect(() => createUICorner({ CornerRadius: Number.POSITIVE_INFINITY })).toThrow(

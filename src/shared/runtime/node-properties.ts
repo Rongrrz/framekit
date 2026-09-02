@@ -4,6 +4,7 @@ import { renderPropertyChanges } from './render';
 import { emitNodeEvent, subscribeToNodeEvent, type Unsubscribe } from './signal';
 
 const propertyWriteEventKeys = new Map<PropertyKey, symbol>();
+const singlePropertyChangeSets = new Map<PropertyKey, ReadonlySet<PropertyKey>>();
 
 type PropertyCommit<Properties extends InstanceProperties> = Readonly<{
   previousProperties: Properties;
@@ -25,43 +26,51 @@ export function applyPropertyPatch<Properties extends InstanceProperties>(
   patch: Partial<Properties>,
 ): void {
   const requestedProperties = Object.keys(patch) as (keyof Properties)[];
-  const commit = commitPropertyPatch(node, patch);
-  const errors: unknown[] = [];
+  const commit = commitPropertyPatch(node, patch, requestedProperties);
+  let errors: unknown[] | undefined;
 
   for (const property of requestedProperties) {
     try {
       emitNodeEvent(node, getPropertyWriteEventKey(property), patch[property]);
     } catch (error) {
-      errors.push(error);
+      (errors ??= []).push(error);
     }
   }
 
-  if (commit) emitPropertyChanges(node, commit, errors);
+  if (commit) errors = emitPropertyChanges(node, commit, errors);
   throwCallbackErrors(errors);
 }
 
 function commitPropertyPatch<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
+  requestedProperties: readonly (keyof Properties)[],
 ): PropertyCommit<Properties> | undefined {
   const state = getActiveNodeState(node);
   validatePropertyPatch(state.properties, patch);
 
   const previousProperties = state.properties;
-  const changedProperties = (Object.keys(patch) as (keyof Properties)[]).filter(
-    (property) => !Object.is(previousProperties[property], patch[property]),
-  );
-  if (changedProperties.length === 0) return;
+  let changedCount = 0;
+  for (const property of requestedProperties) {
+    if (!Object.is(previousProperties[property], patch[property])) changedCount += 1;
+  }
+  if (changedCount === 0) return;
+  const changedProperties =
+    changedCount === requestedProperties.length
+      ? requestedProperties
+      : requestedProperties.filter(
+          (property) => !Object.is(previousProperties[property], patch[property]),
+        );
 
   const nextProperties = { ...state.properties, ...patch };
   state.validateProperties?.(nextProperties);
   state.properties = nextProperties;
   try {
-    renderPropertyChanges(node, changedProperties);
+    renderPropertyChanges(node, getPropertyChangeSet(changedProperties));
   } catch (error) {
     state.properties = previousProperties;
     try {
-      renderPropertyChanges(node, changedProperties);
+      renderPropertyChanges(node, getPropertyChangeSet(changedProperties));
     } catch (rollbackError) {
       throw new AggregateError(
         [error, rollbackError],
@@ -74,11 +83,24 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   return { previousProperties, nextProperties, changedProperties };
 }
 
+function getPropertyChangeSet<Properties extends InstanceProperties>(
+  properties: readonly (keyof Properties)[],
+): ReadonlySet<keyof Properties> {
+  if (properties.length !== 1) return new Set(properties);
+  const property = properties[0]!;
+  let changes = singlePropertyChangeSets.get(property);
+  if (!changes) {
+    changes = new Set([property]);
+    singlePropertyChangeSets.set(property, changes);
+  }
+  return changes as ReadonlySet<keyof Properties>;
+}
+
 function emitPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   commit: PropertyCommit<Properties>,
-  errors: unknown[],
-): void {
+  errors: unknown[] | undefined,
+): unknown[] | undefined {
   for (const property of commit.changedProperties) {
     try {
       emitNodeEvent(
@@ -88,9 +110,10 @@ function emitPropertyChanges<Properties extends InstanceProperties>(
         commit.previousProperties[property],
       );
     } catch (error) {
-      errors.push(error);
+      (errors ??= []).push(error);
     }
   }
+  return errors;
 }
 
 /** Observes every successful write, including writes that keep the current value. */
@@ -128,6 +151,13 @@ export function getPropertiesSnapshot<Properties extends InstanceProperties>(
   return { ...getActiveNodeState(node).properties };
 }
 
+/** Reads the internal property record for synchronous runtime rendering without cloning it. */
+export function getNodeProperties<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
+): Readonly<Properties> {
+  return getActiveNodeState(node).properties;
+}
+
 /** Reads one current property without allocating a snapshot. */
 export function getNodeProperty<
   Properties extends InstanceProperties,
@@ -144,7 +174,8 @@ function getPropertyWriteEventKey(property: PropertyKey): symbol {
   return created;
 }
 
-function throwCallbackErrors(errors: readonly unknown[]): void {
+function throwCallbackErrors(errors: readonly unknown[] | undefined): void {
+  if (!errors) return;
   if (errors.length === 1) throw errors[0];
   if (errors.length > 1) {
     throw new AggregateError(errors, 'Multiple property callbacks failed.');

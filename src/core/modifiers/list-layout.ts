@@ -72,12 +72,14 @@ function resolveListLayout(
   children: readonly LayoutChild[],
 ): LayoutStyles {
   const isHorizontal = properties.FillDirection === 'Horizontal';
-  const orderedChildren = children
-    .map((child, originalIndex) => ({ child, originalIndex }))
-    .sort((left, right) => compareChildren(left, right, properties.SortOrder));
-  const displayOrder = new Map(
-    orderedChildren.map(({ originalIndex }, order) => [originalIndex, order]),
+  const orderedIndices = Array.from({ length: children.length }, (_, index) => index);
+  orderedIndices.sort((left, right) =>
+    compareChildren(children[left]!, left, children[right]!, right, properties.SortOrder),
   );
+  const displayOrder = Array.from<number>({ length: children.length });
+  for (const [order, originalIndex] of orderedIndices.entries()) {
+    displayOrder[originalIndex] = order;
+  }
 
   return {
     parent: {
@@ -102,7 +104,7 @@ function resolveListLayout(
         top: 'auto',
         transform: 'none',
         'flex-shrink': '0',
-        order: String(displayOrder.get(index) ?? index),
+        order: String(displayOrder[index] ?? index),
       }),
     ),
   };
@@ -118,15 +120,17 @@ function validateListLayoutProperties(properties: Readonly<UIListLayoutPropertie
 }
 
 function compareChildren(
-  left: Readonly<{ child: LayoutChild; originalIndex: number }>,
-  right: Readonly<{ child: LayoutChild; originalIndex: number }>,
+  left: LayoutChild,
+  leftIndex: number,
+  right: LayoutChild,
+  rightIndex: number,
   sortOrder: SortOrder,
 ): number {
   const comparison =
     sortOrder === 'Name'
-      ? left.child.Name.localeCompare(right.child.Name)
-      : left.child.LayoutOrder - right.child.LayoutOrder;
-  return comparison || left.originalIndex - right.originalIndex;
+      ? left.Name.localeCompare(right.Name)
+      : left.LayoutOrder - right.LayoutOrder;
+  return comparison || leftIndex - rightIndex;
 }
 
 function resolveHorizontalAlignment(alignment: HorizontalAlignment): string {
