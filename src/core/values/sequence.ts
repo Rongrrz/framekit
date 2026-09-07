@@ -1,4 +1,4 @@
-import { assertFiniteNumber } from '../../shared/runtime/validation';
+import { assertFiniteNumber } from '../../runtime/validation';
 import { assertColor3, type Color3 } from './color3';
 
 /** A color at a normalized point in a ColorSequence. */
@@ -27,8 +27,8 @@ export function colorSequence(
 ): ColorSequence {
   const values = [first, second, ...remaining];
   const keypoints = isColorSequenceKeypoint(first)
-    ? values.map((value) => asColorKeypoint(value))
-    : evenlySpace(values.map((value) => asColor(value)));
+    ? values.map(asColorKeypoint)
+    : evenlySpace(values.map(asColor));
   assertColorSequence(keypoints);
   return Object.freeze(keypoints.map((keypoint) => Object.freeze(keypoint)));
 }
@@ -41,9 +41,7 @@ export function numberSequence(
 ): NumberSequence {
   const values = [first, second, ...remaining];
   const keypoints =
-    typeof first === 'number'
-      ? evenlySpace(values.map((value) => asNumber(value)))
-      : values.map((value) => asNumberKeypoint(value));
+    typeof first === 'number' ? evenlySpace(values.map(asNumber)) : values.map(asNumberKeypoint);
   assertNumberSequence(keypoints);
   return Object.freeze(keypoints.map((keypoint) => Object.freeze(keypoint)));
 }
@@ -75,11 +73,10 @@ function assertSequence(
   }
 
   let previousTime = -1;
-  for (const [index, candidate] of value.entries()) {
-    if (!isRecord(candidate)) {
+  for (const [index, keypoint] of value.entries()) {
+    if (!isRecord(keypoint)) {
       throw new TypeError(`${name}[${index}] must be a keypoint.`);
     }
-    const keypoint = candidate;
     assertFiniteNumber(keypoint.Time, `${name}[${index}].Time`);
     if (keypoint.Time < 0 || keypoint.Time > 1 || keypoint.Time <= previousTime) {
       throw new RangeError(`${name} times must increase from 0 to 1.`);

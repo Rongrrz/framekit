@@ -1,4 +1,4 @@
-import type { Instance, InstanceProperties } from '../shared/runtime/node';
+import type { Instance, InstanceProperties } from '../runtime/node';
 import {
   createSpringBinding,
   type SpringBinding,

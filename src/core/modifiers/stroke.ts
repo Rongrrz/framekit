@@ -1,15 +1,7 @@
-import {
-  createStyleModifier,
-  type StyleModifier,
-  type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
-import {
-  assertAllowedValue,
-  assertBoolean,
-  assertFiniteNumber,
-} from '../../shared/runtime/validation';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
+import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../../runtime/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Where a stroke is drawn relative to its GUI parent's edge. */
@@ -35,7 +27,7 @@ export type UIStroke = StyleModifier<UIStrokeProperties>;
 const borderStrokePositions: readonly BorderStrokePosition[] = ['Inner', 'Center', 'Outer'];
 
 /** Creates a stroke modifier that applies a border effect to its GUI parent. */
-export function createUIStroke(initial: Partial<UIStrokeProperties> = {}): UIStroke {
+export function createUIStroke(initialProperties: Partial<UIStrokeProperties> = {}): UIStroke {
   return createStyleModifier(
     'UIStroke',
     mergeProperties(
@@ -47,7 +39,7 @@ export function createUIStroke(initial: Partial<UIStrokeProperties> = {}): UIStr
         Thickness: 1,
         BorderStrokePosition: 'Outer',
       },
-      initial,
+      initialProperties,
     ),
     resolveStrokeStyles,
     validateStrokeProperties,
@@ -61,8 +53,9 @@ function resolveStrokeStyles(properties: Readonly<UIStrokeProperties>): Styles {
 function resolveStrokeShadow(properties: Readonly<UIStrokeProperties>): string {
   const thickness = Math.max(0, properties.Thickness);
   const color = color3ToCss(properties.Color, properties.Transparency);
-  if (properties.BorderStrokePosition === 'Inner')
+  if (properties.BorderStrokePosition === 'Inner') {
     return `inset 0px 0px 0px ${thickness}px ${color}`;
+  }
   if (properties.BorderStrokePosition === 'Outer') return `0px 0px 0px ${thickness}px ${color}`;
 
   const halfThickness = thickness / 2;

@@ -4,14 +4,10 @@ import {
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from '../../shared/dom/button';
-import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
-import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
-import {
-  assertAllowedValue,
-  assertFiniteNumber,
-  assertString,
-} from '../../shared/runtime/validation';
+} from '../../dom/button';
+import { buttonEventMethods, type GuiMethodTable } from '../../runtime/gui-events';
+import type { GuiElement, PropertyRenderer } from '../../runtime/gui-node';
+import { assertAllowedValue, assertFiniteNumber, assertString } from '../../runtime/validation';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -51,30 +47,34 @@ const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
 /** Creates a non-interactive image node. */
-export function createImageLabel(initial: Partial<ImageLabelProperties> = {}): ImageLabel {
+export function createImageLabel(
+  initialProperties: Partial<ImageLabelProperties> = {},
+): ImageLabel {
   return createImageNode(
     'ImageLabel',
     document.createElement('div'),
-    createDefaultImageProps(),
-    initial,
+    createDefaultImageProperties(),
+    initialProperties,
   );
 }
 
 /** Creates an image node with button events. */
-export function createImageButton(initial: Partial<ImageButtonProperties> = {}): ImageButton {
+export function createImageButton(
+  initialProperties: Partial<ImageButtonProperties> = {},
+): ImageButton {
   const element = document.createElement('button');
   const node = createImageNode(
     'ImageButton',
     element,
     {
-      ...createDefaultImageProps(),
+      ...createDefaultImageProperties(),
       Name: 'ImageButton',
       Disabled: false,
       AccessibleLabel: '',
     },
-    initial,
-    (properties, changed) => {
-      if (changed.has('Disabled') || changed.has('AccessibleLabel')) {
+    initialProperties,
+    (properties, changedProperties) => {
+      if (changedProperties.has('Disabled') || changedProperties.has('AccessibleLabel')) {
         renderButtonProperties(element, properties);
       }
     },
@@ -85,7 +85,7 @@ export function createImageButton(initial: Partial<ImageButtonProperties> = {}):
   return node;
 }
 
-function createDefaultImageProps(): ImageLabelProperties {
+function createDefaultImageProperties(): ImageLabelProperties {
   return {
     ...createDefaultGuiObjectProperties(),
     Name: 'ImageLabel',
@@ -98,12 +98,12 @@ function createDefaultImageProps(): ImageLabelProperties {
 }
 
 function createImageNode<Properties extends ImageLabelProperties>(
-  nodeType: string,
+  className: string,
   element: HTMLElement,
   defaultProperties: Properties,
-  initial: Partial<Properties>,
+  initialProperties: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
-  eventMethods?: GuiEventMethodTable,
+  methods?: GuiMethodTable,
 ): GuiElement<Properties> {
   const image = document.createElement('img');
   image.draggable = false;
@@ -119,30 +119,30 @@ function createImageNode<Properties extends ImageLabelProperties>(
   });
   element.prepend(image);
 
-  return createGuiObjectNode(
-    nodeType,
+  return createGuiObjectNode({
+    className,
     element,
     defaultProperties,
-    initial,
-    (properties, changed) => {
-      if (changed.has('Image')) {
+    initialProperties,
+    renderProperties: (properties, changedProperties) => {
+      if (changedProperties.has('Image')) {
         setImageSource(image, properties.Image);
       }
-      if (changed.has('AltText')) {
+      if (changedProperties.has('AltText')) {
         image.alt = properties.AltText;
       }
-      if (changed.has('ImageTransparency')) {
+      if (changedProperties.has('ImageTransparency')) {
         image.style.opacity = String(1 - clamp(properties.ImageTransparency, 0, 1));
       }
-      if (changed.has('ScaleType')) {
+      if (changedProperties.has('ScaleType')) {
         image.style.objectFit = objectFit[properties.ScaleType];
       }
 
-      renderAdditionalProperties?.(properties, changed);
+      renderAdditionalProperties?.(properties, changedProperties);
     },
-    eventMethods,
-    validateImageProperties,
-  );
+    methods,
+    validateProperties: validateImageProperties,
+  });
 }
 
 function validateImageProperties(

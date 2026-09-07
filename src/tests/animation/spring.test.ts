@@ -1,28 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../..';
+import { fk, fka } from '../../index';
 import { setupAnimationClock } from '../support/animation-clock';
 
 const { advance, settle } = setupAnimationClock();
 
 describe('springs', () => {
-  it('retains a spring per node through the top-level API', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const settings = { tension: 170, friction: 5 } as const;
+  it('retains one spring controller per node', () => {
+    const frame = fk.createFrame();
+    const controller = fka.spring(frame);
 
-    fka.spring(frame, { BackgroundTransparency: 1 }, settings);
-    for (let index = 0; index < 5; index += 1) advance();
-
-    const beforeRetarget = frame.BackgroundTransparency;
-
-    fka.spring(frame, { BackgroundTransparency: 0 }, settings);
-    advance();
-
-    expect(frame.BackgroundTransparency).toBeGreaterThan(beforeRetarget);
+    expect(fka.spring(frame)).toBe(controller);
+    expect(fka.spring(frame, { Rotation: 90 })).toBe(controller);
+    expect(fka.spring(fk.createFrame())).not.toBe(controller);
 
     settle();
 
-    expect(frame.BackgroundTransparency).toBe(0);
+    expect(frame.Rotation).toBe(90);
+    expect(controller.isAnimating()).toBe(false);
   });
 
   it('applies call settings only to properties in that goal', () => {

@@ -4,10 +4,10 @@ import {
   type LayoutModifier,
   type LayoutStyles,
   type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
-import { assertAllowedValue, assertBoolean } from '../../shared/runtime/validation';
+} from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
+import { assertAllowedValue, assertBoolean } from '../../runtime/validation';
 import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
 
 /** Primary axis used to arrange children. */
@@ -47,7 +47,9 @@ const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bott
 const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a list layout that arranges its parent's direct GUI children. */
-export function createUIListLayout(initial: Partial<UIListLayoutProperties> = {}): UIListLayout {
+export function createUIListLayout(
+  initialProperties: Partial<UIListLayoutProperties> = {},
+): UIListLayout {
   return createLayoutModifier(
     'UIListLayout',
     mergeProperties(
@@ -60,7 +62,7 @@ export function createUIListLayout(initial: Partial<UIListLayoutProperties> = {}
         SortOrder: 'LayoutOrder',
         Wraps: false,
       },
-      initial,
+      initialProperties,
     ),
     resolveListLayout,
     validateListLayoutProperties,
@@ -72,14 +74,11 @@ function resolveListLayout(
   children: readonly LayoutChild[],
 ): LayoutStyles {
   const isHorizontal = properties.FillDirection === 'Horizontal';
-  const orderedIndices = Array.from({ length: children.length }, (_, index) => index);
-  orderedIndices.sort((left, right) =>
-    compareChildren(children[left]!, left, children[right]!, right, properties.SortOrder),
-  );
-  const displayOrder = Array.from<number>({ length: children.length });
-  for (const [order, originalIndex] of orderedIndices.entries()) {
-    displayOrder[originalIndex] = order;
-  }
+  const childOrders = resolveChildOrders(children, properties.SortOrder);
+  const horizontalAlignment = resolveHorizontalAlignment(properties.HorizontalAlignment);
+  const verticalAlignment = resolveVerticalAlignment(properties.VerticalAlignment);
+  const mainAxisAlignment = isHorizontal ? horizontalAlignment : verticalAlignment;
+  const crossAxisAlignment = isHorizontal ? verticalAlignment : horizontalAlignment;
 
   return {
     parent: {
@@ -87,15 +86,9 @@ function resolveListLayout(
       'flex-direction': isHorizontal ? 'row' : 'column',
       'flex-wrap': properties.Wraps ? 'wrap' : 'nowrap',
       gap: udimToCss(properties.Padding),
-      'justify-content': isHorizontal
-        ? resolveHorizontalAlignment(properties.HorizontalAlignment)
-        : resolveVerticalAlignment(properties.VerticalAlignment),
-      'align-items': isHorizontal
-        ? resolveVerticalAlignment(properties.VerticalAlignment)
-        : resolveHorizontalAlignment(properties.HorizontalAlignment),
-      'align-content': isHorizontal
-        ? resolveVerticalAlignment(properties.VerticalAlignment)
-        : resolveHorizontalAlignment(properties.HorizontalAlignment),
+      'justify-content': mainAxisAlignment,
+      'align-items': crossAxisAlignment,
+      'align-content': crossAxisAlignment,
     },
     children: children.map(
       (_, index): Styles => ({
@@ -104,7 +97,7 @@ function resolveListLayout(
         top: 'auto',
         transform: 'none',
         'flex-shrink': '0',
-        order: String(displayOrder[index] ?? index),
+        order: String(childOrders[index]),
       }),
     ),
   };
@@ -119,18 +112,22 @@ function validateListLayoutProperties(properties: Readonly<UIListLayoutPropertie
   assertUDim(properties.Padding, 'Padding');
 }
 
-function compareChildren(
-  left: LayoutChild,
-  leftIndex: number,
-  right: LayoutChild,
-  rightIndex: number,
-  sortOrder: SortOrder,
-): number {
-  const comparison =
-    sortOrder === 'Name'
-      ? left.Name.localeCompare(right.Name)
-      : left.LayoutOrder - right.LayoutOrder;
-  return comparison || leftIndex - rightIndex;
+function resolveChildOrders(children: readonly LayoutChild[], sortOrder: SortOrder): number[] {
+  const sortedIndices = children.map((_, index) => index);
+  sortedIndices.sort((leftIndex, rightIndex) => {
+    const left = children[leftIndex]!;
+    const right = children[rightIndex]!;
+    const comparison =
+      sortOrder === 'Name'
+        ? left.Name.localeCompare(right.Name)
+        : left.LayoutOrder - right.LayoutOrder;
+    return comparison || leftIndex - rightIndex;
+  });
+
+  // CSS order changes visual placement while the hierarchy retains its insertion order.
+  const orderByChild = children.map((_, index) => index);
+  for (const [order, childIndex] of sortedIndices.entries()) orderByChild[childIndex] = order;
+  return orderByChild;
 }
 
 function resolveHorizontalAlignment(alignment: HorizontalAlignment): string {

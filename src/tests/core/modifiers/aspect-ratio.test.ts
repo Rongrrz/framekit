@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../..';
+import { fk } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
 
-const { createFrame, createUIAspectRatioConstraint, udim2FromOffset } = fk;
 resetDocumentAfterEach();
 
 describe('UI aspect ratio constraints', () => {
   it('fits within the requested size using the dominant axis', () => {
-    const frame = createFrame({ Size: udim2FromOffset(200, 100) });
-    const constraint = createUIAspectRatioConstraint();
+    const frame = fk.createFrame({ Size: fk.udim2FromOffset(200, 100) });
+    const constraint = fk.createUIAspectRatioConstraint();
 
     frame.addChild(constraint);
 
@@ -40,8 +39,8 @@ describe('UI aspect ratio constraints', () => {
   });
 
   it('can scale from its parent while maintaining the ratio', () => {
-    const frame = createFrame();
-    const constraint = createUIAspectRatioConstraint({
+    const frame = fk.createFrame();
+    const constraint = fk.createUIAspectRatioConstraint({
       AspectRatio: 16 / 9,
       AspectType: 'ScaleWithParentSize',
       DominantAxis: 'Height',
@@ -57,9 +56,9 @@ describe('UI aspect ratio constraints', () => {
   });
 
   it('falls back to a square for invalid ratios', () => {
-    const frame = createFrame();
+    const frame = fk.createFrame();
 
-    frame.addChild(createUIAspectRatioConstraint({ AspectRatio: 0 }));
+    frame.addChild(fk.createUIAspectRatioConstraint({ AspectRatio: 0 }));
 
     expect(frame.element.style.aspectRatio).toBe('1 / 1');
   });

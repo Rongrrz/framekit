@@ -1,11 +1,7 @@
-import {
-  createStyleModifier,
-  type StyleModifier,
-  type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
-import { assertBoolean, assertFiniteNumber } from '../../shared/runtime/validation';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
+import { assertBoolean, assertFiniteNumber } from '../../runtime/validation';
 
 /** Properties for rounding a GUI parent's corners. */
 export type UICornerProperties = InstanceProperties & {
@@ -19,10 +15,10 @@ export type UICornerProperties = InstanceProperties & {
 export type UICorner = StyleModifier<UICornerProperties>;
 
 /** Creates a corner modifier that applies border radius to its GUI parent. */
-export function createUICorner(initial: Partial<UICornerProperties> = {}): UICorner {
+export function createUICorner(initialProperties: Partial<UICornerProperties> = {}): UICorner {
   return createStyleModifier(
     'UICorner',
-    mergeProperties({ Name: 'UICorner', Enabled: true, CornerRadius: 0 }, initial),
+    mergeProperties({ Name: 'UICorner', Enabled: true, CornerRadius: 0 }, initialProperties),
     resolveCornerStyles,
     validateCornerProperties,
   );

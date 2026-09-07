@@ -1,19 +1,16 @@
-import { connectHoverEvents } from '../shared/dom/hover-events';
-import type { GuiEventMethodTable } from '../shared/runtime/gui-events';
-import type { InstanceProperties } from '../shared/runtime/node';
-import { mergeProperties, type PropertyValidator } from '../shared/runtime/node-state';
-import {
-  createGuiNode,
-  setStyle,
-  type GuiElement,
-  type PropertyRenderer,
-} from '../shared/runtime/render';
+import { connectHoverEvents } from '../dom/hover-events';
+import { setStyle } from '../dom/styles';
+import type { GuiMethodTable } from '../runtime/gui-events';
+import { createGuiNode, type GuiElement, type PropertyRenderer } from '../runtime/gui-node';
+import type { InstanceProperties } from '../runtime/node';
+import { mergeProperties } from '../runtime/node-properties';
+import type { PropertyValidator } from '../runtime/node-state';
 import {
   assertAllowedValue,
   assertBoolean,
   assertFiniteNumber,
   assertInteger,
-} from '../shared/runtime/validation';
+} from '../runtime/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from './values/color3';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from './values/udim';
 import { assertVector2, vector2, type Vector2 } from './values/vector2';
@@ -71,33 +68,43 @@ export function createDefaultGuiObjectProperties(): GuiObjectProperties {
   };
 }
 
-/** Builds a DOM-backed node with shared GUI object behavior. */
-export function createGuiObjectNode<Properties extends GuiObjectProperties>(
-  className: string,
-  element: HTMLElement,
-  defaultProperties: Properties,
-  initial: Partial<Properties>,
-  renderAdditionalProperties?: PropertyRenderer<Properties>,
-  eventMethods?: GuiEventMethodTable,
-  validateAdditionalProperties?: PropertyValidator<Properties>,
-): GuiObject<Properties> {
+type GuiObjectNodeOptions<Properties extends GuiObjectProperties> = {
+  className: string;
+  element: HTMLElement;
+  defaultProperties: Properties;
+  initialProperties: Partial<Properties>;
+  renderProperties?: PropertyRenderer<Properties> | undefined;
+  methods?: GuiMethodTable | undefined;
+  validateProperties?: PropertyValidator<Properties> | undefined;
+};
+
+/** Combines shared GUI behavior with an element's own rendering and validation. */
+export function createGuiObjectNode<Properties extends GuiObjectProperties>({
+  className,
+  element,
+  defaultProperties,
+  initialProperties,
+  renderProperties,
+  methods,
+  validateProperties,
+}: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
   element.dataset.framekit = className;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
 
-  const node = createGuiNode(
+  const node = createGuiNode({
     className,
-    mergeProperties(defaultProperties, initial),
+    properties: mergeProperties(defaultProperties, initialProperties),
     element,
-    (properties, changed) => {
-      renderGuiObject(element, properties, changed);
-      renderAdditionalProperties?.(properties, changed);
+    renderProperties: (properties, changedProperties) => {
+      renderGuiObject(element, properties, changedProperties);
+      renderProperties?.(properties, changedProperties);
     },
-    (properties) => {
+    validateProperties: (properties) => {
       validateGuiObjectProperties(properties);
-      validateAdditionalProperties?.(properties);
+      validateProperties?.(properties);
     },
-    eventMethods,
-  );
+    methods,
+  });
 
   connectHoverEvents(node, element);
   return node;
@@ -106,9 +113,9 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>(
 function renderGuiObject(
   element: HTMLElement,
   properties: Readonly<GuiObjectProperties>,
-  changed: ReadonlySet<PropertyKey>,
+  changedProperties: ReadonlySet<PropertyKey>,
 ): void {
-  if (changed.has('Size') || changed.has('AutomaticSize')) {
+  if (changedProperties.has('Size') || changedProperties.has('AutomaticSize')) {
     setStyle(
       element,
       'width',
@@ -124,29 +131,34 @@ function renderGuiObject(
         : udimToCss(properties.Size.Y),
     );
   }
-  if (changed.has('Position')) {
+  if (changedProperties.has('Position')) {
     setStyle(element, 'position', 'absolute');
     setStyle(element, 'left', udimToCss(properties.Position.X));
     setStyle(element, 'top', udimToCss(properties.Position.Y));
   }
-  if (changed.has('AnchorPoint')) {
+  if (changedProperties.has('AnchorPoint')) {
     setStyle(
       element,
       'transform',
       `translate(${-properties.AnchorPoint.X * 100}%, ${-properties.AnchorPoint.Y * 100}%)`,
     );
   }
-  if (changed.has('Rotation')) setStyle(element, 'rotate', `${properties.Rotation}deg`);
-  if (changed.has('Visible')) setStyle(element, 'display', properties.Visible ? '' : 'none');
-  if (changed.has('BackgroundColor3') || changed.has('BackgroundTransparency')) {
+  if (changedProperties.has('Rotation')) setStyle(element, 'rotate', `${properties.Rotation}deg`);
+  if (changedProperties.has('Visible')) {
+    setStyle(element, 'display', properties.Visible ? '' : 'none');
+  }
+  if (
+    changedProperties.has('BackgroundColor3') ||
+    changedProperties.has('BackgroundTransparency')
+  ) {
     setStyle(
       element,
       'background-color',
       color3ToCss(properties.BackgroundColor3, properties.BackgroundTransparency),
     );
   }
-  if (changed.has('ZIndex')) setStyle(element, 'z-index', String(properties.ZIndex));
-  if (changed.has('ClipsDescendants')) {
+  if (changedProperties.has('ZIndex')) setStyle(element, 'z-index', String(properties.ZIndex));
+  if (changedProperties.has('ClipsDescendants')) {
     setStyle(element, 'overflow', properties.ClipsDescendants ? 'hidden' : 'visible');
   }
 }

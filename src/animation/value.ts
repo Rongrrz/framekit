@@ -6,7 +6,7 @@ export type AnimationValueKind = 'number' | 'Color3' | 'Vector2' | 'UDim' | 'UDi
 
 export type DecomposedAnimationValue = Readonly<{
   kind: AnimationValueKind;
-  numbers: number[];
+  components: number[];
 }>;
 
 export function decomposeAnimationValue(
@@ -14,35 +14,35 @@ export function decomposeAnimationValue(
   property: string,
 ): DecomposedAnimationValue {
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return { kind: 'number', numbers: [value] };
+    return { kind: 'number', components: [value] };
   }
-  if (isColor3(value)) return { kind: 'Color3', numbers: [value.R, value.G, value.B] };
+  if (isColor3(value)) return { kind: 'Color3', components: [value.R, value.G, value.B] };
   if (isUDim2(value)) {
     return {
       kind: 'UDim2',
-      numbers: [value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset],
+      components: [value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset],
     };
   }
-  if (isUDim(value)) return { kind: 'UDim', numbers: [value.Scale, value.Offset] };
-  if (isVector2(value)) return { kind: 'Vector2', numbers: [value.X, value.Y] };
+  if (isUDim(value)) return { kind: 'UDim', components: [value.Scale, value.Offset] };
+  if (isVector2(value)) return { kind: 'Vector2', components: [value.X, value.Y] };
   throw new TypeError(`Property "${property}" does not contain an animatable value.`);
 }
 
 export function composeAnimationValue(
   kind: AnimationValueKind,
-  numbers: readonly number[],
+  components: readonly number[],
 ): number | Color3 | Vector2 | UDim | UDim2 {
   switch (kind) {
     case 'number':
-      return numbers[0]!;
+      return components[0]!;
     case 'Color3':
-      return color3FromRGB(numbers[0]!, numbers[1]!, numbers[2]!);
+      return color3FromRGB(components[0]!, components[1]!, components[2]!);
     case 'Vector2':
-      return vector2(numbers[0]!, numbers[1]!);
+      return vector2(components[0]!, components[1]!);
     case 'UDim':
-      return udim(numbers[0]!, numbers[1]!);
+      return udim(components[0]!, components[1]!);
     case 'UDim2':
-      return udim2(numbers[0]!, numbers[1]!, numbers[2]!, numbers[3]!);
+      return udim2(components[0]!, components[1]!, components[2]!, components[3]!);
   }
 }
 
@@ -67,7 +67,7 @@ export function interpolateAnimationValue(
   assertCompatibleAnimationValues(from, to, property);
   return composeAnimationValue(
     from.kind,
-    from.numbers.map((value, index) => value + (to.numbers[index]! - value) * alpha),
+    from.components.map((value, index) => value + (to.components[index]! - value) * alpha),
   );
 }
 

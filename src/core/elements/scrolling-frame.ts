@@ -1,13 +1,14 @@
-import { guiEventMethods } from '../../shared/runtime/gui-events';
-import { addCleanup } from '../../shared/runtime/node-lifecycle';
-import { applyPropertyPatch, getNodeProperty } from '../../shared/runtime/node-properties';
-import { getActiveNodeState } from '../../shared/runtime/node-state';
-import { setStyle, type GuiElement } from '../../shared/runtime/render';
+import { setStyle } from '../../dom/styles';
+import { guiEventMethods } from '../../runtime/gui-events';
+import type { GuiElement } from '../../runtime/gui-node';
+import { onDestroy } from '../../runtime/node-lifecycle';
+import { setNodeProperties, getNodeProperty } from '../../runtime/node-properties';
+import { getActiveNodeState } from '../../runtime/node-state';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
-} from '../../shared/runtime/validation';
+} from '../../runtime/validation';
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,
@@ -94,7 +95,7 @@ const scrollingFrameMethods = Object.freeze(scrollingFrameMethodTable);
 
 /** Creates a native scrolling container with an animatable CanvasPosition. */
 export function createScrollingFrame(
-  initial: Partial<ScrollingFrameProperties> = {},
+  initialProperties: Partial<ScrollingFrameProperties> = {},
 ): ScrollingFrame {
   const element = document.createElement('div');
   element.dataset.framekitScrollingFrame = '';
@@ -116,10 +117,10 @@ export function createScrollingFrame(
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
   // position accepted by the browser after each FrameKit write so those events can be ignored.
   let lastRenderedCanvasPosition = readCanvasPosition(element);
-  const node = createGuiObjectNode<ScrollingFrameProperties>(
-    'ScrollingFrame',
+  const node = createGuiObjectNode<ScrollingFrameProperties>({
+    className: 'ScrollingFrame',
     element,
-    {
+    defaultProperties: {
       ...createDefaultGuiObjectProperties(),
       Name: 'ScrollingFrame',
       ScrollingDirection: 'XY',
@@ -129,69 +130,66 @@ export function createScrollingFrame(
       ScrollingEnabled: true,
       ScrollBarThickness: 12,
     },
-    initial,
-    (current, changed) => {
-      if (changed.has('ScrollingDirection') || changed.has('ScrollingEnabled')) {
-        const scrollX = current.ScrollingDirection === 'X' || current.ScrollingDirection === 'XY';
-        const scrollY = current.ScrollingDirection === 'Y' || current.ScrollingDirection === 'XY';
-        setStyle(element, 'overflow-x', current.ScrollingEnabled && scrollX ? 'auto' : 'hidden');
-        setStyle(element, 'overflow-y', current.ScrollingEnabled && scrollY ? 'auto' : 'hidden');
+    initialProperties,
+    renderProperties: (properties, changedProperties) => {
+      if (
+        changedProperties.has('ScrollingDirection') ||
+        changedProperties.has('ScrollingEnabled')
+      ) {
+        const scrollX =
+          properties.ScrollingDirection === 'X' || properties.ScrollingDirection === 'XY';
+        const scrollY =
+          properties.ScrollingDirection === 'Y' || properties.ScrollingDirection === 'XY';
+        setStyle(element, 'overflow-x', properties.ScrollingEnabled && scrollX ? 'auto' : 'hidden');
+        setStyle(element, 'overflow-y', properties.ScrollingEnabled && scrollY ? 'auto' : 'hidden');
       }
-      if (changed.has('ScrollBarThickness')) {
-        setStyle(element, '--framekit-scrollbar-thickness', `${current.ScrollBarThickness}px`);
-        setStyle(
-          element,
-          'scrollbar-width',
-          current.ScrollBarThickness === 0
-            ? 'none'
-            : current.ScrollBarThickness <= 8
-              ? 'thin'
-              : 'auto',
-        );
+      if (changedProperties.has('ScrollBarThickness')) {
+        setStyle(element, '--framekit-scrollbar-thickness', `${properties.ScrollBarThickness}px`);
+        setStyle(element, 'scrollbar-width', resolveScrollbarWidth(properties.ScrollBarThickness));
       }
-      if (changed.has('CanvasSize') || changed.has('AutomaticCanvasSize')) {
+      if (changedProperties.has('CanvasSize') || changedProperties.has('AutomaticCanvasSize')) {
         setStyle(
           canvasBounds,
           'width',
-          isCanvasAxisAutomatic(current.AutomaticCanvasSize, 'X')
+          isCanvasAxisAutomatic(properties.AutomaticCanvasSize, 'X')
             ? '0px'
-            : udimToCss(current.CanvasSize.X),
+            : udimToCss(properties.CanvasSize.X),
         );
         setStyle(
           canvasBounds,
           'height',
-          isCanvasAxisAutomatic(current.AutomaticCanvasSize, 'Y')
+          isCanvasAxisAutomatic(properties.AutomaticCanvasSize, 'Y')
             ? '0px'
-            : udimToCss(current.CanvasSize.Y),
+            : udimToCss(properties.CanvasSize.Y),
         );
       }
-      if (changed.has('CanvasPosition')) {
-        if (!positionsMatch(readCanvasPosition(element), current.CanvasPosition)) {
-          writeCanvasPosition(element, current.CanvasPosition);
+      if (changedProperties.has('CanvasPosition')) {
+        if (!positionsMatch(readCanvasPosition(element), properties.CanvasPosition)) {
+          writeCanvasPosition(element, properties.CanvasPosition);
         }
         lastRenderedCanvasPosition = readCanvasPosition(element);
       }
     },
-    scrollingFrameMethods,
-    validateScrollingFrameProperties,
-  ) as ScrollingFrame;
+    methods: scrollingFrameMethods,
+    validateProperties: validateScrollingFrameProperties,
+  }) as ScrollingFrame;
 
   const syncCanvasPositionFromBrowser = (): void => {
     const browserPosition = readCanvasPosition(element);
     if (positionsMatch(browserPosition, lastRenderedCanvasPosition)) return;
-    const current = getNodeProperty(node, 'CanvasPosition');
-    if (positionsMatch(browserPosition, current)) {
+    const canvasPosition = getNodeProperty(node, 'CanvasPosition');
+    if (positionsMatch(browserPosition, canvasPosition)) {
       lastRenderedCanvasPosition = browserPosition;
       return;
     }
-    applyPropertyPatch(node, { CanvasPosition: browserPosition });
+    setNodeProperties(node, { CanvasPosition: browserPosition });
   };
 
   const listenerController = new AbortController();
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
   element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
 
-  addCleanup(node, () => listenerController.abort());
+  onDestroy(node, () => listenerController.abort());
   return node;
 }
 
@@ -237,4 +235,10 @@ function writeCanvasPosition(element: HTMLElement, position: Vector2): void {
 
 function positionsMatch(first: Vector2, second: Vector2): boolean {
   return first.X === second.X && first.Y === second.Y;
+}
+
+function resolveScrollbarWidth(thickness: number): string {
+  if (thickness === 0) return 'none';
+  if (thickness <= 8) return 'thin';
+  return 'auto';
 }

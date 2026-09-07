@@ -1,19 +1,8 @@
-import {
-  textGradientFillProperty,
-  textGradientImageProperty,
-} from '../../shared/dom/text-gradient';
-import {
-  createStyleModifier,
-  type StyleModifier,
-  type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
-import {
-  assertAllowedValue,
-  assertBoolean,
-  assertFiniteNumber,
-} from '../../shared/runtime/validation';
+import { textGradientFillProperty, textGradientImageProperty } from '../../dom/text-gradient';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
+import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../../runtime/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import {
   assertColorSequence,
@@ -48,7 +37,9 @@ export type UIGradientProperties = InstanceProperties & {
 export type UIGradient = StyleModifier<UIGradientProperties>;
 
 /** Creates a gradient modifier for a GUI parent's background. */
-export function createUIGradient(initial: Partial<UIGradientProperties> = {}): UIGradient {
+export function createUIGradient(
+  initialProperties: Partial<UIGradientProperties> = {},
+): UIGradient {
   return createStyleModifier(
     'UIGradient',
     mergeProperties(
@@ -61,7 +52,7 @@ export function createUIGradient(initial: Partial<UIGradientProperties> = {}): U
         Offset: vector2(0, 0),
         ApplyTo: 'Background',
       },
-      initial,
+      initialProperties,
     ),
     resolveGradientStyles,
     validateGradientProperties,

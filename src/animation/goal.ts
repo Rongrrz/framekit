@@ -1,5 +1,5 @@
-import type { Instance, InstanceProperties } from '../shared/runtime/node';
-import { getPropertiesSnapshot } from '../shared/runtime/node-properties';
+import type { Instance, InstanceProperties } from '../runtime/node';
+import { getPropertiesSnapshot } from '../runtime/node-properties';
 import type { AnimationGoal } from './types';
 import {
   assertCompatibleAnimationValues,
@@ -38,12 +38,12 @@ type ResolveStartValue<Properties extends InstanceProperties> = (
 ) => unknown;
 
 /** Validates and decomposes an animation goal once at the node boundary. */
-export const prepareAnimationGoal = <Properties extends InstanceProperties>(
+export function prepareAnimationGoal<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   goal: AnimationGoal<Properties>,
   kind: AnimationKind,
   resolveStartValue?: ResolveStartValue<Properties>,
-): readonly PreparedAnimationProperty<Properties>[] => {
+): readonly PreparedAnimationProperty<Properties>[] {
   const currentProperties = getPropertiesSnapshot(node);
   const goalProperties = Object.keys(goal) as (keyof Properties)[];
   const messages = messagesByKind[kind];
@@ -73,4 +73,4 @@ export const prepareAnimationGoal = <Properties extends InstanceProperties>(
       );
     }
   });
-};
+}

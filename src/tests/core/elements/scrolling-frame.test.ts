@@ -1,16 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../../..';
+import { fk, fka } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
 
-const { createScrollingFrame } = fk;
 resetDocumentAfterEach();
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('scrolling frames', () => {
   it('maps scrolling direction to native overflow', () => {
-    const scrolling = createScrollingFrame({ ScrollingDirection: 'Y' });
+    const scrolling = fk.createScrollingFrame({ ScrollingDirection: 'Y' });
 
     expect(scrolling.element.style.overscrollBehavior).toBe('none');
     expect(scrolling.element.style.overflowX).toBe('hidden');
@@ -23,7 +22,7 @@ describe('scrolling frames', () => {
   });
 
   it('configures canvas sizing, native scrolling, and scrollbar thickness', () => {
-    const scrolling = createScrollingFrame({
+    const scrolling = fk.createScrollingFrame({
       CanvasSize: fk.udim2FromOffset(600, 900),
       AutomaticCanvasSize: 'X',
       ScrollBarThickness: 6,
@@ -44,7 +43,7 @@ describe('scrolling frames', () => {
   });
 
   it('exposes canvas geometry and direct scroll helpers', () => {
-    const scrolling = createScrollingFrame();
+    const scrolling = fk.createScrollingFrame();
 
     Object.defineProperties(scrolling.element, {
       scrollWidth: { configurable: true, value: 640 },
@@ -62,7 +61,7 @@ describe('scrolling frames', () => {
   });
 
   it('reads and writes its canvas position as an ordinary property', () => {
-    const scrolling = createScrollingFrame();
+    const scrolling = fk.createScrollingFrame();
 
     scrolling.element.scrollLeft = 12;
     scrolling.element.scrollTop = 34;
@@ -94,7 +93,7 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const springTarget = createScrollingFrame();
+    const springTarget = fk.createScrollingFrame();
     const controller = fka.spring(springTarget);
 
     fka.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
@@ -112,7 +111,7 @@ describe('scrolling frames', () => {
     expect(controller.isAnimating()).toBe(false);
     expect(springTarget.CanvasPosition).toEqual(fk.vector2(0, 40));
 
-    const tweenTarget = createScrollingFrame();
+    const tweenTarget = fk.createScrollingFrame();
     const tween = fka.createTween(
       tweenTarget,
       { Duration: 1 },
@@ -136,7 +135,7 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const scrolling = createScrollingFrame();
+    const scrolling = fk.createScrollingFrame();
     const child = document.createElement('button');
 
     scrolling.element.append(child);
@@ -165,7 +164,7 @@ describe('scrolling frames', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const scrolling = createScrollingFrame();
+    const scrolling = fk.createScrollingFrame();
 
     scrolling.element.scrollTo = vi.fn((left?: number | ScrollToOptions, top?: number) => {
       if (typeof left !== 'number' || top === undefined) return;
@@ -192,7 +191,7 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const scrolling = createScrollingFrame();
+    const scrolling = fk.createScrollingFrame();
     const controller = fka.spring(scrolling);
 
     fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });

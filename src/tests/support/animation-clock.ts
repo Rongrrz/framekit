@@ -9,16 +9,16 @@ const frameDuration = 1000 / 60;
 
 /** Installs a deterministic animation-frame clock for the surrounding test suite. */
 export function setupAnimationClock(): AnimationClock {
-  let time = 0;
+  let nowMs = 0;
   let nextFrameId = 1;
-  let pendingFrames = new Map<number, FrameRequestCallback>();
+  const pendingFrames = new Map<number, FrameRequestCallback>();
 
   beforeEach(() => {
-    time = 0;
+    nowMs = 0;
     nextFrameId = 1;
-    pendingFrames = new Map();
+    pendingFrames.clear();
 
-    vi.stubGlobal('performance', { now: () => time });
+    vi.stubGlobal('performance', { now: () => nowMs });
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
       const frameId = nextFrameId;
 
@@ -33,18 +33,21 @@ export function setupAnimationClock(): AnimationClock {
   afterEach(() => vi.unstubAllGlobals());
 
   function advance(milliseconds = frameDuration): void {
-    time += milliseconds;
+    nowMs += milliseconds;
 
     const framesToRun = Array.from(pendingFrames.values());
 
     pendingFrames.clear();
 
-    for (const callback of framesToRun) callback(time);
+    for (const callback of framesToRun) callback(nowMs);
   }
 
   function settle(maximumFrames = 300): void {
     for (let frame = 0; frame < maximumFrames && pendingFrames.size > 0; frame += 1) {
       advance();
+    }
+    if (pendingFrames.size > 0) {
+      throw new Error(`Animations did not settle within ${maximumFrames} frames.`);
     }
   }
 

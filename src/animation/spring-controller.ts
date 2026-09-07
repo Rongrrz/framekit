@@ -1,8 +1,7 @@
-import type { Instance, InstanceProperties } from '../shared/runtime/node';
-import { addCleanup, isDestroyed } from '../shared/runtime/node-lifecycle';
-import { getPropertiesSnapshot } from '../shared/runtime/node-properties';
-import { getActiveNodeState } from '../shared/runtime/node-state';
-import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
+import type { Instance, InstanceProperties } from '../runtime/node';
+import { onDestroy, isDestroyed } from '../runtime/node-lifecycle';
+import { getActiveNodeState } from '../runtime/node-state';
+import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
 import { prepareAnimationGoal } from './goal';
 import {
   applyAnimationProperties,
@@ -46,6 +45,7 @@ type PropertySpringState = {
   velocityComponents: number[];
   options: ResolvedSpringOptions;
 };
+
 /** Creates the internal retained spring state for a node. */
 export function createSpringBinding<Properties extends InstanceProperties>(
   node: Instance<Properties>,
@@ -59,7 +59,6 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   const completed = readonlySignal(completedEmitter);
   let scheduled = false;
   let previousTimestampMs = 0;
-  let disposed = false;
 
   const animationOwner: AnimationOwner = {
     cancelPropertyFromConflict: (property) => stopProperty(property as keyof Properties),
@@ -74,34 +73,24 @@ export function createSpringBinding<Properties extends InstanceProperties>(
         ? composeAnimationValue(existingSpring.kind, existingSpring.currentComponents)
         : currentValue;
     });
-    const preparedSprings = new Map<
-      keyof Properties,
-      { kind: AnimationValueKind; goalComponents: number[]; startComponents: number[] }
-    >();
-    for (const { property, start, goal: propertyGoal } of preparedGoal) {
-      preparedSprings.set(property, {
-        kind: propertyGoal.kind,
-        goalComponents: propertyGoal.numbers,
-        startComponents: start.numbers,
-      });
-    }
-
     const goalProperties = preparedGoal.map(({ property }) => property);
     claimAnimationProperties(node, goalProperties, animationOwner);
-    for (const [property, preparedSpring] of preparedSprings) {
+
+    for (const { property, start, goal: target } of preparedGoal) {
       const existingSpring = springsByProperty.get(property);
       if (existingSpring) {
-        existingSpring.goalComponents = preparedSpring.goalComponents;
+        existingSpring.goalComponents = target.components;
         existingSpring.options = springOptions;
-      } else {
-        springsByProperty.set(property, {
-          kind: preparedSpring.kind,
-          currentComponents: preparedSpring.startComponents,
-          goalComponents: preparedSpring.goalComponents,
-          velocityComponents: preparedSpring.startComponents.map(() => 0),
-          options: springOptions,
-        });
+        continue;
       }
+
+      springsByProperty.set(property, {
+        kind: target.kind,
+        currentComponents: start.components,
+        goalComponents: target.components,
+        velocityComponents: start.components.map(() => 0),
+        options: springOptions,
+      });
     }
     scheduleNextFrame();
   }
@@ -147,30 +136,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     settledProperties.length = 0;
 
     for (const [property, springState] of springsByProperty) {
-      let propertySettled = true;
-      for (let index = 0; index < springState.currentComponents.length; index += 1) {
-        const nextComponent = solveSpring(
-          springState.currentComponents[index]!,
-          springState.velocityComponents[index]!,
-          springState.goalComponents[index]!,
-          deltaTimeSeconds,
-          springState.options,
-          springSolution,
-        );
-        springState.currentComponents[index] = nextComponent.value;
-        springState.velocityComponents[index] = nextComponent.velocity;
-        if (
-          Math.abs(nextComponent.value - springState.goalComponents[index]!) >
-            springState.options.precision ||
-          Math.abs(nextComponent.velocity) > springState.options.restVelocity
-        ) {
-          propertySettled = false;
-        }
-      }
-
-      if (propertySettled) {
-        springState.currentComponents = [...springState.goalComponents];
-        springState.velocityComponents.fill(0);
+      if (advancePropertySpring(springState, deltaTimeSeconds, springSolution)) {
         settledProperties.push(property);
       }
       animationPatch[property] = composeAnimationValue(
@@ -203,12 +169,11 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   }
 
   function assertUsable(): void {
-    if (disposed || isDestroyed(node)) throw new Error(`${nodeName(node)} has been destroyed.`);
+    if (isDestroyed(node)) throw new Error('Instance has been destroyed.');
   }
 
-  addCleanup(node, () => {
+  onDestroy(node, () => {
     stopAllProperties();
-    disposed = true;
     completedEmitter.clear();
   });
 
@@ -221,7 +186,36 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   return { controller, animate };
 }
 
-function nodeName(node: Instance): string {
-  if (isDestroyed(node)) return 'Instance';
-  return getPropertiesSnapshot(node).Name;
+/** Advances every component together so structured values settle as a single property. */
+function advancePropertySpring(
+  state: PropertySpringState,
+  deltaTimeSeconds: number,
+  solution: SpringSolution,
+): boolean {
+  let settled = true;
+  for (let index = 0; index < state.currentComponents.length; index += 1) {
+    const goal = state.goalComponents[index]!;
+    const next = solveSpring(
+      state.currentComponents[index]!,
+      state.velocityComponents[index]!,
+      goal,
+      deltaTimeSeconds,
+      state.options,
+      solution,
+    );
+    state.currentComponents[index] = next.value;
+    state.velocityComponents[index] = next.velocity;
+    if (
+      Math.abs(next.value - goal) > state.options.precision ||
+      Math.abs(next.velocity) > state.options.restVelocity
+    ) {
+      settled = false;
+    }
+  }
+
+  if (settled) {
+    state.currentComponents = [...state.goalComponents];
+    state.velocityComponents.fill(0);
+  }
+  return settled;
 }

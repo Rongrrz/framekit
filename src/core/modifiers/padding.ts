@@ -1,10 +1,6 @@
-import {
-  createStyleModifier,
-  type StyleModifier,
-  type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
 import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
 
 /** Inner padding applied independently on each edge. */
@@ -23,7 +19,7 @@ export type UIPaddingProperties = InstanceProperties & {
 export type UIPadding = StyleModifier<UIPaddingProperties>;
 
 /** Creates padding inside its GUI parent. */
-export function createUIPadding(initial: Partial<UIPaddingProperties> = {}): UIPadding {
+export function createUIPadding(initialProperties: Partial<UIPaddingProperties> = {}): UIPadding {
   return createStyleModifier(
     'UIPadding',
     mergeProperties(
@@ -34,7 +30,7 @@ export function createUIPadding(initial: Partial<UIPaddingProperties> = {}): UIP
         PaddingBottom: udim(0, 0),
         PaddingLeft: udim(0, 0),
       },
-      initial,
+      initialProperties,
     ),
     resolvePadding,
     validatePaddingProperties,

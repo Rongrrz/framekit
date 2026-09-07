@@ -37,20 +37,41 @@ export type {
 export { createTextBox } from './core/elements/text-box';
 export type { TextBox, TextBoxProperties } from './core/elements/text-box';
 
-export * from './core/modifiers/aspect-ratio';
-export * from './core/modifiers/corner';
-export * from './core/modifiers/gradient';
-export * from './core/modifiers/list-layout';
-export * from './core/modifiers/padding';
-export * from './core/modifiers/scale';
-export * from './core/modifiers/shadow';
-export * from './core/modifiers/stroke';
-export * from './core/modifiers/text-stroke';
+export { createUIAspectRatioConstraint } from './core/modifiers/aspect-ratio';
+export type {
+  AspectType,
+  DominantAxis,
+  UIAspectRatioConstraintProperties,
+  UIAspectRatioConstraint,
+} from './core/modifiers/aspect-ratio';
+export { createUICorner } from './core/modifiers/corner';
+export type { UICornerProperties, UICorner } from './core/modifiers/corner';
+export { createUIGradient } from './core/modifiers/gradient';
+export type { GradientTarget, UIGradientProperties, UIGradient } from './core/modifiers/gradient';
+export { createUIListLayout } from './core/modifiers/list-layout';
+export type {
+  FillDirection,
+  HorizontalAlignment,
+  VerticalAlignment,
+  SortOrder,
+  UIListLayoutProperties,
+  UIListLayout,
+} from './core/modifiers/list-layout';
+export { createUIPadding } from './core/modifiers/padding';
+export type { UIPaddingProperties, UIPadding } from './core/modifiers/padding';
+export { createUIScale } from './core/modifiers/scale';
+export type { UIScaleProperties, UIScale } from './core/modifiers/scale';
+export { createUIShadow } from './core/modifiers/shadow';
+export type { UIShadowProperties, UIShadow } from './core/modifiers/shadow';
+export { createUIStroke } from './core/modifiers/stroke';
+export type { BorderStrokePosition, UIStrokeProperties, UIStroke } from './core/modifiers/stroke';
+export { createUITextStroke } from './core/modifiers/text-stroke';
+export type { UITextStrokeProperties, UITextStroke } from './core/modifiers/text-stroke';
 
-export { createSignal } from './shared/runtime/signal';
-export type { Signal, SignalEmitter, Unsubscribe } from './shared/runtime/signal';
-export { createValue } from './shared/runtime/value';
-export type { Value } from './shared/runtime/value';
+export { createSignal } from './runtime/signal';
+export type { Signal, SignalEmitter, Unsubscribe } from './runtime/signal';
+export { createValue } from './runtime/value';
+export type { Value } from './runtime/value';
 
 export { color3FromHex, color3FromRGB } from './core/values/color3';
 export type { Color3 } from './core/values/color3';
@@ -66,6 +87,6 @@ export type {
   NumberSequenceKeypoint,
 } from './core/values/sequence';
 
-export type { LayoutModifier, StyleModifier } from './shared/runtime/modifier';
-export type { GuiGeometry, GuiElement } from './shared/runtime/render';
-export type { Instance, InstanceProperties } from './shared/runtime/node';
+export type { LayoutModifier, StyleModifier } from './runtime/modifier';
+export type { GuiGeometry, GuiElement } from './runtime/gui-node';
+export type { Instance, InstanceProperties } from './runtime/node';

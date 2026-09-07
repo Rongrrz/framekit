@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../..';
+import { fk } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
 
-const { createImageLabel } = fk;
 resetDocumentAfterEach();
 
 describe('images', () => {
   it('maps image properties to a native image element', () => {
-    const image = createImageLabel({
+    const image = fk.createImageLabel({
       Image: '/item.png',
       AltText: 'Item',
       ScaleType: 'Crop',
@@ -23,7 +22,7 @@ describe('images', () => {
   });
 
   it('removes the native URL when an image source is cleared', () => {
-    const image = createImageLabel({ Image: '/item.png' });
+    const image = fk.createImageLabel({ Image: '/item.png' });
 
     image.setProperties({ Image: '' });
 
@@ -31,11 +30,11 @@ describe('images', () => {
   });
 
   it('rejects executable URL schemes without corrupting the previous source', () => {
-    expect(() => createImageLabel({ Image: 'javascript:alert(1)' })).toThrow(
+    expect(() => fk.createImageLabel({ Image: 'javascript:alert(1)' })).toThrow(
       /Unsupported image URL protocol/,
     );
 
-    const image = createImageLabel({ Image: '/safe.png' });
+    const image = fk.createImageLabel({ Image: '/safe.png' });
 
     expect(() => image.setProperties({ Image: 'javascript:alert(1)' })).toThrow(
       /Unsupported image URL protocol/,

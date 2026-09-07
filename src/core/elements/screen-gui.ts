@@ -1,10 +1,12 @@
-import { connectHoverEvents } from '../../shared/dom/hover-events';
-import { guiEventMethods } from '../../shared/runtime/gui-events';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { addCleanup } from '../../shared/runtime/node-lifecycle';
-import { getActiveNodeState, mergeProperties } from '../../shared/runtime/node-state';
-import { createGuiNode, setStyle, type GuiElement } from '../../shared/runtime/render';
-import { assertBoolean, assertInteger } from '../../shared/runtime/validation';
+import { connectHoverEvents } from '../../dom/hover-events';
+import { setStyle } from '../../dom/styles';
+import { guiEventMethods } from '../../runtime/gui-events';
+import { createGuiNode, type GuiElement } from '../../runtime/gui-node';
+import type { InstanceProperties } from '../../runtime/node';
+import { onDestroy } from '../../runtime/node-lifecycle';
+import { mergeProperties } from '../../runtime/node-properties';
+import { getActiveNodeState } from '../../runtime/node-state';
+import { assertBoolean, assertInteger } from '../../runtime/validation';
 
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = InstanceProperties & {
@@ -43,7 +45,7 @@ const screenGuiMethods = Object.freeze({
 const mountTargets = new WeakMap<ScreenGui, HTMLElement>();
 
 /** Creates an unmounted full-viewport GUI root. */
-export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): ScreenGui {
+export function createScreenGui(initialProperties: Partial<ScreenGuiProperties> = {}): ScreenGui {
   const element = document.createElement('div');
   element.dataset.framekit = 'ScreenGui';
   Object.assign(element.style, {
@@ -56,23 +58,28 @@ export function createScreenGui(initial: Partial<ScreenGuiProperties> = {}): Scr
     overscrollBehavior: 'none',
   });
 
-  const gui = createGuiNode(
-    'ScreenGui',
-    mergeProperties({ Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 }, initial),
+  const gui = createGuiNode({
+    className: 'ScreenGui',
+    properties: mergeProperties(
+      { Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 },
+      initialProperties,
+    ),
     element,
-    (properties, changed) => {
-      if (changed.has('Enabled')) setStyle(element, 'display', properties.Enabled ? '' : 'none');
-      if (changed.has('DisplayOrder')) {
+    renderProperties: (properties, changedProperties) => {
+      if (changedProperties.has('Enabled')) {
+        setStyle(element, 'display', properties.Enabled ? '' : 'none');
+      }
+      if (changedProperties.has('DisplayOrder')) {
         setStyle(element, 'z-index', String(properties.DisplayOrder));
       }
     },
-    validateScreenGuiProperties,
-    screenGuiMethods,
-    { canHaveParent: false },
-  ) as ScreenGui;
+    validateProperties: validateScreenGuiProperties,
+    methods: screenGuiMethods,
+    canHaveParent: false,
+  }) as ScreenGui;
 
   connectHoverEvents(gui, element);
-  addCleanup(gui, () => mountTargets.delete(gui));
+  onDestroy(gui, () => mountTargets.delete(gui));
   return gui;
 }
 

@@ -1,3 +1,5 @@
+import { throwCollectedErrors } from '../runtime/errors';
+
 export type AnimationFrameTask = (timestamp: number) => void;
 
 const activeTasks = new Set<AnimationFrameTask>();
@@ -10,17 +12,10 @@ let requestFrameSource: typeof requestAnimationFrame | undefined;
 export function scheduleAnimationTask(task: AnimationFrameTask): void {
   resetForReplacedFrameSource();
   if (activeTasks.has(task) || pendingTasks.has(task)) return;
-  (runningFrame ? pendingTasks : activeTasks).add(task);
+  // Work started during a callback begins on the next frame.
+  if (runningFrame) pendingTasks.add(task);
+  else activeTasks.add(task);
   scheduleBrowserFrame();
-}
-
-function resetForReplacedFrameSource(): void {
-  if (requestFrameSource === requestAnimationFrame) return;
-  activeTasks.clear();
-  pendingTasks.clear();
-  scheduledFrame = undefined;
-  runningFrame = false;
-  requestFrameSource = requestAnimationFrame;
 }
 
 /** Stops a task without disturbing other animations sharing the browser frame. */
@@ -41,13 +36,12 @@ function scheduleBrowserFrame(): void {
 function runAnimationFrame(timestamp: number): void {
   scheduledFrame = undefined;
   runningFrame = true;
-  let errors: unknown[] | undefined;
+  const errors: unknown[] = [];
   for (const task of activeTasks) {
     try {
       task(timestamp);
     } catch (error) {
       activeTasks.delete(task);
-      errors ??= [];
       errors.push(error);
     }
   }
@@ -57,8 +51,14 @@ function runAnimationFrame(timestamp: number): void {
   pendingTasks.clear();
   scheduleBrowserFrame();
 
-  if (errors?.length === 1) throw errors[0];
-  if (errors && errors.length > 1) {
-    throw new AggregateError(errors, 'Multiple animations failed during one browser frame.');
-  }
+  throwCollectedErrors(errors, 'Multiple animations failed during one browser frame.');
+}
+
+function resetForReplacedFrameSource(): void {
+  if (requestFrameSource === requestAnimationFrame) return;
+  activeTasks.clear();
+  pendingTasks.clear();
+  scheduledFrame = undefined;
+  runningFrame = false;
+  requestFrameSource = requestAnimationFrame;
 }

@@ -1,4 +1,4 @@
-import { assertFiniteNumber } from '../../shared/runtime/validation';
+import { assertFiniteNumber } from '../../runtime/validation';
 
 /** An immutable two-dimensional numeric vector. */
 export type Vector2 = Readonly<{

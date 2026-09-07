@@ -1,19 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../..';
+import { fk } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
 
-const { createFrame, createUIListLayout, createUIPadding, udim } = fk;
 resetDocumentAfterEach();
 
 describe('UI padding', () => {
   it('applies, updates, and removes padding on its parent', () => {
-    const frame = createFrame();
-    const padding = createUIPadding({
-      PaddingTop: udim(0, 8),
-      PaddingRight: udim(0.1, 4),
-      PaddingBottom: udim(0, 12),
-      PaddingLeft: udim(0, 16),
+    const frame = fk.createFrame();
+    const padding = fk.createUIPadding({
+      PaddingTop: fk.udim(0, 8),
+      PaddingRight: fk.udim(0.1, 4),
+      PaddingBottom: fk.udim(0, 12),
+      PaddingLeft: fk.udim(0, 16),
     });
 
     frame.addChild(padding);
@@ -23,7 +22,7 @@ describe('UI padding', () => {
     expect(frame.element.style.paddingBottom).toBe('12px');
     expect(frame.element.style.paddingLeft).toBe('16px');
 
-    padding.setProperties({ PaddingLeft: udim(0, 24) });
+    padding.setProperties({ PaddingLeft: fk.udim(0, 24) });
 
     expect(frame.element.style.paddingLeft).toBe('24px');
 
@@ -36,9 +35,9 @@ describe('UI padding', () => {
   });
 
   it('composes with list layouts without replacing their styles', () => {
-    const frame = createFrame();
-    const padding = createUIPadding({ PaddingLeft: udim(0, 10) });
-    const layout = createUIListLayout({ Padding: udim(0, 6) });
+    const frame = fk.createFrame();
+    const padding = fk.createUIPadding({ PaddingLeft: fk.udim(0, 10) });
+    const layout = fk.createUIListLayout({ Padding: fk.udim(0, 6) });
 
     frame.addChild(padding);
     frame.addChild(layout);

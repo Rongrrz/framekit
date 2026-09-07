@@ -1,4 +1,4 @@
-import { assertFiniteNumber } from '../../shared/runtime/validation';
+import { assertFiniteNumber } from '../../runtime/validation';
 
 /** An immutable scale and pixel-offset pair for one axis. */
 export type UDim = Readonly<{
@@ -18,8 +18,8 @@ export type UDim2 = Readonly<{
 
 /** Creates an immutable scale-and-pixel-offset value. */
 export function udim(scale: number, offset: number): UDim {
-  assertFinite(scale, 'scale');
-  assertFinite(offset, 'offset');
+  assertFiniteNumber(scale, 'UDim scale');
+  assertFiniteNumber(offset, 'UDim offset');
   return Object.freeze({ Scale: scale, Offset: offset });
 }
 
@@ -51,8 +51,8 @@ export function assertUDim(value: unknown, name = 'UDim'): asserts value is UDim
   if (typeof value !== 'object' || value === null || !('Scale' in value) || !('Offset' in value)) {
     throw new TypeError(`${name} must contain finite Scale and Offset values.`);
   }
-  assertFinite(value.Scale, 'scale');
-  assertFinite(value.Offset, 'offset');
+  assertFiniteNumber(value.Scale, 'UDim scale');
+  assertFiniteNumber(value.Offset, 'UDim offset');
 }
 
 export function assertUDim2(value: unknown, name = 'UDim2'): asserts value is UDim2 {
@@ -61,8 +61,4 @@ export function assertUDim2(value: unknown, name = 'UDim2'): asserts value is UD
   }
   assertUDim(value.X, `${name}.X`);
   assertUDim(value.Y, `${name}.Y`);
-}
-
-function assertFinite(value: unknown, name: string): asserts value is number {
-  assertFiniteNumber(value, `UDim ${name}`);
 }

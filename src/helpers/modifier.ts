@@ -1,11 +1,6 @@
-import type { LayoutModifier, StyleModifier } from '../shared/runtime/modifier';
-import type { InstanceProperties } from '../shared/runtime/node';
-import type { GuiElement } from '../shared/runtime/render';
-import { assertBoolean } from '../shared/runtime/validation';
-
-type Modifier<Properties extends InstanceProperties = InstanceProperties> =
-  | LayoutModifier<Properties>
-  | StyleModifier<Properties>;
+import type { GuiElement } from '../runtime/gui-node';
+import type { Modifier } from '../runtime/modifier';
+import { assertBoolean } from '../runtime/validation';
 
 /** Attaches or detaches a retained modifier without recreating it. */
 export function setModifierAttached(

@@ -1,15 +1,11 @@
-import {
-  createStyleModifier,
-  type StyleModifier,
-  type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
 import {
   assertBoolean,
   assertFiniteNumber,
   assertNonNegativeFinite,
-} from '../../shared/runtime/validation';
+} from '../../runtime/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
@@ -35,7 +31,7 @@ export type UIShadowProperties = InstanceProperties & {
 export type UIShadow = StyleModifier<UIShadowProperties>;
 
 /** Creates a shadow modifier that composes with strokes and other style modifiers. */
-export function createUIShadow(initial: Partial<UIShadowProperties> = {}): UIShadow {
+export function createUIShadow(initialProperties: Partial<UIShadowProperties> = {}): UIShadow {
   return createStyleModifier(
     'UIShadow',
     mergeProperties(
@@ -49,7 +45,7 @@ export function createUIShadow(initial: Partial<UIShadowProperties> = {}): UISha
         SpreadRadius: 0,
         Inset: false,
       },
-      initial,
+      initialProperties,
     ),
     resolveShadowStyles,
     validateShadowProperties,

@@ -2,19 +2,15 @@ import {
   textStrokeColorProperty,
   textStrokeContentProperty,
   textStrokeWidthProperty,
-} from '../../shared/dom/text-stroke';
-import {
-  createStyleModifier,
-  type StyleModifier,
-  type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
+} from '../../dom/text-stroke';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
 import {
   assertBoolean,
   assertFiniteNumber,
   assertNonNegativeFinite,
-} from '../../shared/runtime/validation';
+} from '../../runtime/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Properties for an outline drawn around a GUI parent's text. */
@@ -33,7 +29,9 @@ export type UITextStrokeProperties = InstanceProperties & {
 export type UITextStroke = StyleModifier<UITextStrokeProperties>;
 
 /** Creates an outline behind a TextLabel or TextButton's rendered text. */
-export function createUITextStroke(initial: Partial<UITextStrokeProperties> = {}): UITextStroke {
+export function createUITextStroke(
+  initialProperties: Partial<UITextStrokeProperties> = {},
+): UITextStroke {
   return createStyleModifier(
     'UITextStroke',
     mergeProperties(
@@ -44,7 +42,7 @@ export function createUITextStroke(initial: Partial<UITextStrokeProperties> = {}
         Transparency: 0,
         Thickness: 1,
       },
-      initial,
+      initialProperties,
     ),
     resolveTextStrokeStyles,
     validateTextStrokeProperties,

@@ -1,13 +1,8 @@
-import {
-  createStyleModifier,
-  type StyleModifier,
-  type Styles,
-} from '../../shared/runtime/modifier';
-import type { InstanceProperties } from '../../shared/runtime/node';
-import { mergeProperties } from '../../shared/runtime/node-state';
-import { assertAllowedValue, assertFiniteNumber } from '../../shared/runtime/validation';
-import type { GuiObjectProperties } from '../gui-object';
-import { udimToCss } from '../values/udim';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
+import type { InstanceProperties } from '../../runtime/node';
+import { mergeProperties } from '../../runtime/node-properties';
+import { assertAllowedValue, assertFiniteNumber } from '../../runtime/validation';
+import { udimToCss, type UDim2 } from '../values/udim';
 
 /** How an aspect-ratio constraint uses its parent's available size. */
 export type AspectType = 'FitWithinMaxSize' | 'ScaleWithParentSize';
@@ -33,7 +28,7 @@ const dominantAxes: readonly DominantAxis[] = ['Width', 'Height'];
 
 /** Creates a constraint that maintains its GUI parent's width-to-height ratio. */
 export function createUIAspectRatioConstraint(
-  initial: Partial<UIAspectRatioConstraintProperties> = {},
+  initialProperties: Partial<UIAspectRatioConstraintProperties> = {},
 ): UIAspectRatioConstraint {
   return createStyleModifier(
     'UIAspectRatioConstraint',
@@ -44,7 +39,7 @@ export function createUIAspectRatioConstraint(
         AspectType: 'FitWithinMaxSize',
         DominantAxis: 'Width',
       },
-      initial,
+      initialProperties,
     ),
     resolveAspectRatio,
     validateAspectRatioProperties,
@@ -55,10 +50,7 @@ function resolveAspectRatio(
   properties: Readonly<UIAspectRatioConstraintProperties>,
   parentProperties: Readonly<InstanceProperties>,
 ): Styles {
-  const aspectRatio =
-    Number.isFinite(properties.AspectRatio) && properties.AspectRatio > 0
-      ? properties.AspectRatio
-      : 1;
+  const aspectRatio = properties.AspectRatio > 0 ? properties.AspectRatio : 1;
   const styles: Record<string, string> = { 'aspect-ratio': `${aspectRatio} / 1` };
 
   if (properties.AspectType === 'ScaleWithParentSize') {
@@ -93,6 +85,6 @@ function validateAspectRatioProperties(
 
 function hasSize(
   properties: Readonly<InstanceProperties>,
-): properties is Readonly<GuiObjectProperties> {
+): properties is Readonly<InstanceProperties & { Size: UDim2 }> {
   return 'Size' in properties;
 }

@@ -1,11 +1,63 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../..';
+import { fk, fka } from '../../index';
 import { setupAnimationClock } from '../support/animation-clock';
 
 const { advance } = setupAnimationClock();
 
 describe('tweens', () => {
+  it('restarts completed and cancelled playback from the latest property value', () => {
+    const frame = fk.createFrame({ Rotation: 0 });
+    const tween = fka.createTween(frame, { Duration: 1, EasingStyle: 'Linear' }, { Rotation: 90 });
+    const completed = vi.fn();
+
+    tween.completed.subscribe(completed);
+    tween.play();
+    advance(1000);
+
+    expect(frame.Rotation).toBe(90);
+    expect(tween.playbackState()).toBe('Completed');
+
+    frame.Rotation = 30;
+    tween.play();
+    advance(500);
+
+    expect(frame.Rotation).toBe(60);
+
+    tween.cancel();
+    frame.Rotation = 10;
+    tween.play();
+    advance(500);
+
+    expect(frame.Rotation).toBe(50);
+
+    advance(500);
+
+    expect(frame.Rotation).toBe(90);
+    expect(completed.mock.calls).toEqual([['Completed'], ['Cancelled'], ['Completed']]);
+  });
+
+  it('repeats indefinitely until explicitly cancelled', () => {
+    const frame = fk.createFrame({ Rotation: 0 });
+    const tween = fka.createTween(
+      frame,
+      { Duration: 1, EasingStyle: 'Linear', RepeatCount: -1, Reverses: true },
+      { Rotation: 90 },
+    );
+
+    tween.play();
+    advance(4500);
+
+    expect(frame.Rotation).toBe(45);
+    expect(tween.playbackState()).toBe('Playing');
+
+    tween.cancel();
+    advance(1000);
+
+    expect(frame.Rotation).toBe(45);
+    expect(tween.playbackState()).toBe('Cancelled');
+  });
+
   it('interpolates numbers and structured FrameKit values', () => {
     const frame = fk.createFrame({
       Position: fk.udim2FromOffset(0, 10),

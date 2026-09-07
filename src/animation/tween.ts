@@ -1,9 +1,9 @@
-import type { Instance, InstanceProperties } from '../shared/runtime/node';
-import { addCleanup, isDestroyed } from '../shared/runtime/node-lifecycle';
-import { getPropertiesSnapshot } from '../shared/runtime/node-properties';
-import { getActiveNodeState } from '../shared/runtime/node-state';
-import { createSignal, readonlySignal, type Signal } from '../shared/runtime/signal';
-import { assertNonNegativeFinite } from '../shared/runtime/validation';
+import type { Instance, InstanceProperties } from '../runtime/node';
+import { onDestroy, isDestroyed } from '../runtime/node-lifecycle';
+import { getPropertiesSnapshot } from '../runtime/node-properties';
+import { getActiveNodeState } from '../runtime/node-state';
+import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
+import { assertNonNegativeFinite } from '../runtime/validation';
 import {
   assertEasingDirection,
   assertEasingStyle,
@@ -75,25 +75,27 @@ export function createTween<Properties extends InstanceProperties>(
   goal: TweenGoal<Properties>,
 ): Tween {
   getActiveNodeState(node);
-  const resolvedOptions = resolveOptions(options);
+  const resolvedOptions = resolveTweenOptions(options);
 
   const preparedGoal = prepareAnimationGoal(node, goal, 'tween');
   const goalKeys = preparedGoal.map(({ property }) => property);
-  const goalValuesByProperty = new Map(
-    preparedGoal.map(({ property, goalValue }) => [property, goalValue]),
-  );
-  const initialProperties = getPropertiesSnapshot(node);
+  const initialName = getPropertiesSnapshot(node).Name;
+  const durationMs = resolvedOptions.Duration * 1000;
+  const delayMs = resolvedOptions.Delay * 1000;
+  const finalProgress = resolvedOptions.Reverses ? 0 : 1;
+  const traversalsPerIteration = resolvedOptions.Reverses ? 2 : 1;
+  const maximumTraversals =
+    resolvedOptions.RepeatCount === -1
+      ? Number.POSITIVE_INFINITY
+      : (resolvedOptions.RepeatCount + 1) * traversalsPerIteration;
 
   const completedEmitter = createSignal<[TweenPlaybackState]>();
   const completed = readonlySignal(completedEmitter);
   let playbackState: TweenPlaybackState = 'Idle';
-  let scheduled = false;
   let startedAtMs = 0;
   let elapsedBeforePauseMs = 0;
   let startValues: Partial<Properties> = {};
   const animationPatch: Partial<Properties> = {};
-  let ownedProperties: (keyof Properties)[] = [];
-  let disposed = false;
 
   const animationOwner: AnimationOwner = {
     cancelPropertyFromConflict: () => finish('Cancelled'),
@@ -104,30 +106,29 @@ export function createTween<Properties extends InstanceProperties>(
     if (playbackState === 'Playing' || playbackState === 'Delayed') return;
 
     if (playbackState === 'Paused') {
-      startedAtMs = now() - elapsedBeforePauseMs;
+      startedAtMs = performance.now() - elapsedBeforePauseMs;
     } else {
       startValues = {};
       const latest = getPropertiesSnapshot(node);
-      for (const key of goalKeys) startValues[key] = latest[key];
+      for (const property of goalKeys) startValues[property] = latest[property];
       elapsedBeforePauseMs = 0;
-      startedAtMs = now();
+      startedAtMs = performance.now();
     }
 
-    claimGoalProperties();
-    playbackState = elapsedBeforePauseMs < resolvedOptions.Delay * 1000 ? 'Delayed' : 'Playing';
-    if (resolvedOptions.Duration === 0 && resolvedOptions.Delay === 0) {
-      applyProgressOrCancel(finalProgress());
-      finish('Completed');
+    claimAnimationProperties(node, goalKeys, animationOwner);
+    playbackState = elapsedBeforePauseMs < delayMs ? 'Delayed' : 'Playing';
+    if (durationMs === 0 && delayMs === 0) {
+      complete();
       return;
     }
-    scheduleFrame();
+    scheduleAnimationTask(step);
   }
 
   function pause(): void {
     assertUsable();
     if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
-    elapsedBeforePauseMs = Math.max(0, now() - startedAtMs);
-    cancelFrame();
+    elapsedBeforePauseMs = Math.max(0, performance.now() - startedAtMs);
+    cancelAnimationTask(step);
     playbackState = 'Paused';
   }
 
@@ -148,29 +149,20 @@ export function createTween<Properties extends InstanceProperties>(
 
     const elapsedMs = Math.max(0, timestamp - startedAtMs);
     elapsedBeforePauseMs = elapsedMs;
-    const delayMs = resolvedOptions.Delay * 1000;
     if (elapsedMs < delayMs) {
       playbackState = 'Delayed';
       return;
     }
 
     playbackState = 'Playing';
-    const durationMs = resolvedOptions.Duration * 1000;
     const activeElapsedMs = elapsedMs - delayMs;
     if (durationMs === 0) {
-      applyProgressOrCancel(finalProgress());
-      finish('Completed');
+      complete();
       return;
     }
     const traversalIndex = Math.floor(activeElapsedMs / durationMs);
-    const traversalsPerIteration = resolvedOptions.Reverses ? 2 : 1;
-    const maximumTraversals =
-      resolvedOptions.RepeatCount === -1
-        ? Number.POSITIVE_INFINITY
-        : (resolvedOptions.RepeatCount + 1) * traversalsPerIteration;
     if (traversalIndex >= maximumTraversals) {
-      applyProgressOrCancel(finalProgress());
-      finish('Completed');
+      complete();
       return;
     }
 
@@ -197,58 +189,40 @@ export function createTween<Properties extends InstanceProperties>(
 
   function applyProgress(progress: number): void {
     if (isDestroyed(node)) return;
-    const eased = ease(progress, resolvedOptions.EasingStyle, resolvedOptions.EasingDirection);
-    for (const key of goalKeys) {
-      animationPatch[key] = interpolateAnimationValue(
-        startValues[key],
-        goalValuesByProperty.get(key),
-        eased,
-        String(key),
+    const easedProgress = ease(
+      progress,
+      resolvedOptions.EasingStyle,
+      resolvedOptions.EasingDirection,
+    );
+    for (const { property, goalValue } of preparedGoal) {
+      animationPatch[property] = interpolateAnimationValue(
+        startValues[property],
+        goalValue,
+        easedProgress,
+        String(property),
       ) as Properties[keyof Properties];
     }
     applyAnimationProperties(node, animationPatch, animationOwner);
   }
 
-  function finalProgress(): number {
-    return resolvedOptions.Reverses ? 0 : 1;
-  }
-
-  function claimGoalProperties(): void {
-    claimAnimationProperties(node, goalKeys, animationOwner);
-    ownedProperties = [...goalKeys];
-  }
-
-  function releaseGoalProperties(): void {
-    releaseAnimationProperties(node, ownedProperties, animationOwner);
-    ownedProperties = [];
+  function complete(): void {
+    applyProgressOrCancel(finalProgress);
+    finish('Completed');
   }
 
   function finish(nextState: 'Completed' | 'Cancelled'): void {
     if (playbackState === 'Completed' || playbackState === 'Cancelled') return;
-    cancelFrame();
-    releaseGoalProperties();
+    cancelAnimationTask(step);
+    releaseAnimationProperties(node, goalKeys, animationOwner);
     playbackState = nextState;
     completedEmitter.emit(nextState);
   }
 
-  function cancelFrame(): void {
-    if (!scheduled) return;
-    scheduled = false;
-    cancelAnimationTask(step);
-  }
-
-  function scheduleFrame(): void {
-    if (scheduled) return;
-    scheduled = true;
-    scheduleAnimationTask(step);
-  }
-
   function assertUsable(): void {
-    if (disposed || isDestroyed(node))
-      throw new Error(`${initialProperties.Name} has been destroyed.`);
+    if (isDestroyed(node)) throw new Error(`${initialName} has been destroyed.`);
   }
 
-  addCleanup(node, () => {
+  onDestroy(node, () => {
     try {
       if (
         playbackState === 'Playing' ||
@@ -258,9 +232,8 @@ export function createTween<Properties extends InstanceProperties>(
         finish('Cancelled');
       }
     } finally {
-      cancelFrame();
-      releaseGoalProperties();
-      disposed = true;
+      cancelAnimationTask(step);
+      releaseAnimationProperties(node, goalKeys, animationOwner);
       completedEmitter.clear();
     }
   });
@@ -268,11 +241,7 @@ export function createTween<Properties extends InstanceProperties>(
   return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
 }
 
-function now(): number {
-  return performance.now();
-}
-
-function resolveOptions(options: TweenOptions): ResolvedTweenOptions {
+function resolveTweenOptions(options: TweenOptions): ResolvedTweenOptions {
   const resolved: ResolvedTweenOptions = {
     Duration: options.Duration,
     EasingStyle: options.EasingStyle ?? 'Quad',

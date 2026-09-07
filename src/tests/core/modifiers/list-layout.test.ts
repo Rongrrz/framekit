@@ -1,22 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../..';
-import { groupNode } from '../../support/group-node';
+import { fk } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
 
-const { createFrame, createUIListLayout, createUIScale, udim, udim2FromOffset } = fk;
 resetDocumentAfterEach();
 
 describe('UI list layouts', () => {
   it('lays out direct GUI children and restores their positioning when detached', () => {
-    const frame = createFrame();
-    const first = createFrame({
+    const frame = fk.createFrame();
+    const first = fk.createFrame({
       Name: 'First',
-      Position: udim2FromOffset(10, 20),
+      Position: fk.udim2FromOffset(10, 20),
       LayoutOrder: 2,
     });
-    const second = createFrame({ Name: 'Second', LayoutOrder: 1 });
-    const layout = createUIListLayout({ Padding: udim(0, 8) });
+    const second = fk.createFrame({ Name: 'Second', LayoutOrder: 1 });
+    const layout = fk.createUIListLayout({ Padding: fk.udim(0, 8) });
 
     frame.addChild(first);
     frame.addChild(second);
@@ -30,7 +28,7 @@ describe('UI list layouts', () => {
     expect(first.element.style.order).toBe('1');
     expect(second.element.style.order).toBe('0');
 
-    first.setProperties({ Position: udim2FromOffset(25, 30), LayoutOrder: 0 });
+    first.setProperties({ Position: fk.udim2FromOffset(25, 30), LayoutOrder: 0 });
 
     expect(first.element.style.left).toBe('auto');
     expect(first.element.style.order).toBe('0');
@@ -45,10 +43,10 @@ describe('UI list layouts', () => {
   });
 
   it('updates direction, alignment, wrapping, and name sorting', () => {
-    const frame = createFrame({ Visible: false });
-    const zebra = createFrame({ Name: 'Zebra' });
-    const alpha = createFrame({ Name: 'Alpha' });
-    const layout = createUIListLayout({ SortOrder: 'Name' });
+    const frame = fk.createFrame({ Visible: false });
+    const zebra = fk.createFrame({ Name: 'Zebra' });
+    const alpha = fk.createFrame({ Name: 'Alpha' });
+    const layout = fk.createUIListLayout({ SortOrder: 'Name' });
 
     frame.addChild(zebra);
     frame.addChild(alpha);
@@ -80,13 +78,13 @@ describe('UI list layouts', () => {
   });
 
   it('preserves layout positioning when a child modifier updates', () => {
-    const container = createFrame();
-    const child = createFrame({ Position: udim2FromOffset(40, 50) });
-    const scale = createUIScale();
+    const container = fk.createFrame();
+    const child = fk.createFrame({ Position: fk.udim2FromOffset(40, 50) });
+    const scale = fk.createUIScale();
 
     child.addChild(scale);
     container.addChild(child);
-    container.addChild(createUIListLayout());
+    container.addChild(fk.createUIListLayout());
 
     expect(child.element.style.position).toBe('relative');
     expect(child.element.style.left).toBe('auto');
@@ -99,10 +97,10 @@ describe('UI list layouts', () => {
   });
 
   it('rejects element-less parents', () => {
-    const group = groupNode({ Name: 'Group' });
-    const layout = createUIListLayout();
+    const parentModifier = fk.createUICorner();
+    const layout = fk.createUIListLayout();
 
-    expect(() => group.addChild(layout)).toThrow(/DOM-backed/);
+    expect(() => parentModifier.addChild(layout)).toThrow(/cannot contain child nodes/);
     expect(layout.Parent).toBeUndefined();
   });
 });

@@ -1,5 +1,5 @@
-import type { PropertyValidator } from '../shared/runtime/node-state';
-import { assertString } from '../shared/runtime/validation';
+import type { PropertyValidator } from '../runtime/node-state';
+import { assertString } from '../runtime/validation';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -7,10 +7,8 @@ import {
   type GuiObjectProperties,
 } from './gui-object';
 
-type CustomProperties = object;
-
 /** Description used to create one reusable GUI class. */
-export type GuiObjectDefinition<Properties extends CustomProperties> = {
+export type GuiObjectDefinition<Properties extends object> = {
   /** ClassName shown in the FrameKit hierarchy and debug output. */
   className: string;
   /** Defaults for the properties unique to this class. */
@@ -30,12 +28,12 @@ export type GuiObjectDefinition<Properties extends CustomProperties> = {
 };
 
 /** Constructor returned by defineGuiObject. */
-export type GuiObjectConstructor<Properties extends CustomProperties> = (
-  initial?: Partial<GuiObjectProperties & Properties>,
+export type GuiObjectConstructor<Properties extends object> = (
+  initialProperties?: Partial<GuiObjectProperties & Properties>,
 ) => GuiObject<GuiObjectProperties & Properties>;
 
 /** Defines a reusable GUI class without exposing FrameKit runtime internals. */
-export function defineGuiObject<Properties extends CustomProperties>(
+export function defineGuiObject<Properties extends object>(
   definition: GuiObjectDefinition<Properties>,
 ): GuiObjectConstructor<Properties> {
   validateDefinition(definition);
@@ -47,7 +45,7 @@ export function defineGuiObject<Properties extends CustomProperties>(
   const applyProperties = definition.applyProperties;
   const validate = definition.validate;
 
-  return (initial = {}) => {
+  return (initialProperties = {}) => {
     const element = createElement();
     const defaults = {
       ...createDefaultGuiObjectProperties(),
@@ -56,21 +54,20 @@ export function defineGuiObject<Properties extends CustomProperties>(
       Name: className,
     } as GuiObjectProperties & Properties;
 
-    return createGuiObjectNode(
+    return createGuiObjectNode({
       className,
       element,
-      defaults,
-      initial,
-      (properties, changedProperties) => {
+      defaultProperties: defaults,
+      initialProperties,
+      renderProperties: (properties, changedProperties) => {
         applyProperties?.(element, properties, changedProperties);
       },
-      undefined,
-      validate,
-    );
+      validateProperties: validate,
+    });
   };
 }
 
-function validateDefinition<Properties extends CustomProperties>(
+function validateDefinition<Properties extends object>(
   definition: GuiObjectDefinition<Properties>,
 ): void {
   assertString(definition.className, 'className');

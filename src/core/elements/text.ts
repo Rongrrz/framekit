@@ -4,32 +4,33 @@ import {
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from '../../shared/dom/button';
-import { initializeTextGradient, resetTextGradientHost } from '../../shared/dom/text-gradient';
+} from '../../dom/button';
+import { initializeTextGradient, resetTextGradientHost } from '../../dom/text-gradient';
+import { bindTextScaleResize } from '../../dom/text-size';
 import {
   initializeTextStrokeHost,
   resetTextStrokeHost,
   syncTextStrokeHost,
-} from '../../shared/dom/text-stroke';
+} from '../../dom/text-stroke';
 import {
-  bindTextScaleResize,
   createDefaultTextStyleProperties,
+  hasTextStyleChange,
   horizontalFlexAlignment,
   renderTextStyle,
   validateTextStyleProperties,
   verticalFlexAlignment,
   type TextStyleProperties,
-} from '../../shared/dom/text-style';
-import { buttonEventMethods, type GuiEventMethodTable } from '../../shared/runtime/gui-events';
-import { getNodeProperties } from '../../shared/runtime/node-properties';
-import { type GuiElement, type PropertyRenderer } from '../../shared/runtime/render';
+} from '../../dom/text-style';
+import { buttonEventMethods, type GuiMethodTable } from '../../runtime/gui-events';
+import type { GuiElement, PropertyRenderer } from '../../runtime/gui-node';
+import { getNodeProperties } from '../../runtime/node-properties';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
 
-export type { TextXAlignment, TextYAlignment } from '../../shared/dom/text-style';
+export type { TextXAlignment, TextYAlignment } from '../../dom/text-style';
 
 /** Properties shared by text labels and text buttons. */
 export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
@@ -44,30 +45,32 @@ export type TextButtonProperties = TextLabelProperties & ButtonProperties;
 export type TextButton = ButtonElement<TextButtonProperties>;
 
 /** Creates a non-interactive text node. */
-export function createTextLabel(initial: Partial<TextLabelProperties> = {}): TextLabel {
+export function createTextLabel(initialProperties: Partial<TextLabelProperties> = {}): TextLabel {
   return createTextNode(
     'TextLabel',
     document.createElement('div'),
-    createDefaultTextProps(),
-    initial,
+    createDefaultTextProperties(),
+    initialProperties,
   );
 }
 
 /** Creates a text node with button events. */
-export function createTextButton(initial: Partial<TextButtonProperties> = {}): TextButton {
+export function createTextButton(
+  initialProperties: Partial<TextButtonProperties> = {},
+): TextButton {
   const element = document.createElement('button');
   const node = createTextNode(
     'TextButton',
     element,
     {
-      ...createDefaultTextProps(),
+      ...createDefaultTextProperties(),
       Name: 'TextButton',
       Disabled: false,
       AccessibleLabel: '',
     },
-    initial,
-    (properties, changed) => {
-      if (changed.has('Disabled') || changed.has('AccessibleLabel')) {
+    initialProperties,
+    (properties, changedProperties) => {
+      if (changedProperties.has('Disabled') || changedProperties.has('AccessibleLabel')) {
         renderButtonProperties(element, properties);
       }
     },
@@ -78,7 +81,7 @@ export function createTextButton(initial: Partial<TextButtonProperties> = {}): T
   return node;
 }
 
-function createDefaultTextProps(): TextLabelProperties {
+function createDefaultTextProperties(): TextLabelProperties {
   return {
     ...createDefaultGuiObjectProperties(),
     Name: 'TextLabel',
@@ -87,12 +90,12 @@ function createDefaultTextProps(): TextLabelProperties {
 }
 
 function createTextNode<Properties extends TextLabelProperties>(
-  nodeType: string,
+  className: string,
   element: HTMLElement,
   defaultProperties: Properties,
-  initial: Partial<Properties>,
+  initialProperties: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
-  eventMethods?: GuiEventMethodTable,
+  methods?: GuiMethodTable,
 ): GuiElement<Properties> {
   const text = document.createElement('span');
   text.dataset.framekitText = '';
@@ -107,52 +110,37 @@ function createTextNode<Properties extends TextLabelProperties>(
   initializeTextGradient(text);
   initializeTextStrokeHost(element);
 
-  const node = createGuiObjectNode(
-    nodeType,
+  const node = createGuiObjectNode({
+    className,
     element,
     defaultProperties,
-    initial,
-    (properties, changed) => {
-      const textChanged = hasTextChange(changed);
+    initialProperties,
+    renderProperties: (properties, changedProperties) => {
+      const textChanged = hasTextStyleChange(changedProperties);
       if (textChanged) {
         resetTextGradientHost(element);
         resetTextStrokeHost(element);
       }
-      if (changed.has('Text')) text.textContent = properties.Text;
-      renderTextStyle(text, properties, changed);
+      if (changedProperties.has('Text')) text.textContent = properties.Text;
+      renderTextStyle(text, properties, changedProperties);
       if (textChanged) syncTextStrokeHost(element, properties, text.style.fontSize);
-      if (changed.has('TextXAlignment')) {
+      if (changedProperties.has('TextXAlignment')) {
         text.style.justifyContent = horizontalFlexAlignment[properties.TextXAlignment];
       }
-      if (changed.has('TextYAlignment')) {
+      if (changedProperties.has('TextYAlignment')) {
         text.style.alignItems = verticalFlexAlignment[properties.TextYAlignment];
       }
-      renderAdditionalProperties?.(properties, changed);
+      renderAdditionalProperties?.(properties, changedProperties);
     },
-    eventMethods,
-    validateTextProperties,
-  );
+    methods,
+    validateProperties: validateTextProperties,
+  });
   bindTextScaleResize(node, element, () => {
     const properties = getNodeProperties(node);
     renderTextStyle(text, properties);
     syncTextStrokeHost(element, properties, text.style.fontSize);
   });
   return node;
-}
-
-function hasTextChange(changed: ReadonlySet<PropertyKey>): boolean {
-  return (
-    changed.has('Text') ||
-    changed.has('TextColor3') ||
-    changed.has('TextTransparency') ||
-    changed.has('TextSize') ||
-    changed.has('TextScaled') ||
-    changed.has('TextWrapped') ||
-    changed.has('TextXAlignment') ||
-    changed.has('TextYAlignment') ||
-    changed.has('FontFamily') ||
-    changed.has('FontWeight')
-  );
 }
 
 function validateTextProperties(

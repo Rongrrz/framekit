@@ -1,7 +1,7 @@
 import type { Color3 } from '../core/values/color3';
 import type { UDim, UDim2 } from '../core/values/udim';
 import type { Vector2 } from '../core/values/vector2';
-import type { InstanceProperties } from '../shared/runtime/node';
+import type { InstanceProperties } from '../runtime/node';
 
 type AnimatableValue = number | Color3 | Vector2 | UDim | UDim2;
 

@@ -1,6 +1,7 @@
-import type { Instance, InstanceProperties } from '../shared/runtime/node';
-import { subscribeToPropertyWrite } from '../shared/runtime/node-properties';
-import type { Unsubscribe } from '../shared/runtime/signal';
+import { throwCollectedErrors } from '../runtime/errors';
+import type { Instance, InstanceProperties } from '../runtime/node';
+import { subscribeToPropertyWrite } from '../runtime/node-properties';
+import type { Unsubscribe } from '../runtime/signal';
 
 export type AnimationOwner = {
   cancelPropertyFromConflict(property: PropertyKey): void;
@@ -126,13 +127,7 @@ function cancelConflictingPropertyOwners(
     owner = nextOwner;
   }
 
-  if (errors.length === 1) throw errors[0];
-  if (errors.length > 1) {
-    throw new AggregateError(
-      errors,
-      `Multiple animations failed while releasing "${String(property)}".`,
-    );
-  }
+  throwCollectedErrors(errors, `Multiple animations failed while releasing "${String(property)}".`);
 }
 
 function getOrCreateNodeClaims(node: Instance): Map<PropertyKey, PropertyClaim> {
