@@ -62,6 +62,8 @@ card.setProperties({
 
 Assignments and `setProperties()` are validated and applied immediately. They never rerun application code or recreate the node. Use `setProperties()` when several changes belong to one update; otherwise direct assignment is the simplest option.
 
+For the complete runtime sequence—including property transactions, modifier rendering, animation ownership, detach/unmount, and destruction—see [`FRAMEKIT_LIFECYCLE.md`](FRAMEKIT_LIFECYCLE.md).
+
 ## Elements and modifiers
 
 Elements are DOM-backed nodes. Modifiers are element-less nodes that affect their parent and participate in the same tree and lifecycle.
@@ -300,9 +302,9 @@ The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree fol
 - `core.ts` and `core/` — the `fk` surface; `core/elements` contains only user-creatable GUI objects
 - `animation.ts` and `animation/` — springs, tweens, easing, and controllers exposed through `fka`
 - `helpers.ts` and `helpers/` — optional composed behavior exposed through `fkh`
-- `shared/dom` — browser event wiring, text rendering, and other DOM-specific implementation details
-- `shared/runtime` — node state, trees, rendering, property ownership, events, and cleanup used across domains
-- `tests` — mirrors the source domains and keeps reusable test infrastructure under `tests/shared`
+- `dom/` — browser event wiring, text rendering, and other DOM-specific implementation details
+- `runtime/` — node state, trees, rendering, property ownership, events, and cleanup used across domains
+- `tests/` — source tests mirror the implementation domains, with reusable test infrastructure under `tests/support`
 
 Core types are available through `fk`, while animation types are available through `fka`:
 
