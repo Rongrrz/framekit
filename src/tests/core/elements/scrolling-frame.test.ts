@@ -28,10 +28,12 @@ describe('scrolling frames', () => {
     expect(scrolling.element.style.overflowY).toBe('hidden');
   });
 
-  it('configures canvas sizing, native scrolling, and scrollbar thickness', () => {
+  it('configures canvas sizing, native scrolling, and scrollbar appearance', () => {
     const scrolling = fk.createScrollingFrame({
       CanvasSize: fk.udim2FromOffset(600, 900),
       AutomaticCanvasSize: 'X',
+      ScrollBarImageColor3: fk.color3FromRGB(18, 153, 98),
+      ScrollBarImageTransparency: 0.25,
       ScrollBarThickness: 6,
     });
     const canvasBounds = scrolling.element.querySelector<HTMLElement>(
@@ -41,12 +43,22 @@ describe('scrolling frames', () => {
     expect(canvasBounds?.style.width).toBe('0px');
     expect(canvasBounds?.style.height).toBe('900px');
     expect(scrolling.element.style.getPropertyValue('--framekit-scrollbar-thickness')).toBe('6px');
+    expect(scrolling.element.style.getPropertyValue('--framekit-scrollbar-color')).toBe(
+      'rgb(18 153 98 / 0.75)',
+    );
     expect(scrolling.element.style.getPropertyValue('scrollbar-width')).toBe('thin');
+    expect(document.querySelector('[data-framekit-scrollbar-styles]')?.textContent).toContain(
+      '[data-framekit="ScrollingFrame"]::-webkit-scrollbar-thumb',
+    );
 
     scrolling.ScrollingEnabled = false;
 
     expect(scrolling.element.style.overflowX).toBe('hidden');
     expect(scrolling.element.style.overflowY).toBe('hidden');
+
+    expect(() => scrolling.setProperties({ ScrollBarImageTransparency: 1.1 })).toThrow(
+      /between 0 and 1/,
+    );
   });
 
   it('exposes canvas geometry and direct scroll helpers', () => {

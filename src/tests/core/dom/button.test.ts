@@ -20,6 +20,11 @@ describe('buttons', () => {
     expect(button.element.style.color).toBe('inherit');
     expect(button.element.style.outline).toBe('');
     expect(button.element.style.cursor).toBe('pointer');
+    expect(button.AutoButtonColor).toBe(true);
+    expect(button.element.hasAttribute('data-framekit-auto-button-color')).toBe(true);
+    expect(document.querySelector('[data-framekit-button-styles]')?.textContent).toContain(
+      '[data-framekit-button][data-framekit-auto-button-color]:not(:disabled):hover',
+    );
     expect('onTextChanged' in button).toBe(false);
 
     button.element.click();
@@ -34,6 +39,19 @@ describe('buttons', () => {
     button.destroy();
 
     expect(() => button.onClick(callback)).toThrow(/destroyed/);
+  });
+
+  it('allows automatic hover and pressed feedback to be disabled', () => {
+    const button = fk.createTextButton({ AutoButtonColor: false });
+
+    expect(button.element.hasAttribute('data-framekit-auto-button-color')).toBe(false);
+
+    button.AutoButtonColor = true;
+
+    expect(button.element.hasAttribute('data-framekit-auto-button-color')).toBe(true);
+    expect(() => button.setProperties({ AutoButtonColor: 'yes' as never })).toThrow(
+      /AutoButtonColor/,
+    );
   });
 
   it('does not fire button press events while disabled', () => {
@@ -97,6 +115,7 @@ describe('buttons', () => {
     expect(button.element.tagName).toBe('BUTTON');
     expect(button.element.disabled).toBe(true);
     expect(button.element.style.cursor).toBe('not-allowed');
+    expect(button.AutoButtonColor).toBe(true);
 
     button.setProperties({ Disabled: false });
 

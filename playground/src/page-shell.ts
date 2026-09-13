@@ -2,7 +2,7 @@ import { fk, fka } from 'framekit';
 
 import { pageHeight, pageWidth, type PlaygroundLayout } from './layout';
 import type { SitePage } from './router';
-import { bindThemeColors, scrollbarThickness, type ThemeValue } from './theme';
+import { bindThemeColors, scrollbarThickness, themeColor, type ThemeValue } from './theme';
 
 type PageShell = Readonly<{
   app: fk.ScreenGui;
@@ -33,6 +33,7 @@ export const createPageShell = (
     Size: fk.udim2(1, 0, 1, -navigationHeight),
     Position: fk.udim2FromOffset(0, navigationHeight),
     ScrollingDirection: 'Y',
+    ScrollBarImageColor3: themeColor(theme, 'textFaint'),
     ScrollBarThickness: scrollbarThickness,
   });
   const scrollSizer = fk.createFrame({
@@ -46,7 +47,10 @@ export const createPageShell = (
   });
   const contentScale = fk.createUIScale({ Scale: currentScale });
 
-  bindThemeColors(page, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
+  bindThemeColors(page, theme, (palette) => ({
+    BackgroundColor3: palette.canvas,
+    ScrollBarImageColor3: palette.textFaint,
+  }));
   content.addChild(contentScale);
   scrollSizer.addChild(content);
   page.addChild(scrollSizer);

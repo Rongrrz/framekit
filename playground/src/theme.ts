@@ -93,9 +93,6 @@ const themeSpringOptions = {
 const documentPaletteProperties = [
   '--pg-canvas',
   '--pg-border',
-  '--pg-scroll-track',
-  '--pg-scroll-thumb',
-  '--pg-scroll-hover',
   '--pg-focus',
   '--pg-selection-text',
 ] as const;
@@ -221,9 +218,6 @@ const applyDocumentPalette = (palette: ThemePalette): void => {
   const root = document.documentElement.style;
   root.setProperty('--pg-canvas', colorToCss(palette.canvas));
   root.setProperty('--pg-border', colorToCss(palette.border));
-  root.setProperty('--pg-scroll-track', colorToCss(palette.canvas));
-  root.setProperty('--pg-scroll-thumb', colorToCss(palette.textFaint));
-  root.setProperty('--pg-scroll-hover', colorToCss(palette.accent));
   root.setProperty('--pg-focus', colorToCss(palette.accent));
   root.setProperty('--pg-selection-text', colorToCss(palette.onAccent));
 };
@@ -242,18 +236,12 @@ export const installPlaygroundStyles = (): void => {
       font-synthesis: none;
       --pg-canvas: #0a0d12;
       --pg-border: rgb(48 61 76);
-      --pg-scroll-track: #0a0d12;
-      --pg-scroll-thumb: #526174;
-      --pg-scroll-hover: #76edad;
       --pg-focus: #76edad;
     }
     :root[data-framekit-theme="light"] {
       color-scheme: light;
       --pg-canvas: #f5f7fa;
       --pg-border: rgb(207 216 226);
-      --pg-scroll-track: #f5f7fa;
-      --pg-scroll-thumb: #9cabbc;
-      --pg-scroll-hover: #129962;
       --pg-focus: #129962;
     }
     * { box-sizing: border-box; }
@@ -262,27 +250,6 @@ export const installPlaygroundStyles = (): void => {
     }
     body { font-family: ${fonts.sans}; }
     ::selection { color: var(--pg-selection-text); background: var(--pg-focus); }
-    [data-framekit-scrolling-frame] {
-      scrollbar-color: var(--pg-scroll-thumb) var(--pg-scroll-track);
-      scrollbar-gutter: stable;
-    }
-    [data-framekit-scrolling-frame]::-webkit-scrollbar { width: ${scrollbarThickness}px; height: ${scrollbarThickness}px; }
-    [data-framekit-scrolling-frame]::-webkit-scrollbar-track { background: var(--pg-scroll-track); }
-    [data-framekit-scrolling-frame]::-webkit-scrollbar-thumb {
-      min-height: 48px;
-      border: 3px solid var(--pg-scroll-track);
-      border-radius: 999px;
-      background: var(--pg-scroll-thumb);
-      background-clip: padding-box;
-    }
-    [data-framekit-scrolling-frame]::-webkit-scrollbar-thumb:hover {
-      background: var(--pg-scroll-hover); background-clip: padding-box;
-    }
-    [data-framekit-scrolling-frame]::-webkit-scrollbar-corner { background: var(--pg-scroll-track); }
-    button { cursor: pointer; transition: filter 140ms ease; }
-    button:hover { filter: brightness(1.06); }
-    button:active { filter: brightness(.92); }
-    button:focus-visible { outline: 3px solid var(--pg-focus); outline-offset: 3px; }
     @media (prefers-reduced-motion: reduce) {
       * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
     }

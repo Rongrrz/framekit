@@ -11,6 +11,7 @@ import { guiEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
 import { setNodeProperties, getNodeProperty } from '../node/properties';
 import { getActiveNodeState } from '../node/state';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 
@@ -35,6 +36,10 @@ export type ScrollingFrameProperties = GuiObjectProperties & {
   AutomaticCanvasSize: AutomaticSize;
   /** Whether mouse, touch, and keyboard scrolling is enabled. */
   ScrollingEnabled: boolean;
+  /** Native scrollbar thumb color. */
+  ScrollBarImageColor3: Color3;
+  /** Native scrollbar thumb transparency from 0 (opaque) to 1 (invisible). */
+  ScrollBarImageTransparency: number;
   /** Native scrollbar thickness in pixels. */
   ScrollBarThickness: number;
 };
@@ -107,7 +112,6 @@ export function createScrollingFrame(
   const tagName = options.tagName ?? 'div';
   assertAllowedValue(tagName, scrollingFrameTagNames, 'ScrollingFrame tagName');
   const element = document.createElement(tagName);
-  element.dataset.framekitScrollingFrame = '';
   const canvasBounds = document.createElement('div');
 
   canvasBounds.dataset.framekitCanvasBounds = '';
@@ -137,6 +141,8 @@ export function createScrollingFrame(
       CanvasSize: udim2FromOffset(0, 0),
       AutomaticCanvasSize: 'None',
       ScrollingEnabled: true,
+      ScrollBarImageColor3: color3FromRGB(0, 0, 0),
+      ScrollBarImageTransparency: 0,
       ScrollBarThickness: 12,
     },
     initialProperties,
@@ -155,6 +161,16 @@ export function createScrollingFrame(
       if (changedProperties.has('ScrollBarThickness')) {
         setStyle(element, '--framekit-scrollbar-thickness', `${properties.ScrollBarThickness}px`);
         setStyle(element, 'scrollbar-width', resolveScrollbarWidth(properties.ScrollBarThickness));
+      }
+      if (
+        changedProperties.has('ScrollBarImageColor3') ||
+        changedProperties.has('ScrollBarImageTransparency')
+      ) {
+        setStyle(
+          element,
+          '--framekit-scrollbar-color',
+          color3ToCss(properties.ScrollBarImageColor3, properties.ScrollBarImageTransparency),
+        );
       }
       if (changedProperties.has('CanvasSize') || changedProperties.has('AutomaticCanvasSize')) {
         setStyle(
@@ -208,6 +224,11 @@ function validateScrollingFrameProperties(properties: Readonly<ScrollingFramePro
   assertUDim2(properties.CanvasSize, 'CanvasSize');
   assertAllowedValue(properties.AutomaticCanvasSize, automaticCanvasSizes, 'AutomaticCanvasSize');
   assertBoolean(properties.ScrollingEnabled, 'ScrollingEnabled');
+  assertColor3(properties.ScrollBarImageColor3, 'ScrollBarImageColor3');
+  assertNonNegativeFinite(properties.ScrollBarImageTransparency, 'ScrollBarImageTransparency');
+  if (properties.ScrollBarImageTransparency > 1) {
+    throw new RangeError('ScrollBarImageTransparency must be between 0 and 1.');
+  }
   assertNonNegativeFinite(properties.ScrollBarThickness, 'ScrollBarThickness');
 }
 
@@ -220,9 +241,24 @@ function ensureScrollbarStyles(ownerDocument: Document): void {
   const style = ownerDocument.createElement('style');
   style.dataset.framekitScrollbarStyles = '';
   style.textContent = `
+    [data-framekit="ScrollingFrame"] {
+      scrollbar-color: var(--framekit-scrollbar-color) transparent;
+      scrollbar-gutter: stable;
+    }
     [data-framekit="ScrollingFrame"]::-webkit-scrollbar {
       width: var(--framekit-scrollbar-thickness);
       height: var(--framekit-scrollbar-thickness);
+    }
+    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-track,
+    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-thumb {
+      min-height: 48px;
+      border: 3px solid transparent;
+      border-radius: 999px;
+      background: var(--framekit-scrollbar-color);
+      background-clip: padding-box;
     }
   `;
   ownerDocument.head.append(style);

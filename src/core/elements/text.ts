@@ -97,12 +97,17 @@ export function createTextButton(
       ...createDefaultTextProperties(),
       Name: 'TextButton',
       Disabled: false,
+      AutoButtonColor: true,
       AccessibleLabel: '',
     },
     initialProperties,
     'span',
     (properties, changedProperties) => {
-      if (changedProperties.has('Disabled') || changedProperties.has('AccessibleLabel')) {
+      if (
+        changedProperties.has('Disabled') ||
+        changedProperties.has('AutoButtonColor') ||
+        changedProperties.has('AccessibleLabel')
+      ) {
         renderButtonProperties(element, properties);
       }
     },
