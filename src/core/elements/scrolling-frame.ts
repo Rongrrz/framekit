@@ -7,10 +7,10 @@ import {
   type GuiObjectProperties,
 } from '../gui-object';
 import { assertAllowedValue, assertBoolean, assertNonNegativeFinite } from '../internal/validation';
-import { guiEventMethods } from '../node-service/gui-events';
-import type { GuiElement } from '../node-service/gui-node';
-import { setNodeProperties, getNodeProperty } from '../node-service/properties';
-import { getActiveNodeState } from '../node-service/state';
+import { guiEventMethods } from '../node/gui-events';
+import type { GuiElement } from '../node/gui-node';
+import { setNodeProperties, getNodeProperty } from '../node/properties';
+import { getActiveNodeState } from '../node/state';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 

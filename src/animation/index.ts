@@ -1,5 +1,5 @@
-export type { SpringController, SpringOptions } from './tween-service/spring-controller';
-export type { AnimationGoal } from './tween-service/types';
+export type { SpringController, SpringOptions } from './spring-controller';
+export type { AnimationGoal } from './types';
 
 export { TweenService } from './tween-service';
 export type {

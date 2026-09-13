@@ -4,7 +4,7 @@ import {
   assertNonNegativeFinite,
   assertString,
 } from '../internal/validation';
-import type { InstanceProperties } from '../node-service/instance';
+import type { InstanceProperties } from '../node/instance';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { setStyle } from './styles';
 import { renderTextSize } from './text-size';

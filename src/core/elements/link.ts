@@ -1,8 +1,8 @@
 import { DestroyService } from '../destroy-service';
 import { assertAllowedValue, assertString } from '../internal/validation';
-import { emitNodeEvent } from '../node-service/events';
-import { guiEventKeys, linkEventMethods, type ClickEventMethods } from '../node-service/gui-events';
-import type { GuiElement } from '../node-service/gui-node';
+import { emitNodeEvent } from '../node/events';
+import { guiEventKeys, linkEventMethods, type ClickEventMethods } from '../node/gui-events';
+import type { GuiElement } from '../node/gui-node';
 import { createDefaultTextProperties, createTextNode, type TextLabelProperties } from './text';
 
 /** Browser browsing contexts supported by Link. */

@@ -1,13 +1,8 @@
 import { throwCollectedErrors } from './internal/errors';
-import type { GuiElement } from './node-service/gui-node';
-import type { Instance } from './node-service/instance';
-import {
-  getActiveNodeState,
-  getChildren,
-  getNodeState,
-  isModifierState,
-} from './node-service/state';
-import { unlinkNodeFromParent } from './node-service/tree';
+import { NodeService } from './node-service';
+import type { GuiElement } from './node/gui-node';
+import type { Instance } from './node/instance';
+import { getActiveNodeState, getChildren, getNodeState, isModifierState } from './node/state';
 import { RenderService } from './render-service';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */
@@ -48,7 +43,7 @@ function destroyRecursively(
   children.length = 0;
 
   if (state.parent) {
-    const previousParent = unlinkNodeFromParent(node, state)!;
+    const previousParent = NodeService.unlinkNodeFromParent(node, state)!;
     if (isModifierState(state) || RenderService.hasLayoutModifier(previousParent)) {
       try {
         RenderService.renderNode(previousParent);

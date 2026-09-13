@@ -1,7 +1,7 @@
 import { assertNonNegativeFinite } from '../internal/validation';
-import type { InstanceProperties } from '../node-service/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../node-service/modifier';
-import { mergeProperties } from '../node-service/properties';
+import type { InstanceProperties } from '../node/instance';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
+import { mergeProperties } from '../node/properties';
 
 /** Properties for visual scaling without changing layout size. */
 export type UIScaleProperties = InstanceProperties & {

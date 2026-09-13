@@ -1,4 +1,4 @@
-import { assertPositiveFinite } from '../../core/internal/validation';
+import { assertPositiveFinite } from '../core/internal/validation';
 
 /** Optional physical and settling behavior for a spring. */
 export type SpringOptions = Readonly<{

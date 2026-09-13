@@ -1,6 +1,6 @@
-import type { InstanceProperties } from '../node-service/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../node-service/modifier';
-import { mergeProperties } from '../node-service/properties';
+import type { InstanceProperties } from '../node/instance';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
+import { mergeProperties } from '../node/properties';
 import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
 
 /** Inner padding applied independently on each edge. */

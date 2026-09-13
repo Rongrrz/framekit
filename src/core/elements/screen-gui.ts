@@ -2,11 +2,11 @@ import { DestroyService } from '../destroy-service';
 import { connectHoverEvents } from '../dom/hover-events';
 import { setStyle } from '../dom/styles';
 import { assertBoolean, assertInteger } from '../internal/validation';
-import { guiEventMethods } from '../node-service/gui-events';
-import { createGuiNode, type GuiElement } from '../node-service/gui-node';
-import type { InstanceProperties } from '../node-service/instance';
-import { mergeProperties } from '../node-service/properties';
-import { getActiveNodeState } from '../node-service/state';
+import { guiEventMethods } from '../node/gui-events';
+import { createGuiNode, type GuiElement } from '../node/gui-node';
+import type { InstanceProperties } from '../node/instance';
+import { mergeProperties } from '../node/properties';
+import { getActiveNodeState } from '../node/state';
 
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = InstanceProperties & {

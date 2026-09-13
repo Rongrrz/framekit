@@ -1,20 +1,8 @@
 import { DestroyService } from '../destroy-service';
+import { NodeService } from '../node-service';
 import type { Unsubscribe } from '../state/signal';
 import { watchValue, type Value } from '../state/value';
 import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
-import {
-  append,
-  children,
-  descendants,
-  detach,
-  findFirstChild,
-  getClassName,
-  getFullName,
-  getParent,
-  printTree,
-  setParent,
-  toTreeString,
-} from './tree';
 
 /** Properties shared by every FrameKit instance. */
 export type InstanceProperties = {
@@ -107,28 +95,28 @@ const methodTable = {
     return subscribeToPropertyChange(this, property, listener);
   },
   addChild(this: Instance, child: Instance): void {
-    append(this, child);
+    NodeService.append(this, child);
   },
   removeFromParent(this: Instance): void {
-    detach(this);
+    NodeService.detach(this);
   },
   getChildren(this: Instance): readonly Instance[] {
-    return children(this);
+    return NodeService.children(this);
   },
   getDescendants(this: Instance): readonly Instance[] {
-    return descendants(this);
+    return NodeService.descendants(this);
   },
   findFirstChild(this: Instance, name: string, recursive = false): Instance | undefined {
-    return findFirstChild(this, name, recursive);
+    return NodeService.findFirstChild(this, name, recursive);
   },
   getFullName(this: Instance): string {
-    return getFullName(this);
+    return NodeService.getFullName(this);
   },
   toTreeString(this: Instance): string {
-    return toTreeString(this);
+    return NodeService.toTreeString(this);
   },
   printTree(this: Instance): void {
-    printTree(this);
+    NodeService.printTree(this);
   },
   destroy(this: Instance): void {
     DestroyService.destroy(this);
@@ -147,15 +135,15 @@ const methodTable = {
 Object.defineProperties(methodTable, {
   ClassName: {
     get(this: Instance): string {
-      return getClassName(this);
+      return NodeService.getClassName(this);
     },
   },
   Parent: {
     get(this: Instance): Instance | undefined {
-      return getParent(this);
+      return NodeService.getParent(this);
     },
     set(this: Instance, newParent: Instance | undefined) {
-      setParent(this, newParent);
+      NodeService.setParent(this, newParent);
     },
   },
 });

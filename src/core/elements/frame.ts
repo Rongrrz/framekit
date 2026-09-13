@@ -4,7 +4,7 @@ import {
   type GuiObjectProperties,
 } from '../gui-object';
 import { assertAllowedValue } from '../internal/validation';
-import type { GuiElement } from '../node-service/gui-node';
+import type { GuiElement } from '../node/gui-node';
 
 /** Properties for a rectangular GUI container. */
 export type FrameProperties = GuiObjectProperties;

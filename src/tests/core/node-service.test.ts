@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index';
+import { fk } from '../../index';
 
-describe('tree', () => {
+describe('NodeService', () => {
   it('tracks, reparents, finds, and destroys children', () => {
     const first = fk.createFrame({ Name: 'First' });
     const second = fk.createFrame({ Name: 'Second' });

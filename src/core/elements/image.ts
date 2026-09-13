@@ -11,8 +11,8 @@ import {
   type GuiObjectProperties,
 } from '../gui-object';
 import { assertAllowedValue, assertFiniteNumber, assertString } from '../internal/validation';
-import { buttonEventMethods, type GuiMethodTable } from '../node-service/gui-events';
-import type { GuiElement, PropertyRenderer } from '../node-service/gui-node';
+import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events';
+import type { GuiElement, PropertyRenderer } from '../node/gui-node';
 
 /** How an image is fitted within its node bounds. */
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';

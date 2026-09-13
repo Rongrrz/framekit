@@ -1,4 +1,4 @@
-import type { Instance, InstanceProperties } from '../../core/node-service/instance';
+import type { Instance, InstanceProperties } from '../core/node/instance';
 import {
   createSpringBinding,
   type SpringBinding,

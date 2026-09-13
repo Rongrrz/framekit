@@ -106,6 +106,6 @@ export type {
   InstanceProperties,
   LayoutModifier,
   StyleModifier,
-} from './node-service';
+} from './node';
 
-export { spring } from '../animation/tween-service/spring';
+export { spring } from '../animation/spring';

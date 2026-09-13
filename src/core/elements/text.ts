@@ -27,10 +27,10 @@ import {
   type GuiObjectProperties,
 } from '../gui-object';
 import { assertAllowedValue } from '../internal/validation';
-import { buttonEventMethods, type GuiMethodTable } from '../node-service/gui-events';
-import type { GuiElement, PropertyRenderer } from '../node-service/gui-node';
-import { getNodeProperties } from '../node-service/properties';
-import type { PropertyValidator } from '../node-service/state';
+import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events';
+import type { GuiElement, PropertyRenderer } from '../node/gui-node';
+import { getNodeProperties } from '../node/properties';
+import type { PropertyValidator } from '../node/state';
 
 export type { TextXAlignment, TextYAlignment } from '../dom/text-style';
 

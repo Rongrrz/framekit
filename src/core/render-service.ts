@@ -1,8 +1,8 @@
 import { removeStyle, setStyle } from './dom/styles';
-import type { GuiElement } from './node-service/gui-node';
-import type { Instance, InstanceProperties } from './node-service/instance';
-import type { LayoutChild, LayoutNodeState, Styles } from './node-service/modifier';
-import { getNodeState, isGuiNode, isModifierState, type GuiNodeState } from './node-service/state';
+import type { GuiElement } from './node/gui-node';
+import type { Instance, InstanceProperties } from './node/instance';
+import type { LayoutChild, LayoutNodeState, Styles } from './node/modifier';
+import { getNodeState, isGuiNode, isModifierState, type GuiNodeState } from './node/state';
 
 function hasLayoutModifier(node: Instance): boolean {
   const state = getNodeState(node);

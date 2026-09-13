@@ -1,7 +1,7 @@
 import { DestroyService } from '../destroy-service';
-import { emitNodeEvent } from '../node-service/events';
-import { guiEventKeys } from '../node-service/gui-events';
-import type { GuiElement } from '../node-service/gui-node';
+import { emitNodeEvent } from '../node/events';
+import { guiEventKeys } from '../node/gui-events';
+import type { GuiElement } from '../node/gui-node';
 
 /** Connects the hover events shared by every DOM-backed GUI node. */
 export function connectHoverEvents(node: GuiElement, element: HTMLElement): void {

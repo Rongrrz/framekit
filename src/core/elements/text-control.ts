@@ -12,15 +12,15 @@ import {
   type GuiObjectProperties,
 } from '../gui-object';
 import { assertBoolean, assertFiniteNumber, assertString } from '../internal/validation';
-import { emitNodeEvent } from '../node-service/events';
+import { emitNodeEvent } from '../node/events';
 import {
   guiEventKeys,
   textChangedEventMethods,
   type TextChangedEventMethods,
-} from '../node-service/gui-events';
-import type { GuiElement, PropertyRenderer } from '../node-service/gui-node';
-import { getNodeProperties, getNodeProperty, setNodeProperties } from '../node-service/properties';
-import type { PropertyValidator } from '../node-service/state';
+} from '../node/gui-events';
+import type { GuiElement, PropertyRenderer } from '../node/gui-node';
+import { getNodeProperties, getNodeProperty, setNodeProperties } from '../node/properties';
+import type { PropertyValidator } from '../node/state';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Properties shared by native single-line and multiline text controls. */

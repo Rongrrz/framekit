@@ -1,7 +1,6 @@
-import { RenderService } from '../render-service';
-import type { GuiElement } from './gui-node';
-import type { Instance } from './instance';
-import type { Modifier } from './modifier';
+import type { GuiElement } from './node/gui-node';
+import type { Instance } from './node/instance';
+import type { Modifier } from './node/modifier';
 import {
   getActiveNodeState,
   getChildren,
@@ -9,10 +8,11 @@ import {
   isModifierState,
   isGuiNode,
   type NodeState,
-} from './state';
+} from './node/state';
+import { RenderService } from './render-service';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
-export function append(parent: Instance, child: Instance): void {
+function append(parent: Instance, child: Instance): void {
   const parentState = getActiveNodeState(parent);
   const childState = getActiveNodeState(child);
   if (parent === child || isAncestor(child, parent)) {
@@ -75,7 +75,7 @@ export function append(parent: Instance, child: Instance): void {
 }
 
 /** Detaches a node without destroying it or its descendants. */
-export function detach(node: Instance): void {
+function detach(node: Instance): void {
   const state = getActiveNodeState(node);
   if (!state.canHaveParent) return;
   const previousParent = unlinkNodeFromParent(node, state);
@@ -88,27 +88,27 @@ export function detach(node: Instance): void {
   }
 }
 
-export function getParent(node: Instance): Instance | undefined {
+function getParent(node: Instance): Instance | undefined {
   return getActiveNodeState(node).parent;
 }
 
-export function getClassName(node: Instance): string {
+function getClassName(node: Instance): string {
   return getActiveNodeState(node).className;
 }
 
 /** Reparents a node, or detaches it when `newParent` is undefined. */
-export function setParent(node: Instance, newParent: Instance | undefined): void {
+function setParent(node: Instance, newParent: Instance | undefined): void {
   if (newParent) append(newParent, node);
   else detach(node);
 }
 
 /** Returns a snapshot of the node's direct children. */
-export function children(node: Instance): readonly Instance[] {
+function children(node: Instance): readonly Instance[] {
   return [...getChildren(getActiveNodeState(node))];
 }
 
 /** Returns every descendant in depth-first hierarchy order. */
-export function descendants(node: Instance): readonly Instance[] {
+function descendants(node: Instance): readonly Instance[] {
   const descendantNodes: Instance[] = [];
   const pending = [...getChildren(getActiveNodeState(node))].reverse();
   while (pending.length > 0) {
@@ -123,11 +123,7 @@ export function descendants(node: Instance): readonly Instance[] {
 }
 
 /** Finds the first child with a matching name, optionally searching all descendants. */
-export function findFirstChild(
-  node: Instance,
-  name: string,
-  recursive = false,
-): Instance | undefined {
+function findFirstChild(node: Instance, name: string, recursive = false): Instance | undefined {
   const matchingChild = getChildren(getActiveNodeState(node)).find(
     (child) => getNodeState(child).properties.Name === name,
   );
@@ -136,7 +132,7 @@ export function findFirstChild(
 }
 
 /** Returns the dot-separated hierarchy path from the root to this node. */
-export function getFullName(node: Instance): string {
+function getFullName(node: Instance): string {
   getActiveNodeState(node);
   const names: string[] = [];
   for (let current: Instance | undefined = node; current; current = getNodeState(current).parent) {
@@ -146,7 +142,7 @@ export function getFullName(node: Instance): string {
 }
 
 /** Formats a stable, human-readable snapshot of a node hierarchy. */
-export function toTreeString(node: Instance): string {
+function toTreeString(node: Instance): string {
   const lines = [formatNode(node)];
   const rootChildren = getChildren(getActiveNodeState(node));
   const pending: TreeLine[] = [];
@@ -162,7 +158,7 @@ export function toTreeString(node: Instance): string {
 }
 
 /** Prints the current hierarchy snapshot to the console. */
-export function printTree(node: Instance): void {
+function printTree(node: Instance): void {
   console.log(toTreeString(node));
 }
 
@@ -243,7 +239,7 @@ function linkNodeToParent(
 }
 
 /** Removes a node from the authoritative hierarchy state and returns its previous parent. */
-export function unlinkNodeFromParent(node: Instance, state: NodeState): Instance | undefined {
+function unlinkNodeFromParent(node: Instance, state: NodeState): Instance | undefined {
   const previousParent = state.parent;
   if (!previousParent) return undefined;
 
@@ -257,3 +253,19 @@ export function unlinkNodeFromParent(node: Instance, state: NodeState): Instance
   state.parent = undefined;
   return previousParent;
 }
+
+/** Owns hierarchy reads and mutations for every FrameKit node. */
+export const NodeService = Object.freeze({
+  append,
+  detach,
+  getParent,
+  getClassName,
+  setParent,
+  children,
+  descendants,
+  findFirstChild,
+  getFullName,
+  toTreeString,
+  printTree,
+  unlinkNodeFromParent,
+});

@@ -1,4 +1,4 @@
-import type { Instance, InstanceProperties } from '../node-service/instance';
+import type { Instance, InstanceProperties } from '../node/instance';
 import { setStyle } from './styles';
 import type { TextStyleProperties } from './text-style';
 
