@@ -96,7 +96,7 @@ export const createPageShell = (
         page.scrollTo(goal);
         return;
       }
-      fka.spring(page, { CanvasPosition: goal }, scrollSpringOptions);
+      fka.TweenService.spring(page, { CanvasPosition: goal }, scrollSpringOptions);
     },
   });
 };

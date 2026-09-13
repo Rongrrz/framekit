@@ -3,7 +3,7 @@
  *
  * A GUI factory composes core/gui-object.ts with the node system to create and register a
  * handle. Node properties commit updates, RenderService applies them, the tree owns attachment,
- * and DestroyService releases descendants and resources. TweenService and SpringService use
+ * and DestroyService releases descendants and resources. TweenService uses
  * that same property path. The tests/ directory mirrors these modules.
  */
 /** Core nodes, values, hierarchy, state, and events. */

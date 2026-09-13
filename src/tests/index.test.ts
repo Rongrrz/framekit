@@ -14,14 +14,12 @@ describe('package API', () => {
     expect(typeof fk.createUITextStroke).toBe('function');
     expect(typeof fk.defineGuiObject).toBe('function');
 
-    expect(typeof fka.spring).toBe('function');
-    expect(typeof fka.createTween).toBe('function');
-    expect(typeof fka.SpringService.get).toBe('function');
-    expect(typeof fka.SpringService.animate).toBe('function');
     expect(typeof fka.TweenService.create).toBe('function');
-    expect(fka.TweenService.create).toBe(fka.createTween);
-    expect(Object.isFrozen(fka.SpringService)).toBe(true);
+    expect(typeof fka.TweenService.spring).toBe('function');
     expect(Object.isFrozen(fka.TweenService)).toBe(true);
+    expect(fka).not.toHaveProperty('createTween');
+    expect(fka).not.toHaveProperty('spring');
+    expect(fka).not.toHaveProperty('SpringService');
     expect(fka).not.toHaveProperty('createMotion');
     expect(fka).not.toHaveProperty('tweenInfo');
 

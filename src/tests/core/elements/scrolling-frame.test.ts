@@ -94,9 +94,9 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const springTarget = fk.createScrollingFrame();
-    const controller = fka.spring(springTarget);
+    const controller = fka.TweenService.spring(springTarget);
 
-    fka.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
+    fka.TweenService.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
     springTarget.element.dispatchEvent(new Event('scroll'));
 
     expect(controller.isAnimating()).toBe(true);
@@ -112,7 +112,7 @@ describe('scrolling frames', () => {
     expect(springTarget.CanvasPosition).toEqual(fk.vector2(0, 40));
 
     const tweenTarget = fk.createScrollingFrame();
-    const tween = fka.createTween(
+    const tween = fka.TweenService.create(
       tweenTarget,
       { Duration: 1 },
       {
@@ -140,9 +140,9 @@ describe('scrolling frames', () => {
 
     scrolling.element.append(child);
 
-    const controller = fka.spring(scrolling);
+    const controller = fka.TweenService.spring(scrolling);
 
-    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fka.TweenService.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
 
     expect(scrolling.element.tabIndex).toBe(0);
@@ -172,9 +172,9 @@ describe('scrolling frames', () => {
       scrolling.element.scrollTop = Math.round(top);
     });
 
-    const controller = fka.spring(scrolling);
+    const controller = fka.TweenService.spring(scrolling);
 
-    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fka.TweenService.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     frame?.(1000 / 60);
 
     expect(scrolling.CanvasPosition.Y).not.toBe(scrolling.element.scrollTop);
@@ -192,9 +192,9 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const scrolling = fk.createScrollingFrame();
-    const controller = fka.spring(scrolling);
+    const controller = fka.TweenService.spring(scrolling);
 
-    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fka.TweenService.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     scrolling.CanvasPosition = fk.vector2(0, 80);
 
     expect(controller.isAnimating()).toBe(false);

@@ -135,7 +135,7 @@ export const bindThemeTransition = (
       palette.set(themes[nextMode]);
       return;
     }
-    fka.spring(transition, { Rotation: goal }, themeSpringOptions);
+    fka.TweenService.spring(transition, { Rotation: goal }, themeSpringOptions);
   });
   owner.watch(palette, applyDocumentPalette);
   owner.onDestroy(() => {

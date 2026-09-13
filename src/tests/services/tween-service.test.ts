@@ -43,7 +43,7 @@ describe('tweens', () => {
 
   it('repeats indefinitely until explicitly cancelled', () => {
     const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.createTween(
+    const tween = fka.TweenService.create(
       frame,
       { Duration: 1, EasingStyle: 'Linear', RepeatCount: -1, Reverses: true },
       { Rotation: 90 },
@@ -67,7 +67,7 @@ describe('tweens', () => {
       Position: fk.udim2FromOffset(0, 10),
       BackgroundColor3: fk.color3FromRGB(0, 50, 100),
     });
-    const tween = fka.createTween(
+    const tween = fka.TweenService.create(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
@@ -95,7 +95,7 @@ describe('tweens', () => {
 
   it('supports delay, pause, resume, and cancellation', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const tween = fka.createTween(
+    const tween = fka.TweenService.create(
       frame,
       { Duration: 1, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.25 },
       {
@@ -126,7 +126,7 @@ describe('tweens', () => {
 
   it('lets a direct assignment cancel a paused tween', () => {
     const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
 
     tween.play();
     advance(250);
@@ -140,7 +140,7 @@ describe('tweens', () => {
 
   it('returns to the start when reversing and completes repeats', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const tween = fka.createTween(
+    const tween = fka.TweenService.create(
       frame,
       {
         Duration: 0.1,
@@ -175,9 +175,9 @@ describe('tweens', () => {
 
   it('cancels conflicting tweens but allows disjoint properties', () => {
     const frame = fk.createFrame();
-    const first = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
-    const second = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
-    const position = fka.createTween(
+    const first = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const second = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
+    const position = fka.TweenService.create(
       frame,
       { Duration: 1 },
       {
@@ -196,21 +196,21 @@ describe('tweens', () => {
 
   it('keeps ownership consistent when cancellation listeners start another tween', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const first = fka.createTween(
+    const first = fka.TweenService.create(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
         BackgroundTransparency: 1,
       },
     );
-    const reentrant = fka.createTween(
+    const reentrant = fka.TweenService.create(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
         BackgroundTransparency: 0.75,
       },
     );
-    const latest = fka.createTween(
+    const latest = fka.TweenService.create(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
@@ -233,14 +233,14 @@ describe('tweens', () => {
 
   it('finishes zero-duration tweens and cancels playback with node destruction', () => {
     const frame = fk.createFrame();
-    const instant = fka.createTween(frame, { Duration: 0 }, { BackgroundTransparency: 1 });
+    const instant = fka.TweenService.create(frame, { Duration: 0 }, { BackgroundTransparency: 1 });
 
     instant.play();
 
     expect(frame.BackgroundTransparency).toBe(1);
     expect(instant.playbackState()).toBe('Completed');
 
-    const delayed = fka.createTween(
+    const delayed = fka.TweenService.create(
       frame,
       { Duration: 0, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.1 },
       {
@@ -254,7 +254,7 @@ describe('tweens', () => {
     expect(frame.BackgroundTransparency).toBe(0.5);
     expect(delayed.playbackState()).toBe('Completed');
 
-    const running = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0 });
+    const running = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 0 });
 
     running.play();
     frame.destroy();
@@ -265,7 +265,7 @@ describe('tweens', () => {
 
   it('finishes tween cleanup when a cancellation listener throws during destruction', () => {
     const frame = fk.createFrame();
-    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const listener = vi.fn(() => {
       throw new Error('listener failed');
     });
@@ -282,7 +282,7 @@ describe('tweens', () => {
 
   it('keeps a direct property write in control when tween cancellation listeners fail', () => {
     const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
     const changed = vi.fn();
 
     tween.completed.subscribe(() => {
@@ -299,8 +299,8 @@ describe('tweens', () => {
 
   it('releases partial ownership when a multi-property claim fails', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const existing = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
-    const interrupted = fka.createTween(
+    const existing = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const interrupted = fka.TweenService.create(
       frame,
       { Duration: 1 },
       { Rotation: 90, BackgroundTransparency: 0.5 },
@@ -313,7 +313,7 @@ describe('tweens', () => {
 
     expect(() => interrupted.play()).toThrow(/cancel listener failed/);
 
-    const replacement = fka.createTween(frame, { Duration: 1 }, { Rotation: 45 });
+    const replacement = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 45 });
 
     expect(() => replacement.play()).not.toThrow();
     expect(replacement.playbackState()).toBe('Playing');
@@ -321,23 +321,23 @@ describe('tweens', () => {
 
   it('keeps ownership that a retained spring had before a failed claim', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const controller = fka.spring(frame);
-    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const controller = fka.TweenService.spring(frame);
+    const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
 
-    fka.spring(frame, { Rotation: 90 });
+    fka.TweenService.spring(frame, { Rotation: 90 });
     tween.completed.subscribe(() => {
       throw new Error('cancel listener failed');
     });
     tween.play();
 
     expect(() =>
-      fka.spring(frame, {
+      fka.TweenService.spring(frame, {
         Rotation: 45,
         BackgroundTransparency: 0.5,
       }),
     ).toThrow(/cancel listener failed/);
 
-    const replacement = fka.createTween(frame, { Duration: 1 }, { Rotation: 20 });
+    const replacement = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 20 });
 
     replacement.play();
 
@@ -347,8 +347,12 @@ describe('tweens', () => {
 
   it('releases every directly assigned property when several cancellation listeners fail', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const rotation = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
-    const transparency = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const rotation = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
+    const transparency = fka.TweenService.create(
+      frame,
+      { Duration: 1 },
+      { BackgroundTransparency: 1 },
+    );
 
     rotation.completed.subscribe(() => {
       throw new Error('rotation cancellation failed');
@@ -374,7 +378,7 @@ describe('tweens', () => {
       throw new Error('property listener failed');
     });
 
-    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
 
     tween.play();
 
@@ -386,16 +390,18 @@ describe('tweens', () => {
   it('validates tween configuration and goal values', () => {
     const frame = fk.createFrame();
 
-    expect(() => fka.createTween(frame, { Duration: -1 }, { Rotation: 1 })).toThrow(/duration/);
-    expect(() => fka.createTween(frame, { Duration: 1, RepeatCount: -2 }, { Rotation: 1 })).toThrow(
-      /repeat count/,
+    expect(() => fka.TweenService.create(frame, { Duration: -1 }, { Rotation: 1 })).toThrow(
+      /duration/,
     );
-    expect(() => fka.createTween(frame, { Duration: 1 }, {})).toThrow(/goal property/);
-    expect(() => fka.createTween(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
+    expect(() =>
+      fka.TweenService.create(frame, { Duration: 1, RepeatCount: -2 }, { Rotation: 1 }),
+    ).toThrow(/repeat count/);
+    expect(() => fka.TweenService.create(frame, { Duration: 1 }, {})).toThrow(/goal property/);
+    expect(() => fka.TweenService.create(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
       /Unknown tween property "Missing"/,
     );
     expect(() =>
-      fka.createTween(
+      fka.TweenService.create(
         frame,
         { Duration: 1 },
         {
@@ -411,12 +417,12 @@ describe('tweens', () => {
 
     frame.addChild(scale);
 
-    const invalid = fka.createTween(scale, { Duration: 0 }, { Scale: -1 });
+    const invalid = fka.TweenService.create(scale, { Duration: 0 }, { Scale: -1 });
 
     expect(() => invalid.play()).toThrow(/non-negative finite/);
     expect(invalid.playbackState()).toBe('Cancelled');
 
-    const valid = fka.createTween(scale, { Duration: 0 }, { Scale: 0.5 });
+    const valid = fka.TweenService.create(scale, { Duration: 0 }, { Scale: 0.5 });
 
     valid.play();
 
