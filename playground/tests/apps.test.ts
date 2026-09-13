@@ -22,7 +22,8 @@ describe('playground application', () => {
     expect((app.findFirstChild('HomeProductName', true) as fk.TextLabel).TextScaled).toBe(true);
     const page = app.findFirstChild('FrameKitPlaygroundPage', true) as fk.ScrollingFrame;
     expect(page.ScrollBarThickness).toBe(12);
-    expect(page.element.dataset.framekitScrollingFrame).toBe('');
+    expect(page.ScrollBarImageColor3).toEqual(fk.color3FromRGB(105, 120, 137));
+    expect(page.ScrollBarImageTransparency).toBe(0);
     app.destroy();
   });
 
@@ -49,6 +50,7 @@ describe('playground application', () => {
     expect(document.documentElement.dataset.framekitTheme).toBe('light');
     expect(toggle.Text).toContain('Dark');
     expect(page.BackgroundColor3).toEqual(fk.color3FromRGB(245, 247, 250));
+    expect(page.ScrollBarImageColor3).toEqual(fk.color3FromRGB(121, 136, 151));
     expect(window.localStorage.getItem('framekit-playground-theme')).toBe('light');
     app.destroy();
   });
