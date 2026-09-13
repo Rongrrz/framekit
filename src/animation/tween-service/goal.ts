@@ -1,5 +1,5 @@
-import type { Instance, InstanceProperties } from '../core/node-service/instance';
-import { getPropertiesSnapshot } from '../core/node-service/properties';
+import type { Instance, InstanceProperties } from '../../core/node-service/instance';
+import { getPropertiesSnapshot } from '../../core/node-service/properties';
 import type { AnimationGoal } from './types';
 import {
   assertCompatibleAnimationValues,

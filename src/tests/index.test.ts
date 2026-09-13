@@ -19,8 +19,9 @@ describe('package API', () => {
     expect(typeof fk.defineGuiObject).toBe('function');
 
     expect(typeof fka.TweenService.create).toBe('function');
-    expect(typeof fka.TweenService.spring).toBe('function');
+    expect(typeof fk.spring).toBe('function');
     expect(Object.isFrozen(fka.TweenService)).toBe(true);
+    expect(fka.TweenService).not.toHaveProperty('spring');
     expect(fka).not.toHaveProperty('createTween');
     expect(fka).not.toHaveProperty('spring');
     expect(fka).not.toHaveProperty('SpringService');
@@ -33,7 +34,6 @@ describe('package API', () => {
     expect(fkh).not.toHaveProperty('createSpringModifierToggle');
     expect(fk).not.toHaveProperty('createUIGlow');
 
-    expect(fk).not.toHaveProperty('spring');
     expect(fka).not.toHaveProperty('createFrame');
   });
 

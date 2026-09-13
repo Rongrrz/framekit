@@ -1,34 +1,28 @@
+import { DestroyService } from '../../core/destroy-service';
+import { assertNonNegativeFinite } from '../../core/internal/validation';
+import type { Instance, InstanceProperties } from '../../core/node-service/instance';
+import { getPropertiesSnapshot } from '../../core/node-service/properties';
+import { getActiveNodeState } from '../../core/node-service/state';
+import { createSignal, readonlySignal, type Signal } from '../../core/state/signal';
 import {
   assertEasingDirection,
   assertEasingStyle,
   ease,
   type EasingDirection,
   type EasingStyle,
-} from '../animation/easing';
-import { prepareAnimationGoal } from '../animation/goal';
+} from './easing';
+import { prepareAnimationGoal } from './goal';
 import {
   applyAnimationProperties,
   claimAnimationProperties,
   releaseAnimationProperties,
   type AnimationOwner,
-} from '../animation/ownership';
-import { cancelAnimationTask, scheduleAnimationTask } from '../animation/scheduler';
-import {
-  createSpringBinding,
-  type SpringBinding,
-  type SpringController,
-  type SpringOptions,
-} from '../animation/spring-controller';
-import type { AnimationGoal } from '../animation/types';
-import { interpolateAnimationValue } from '../animation/value';
-import { DestroyService } from '../core/destroy-service';
-import { assertNonNegativeFinite } from '../core/internal/validation';
-import type { Instance, InstanceProperties } from '../core/node-service/instance';
-import { getPropertiesSnapshot } from '../core/node-service/properties';
-import { getActiveNodeState } from '../core/node-service/state';
-import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
+} from './ownership';
+import { cancelAnimationTask, scheduleAnimationTask } from './scheduler';
+import type { AnimationGoal } from './types';
+import { interpolateAnimationValue } from './value';
 
-export type { EasingDirection, EasingStyle } from '../animation/easing';
+export type { EasingDirection, EasingStyle } from './easing';
 
 /** Timing and playback settings for a tween. */
 export type TweenOptions = Readonly<{
@@ -73,8 +67,6 @@ export type Tween = {
   /** Emits when playback completes or is cancelled. */
   readonly completed: Signal<[TweenPlaybackState]>;
 };
-
-const springsByNode = new WeakMap<Instance, SpringBinding<InstanceProperties>>();
 
 /** Creates a controllable tween that applies interpolated property values. */
 function create<Properties extends InstanceProperties>(
@@ -249,37 +241,8 @@ function create<Properties extends InstanceProperties>(
   return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
 }
 
-/** Returns the retained spring tween for a node without changing its goal. */
-function spring<Properties extends InstanceProperties>(
-  node: Instance<Properties>,
-): SpringController<Properties>;
-/** Retargets a node's retained spring tween. */
-function spring<Properties extends InstanceProperties>(
-  node: Instance<Properties>,
-  goal: TweenGoal<Properties>,
-): SpringController<Properties>;
-/** Retargets a node's retained spring tween with per-property spring settings. */
-function spring<Properties extends InstanceProperties>(
-  node: Instance<Properties>,
-  goal: TweenGoal<Properties>,
-  settings: SpringOptions,
-): SpringController<Properties>;
-function spring<Properties extends InstanceProperties>(
-  node: Instance<Properties>,
-  goal?: TweenGoal<Properties>,
-  settings?: SpringOptions,
-): SpringController<Properties> {
-  let binding = springsByNode.get(node) as SpringBinding<Properties> | undefined;
-  if (!binding) {
-    binding = createSpringBinding(node);
-    springsByNode.set(node, binding as SpringBinding<InstanceProperties>);
-  }
-  if (goal) binding.animate(goal, settings);
-  return binding.controller;
-}
-
-/** Owns explicit timed tweens and retained spring tweens. */
-export const TweenService = Object.freeze({ create, spring });
+/** Owns explicit timed tweens. */
+export const TweenService = Object.freeze({ create });
 
 function resolveTweenOptions(options: TweenOptions): ResolvedTweenOptions {
   const resolved: ResolvedTweenOptions = {

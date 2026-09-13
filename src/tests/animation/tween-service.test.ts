@@ -321,17 +321,17 @@ describe('tweens', () => {
 
   it('keeps ownership that a retained spring had before a failed claim', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const controller = fka.TweenService.spring(frame);
+    const controller = fk.spring(frame);
     const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
 
-    fka.TweenService.spring(frame, { Rotation: 90 });
+    fk.spring(frame, { Rotation: 90 });
     tween.completed.subscribe(() => {
       throw new Error('cancel listener failed');
     });
     tween.play();
 
     expect(() =>
-      fka.TweenService.spring(frame, {
+      fk.spring(frame, {
         Rotation: 45,
         BackgroundTransparency: 0.5,
       }),

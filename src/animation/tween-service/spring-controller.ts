@@ -1,7 +1,7 @@
-import { DestroyService } from '../core/destroy-service';
-import type { Instance, InstanceProperties } from '../core/node-service/instance';
-import { getActiveNodeState } from '../core/node-service/state';
-import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
+import { DestroyService } from '../../core/destroy-service';
+import type { Instance, InstanceProperties } from '../../core/node-service/instance';
+import { getActiveNodeState } from '../../core/node-service/state';
+import { createSignal, readonlySignal, type Signal } from '../../core/state/signal';
 import { prepareAnimationGoal } from './goal';
 import {
   applyAnimationProperties,

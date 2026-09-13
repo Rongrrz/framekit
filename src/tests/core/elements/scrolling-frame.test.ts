@@ -101,9 +101,9 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const springTarget = fk.createScrollingFrame();
-    const controller = fka.TweenService.spring(springTarget);
+    const controller = fk.spring(springTarget);
 
-    fka.TweenService.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
+    fk.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
     springTarget.element.dispatchEvent(new Event('scroll'));
 
     expect(controller.isAnimating()).toBe(true);
@@ -147,9 +147,9 @@ describe('scrolling frames', () => {
 
     scrolling.element.append(child);
 
-    const controller = fka.TweenService.spring(scrolling);
+    const controller = fk.spring(scrolling);
 
-    fka.TweenService.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fk.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
 
     expect(scrolling.element.tabIndex).toBe(0);
@@ -179,9 +179,9 @@ describe('scrolling frames', () => {
       scrolling.element.scrollTop = Math.round(top);
     });
 
-    const controller = fka.TweenService.spring(scrolling);
+    const controller = fk.spring(scrolling);
 
-    fka.TweenService.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fk.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     frame?.(1000 / 60);
 
     expect(scrolling.CanvasPosition.Y).not.toBe(scrolling.element.scrollTop);
@@ -199,9 +199,9 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const scrolling = fk.createScrollingFrame();
-    const controller = fka.TweenService.spring(scrolling);
+    const controller = fk.spring(scrolling);
 
-    fka.TweenService.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fk.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     scrolling.CanvasPosition = fk.vector2(0, 80);
 
     expect(controller.isAnimating()).toBe(false);

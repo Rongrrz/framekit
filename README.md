@@ -44,7 +44,7 @@ The common vocabulary is deliberately small:
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                     |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                     |
-| Motion        | `fka.TweenService.spring`, `fka.TweenService.create`                                      |
+| Motion        | `fk.spring`, `fka.TweenService.create`                                                    |
 | Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`, `fkh.setModifierAttached`               |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
 
@@ -281,23 +281,23 @@ Set `ScrollingEnabled` to `false` to temporarily disable native mouse, touch, an
 
 ## Spring motion
 
-Call `fka.TweenService.spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
+Call `fk.spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
 
 ```ts
 const scale = fk.createUIScale();
 button.addChild(scale);
 
-button.onMouseEnter(() => fka.TweenService.spring(scale, { Scale: 1.04 }));
-button.onMouseLeave(() => fka.TweenService.spring(scale, { Scale: 1 }));
+button.onMouseEnter(() => fk.spring(scale, { Scale: 1.04 }));
+button.onMouseLeave(() => fk.spring(scale, { Scale: 1 }));
 ```
 
 The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mass: 1, precision: 0.001, restVelocity: 0.0625 }`. Most interactions should leave it alone. When a particular motion needs a different feel, pass a separate settings object:
 
 ```ts
-fka.TweenService.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
+fk.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
 ```
 
-`fka.TweenService.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
+`fk.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
 
 Assigning a property directly or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue, and the write takes control even when it assigns the property's current value.
 
@@ -340,7 +340,7 @@ Core types are available through `fk`, while animation types are available throu
 
 ```ts
 function show(panel: fk.Frame): void {
-  fka.TweenService.spring(panel, { BackgroundTransparency: 0 });
+  fk.spring(panel, { BackgroundTransparency: 0 });
 }
 ```
 

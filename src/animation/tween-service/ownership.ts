@@ -1,7 +1,7 @@
-import { throwCollectedErrors } from '../core/internal/errors';
-import type { Instance, InstanceProperties } from '../core/node-service/instance';
-import { subscribeToPropertyWrite } from '../core/node-service/properties';
-import type { Unsubscribe } from '../core/state/signal';
+import { throwCollectedErrors } from '../../core/internal/errors';
+import type { Instance, InstanceProperties } from '../../core/node-service/instance';
+import { subscribeToPropertyWrite } from '../../core/node-service/properties';
+import type { Unsubscribe } from '../../core/state/signal';
 
 export type AnimationOwner = {
   cancelPropertyFromConflict(property: PropertyKey): void;

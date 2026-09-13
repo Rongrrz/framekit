@@ -8,11 +8,11 @@ const { advance, settle } = setupAnimationClock();
 describe('TweenService spring tweens', () => {
   it('retains one spring controller per node', () => {
     const frame = fk.createFrame();
-    const controller = fka.TweenService.spring(frame);
+    const controller = fk.spring(frame);
 
-    expect(fka.TweenService.spring(frame)).toBe(controller);
-    expect(fka.TweenService.spring(frame, { Rotation: 90 })).toBe(controller);
-    expect(fka.TweenService.spring(fk.createFrame())).not.toBe(controller);
+    expect(fk.spring(frame)).toBe(controller);
+    expect(fk.spring(frame, { Rotation: 90 })).toBe(controller);
+    expect(fk.spring(fk.createFrame())).not.toBe(controller);
 
     settle();
 
@@ -25,10 +25,10 @@ describe('TweenService spring tweens', () => {
     const control = fk.createFrame({ BackgroundTransparency: 0 });
     const slow = { tension: 40, friction: 12 } as const;
 
-    fka.TweenService.spring(frame, { BackgroundTransparency: 1 }, slow);
-    fka.TweenService.spring(control, { BackgroundTransparency: 1 }, slow);
+    fk.spring(frame, { BackgroundTransparency: 1 }, slow);
+    fk.spring(control, { BackgroundTransparency: 1 }, slow);
     advance();
-    fka.TweenService.spring(frame, { Rotation: 90 }, { tension: 400, friction: 40, mass: 2 });
+    fk.spring(frame, { Rotation: 90 }, { tension: 400, friction: 40, mass: 2 });
     advance();
 
     expect(frame.BackgroundTransparency).toBe(control.BackgroundTransparency);
@@ -45,14 +45,14 @@ describe('TweenService spring tweens', () => {
       Size: fk.udim2FromOffset(100, 100),
       BackgroundColor3: fk.color3FromRGB(0, 0, 0),
     });
-    const controller = fka.TweenService.spring(frame);
+    const controller = fk.spring(frame);
     const completed = vi.fn();
 
     expect(controller.completed).not.toHaveProperty('emit');
     expect(controller.completed).not.toHaveProperty('clear');
 
     controller.completed.subscribe(completed);
-    fka.TweenService.spring(frame, {
+    fk.spring(frame, {
       Position: fk.udim2(0.5, 20, 0.25, -10),
       Size: fk.udim2FromOffset(240, 160),
       BackgroundColor3: fk.color3FromRGB(120, 80, 200),
@@ -77,12 +77,12 @@ describe('TweenService spring tweens', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
     const settings = { tension: 170, friction: 5 } as const;
 
-    fka.TweenService.spring(frame, { BackgroundTransparency: 1 }, settings);
+    fk.spring(frame, { BackgroundTransparency: 1 }, settings);
     for (let index = 0; index < 5; index += 1) advance();
 
     const beforeRetarget = frame.BackgroundTransparency;
 
-    fka.TweenService.spring(frame, { BackgroundTransparency: 0 }, settings);
+    fk.spring(frame, { BackgroundTransparency: 0 }, settings);
     advance();
 
     expect(frame.BackgroundTransparency).toBeGreaterThan(beforeRetarget);
@@ -94,9 +94,9 @@ describe('TweenService spring tweens', () => {
 
   it('arbitrates property ownership with tweens in both directions', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const controller = fka.TweenService.spring(frame);
+    const controller = fk.spring(frame);
 
-    fka.TweenService.spring(frame, { BackgroundTransparency: 1 });
+    fk.spring(frame, { BackgroundTransparency: 1 });
     advance();
 
     const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
@@ -105,7 +105,7 @@ describe('TweenService spring tweens', () => {
 
     expect(controller.isAnimating()).toBe(false);
 
-    fka.TweenService.spring(frame, { BackgroundTransparency: 0.25 });
+    fk.spring(frame, { BackgroundTransparency: 0.25 });
 
     expect(tween.playbackState()).toBe('Cancelled');
 
@@ -116,9 +116,9 @@ describe('TweenService spring tweens', () => {
 
   it('lets direct property changes take control from active animations', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const controller = fka.TweenService.spring(frame);
+    const controller = fk.spring(frame);
 
-    fka.TweenService.spring(frame, { Rotation: 90 });
+    fk.spring(frame, { Rotation: 90 });
     advance();
 
     frame.Rotation = 12;
@@ -141,9 +141,9 @@ describe('TweenService spring tweens', () => {
 
   it('stops when a direct assignment keeps the current value', () => {
     const frame = fk.createFrame({ Rotation: 0 });
-    const controller = fka.TweenService.spring(frame);
+    const controller = fk.spring(frame);
 
-    fka.TweenService.spring(frame, { Rotation: 90 });
+    fk.spring(frame, { Rotation: 90 });
     frame.Rotation = 0;
 
     expect(controller.isAnimating()).toBe(false);
@@ -152,9 +152,9 @@ describe('TweenService spring tweens', () => {
 
   it('keeps an animation when a rejected assignment never takes effect', () => {
     const scale = fk.createUIScale();
-    const controller = fka.TweenService.spring(scale);
+    const controller = fk.spring(scale);
 
-    fka.TweenService.spring(scale, { Scale: 2 });
+    fk.spring(scale, { Scale: 2 });
 
     expect(() => (scale.Scale = -1)).toThrow(/non-negative finite/);
     expect(controller.isAnimating()).toBe(true);
@@ -166,9 +166,9 @@ describe('TweenService spring tweens', () => {
 
   it('stops individual properties and releases everything on destruction', () => {
     const frame = fk.createFrame();
-    const controller = fka.TweenService.spring(frame);
+    const controller = fk.spring(frame);
 
-    fka.TweenService.spring(frame, {
+    fk.spring(frame, {
       BackgroundTransparency: 1,
       Position: fk.udim2FromOffset(100, 100),
     });
@@ -179,32 +179,22 @@ describe('TweenService spring tweens', () => {
     frame.destroy();
 
     expect(controller.isAnimating()).toBe(false);
-    expect(() => fka.TweenService.spring(frame, { BackgroundTransparency: 0 })).toThrow(
-      /destroyed/,
-    );
+    expect(() => fk.spring(frame, { BackgroundTransparency: 0 })).toThrow(/destroyed/);
   });
 
   it('validates options and spring goals', () => {
     const frame = fk.createFrame();
 
-    expect(() => fka.TweenService.spring(frame, { Rotation: 1 }, { tension: 0 })).toThrow(
-      /tension/,
-    );
-    expect(() => fka.TweenService.spring(frame, { Rotation: 1 }, { friction: Number.NaN })).toThrow(
-      /friction/,
-    );
-    expect(() => fka.TweenService.spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
-    expect(() => fka.TweenService.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(
-      /rest velocity/,
-    );
+    expect(() => fk.spring(frame, { Rotation: 1 }, { tension: 0 })).toThrow(/tension/);
+    expect(() => fk.spring(frame, { Rotation: 1 }, { friction: Number.NaN })).toThrow(/friction/);
+    expect(() => fk.spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
+    expect(() => fk.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
 
-    expect(() => fka.TweenService.spring(frame, {})).toThrow(/goal property/);
-    expect(() => fka.TweenService.spring(frame, { Missing: 1 } as never)).toThrow(
+    expect(() => fk.spring(frame, {})).toThrow(/goal property/);
+    expect(() => fk.spring(frame, { Missing: 1 } as never)).toThrow(
       /Unknown spring property "Missing"/,
     );
-    expect(() => fka.TweenService.spring(frame, { BackgroundTransparency: Number.NaN })).toThrow(
-      /animatable/,
-    );
+    expect(() => fk.spring(frame, { BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
 
   it('releases property ownership when a spring update cannot render', () => {
@@ -213,9 +203,9 @@ describe('TweenService spring tweens', () => {
 
     frame.addChild(scale);
 
-    const controller = fka.TweenService.spring(scale);
+    const controller = fk.spring(scale);
 
-    fka.TweenService.spring(scale, { Scale: -1 }, { tension: 170, friction: 5 });
+    fk.spring(scale, { Scale: -1 }, { tension: 170, friction: 5 });
 
     expect(() => settle()).toThrow(/non-negative finite/);
     expect(controller.isAnimating()).toBe(false);
@@ -232,7 +222,7 @@ describe('TweenService spring tweens', () => {
     const shadow = fk.createUIShadow();
 
     frame.addChild(shadow);
-    fka.TweenService.spring(shadow, {
+    fk.spring(shadow, {
       Offset: fk.vector2(12, 20),
       BlurRadius: 28,
       Transparency: 0.25,

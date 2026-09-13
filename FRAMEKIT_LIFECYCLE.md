@@ -83,7 +83,7 @@ Springs and tweens do not mutate private animation-only copies of the UI. They r
 
 ### Springs
 
-Each node retains one spring controller. Calling `fka.TweenService.spring(node, goal)` again retargets per-property springs from current visual values while preserving velocity. Properties settle independently; `completed` emits when all active properties settle.
+Each node retains one spring controller. Calling `fk.spring(node, goal)` again retargets per-property springs from current visual values while preserving velocity. Properties settle independently; `completed` emits when all active properties settle.
 
 ### Ownership rules
 
