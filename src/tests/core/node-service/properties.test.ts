@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../index';
+import { fk } from '../../../index';
 
 describe('node properties', () => {
   it('commits and renders an entire patch before notifying property observers', () => {

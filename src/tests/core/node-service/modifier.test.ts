@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { createStyleModifier } from '../../core/node-service/modifier';
-import { fk } from '../../index';
-import { resetDocumentAfterEach } from '../support/reset-document';
+import { createStyleModifier } from '../../../core/node-service/modifier';
+import { fk } from '../../../index';
+import { resetDocumentAfterEach } from '../../support/reset-document';
 
 resetDocumentAfterEach();
 

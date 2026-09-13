@@ -329,11 +329,9 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree follows those same boundaries:
 
-- `core.ts` and `core/` — the `fk` surface; `core/elements` contains only user-creatable GUI objects
-- `animation.ts` and `animation/` — springs, tweens, easing, and controllers exposed through `fka`
-- `helpers.ts` and `helpers/` — optional composed behavior exposed through `fkh`
-- `dom/` — browser event wiring, text rendering, and other DOM-specific implementation details
-- `runtime/` — node state, trees, rendering, property ownership, events, and cleanup used across domains
+- `core/` — the `fk` surface, elements, values, state, DOM lifecycle, and `node-service`
+- `animation/` — the `fka` surface and the cohesive `tween-service` implementation
+- `helpers/` — optional composed behavior exposed through `fkh`
 - `tests/` — source tests mirror the implementation domains, with reusable test infrastructure under `tests/support`
 
 Core types are available through `fk`, while animation types are available through `fka`:
@@ -344,7 +342,7 @@ function show(panel: fk.Frame): void {
 }
 ```
 
-The runtime remains an implementation boundary rather than a secondary public entry point. Package consumers should import only from `framekit`.
+Internal validation and error plumbing live under `core/internal`; they are implementation details rather than a secondary public entry point. Package consumers should import only from `framekit`.
 
 ## Custom GUI classes
 
