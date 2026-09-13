@@ -36,7 +36,7 @@ The common vocabulary is deliberately small:
 
 | Area          | What you use                                                                              |
 | ------------- | ----------------------------------------------------------------------------------------- |
-| Elements      | `createScreenGui`, `createFrame`, scrolling, text, image, link, and text-box factories    |
+| Elements      | `createScreenGui`, frames, text, native text controls, images, and links                  |
 | Modifiers     | `createUICorner`, gradients, border and text strokes, shadows, padding, scale, and layout |
 | Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`      |
 | Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`         |
@@ -229,19 +229,28 @@ There is no dependency tracking or render cycle. A watched callback is simply a 
 
 All GUI nodes expose `onMouseEnter()` and `onMouseLeave()`. Button nodes add `onClick()`, primary-button, and secondary-button methods.
 
-Text boxes keep their current string in `Text`, available through `box.Text`. `onTextChanged()` emits that same string as the user edits:
+`TextInput` and `TextArea` use native form controls. Both keep their current string in `Text`, and `onTextChanged()` emits that same string as the user edits. Use `TextInput` for a single line and `TextArea` for multiline content:
 
 ```ts
-const bio = fk.createTextBox({
+const email = fk.createTextInput({
+  InputType: 'Email',
+  PlaceholderText: 'you@example.com',
+  FieldName: 'email',
+  AutoComplete: 'email',
+});
+
+const bio = fk.createTextArea({
   Text: 'Hello FrameKit',
-  MultiLine: true,
   PlaceholderText: 'Write something…',
+  ResizeDirection: 'Vertical',
 });
 
 bio.onTextChanged((value) => console.log(value));
 ```
 
-Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
+`TextBox` has been removed. Migrate a single-line `TextBox` to `TextInput`; migrate one that used `MultiLine: true` to `TextArea` and remove `MultiLine`.
+
+The controls also expose `Disabled`, `ReadOnly`, `AccessibleLabel`, and native form/autocomplete properties. Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
 
 ## Geometry and scrolling
 

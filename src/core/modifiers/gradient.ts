@@ -1,4 +1,5 @@
 import { textGradientFillProperty, textGradientImageProperty } from '../../dom/text-gradient';
+import { isDisplayTextProperties } from '../../dom/text-style';
 import type { InstanceProperties } from '../../node/instance';
 import { createStyleModifier, type StyleModifier, type Styles } from '../../node/modifier';
 import { mergeProperties } from '../../node/properties';
@@ -177,7 +178,7 @@ function readTargetTransparency(
 }
 
 function isTextTarget(properties: Readonly<InstanceProperties>): boolean {
-  return 'Text' in properties && !('MultiLine' in properties);
+  return isDisplayTextProperties(properties);
 }
 
 function multiplyColors(first: Color3, second: Color3): Color3 {

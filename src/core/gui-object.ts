@@ -76,6 +76,7 @@ type GuiObjectNodeOptions<Properties extends GuiObjectProperties> = {
   renderProperties?: PropertyRenderer<Properties> | undefined;
   methods?: GuiMethodTable | undefined;
   validateProperties?: PropertyValidator<Properties> | undefined;
+  canContainGuiChildren?: boolean;
 };
 
 /** Combines shared GUI behavior with an element's own rendering and validation. */
@@ -87,6 +88,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
   renderProperties,
   methods,
   validateProperties,
+  canContainGuiChildren = true,
 }: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
   element.dataset.framekit = className;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box', margin: '0' });
@@ -104,6 +106,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
       validateProperties?.(properties);
     },
     methods,
+    canContainGuiChildren,
   });
 
   connectHoverEvents(node, element);

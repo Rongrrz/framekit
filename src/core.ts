@@ -43,8 +43,15 @@ export type {
   TextYAlignment,
 } from './core/elements/text';
 
-export { createTextBox } from './core/elements/text-box';
-export type { TextBox, TextBoxProperties } from './core/elements/text-box';
+export { createTextInput } from './core/elements/text-input';
+export type { TextInput, TextInputProperties, TextInputType } from './core/elements/text-input';
+
+export { createTextArea } from './core/elements/text-area';
+export type {
+  TextArea,
+  TextAreaProperties,
+  TextAreaResizeDirection,
+} from './core/elements/text-area';
 
 export { createUIAspectRatioConstraint } from './core/modifiers/aspect-ratio';
 export type {

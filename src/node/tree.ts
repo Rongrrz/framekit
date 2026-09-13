@@ -25,6 +25,9 @@ export function append(parent: Instance, child: Instance): void {
   if (isModifierState(parentState)) {
     throw new TypeError('UI modifiers cannot contain child nodes.');
   }
+  if (parentState.kind === 'gui' && isGuiNode(child) && !parentState.canContainGuiChildren) {
+    throw new TypeError(`${parentState.properties.Name} cannot contain GUI children.`);
+  }
   if (childState.parent === parent) {
     placeChildElement(parent, parentState, child, getChildren(parentState).indexOf(child));
     return;

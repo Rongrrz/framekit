@@ -3,6 +3,7 @@ import {
   textStrokeContentProperty,
   textStrokeWidthProperty,
 } from '../../dom/text-stroke';
+import { isDisplayTextProperties } from '../../dom/text-style';
 import type { InstanceProperties } from '../../node/instance';
 import { createStyleModifier, type StyleModifier, type Styles } from '../../node/modifier';
 import { mergeProperties } from '../../node/properties';
@@ -53,7 +54,7 @@ function resolveTextStrokeStyles(
   properties: Readonly<UITextStrokeProperties>,
   targetProperties: Readonly<InstanceProperties>,
 ): Styles {
-  if (!('Text' in targetProperties) || 'MultiLine' in targetProperties) {
+  if (!isDisplayTextProperties(targetProperties)) {
     throw new TypeError('UITextStroke must be attached to a TextLabel or TextButton.');
   }
   if (!properties.Enabled) return {};

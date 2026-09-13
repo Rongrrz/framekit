@@ -74,13 +74,14 @@ export const createApiPage = (
       { text: 'fk.createTextLabel(properties?, { textTagName? })', color: 'purple' },
       { text: 'fk.createTextButton(properties?)', color: 'orange' },
       { text: 'fk.createLink(properties?)', color: 'blue' },
-      { text: 'fk.createTextBox(properties?)' },
+      { text: 'fk.createTextInput(properties?)' },
+      { text: 'fk.createTextArea(properties?)' },
       { text: 'fk.createImageLabel(properties?, { tagName? })' },
       { text: 'fk.createImageButton(properties?)' },
       { text: 'fk.createScrollingFrame(properties?, { tagName? })' },
     ],
     430,
-    280,
+    300,
   );
 
   appendArticleSection(
@@ -118,9 +119,9 @@ export const createApiPage = (
   const elements = [
     ['ScreenGui', 'Mountable hierarchy root with mount and unmount.', 'accent'],
     ['Frame', 'General container and visual surface.', 'blue'],
-    ['TextLabel', 'Text display with wrapping, alignment, and TextScaled.', 'purple'],
+    ['TextLabel / Link', 'Display text; Link adds native navigation.', 'purple'],
     ['TextButton', 'TextLabel properties plus typed button events.', 'orange'],
-    ['TextBox', 'Editable text with onTextChanged.', 'blue'],
+    ['TextInput / TextArea', 'Native editable text with onTextChanged.', 'blue'],
     ['ImageLabel / ImageButton', 'Images with Stretch, Fit, or Crop scaling.', 'accent'],
     ['ScrollingFrame', 'Native scrolling with synchronized canvas position.', 'purple'],
   ] as const satisfies readonly (readonly [string, string, ThemeToken])[];
@@ -156,7 +157,7 @@ export const createApiPage = (
     shell.article,
     theme,
     'Events',
-    'All GUI elements support pointer entry and exit. Buttons add mouse-button events, while TextBox adds user-edit events.',
+    'All GUI elements support pointer entry and exit. Buttons add mouse-button events, while native text controls add user-edit events.',
     2422,
   );
   appendCodeBlock(
@@ -170,7 +171,7 @@ export const createApiPage = (
       { text: 'button.onPrimaryButtonDown(listener)' },
       { text: 'button.onPrimaryButtonUp(listener)' },
       { text: 'button.onSecondaryClick(listener)' },
-      { text: 'textBox.onTextChanged(listener)', color: 'blue' },
+      { text: 'textControl.onTextChanged(listener)', color: 'blue' },
     ],
     2546,
     234,

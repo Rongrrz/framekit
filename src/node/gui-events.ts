@@ -29,13 +29,14 @@ export type ButtonEventMethods = {
 /** Activation available on native links and buttons. */
 export type ClickEventMethods = Pick<ButtonEventMethods, 'onClick'>;
 
-/** Text editing events available on TextBox nodes. */
-export type TextBoxEventMethods = {
+/** Text editing events available on native text controls. */
+export type TextChangedEventMethods = {
   /** Subscribes to user edits after Text has been synchronized. */
   onTextChanged(listener: (text: string, event: InputEvent) => void): Unsubscribe;
 };
 
-export type GuiMethodTable = GuiEventMethods & Partial<ButtonEventMethods & TextBoxEventMethods>;
+export type GuiMethodTable = GuiEventMethods &
+  Partial<ButtonEventMethods & TextChangedEventMethods>;
 
 export const guiEventKeys = Object.freeze({
   mouseEnter: Symbol('MouseEnter'),
@@ -90,9 +91,9 @@ export const buttonEventMethods = Object.freeze({
   },
 } satisfies ButtonEventMethods);
 
-export const textBoxEventMethods = Object.freeze({
+export const textChangedEventMethods = Object.freeze({
   ...guiEventMethods,
   onTextChanged(this: Instance, listener: (text: string, event: InputEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.textChanged, listener);
   },
-} satisfies TextBoxEventMethods);
+} satisfies TextChangedEventMethods);

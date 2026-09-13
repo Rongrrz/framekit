@@ -25,6 +25,7 @@ export type GuiNodeState<Properties extends InstanceProperties = InstancePropert
   BaseNodeState<Properties> & {
     kind: 'gui';
     children: Instance[];
+    canContainGuiChildren: boolean;
     propertyNames: ReadonlySet<keyof Properties>;
     renderProperties: PropertyRenderer<Properties> | undefined;
     modifiers: Map<string, Modifier>;

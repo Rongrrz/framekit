@@ -9,6 +9,9 @@ describe('package API', () => {
 
     expect(typeof fk.createFrame).toBe('function');
     expect(typeof fk.createLink).toBe('function');
+    expect(typeof fk.createTextInput).toBe('function');
+    expect(typeof fk.createTextArea).toBe('function');
+    expect(fk).not.toHaveProperty('createTextBox');
     expect(typeof fk.color3FromRGB).toBe('function');
     expect(typeof fk.createValue).toBe('function');
     expect(typeof fk.createUIGradient).toBe('function');

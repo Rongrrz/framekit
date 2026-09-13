@@ -40,6 +40,7 @@ type GuiNodeOptions<Properties extends InstanceProperties> = {
   validateProperties?: PropertyValidator<Properties> | undefined;
   methods?: GuiMethodTable | undefined;
   canHaveParent?: boolean;
+  canContainGuiChildren?: boolean;
 };
 
 /** Creates the handle, registers its validated state, then performs the initial render. */
@@ -51,6 +52,7 @@ export function createGuiNode<Properties extends InstanceProperties>({
   validateProperties,
   methods = guiEventMethods,
   canHaveParent = true,
+  canContainGuiChildren = true,
 }: GuiNodeOptions<Properties>): GuiElement<Properties> {
   const propertyNames = new Set(Object.keys(properties) as (keyof Properties)[]);
   const node = createNodeHandle(properties, getGuiMethodTable(methods), {
@@ -60,6 +62,7 @@ export function createGuiNode<Properties extends InstanceProperties>({
     ...createBaseState(className, properties, validateProperties, canHaveParent),
     kind: 'gui',
     children: [],
+    canContainGuiChildren,
     propertyNames,
     renderProperties,
     modifiers: new Map(),
