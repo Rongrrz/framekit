@@ -48,7 +48,9 @@ describe('gradients', () => {
     expect(label.element.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
       'transparent',
     );
-    expect(label.element.querySelectorAll('[data-framekit-text]')).toHaveLength(1);
+    const renderedText = label.element.querySelector<HTMLElement>('[data-framekit-text]');
+    expect(renderedText?.style.backgroundClip).toBe('text');
+    expect(renderedText?.style.getPropertyValue('-webkit-background-clip')).toBe('text');
 
     gradient.Enabled = false;
 

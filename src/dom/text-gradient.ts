@@ -5,7 +5,8 @@ export const textGradientImageProperty = '--framekit-text-gradient-image';
 export function initializeTextGradient(text: HTMLElement): void {
   text.style.backgroundImage = `var(${textGradientImageProperty}, none)`;
   text.style.backgroundClip = 'text';
-  text.style.webkitBackgroundClip = 'text';
+  // Keep the prefixed CSS fallback without using its deprecated CSSStyleDeclaration alias.
+  text.style.setProperty('-webkit-background-clip', 'text');
   text.style.webkitTextFillColor = `var(${textGradientFillProperty}, currentcolor)`;
 }
 
