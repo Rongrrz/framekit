@@ -250,10 +250,6 @@ export const installPlaygroundStyles = (): void => {
     }
     body { font-family: ${fonts.sans}; }
     ::selection { color: var(--pg-selection-text); background: var(--pg-focus); }
-    button { cursor: pointer; transition: filter 140ms ease; }
-    button:hover { filter: brightness(1.06); }
-    button:active { filter: brightness(.92); }
-    button:focus-visible { outline: 3px solid var(--pg-focus); outline-offset: 3px; }
     @media (prefers-reduced-motion: reduce) {
       * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
     }
