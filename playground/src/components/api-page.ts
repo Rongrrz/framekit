@@ -73,13 +73,14 @@ export const createApiPage = (
       { text: 'fk.createFrame(properties?, { tagName? })', color: 'blue' },
       { text: 'fk.createTextLabel(properties?, { textTagName? })', color: 'purple' },
       { text: 'fk.createTextButton(properties?)', color: 'orange' },
+      { text: 'fk.createLink(properties?)', color: 'blue' },
       { text: 'fk.createTextBox(properties?)' },
       { text: 'fk.createImageLabel(properties?, { tagName? })' },
       { text: 'fk.createImageButton(properties?)' },
       { text: 'fk.createScrollingFrame(properties?, { tagName? })' },
     ],
     430,
-    260,
+    280,
   );
 
   appendArticleSection(

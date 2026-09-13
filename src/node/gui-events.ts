@@ -26,6 +26,9 @@ export type ButtonEventMethods = {
   onSecondaryButtonUp(listener: (event: MouseEvent) => void): Unsubscribe;
 };
 
+/** Activation available on native links and buttons. */
+export type ClickEventMethods = Pick<ButtonEventMethods, 'onClick'>;
+
 /** Text editing events available on TextBox nodes. */
 export type TextBoxEventMethods = {
   /** Subscribes to user edits after Text has been synchronized. */
@@ -56,11 +59,20 @@ export const guiEventMethods = Object.freeze({
   },
 } satisfies GuiEventMethods);
 
-export const buttonEventMethods = Object.freeze({
-  ...guiEventMethods,
+const clickEventMethods = {
   onClick(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.click, listener);
   },
+} satisfies ClickEventMethods;
+
+export const linkEventMethods = Object.freeze({
+  ...guiEventMethods,
+  ...clickEventMethods,
+});
+
+export const buttonEventMethods = Object.freeze({
+  ...guiEventMethods,
+  ...clickEventMethods,
   onPrimaryButtonDown(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.primaryButtonDown, listener);
   },

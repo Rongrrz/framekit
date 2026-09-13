@@ -24,6 +24,7 @@ import {
 import { buttonEventMethods, type GuiMethodTable } from '../../node/gui-events';
 import type { GuiElement, PropertyRenderer } from '../../node/gui-node';
 import { getNodeProperties } from '../../node/properties';
+import type { PropertyValidator } from '../../node/state';
 import { assertAllowedValue } from '../../runtime/validation';
 import {
   createDefaultGuiObjectProperties,
@@ -112,7 +113,7 @@ export function createTextButton(
   return node;
 }
 
-function createDefaultTextProperties(): TextLabelProperties {
+export function createDefaultTextProperties(): TextLabelProperties {
   return {
     ...createDefaultGuiObjectProperties(),
     Name: 'TextLabel',
@@ -120,7 +121,7 @@ function createDefaultTextProperties(): TextLabelProperties {
   };
 }
 
-function createTextNode<Properties extends TextLabelProperties>(
+export function createTextNode<Properties extends TextLabelProperties>(
   className: string,
   element: HTMLElement,
   defaultProperties: Properties,
@@ -128,6 +129,7 @@ function createTextNode<Properties extends TextLabelProperties>(
   textTagName: TextTagName,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   methods?: GuiMethodTable,
+  validateAdditionalProperties?: PropertyValidator<Properties>,
 ): GuiElement<Properties> {
   const text = document.createElement(textTagName);
   text.dataset.framekitText = '';
@@ -166,7 +168,10 @@ function createTextNode<Properties extends TextLabelProperties>(
       renderAdditionalProperties?.(properties, changedProperties);
     },
     methods,
-    validateProperties: validateTextProperties,
+    validateProperties: (properties) => {
+      validateTextProperties(properties);
+      validateAdditionalProperties?.(properties);
+    },
   });
   bindTextScaleResize(node, element, () => {
     const properties = getNodeProperties(node);

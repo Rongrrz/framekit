@@ -15,6 +15,9 @@ export type {
   ScaleType,
 } from './core/elements/image';
 
+export { createLink } from './core/elements/link';
+export type { Link, LinkProperties, LinkTarget } from './core/elements/link';
+
 export { createScreenGui } from './core/elements/screen-gui';
 export type { ScreenGui, ScreenGuiProperties } from './core/elements/screen-gui';
 

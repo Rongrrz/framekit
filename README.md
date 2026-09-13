@@ -34,19 +34,19 @@ FrameKit has no components, render functions, hooks, throwaway virtual trees, de
 
 The common vocabulary is deliberately small:
 
-| Area          | What you use                                                                                  |
-| ------------- | --------------------------------------------------------------------------------------------- |
-| Elements      | `createScreenGui`, `createFrame`, `createScrollingFrame`, text, image, and text-box factories |
-| Modifiers     | `createUICorner`, gradients, border and text strokes, shadows, padding, scale, and layout     |
-| Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`          |
-| Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`             |
-| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry          |
-| Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                         |
-| Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                    |
-| Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                         |
-| Motion        | `fka.TweenService.spring`, `fka.TweenService.create`                                          |
-| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`, `fkh.setModifierAttached`                   |
-| Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors                |
+| Area          | What you use                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| Elements      | `createScreenGui`, `createFrame`, scrolling, text, image, link, and text-box factories    |
+| Modifiers     | `createUICorner`, gradients, border and text strokes, shadows, padding, scale, and layout |
+| Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`      |
+| Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`         |
+| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry      |
+| Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                     |
+| Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
+| Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                     |
+| Motion        | `fka.TweenService.spring`, `fka.TweenService.create`                                      |
+| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`, `fkh.setModifierAttached`               |
+| Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
 
@@ -78,6 +78,16 @@ const content = fk.createScrollingFrame({}, { tagName: 'main' });
 ```
 
 `Frame` supports `div`, `main`, `section`, `article`, `aside`, `header`, `footer`, `nav`, and `figure`. `ScrollingFrame` supports scrolling-region equivalents. `TextLabel` renders text as `span` by default and also supports paragraphs, headings, emphasis, code, preformatted text, and block quotes. `ImageLabel` supports `div` or `figure`. Interactive instances remain native `button` elements.
+
+Use `Link` for navigation instead of attaching a click handler to a frame. It renders a real anchor, preserving browser navigation and accessibility behavior:
+
+```ts
+const guide = fk.createLink({
+  Text: 'Read the guide',
+  Href: '/guide',
+  Rel: 'help',
+});
+```
 
 ```ts
 const panel = fk.createFrame({

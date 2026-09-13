@@ -8,6 +8,7 @@ describe('package API', () => {
     expect(Object.keys(framekit).sort()).toEqual(['fk', 'fka', 'fkh']);
 
     expect(typeof fk.createFrame).toBe('function');
+    expect(typeof fk.createLink).toBe('function');
     expect(typeof fk.color3FromRGB).toBe('function');
     expect(typeof fk.createValue).toBe('function');
     expect(typeof fk.createUIGradient).toBe('function');
