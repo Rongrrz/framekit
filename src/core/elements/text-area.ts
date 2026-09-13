@@ -1,4 +1,4 @@
-import { assertAllowedValue } from '../../runtime/validation';
+import { assertAllowedValue } from '../internal/validation';
 import {
   createDefaultTextControlProperties,
   createTextControl,

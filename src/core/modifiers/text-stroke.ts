@@ -2,16 +2,12 @@ import {
   textStrokeColorProperty,
   textStrokeContentProperty,
   textStrokeWidthProperty,
-} from '../../dom/text-stroke';
-import { isDisplayTextProperties } from '../../dom/text-style';
-import type { InstanceProperties } from '../../node/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../../node/modifier';
-import { mergeProperties } from '../../node/properties';
-import {
-  assertBoolean,
-  assertFiniteNumber,
-  assertNonNegativeFinite,
-} from '../../runtime/validation';
+} from '../dom/text-stroke';
+import { isDisplayTextProperties } from '../dom/text-style';
+import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../internal/validation';
+import type { InstanceProperties } from '../node-service/instance';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node-service/modifier';
+import { mergeProperties } from '../node-service/properties';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Properties for an outline drawn around a GUI parent's text. */

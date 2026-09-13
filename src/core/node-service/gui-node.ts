@@ -1,5 +1,5 @@
-import { vector2, type Vector2 } from '../core/values/vector2';
-import { RenderService } from '../services/render-service';
+import { RenderService } from '../render-service';
+import { vector2, type Vector2 } from '../values/vector2';
 import { guiEventMethods, type GuiMethodTable, type GuiEventMethods } from './gui-events';
 import {
   createNodeHandle,

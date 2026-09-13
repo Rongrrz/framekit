@@ -1,7 +1,7 @@
-import { throwCollectedErrors } from '../runtime/errors';
-import type { Unsubscribe } from '../runtime/signal';
-import { assertString } from '../runtime/validation';
-import { RenderService } from '../services/render-service';
+import { throwCollectedErrors } from '../internal/errors';
+import { assertString } from '../internal/validation';
+import { RenderService } from '../render-service';
+import type { Unsubscribe } from '../state/signal';
 import { emitNodeEvent, subscribeToNodeEvent } from './events';
 import type { Instance, InstanceProperties } from './instance';
 import { getActiveNodeState, getNodeState } from './state';

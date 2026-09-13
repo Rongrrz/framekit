@@ -1,6 +1,6 @@
-import type { GuiElement } from '../node/gui-node';
-import type { Modifier } from '../node/modifier';
-import { assertBoolean } from '../runtime/validation';
+import { assertBoolean } from '../core/internal/validation';
+import type { GuiElement } from '../core/node-service/gui-node';
+import type { Modifier } from '../core/node-service/modifier';
 
 /** Attaches or detaches a retained modifier without recreating it. */
 export function setModifierAttached(

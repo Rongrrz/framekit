@@ -1,6 +1,6 @@
-import type { Unsubscribe } from '../runtime/signal';
-import { watchValue, type Value } from '../runtime/value';
-import { DestroyService } from '../services/destroy-service';
+import { DestroyService } from '../destroy-service';
+import type { Unsubscribe } from '../state/signal';
+import { watchValue, type Value } from '../state/value';
 import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
 import {
   append,

@@ -21,12 +21,12 @@ import {
 } from '../animation/spring-controller';
 import type { AnimationGoal } from '../animation/types';
 import { interpolateAnimationValue } from '../animation/value';
-import type { Instance, InstanceProperties } from '../node/instance';
-import { getPropertiesSnapshot } from '../node/properties';
-import { getActiveNodeState } from '../node/state';
-import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
-import { assertNonNegativeFinite } from '../runtime/validation';
-import { DestroyService } from './destroy-service';
+import { DestroyService } from '../core/destroy-service';
+import { assertNonNegativeFinite } from '../core/internal/validation';
+import type { Instance, InstanceProperties } from '../core/node-service/instance';
+import { getPropertiesSnapshot } from '../core/node-service/properties';
+import { getActiveNodeState } from '../core/node-service/state';
+import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
 
 export type { EasingDirection, EasingStyle } from '../animation/easing';
 

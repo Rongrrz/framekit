@@ -1,11 +1,11 @@
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../core/values/color3';
-import type { InstanceProperties } from '../node/instance';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
   assertString,
-} from '../runtime/validation';
+} from '../internal/validation';
+import type { InstanceProperties } from '../node-service/instance';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { setStyle } from './styles';
 import { renderTextSize } from './text-size';
 

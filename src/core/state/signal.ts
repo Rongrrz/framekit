@@ -1,4 +1,4 @@
-import { throwCollectedErrors } from './errors';
+import { throwCollectedErrors } from '../internal/errors';
 
 /** Stops a subscription or unregisters cleanup work. Safe to call repeatedly. */
 export type Unsubscribe = () => void;

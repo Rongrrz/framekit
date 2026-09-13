@@ -1,4 +1,4 @@
-import type { Unsubscribe } from '../runtime/signal';
+import type { Unsubscribe } from '../state/signal';
 import { subscribeToNodeEvent } from './events';
 import type { Instance } from './instance';
 

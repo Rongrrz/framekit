@@ -1,26 +1,26 @@
-import { bindTextScaleResize, renderTextSize } from '../../dom/text-size';
+import { DestroyService } from '../destroy-service';
+import { bindTextScaleResize, renderTextSize } from '../dom/text-size';
 import {
   createDefaultTextStyleProperties,
   renderTextStyle,
   type TextStyleProperties,
   validateTextStyleProperties,
-} from '../../dom/text-style';
-import { emitNodeEvent } from '../../node/events';
-import {
-  guiEventKeys,
-  textChangedEventMethods,
-  type TextChangedEventMethods,
-} from '../../node/gui-events';
-import type { GuiElement, PropertyRenderer } from '../../node/gui-node';
-import { getNodeProperties, getNodeProperty, setNodeProperties } from '../../node/properties';
-import type { PropertyValidator } from '../../node/state';
-import { assertBoolean, assertFiniteNumber, assertString } from '../../runtime/validation';
-import { DestroyService } from '../../services/destroy-service';
+} from '../dom/text-style';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
+import { assertBoolean, assertFiniteNumber, assertString } from '../internal/validation';
+import { emitNodeEvent } from '../node-service/events';
+import {
+  guiEventKeys,
+  textChangedEventMethods,
+  type TextChangedEventMethods,
+} from '../node-service/gui-events';
+import type { GuiElement, PropertyRenderer } from '../node-service/gui-node';
+import { getNodeProperties, getNodeProperty, setNodeProperties } from '../node-service/properties';
+import type { PropertyValidator } from '../node-service/state';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Properties shared by native single-line and multiline text controls. */

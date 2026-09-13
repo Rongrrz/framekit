@@ -1,9 +1,9 @@
-import type { GuiObjectProperties } from '../core/gui-object';
-import { emitNodeEvent } from '../node/events';
-import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events';
-import type { GuiElement } from '../node/gui-node';
-import { assertBoolean, assertString } from '../runtime/validation';
-import { DestroyService } from '../services/destroy-service';
+import { DestroyService } from '../destroy-service';
+import type { GuiObjectProperties } from '../gui-object';
+import { assertBoolean, assertString } from '../internal/validation';
+import { emitNodeEvent } from '../node-service/events';
+import { guiEventKeys, type ButtonEventMethods } from '../node-service/gui-events';
+import type { GuiElement } from '../node-service/gui-node';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */

@@ -1,7 +1,7 @@
-import type { Instance, InstanceProperties } from '../node/instance';
-import { subscribeToPropertyWrite } from '../node/properties';
-import { throwCollectedErrors } from '../runtime/errors';
-import type { Unsubscribe } from '../runtime/signal';
+import { throwCollectedErrors } from '../core/internal/errors';
+import type { Instance, InstanceProperties } from '../core/node-service/instance';
+import { subscribeToPropertyWrite } from '../core/node-service/properties';
+import type { Unsubscribe } from '../core/state/signal';
 
 export type AnimationOwner = {
   cancelPropertyFromConflict(property: PropertyKey): void;

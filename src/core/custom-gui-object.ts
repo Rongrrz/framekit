@@ -1,11 +1,11 @@
-import type { PropertyValidator } from '../node/state';
-import { assertString } from '../runtime/validation';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObject,
   type GuiObjectProperties,
 } from './gui-object';
+import { assertString } from './internal/validation';
+import type { PropertyValidator } from './node-service/state';
 
 /** Description used to create one reusable GUI class. */
 export type GuiObjectDefinition<Properties extends object> = {

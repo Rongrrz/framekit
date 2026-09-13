@@ -1,20 +1,16 @@
-import { setStyle } from '../../dom/styles';
-import { guiEventMethods } from '../../node/gui-events';
-import type { GuiElement } from '../../node/gui-node';
-import { setNodeProperties, getNodeProperty } from '../../node/properties';
-import { getActiveNodeState } from '../../node/state';
-import {
-  assertAllowedValue,
-  assertBoolean,
-  assertNonNegativeFinite,
-} from '../../runtime/validation';
-import { DestroyService } from '../../services/destroy-service';
+import { DestroyService } from '../destroy-service';
+import { setStyle } from '../dom/styles';
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
+import { assertAllowedValue, assertBoolean, assertNonNegativeFinite } from '../internal/validation';
+import { guiEventMethods } from '../node-service/gui-events';
+import type { GuiElement } from '../node-service/gui-node';
+import { setNodeProperties, getNodeProperty } from '../node-service/properties';
+import { getActiveNodeState } from '../node-service/state';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
 import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 

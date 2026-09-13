@@ -1,8 +1,13 @@
-import type { GuiElement } from '../node/gui-node';
-import type { Instance } from '../node/instance';
-import { getActiveNodeState, getChildren, getNodeState, isModifierState } from '../node/state';
-import { unlinkNodeFromParent } from '../node/tree';
-import { throwCollectedErrors } from '../runtime/errors';
+import { throwCollectedErrors } from './internal/errors';
+import type { GuiElement } from './node-service/gui-node';
+import type { Instance } from './node-service/instance';
+import {
+  getActiveNodeState,
+  getChildren,
+  getNodeState,
+  isModifierState,
+} from './node-service/state';
+import { unlinkNodeFromParent } from './node-service/tree';
 import { RenderService } from './render-service';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */

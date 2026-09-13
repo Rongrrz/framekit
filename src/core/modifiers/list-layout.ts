@@ -1,13 +1,13 @@
-import type { InstanceProperties } from '../../node/instance';
+import { assertAllowedValue, assertBoolean } from '../internal/validation';
+import type { InstanceProperties } from '../node-service/instance';
 import {
   createLayoutModifier,
   type LayoutChild,
   type LayoutModifier,
   type LayoutStyles,
   type Styles,
-} from '../../node/modifier';
-import { mergeProperties } from '../../node/properties';
-import { assertAllowedValue, assertBoolean } from '../../runtime/validation';
+} from '../node-service/modifier';
+import { mergeProperties } from '../node-service/properties';
 import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
 
 /** Primary axis used to arrange children. */

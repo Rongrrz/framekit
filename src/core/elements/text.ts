@@ -4,14 +4,14 @@ import {
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from '../../dom/button';
-import { initializeTextGradient, resetTextGradientHost } from '../../dom/text-gradient';
-import { bindTextScaleResize } from '../../dom/text-size';
+} from '../dom/button';
+import { initializeTextGradient, resetTextGradientHost } from '../dom/text-gradient';
+import { bindTextScaleResize } from '../dom/text-size';
 import {
   initializeTextStrokeHost,
   resetTextStrokeHost,
   syncTextStrokeHost,
-} from '../../dom/text-stroke';
+} from '../dom/text-stroke';
 import {
   createDefaultTextStyleProperties,
   hasTextStyleChange,
@@ -20,19 +20,19 @@ import {
   validateTextStyleProperties,
   verticalFlexAlignment,
   type TextStyleProperties,
-} from '../../dom/text-style';
-import { buttonEventMethods, type GuiMethodTable } from '../../node/gui-events';
-import type { GuiElement, PropertyRenderer } from '../../node/gui-node';
-import { getNodeProperties } from '../../node/properties';
-import type { PropertyValidator } from '../../node/state';
-import { assertAllowedValue } from '../../runtime/validation';
+} from '../dom/text-style';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
+import { assertAllowedValue } from '../internal/validation';
+import { buttonEventMethods, type GuiMethodTable } from '../node-service/gui-events';
+import type { GuiElement, PropertyRenderer } from '../node-service/gui-node';
+import { getNodeProperties } from '../node-service/properties';
+import type { PropertyValidator } from '../node-service/state';
 
-export type { TextXAlignment, TextYAlignment } from '../../dom/text-style';
+export type { TextXAlignment, TextYAlignment } from '../dom/text-style';
 
 /** Properties shared by text labels and text buttons. */
 export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;

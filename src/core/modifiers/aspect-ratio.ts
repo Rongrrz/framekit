@@ -1,7 +1,7 @@
-import type { InstanceProperties } from '../../node/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../../node/modifier';
-import { mergeProperties } from '../../node/properties';
-import { assertAllowedValue, assertFiniteNumber } from '../../runtime/validation';
+import { assertAllowedValue, assertFiniteNumber } from '../internal/validation';
+import type { InstanceProperties } from '../node-service/instance';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node-service/modifier';
+import { mergeProperties } from '../node-service/properties';
 import { udimToCss, type UDim2 } from '../values/udim';
 
 /** How an aspect-ratio constraint uses its parent's available size. */

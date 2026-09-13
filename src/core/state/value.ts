@@ -1,6 +1,6 @@
-import type { Instance } from '../node/instance';
-import { getActiveNodeState } from '../node/state';
-import { DestroyService } from '../services/destroy-service';
+import { DestroyService } from '../destroy-service';
+import type { Instance } from '../node-service/instance';
+import { getActiveNodeState } from '../node-service/state';
 import { createSignal, type Unsubscribe } from './signal';
 
 type ValueListener<T> = (value: T) => void;

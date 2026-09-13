@@ -1,4 +1,4 @@
-import { createSignal, type SignalEmitter, type Unsubscribe } from '../runtime/signal';
+import { createSignal, type SignalEmitter, type Unsubscribe } from '../state/signal';
 import type { Instance } from './instance';
 import { getActiveNodeState, getNodeState } from './state';
 

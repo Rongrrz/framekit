@@ -1,16 +1,16 @@
-import { connectHoverEvents } from '../dom/hover-events';
-import { setStyle } from '../dom/styles';
-import type { GuiMethodTable } from '../node/gui-events';
-import { createGuiNode, type GuiElement, type PropertyRenderer } from '../node/gui-node';
-import type { InstanceProperties } from '../node/instance';
-import { mergeProperties } from '../node/properties';
-import type { PropertyValidator } from '../node/state';
+import { connectHoverEvents } from './dom/hover-events';
+import { setStyle } from './dom/styles';
 import {
   assertAllowedValue,
   assertBoolean,
   assertFiniteNumber,
   assertInteger,
-} from '../runtime/validation';
+} from './internal/validation';
+import type { GuiMethodTable } from './node-service/gui-events';
+import { createGuiNode, type GuiElement, type PropertyRenderer } from './node-service/gui-node';
+import type { InstanceProperties } from './node-service/instance';
+import { mergeProperties } from './node-service/properties';
+import type { PropertyValidator } from './node-service/state';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from './values/color3';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from './values/udim';
 import { assertVector2, vector2, type Vector2 } from './values/vector2';

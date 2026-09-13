@@ -1,4 +1,4 @@
-import { RenderService } from '../services/render-service';
+import { RenderService } from '../render-service';
 import type { GuiElement } from './gui-node';
 import type { Instance } from './instance';
 import type { Modifier } from './modifier';

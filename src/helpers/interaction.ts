@@ -1,6 +1,6 @@
+import { assertNonNegativeFinite } from '../core/internal/validation';
 import { createUIScale, type UIScale } from '../core/modifiers/scale';
-import type { GuiElement } from '../node/gui-node';
-import { assertNonNegativeFinite } from '../runtime/validation';
+import type { GuiElement } from '../core/node-service/gui-node';
 import { TweenService } from '../services/tween-service';
 
 /** Adds a UIScale that springs between its resting and hovered values. */
