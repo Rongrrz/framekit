@@ -68,6 +68,17 @@ For the complete runtime sequence—including property transactions, modifier re
 
 Elements are DOM-backed nodes. Modifiers are element-less nodes that affect their parent and participate in the same tree and lifecycle.
 
+Container and display factories accept creation-only semantic HTML options. The default tags preserve the existing generic structure; choose a semantic tag when the node's content has that role:
+
+```ts
+const article = fk.createFrame({}, { tagName: 'article' });
+const title = fk.createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
+const galleryItem = fk.createImageLabel({ AltText: 'Steel sword' }, { tagName: 'figure' });
+const content = fk.createScrollingFrame({}, { tagName: 'main' });
+```
+
+`Frame` supports `div`, `main`, `section`, `article`, `aside`, `header`, `footer`, `nav`, and `figure`. `ScrollingFrame` supports scrolling-region equivalents. `TextLabel` renders text as `span` by default and also supports paragraphs, headings, emphasis, code, preformatted text, and block quotes. `ImageLabel` supports `div` or `figure`. Interactive instances remain native `button` elements.
+
 ```ts
 const panel = fk.createFrame({
   Name: 'Inventory',

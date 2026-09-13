@@ -21,6 +21,12 @@ import { assertVector2, vector2, type Vector2 } from '../values/vector2';
 /** Axes on which a scrolling frame accepts native scrolling. */
 export type ScrollingDirection = 'X' | 'Y' | 'XY';
 
+/** Semantic HTML elements that can provide a scrolling region. */
+export type ScrollingFrameTagName = (typeof scrollingFrameTagNames)[number];
+
+/** Creation-only options for a scrolling frame's native element. */
+export type ScrollingFrameOptions = Readonly<{ tagName?: ScrollingFrameTagName }>;
+
 /** Frame properties plus controlled scroll position and direction. */
 export type ScrollingFrameProperties = GuiObjectProperties & {
   /** Axes that accept native scrolling. */
@@ -50,10 +56,14 @@ export type ScrollingFrameMethods = {
 };
 
 /** A native scrolling container synchronized through CanvasPosition. */
-export type ScrollingFrame = GuiElement<ScrollingFrameProperties> & ScrollingFrameMethods;
+export type ScrollingFrame = GuiElement<ScrollingFrameProperties> &
+  ScrollingFrameMethods & {
+    readonly element: HTMLElementTagNameMap[ScrollingFrameTagName];
+  };
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
+const scrollingFrameTagNames = ['div', 'main', 'section', 'article', 'aside', 'nav'] as const;
 const documentsWithScrollbarStyles = new WeakSet<Document>();
 
 const scrollingFrameMethodTable = {
@@ -96,8 +106,11 @@ const scrollingFrameMethods = Object.freeze(scrollingFrameMethodTable);
 /** Creates a native scrolling container with an animatable CanvasPosition. */
 export function createScrollingFrame(
   initialProperties: Partial<ScrollingFrameProperties> = {},
+  options: ScrollingFrameOptions = {},
 ): ScrollingFrame {
-  const element = document.createElement('div');
+  const tagName = options.tagName ?? 'div';
+  assertAllowedValue(tagName, scrollingFrameTagNames, 'ScrollingFrame tagName');
+  const element = document.createElement(tagName);
   element.dataset.framekitScrollingFrame = '';
   const canvasBounds = document.createElement('div');
 

@@ -7,6 +7,15 @@ resetDocumentAfterEach();
 afterEach(() => vi.unstubAllGlobals());
 
 describe('text labels', () => {
+  it('uses a creation-only semantic text tag', () => {
+    const defaultLabel = fk.createTextLabel({ Text: 'Plain' });
+    const heading = fk.createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
+
+    expect(defaultLabel.element.querySelector('[data-framekit-text]')?.tagName).toBe('SPAN');
+    expect(heading.element.querySelector('[data-framekit-text]')?.tagName).toBe('H1');
+    expect(() => fk.createTextLabel({}, { textTagName: 'script' } as never)).toThrow(/textTagName/);
+  });
+
   it('synchronizes text properties without replacing node children', () => {
     const label = fk.createTextLabel();
     const child = fk.createTextLabel();

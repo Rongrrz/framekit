@@ -1,5 +1,5 @@
 export { createFrame } from './core/elements/frame';
-export type { Frame, FrameProperties } from './core/elements/frame';
+export type { Frame, FrameOptions, FrameProperties, FrameTagName } from './core/elements/frame';
 export { defineGuiObject } from './core/custom-gui-object';
 export type { GuiObjectConstructor, GuiObjectDefinition } from './core/custom-gui-object';
 export type { AutomaticSize, GuiObject, GuiObjectProperties } from './core/gui-object';
@@ -9,7 +9,9 @@ export type {
   ImageButton,
   ImageButtonProperties,
   ImageLabel,
+  ImageLabelOptions,
   ImageLabelProperties,
+  ImageLabelTagName,
   ScaleType,
 } from './core/elements/image';
 
@@ -20,8 +22,10 @@ export { createScrollingFrame } from './core/elements/scrolling-frame';
 export type {
   ScrollingDirection,
   ScrollingFrameMethods,
+  ScrollingFrameOptions,
   ScrollingFrame,
   ScrollingFrameProperties,
+  ScrollingFrameTagName,
 } from './core/elements/scrolling-frame';
 
 export { createTextButton, createTextLabel } from './core/elements/text';
@@ -29,7 +33,9 @@ export type {
   TextButton,
   TextButtonProperties,
   TextLabel,
+  TextLabelOptions,
   TextLabelProperties,
+  TextTagName,
   TextXAlignment,
   TextYAlignment,
 } from './core/elements/text';

@@ -8,6 +8,13 @@ resetDocumentAfterEach();
 afterEach(() => vi.unstubAllGlobals());
 
 describe('scrolling frames', () => {
+  it('uses a creation-only semantic host tag', () => {
+    const main = fk.createScrollingFrame({}, { tagName: 'main' });
+
+    expect(main.element.tagName).toBe('MAIN');
+    expect(() => fk.createScrollingFrame({}, { tagName: 'footer' } as never)).toThrow(/tagName/);
+  });
+
   it('maps scrolling direction to native overflow', () => {
     const scrolling = fk.createScrollingFrame({ ScrollingDirection: 'Y' });
 

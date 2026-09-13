@@ -24,6 +24,7 @@ import {
 import { buttonEventMethods, type GuiMethodTable } from '../../node/gui-events';
 import type { GuiElement, PropertyRenderer } from '../../node/gui-node';
 import { getNodeProperties } from '../../node/properties';
+import { assertAllowedValue } from '../../runtime/validation';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -35,6 +36,12 @@ export type { TextXAlignment, TextYAlignment } from '../../dom/text-style';
 /** Properties shared by text labels and text buttons. */
 export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
 
+/** Semantic HTML elements that can carry a text label's content. */
+export type TextTagName = (typeof textTagNames)[number];
+
+/** Creation-only options for a text label's native text element. */
+export type TextLabelOptions = Readonly<{ textTagName?: TextTagName }>;
+
 /** A non-interactive text node. */
 export type TextLabel = GuiElement<TextLabelProperties>;
 
@@ -44,13 +51,36 @@ export type TextButtonProperties = TextLabelProperties & ButtonProperties;
 /** A text node with typed button events. */
 export type TextButton = ButtonElement<TextButtonProperties>;
 
+const textTagNames = [
+  'span',
+  'p',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'strong',
+  'em',
+  'small',
+  'code',
+  'pre',
+  'blockquote',
+] as const;
+
 /** Creates a non-interactive text node. */
-export function createTextLabel(initialProperties: Partial<TextLabelProperties> = {}): TextLabel {
+export function createTextLabel(
+  initialProperties: Partial<TextLabelProperties> = {},
+  options: TextLabelOptions = {},
+): TextLabel {
+  const textTagName = options.textTagName ?? 'span';
+  assertAllowedValue(textTagName, textTagNames, 'TextLabel textTagName');
   return createTextNode(
     'TextLabel',
     document.createElement('div'),
     createDefaultTextProperties(),
     initialProperties,
+    textTagName,
   );
 }
 
@@ -69,6 +99,7 @@ export function createTextButton(
       AccessibleLabel: '',
     },
     initialProperties,
+    'span',
     (properties, changedProperties) => {
       if (changedProperties.has('Disabled') || changedProperties.has('AccessibleLabel')) {
         renderButtonProperties(element, properties);
@@ -94,10 +125,11 @@ function createTextNode<Properties extends TextLabelProperties>(
   element: HTMLElement,
   defaultProperties: Properties,
   initialProperties: Partial<Properties>,
+  textTagName: TextTagName,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   methods?: GuiMethodTable,
 ): GuiElement<Properties> {
-  const text = document.createElement('span');
+  const text = document.createElement(textTagName);
   text.dataset.framekitText = '';
   Object.assign(text.style, {
     position: 'absolute',
@@ -105,6 +137,7 @@ function createTextNode<Properties extends TextLabelProperties>(
     display: 'flex',
     pointerEvents: 'none',
     lineHeight: '1.2',
+    margin: '0',
   });
   element.prepend(text);
   initializeTextGradient(text);

@@ -17,6 +17,12 @@ import {
 /** How an image is fitted within its node bounds. */
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 
+/** Semantic HTML elements that can wrap an image label. */
+export type ImageLabelTagName = (typeof imageLabelTagNames)[number];
+
+/** Creation-only options for an image label's native wrapper. */
+export type ImageLabelOptions = Readonly<{ tagName?: ImageLabelTagName }>;
+
 /** Properties shared by image labels and image buttons. */
 export type ImageLabelProperties = GuiObjectProperties & {
   /** Image URL. Supports HTTP(S), blob, and image data URLs. */
@@ -30,7 +36,9 @@ export type ImageLabelProperties = GuiObjectProperties & {
 };
 
 /** A non-interactive image node. */
-export type ImageLabel = GuiElement<ImageLabelProperties>;
+export type ImageLabel = GuiElement<ImageLabelProperties> & {
+  readonly element: HTMLElementTagNameMap[ImageLabelTagName];
+};
 
 /** Properties for an interactive image button. */
 export type ImageButtonProperties = ImageLabelProperties & ButtonProperties;
@@ -44,18 +52,22 @@ const objectFit = {
   Crop: 'cover',
 } satisfies Record<ScaleType, string>;
 const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
+const imageLabelTagNames = ['div', 'figure'] as const;
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
 /** Creates a non-interactive image node. */
 export function createImageLabel(
   initialProperties: Partial<ImageLabelProperties> = {},
+  options: ImageLabelOptions = {},
 ): ImageLabel {
+  const tagName = options.tagName ?? 'div';
+  assertAllowedValue(tagName, imageLabelTagNames, 'ImageLabel tagName');
   return createImageNode(
     'ImageLabel',
-    document.createElement('div'),
+    document.createElement(tagName),
     createDefaultImageProperties(),
     initialProperties,
-  );
+  ) as ImageLabel;
 }
 
 /** Creates an image node with button events. */
