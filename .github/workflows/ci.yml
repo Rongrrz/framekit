@@ -1,4 +1,4 @@
-name: CI
+name: Verify
 
 on:
   push:
@@ -10,16 +10,42 @@ permissions:
 
 jobs:
   check:
+    name: Node.js ${{ matrix.node-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         node-version: [20, 24]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - run: npm ci
-      - run: npm run check
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test library
+        run: npm test
+
+      - name: Test playground
+        run: npm run test:playground
+
+      - name: Build library
+        run: npm run build:library
+
+      - name: Build playground
+        run: npm run build:playground

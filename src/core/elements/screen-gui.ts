@@ -1,12 +1,12 @@
-import { connectHoverEvents } from '../../dom/hover-events';
-import { setStyle } from '../../dom/styles';
-import { guiEventMethods } from '../../runtime/gui-events';
-import { createGuiNode, type GuiElement } from '../../runtime/gui-node';
-import type { InstanceProperties } from '../../runtime/node';
-import { onDestroy } from '../../runtime/node-lifecycle';
-import { mergeProperties } from '../../runtime/node-properties';
-import { getActiveNodeState } from '../../runtime/node-state';
-import { assertBoolean, assertInteger } from '../../runtime/validation';
+import { DestroyService } from '../destroy-service';
+import { connectHoverEvents } from '../dom/hover-events';
+import { setStyle } from '../dom/styles';
+import { assertBoolean, assertInteger } from '../internal/validation';
+import { guiEventMethods } from '../node/gui-events';
+import { createGuiNode, type GuiElement } from '../node/gui-node';
+import type { InstanceProperties } from '../node/instance';
+import { mergeProperties } from '../node/properties';
+import { getActiveNodeState } from '../node/state';
 
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = InstanceProperties & {
@@ -79,7 +79,7 @@ export function createScreenGui(initialProperties: Partial<ScreenGuiProperties> 
   }) as ScreenGui;
 
   connectHoverEvents(gui, element);
-  onDestroy(gui, () => mountTargets.delete(gui));
+  DestroyService.onDestroy(gui, () => mountTargets.delete(gui));
   return gui;
 }
 

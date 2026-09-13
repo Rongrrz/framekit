@@ -6,6 +6,16 @@ import { resetDocumentAfterEach } from '../../support/reset-document';
 resetDocumentAfterEach();
 
 describe('frames', () => {
+  it('uses a creation-only semantic host tag', () => {
+    const defaultFrame = fk.createFrame();
+    const article = fk.createFrame({}, { tagName: 'article' });
+
+    expect(defaultFrame.element.tagName).toBe('DIV');
+    expect(article.element.tagName).toBe('ARTICLE');
+    expect(article.element.style.margin).toBe('0px');
+    expect(() => fk.createFrame({}, { tagName: 'button' } as never)).toThrow(/tagName/);
+  });
+
   it('updates native styles from a property patch', () => {
     const frame = fk.createFrame();
 

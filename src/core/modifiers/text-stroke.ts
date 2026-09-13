@@ -2,15 +2,12 @@ import {
   textStrokeColorProperty,
   textStrokeContentProperty,
   textStrokeWidthProperty,
-} from '../../dom/text-stroke';
-import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
-import type { InstanceProperties } from '../../runtime/node';
-import { mergeProperties } from '../../runtime/node-properties';
-import {
-  assertBoolean,
-  assertFiniteNumber,
-  assertNonNegativeFinite,
-} from '../../runtime/validation';
+} from '../dom/text-stroke';
+import { isDisplayTextProperties } from '../dom/text-style';
+import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../internal/validation';
+import type { InstanceProperties } from '../node/instance';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
+import { mergeProperties } from '../node/properties';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
 /** Properties for an outline drawn around a GUI parent's text. */
@@ -53,7 +50,7 @@ function resolveTextStrokeStyles(
   properties: Readonly<UITextStrokeProperties>,
   targetProperties: Readonly<InstanceProperties>,
 ): Styles {
-  if (!('Text' in targetProperties) || 'MultiLine' in targetProperties) {
+  if (!isDisplayTextProperties(targetProperties)) {
     throw new TypeError('UITextStroke must be attached to a TextLabel or TextButton.');
   }
   if (!properties.Enabled) return {};

@@ -34,19 +34,19 @@ FrameKit has no components, render functions, hooks, throwaway virtual trees, de
 
 The common vocabulary is deliberately small:
 
-| Area          | What you use                                                                                  |
-| ------------- | --------------------------------------------------------------------------------------------- |
-| Elements      | `createScreenGui`, `createFrame`, `createScrollingFrame`, text, image, and text-box factories |
-| Modifiers     | `createUICorner`, gradients, border and text strokes, shadows, padding, scale, and layout     |
-| Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`          |
-| Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`             |
-| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry          |
-| Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                         |
-| Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                    |
-| Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                         |
-| Motion        | `fka.spring`, `fka.createTween`                                                               |
-| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`, `fkh.setModifierAttached`                   |
-| Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors                |
+| Area          | What you use                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| Elements      | `createScreenGui`, frames, text, native text controls, images, and links                  |
+| Modifiers     | `createUICorner`, gradients, border and text strokes, shadows, padding, scale, and layout |
+| Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`      |
+| Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`         |
+| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry      |
+| Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                     |
+| Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
+| Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                     |
+| Motion        | `fk.spring`, `fka.TweenService.create`                                                    |
+| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`, `fkh.setModifierAttached`               |
+| Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
 
@@ -67,6 +67,27 @@ For the complete runtime sequence—including property transactions, modifier re
 ## Elements and modifiers
 
 Elements are DOM-backed nodes. Modifiers are element-less nodes that affect their parent and participate in the same tree and lifecycle.
+
+Container and display factories accept creation-only semantic HTML options. The default tags preserve the existing generic structure; choose a semantic tag when the node's content has that role:
+
+```ts
+const article = fk.createFrame({}, { tagName: 'article' });
+const title = fk.createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
+const galleryItem = fk.createImageLabel({ AltText: 'Steel sword' }, { tagName: 'figure' });
+const content = fk.createScrollingFrame({}, { tagName: 'main' });
+```
+
+`Frame` supports `div`, `main`, `section`, `article`, `aside`, `header`, `footer`, `nav`, and `figure`. `ScrollingFrame` supports scrolling-region equivalents. `TextLabel` renders text as `span` by default and also supports paragraphs, headings, emphasis, code, preformatted text, and block quotes. `ImageLabel` supports `div` or `figure`. Interactive instances remain native `button` elements.
+
+Use `Link` for navigation instead of attaching a click handler to a frame. It renders a real anchor, preserving browser navigation and accessibility behavior:
+
+```ts
+const guide = fk.createLink({
+  Text: 'Read the guide',
+  Href: '/guide',
+  Rel: 'help',
+});
+```
 
 ```ts
 const panel = fk.createFrame({
@@ -208,19 +229,28 @@ There is no dependency tracking or render cycle. A watched callback is simply a 
 
 All GUI nodes expose `onMouseEnter()` and `onMouseLeave()`. Button nodes add `onClick()`, primary-button, and secondary-button methods.
 
-Text boxes keep their current string in `Text`, available through `box.Text`. `onTextChanged()` emits that same string as the user edits:
+`TextInput` and `TextArea` use native form controls. Both keep their current string in `Text`, and `onTextChanged()` emits that same string as the user edits. Use `TextInput` for a single line and `TextArea` for multiline content:
 
 ```ts
-const bio = fk.createTextBox({
+const email = fk.createTextInput({
+  InputType: 'Email',
+  PlaceholderText: 'you@example.com',
+  FieldName: 'email',
+  AutoComplete: 'email',
+});
+
+const bio = fk.createTextArea({
   Text: 'Hello FrameKit',
-  MultiLine: true,
   PlaceholderText: 'Write something…',
+  ResizeDirection: 'Vertical',
 });
 
 bio.onTextChanged((value) => console.log(value));
 ```
 
-Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
+`TextBox` has been removed. Migrate a single-line `TextBox` to `TextInput`; migrate one that used `MultiLine: true` to `TextArea` and remove `MultiLine`.
+
+The controls also expose `Disabled`, `ReadOnly`, `AccessibleLabel`, and native form/autocomplete properties. Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
 
 ## Geometry and scrolling
 
@@ -251,23 +281,23 @@ Set `ScrollingEnabled` to `false` to temporarily disable native mouse, touch, an
 
 ## Spring motion
 
-Call `fka.spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
+Call `fk.spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
 
 ```ts
 const scale = fk.createUIScale();
 button.addChild(scale);
 
-button.onMouseEnter(() => fka.spring(scale, { Scale: 1.04 }));
-button.onMouseLeave(() => fka.spring(scale, { Scale: 1 }));
+button.onMouseEnter(() => fk.spring(scale, { Scale: 1.04 }));
+button.onMouseLeave(() => fk.spring(scale, { Scale: 1 }));
 ```
 
 The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mass: 1, precision: 0.001, restVelocity: 0.0625 }`. Most interactions should leave it alone. When a particular motion needs a different feel, pass a separate settings object:
 
 ```ts
-fka.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
+fk.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
 ```
 
-`fka.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
+`fk.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
 
 Assigning a property directly or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue, and the write takes control even when it assigns the property's current value.
 
@@ -280,7 +310,7 @@ Scaling with `UIScale` is useful for hover effects because it changes visual siz
 Tweens are the explicit, timed alternative to springs:
 
 ```ts
-const tween = fka.createTween(
+const tween = fka.TweenService.create(
   panel,
   { Duration: 0.3, EasingStyle: 'Quad' },
   {
@@ -299,22 +329,21 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree follows those same boundaries:
 
-- `core.ts` and `core/` — the `fk` surface; `core/elements` contains only user-creatable GUI objects
-- `animation.ts` and `animation/` — springs, tweens, easing, and controllers exposed through `fka`
-- `helpers.ts` and `helpers/` — optional composed behavior exposed through `fkh`
-- `dom/` — browser event wiring, text rendering, and other DOM-specific implementation details
-- `runtime/` — node state, trees, rendering, property ownership, events, and cleanup used across domains
+- `core/` — the `fk` surface with direct `node-service.ts`, `render-service.ts`, and `destroy-service.ts` entry points
+- `core/node/` — private node handles, state, properties, and event implementation
+- `animation/` — the `fka` surface with `tween-service.ts` and its sibling animation mechanics
+- `helpers/` — optional composed behavior exposed through `fkh`
 - `tests/` — source tests mirror the implementation domains, with reusable test infrastructure under `tests/support`
 
 Core types are available through `fk`, while animation types are available through `fka`:
 
 ```ts
 function show(panel: fk.Frame): void {
-  fka.spring(panel, { BackgroundTransparency: 0 });
+  fk.spring(panel, { BackgroundTransparency: 0 });
 }
 ```
 
-The runtime remains an implementation boundary rather than a secondary public entry point. Package consumers should import only from `framekit`.
+Internal validation and error plumbing live under `core/internal`; they are implementation details rather than a secondary public entry point. Package consumers should import only from `framekit`.
 
 ## Custom GUI classes
 

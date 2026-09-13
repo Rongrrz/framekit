@@ -1,7 +1,7 @@
 import { spring } from '../animation/spring';
+import { assertNonNegativeFinite } from '../core/internal/validation';
 import { createUIScale, type UIScale } from '../core/modifiers/scale';
-import type { GuiElement } from '../runtime/gui-node';
-import { assertNonNegativeFinite } from '../runtime/validation';
+import type { GuiElement } from '../core/node/gui-node';
 
 /** Adds a UIScale that springs between its resting and hovered values. */
 export function bindHoverScale(node: GuiElement, hoveredScale = 1.035): UIScale {

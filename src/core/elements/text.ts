@@ -4,14 +4,14 @@ import {
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from '../../dom/button';
-import { initializeTextGradient, resetTextGradientHost } from '../../dom/text-gradient';
-import { bindTextScaleResize } from '../../dom/text-size';
+} from '../dom/button';
+import { initializeTextGradient, resetTextGradientHost } from '../dom/text-gradient';
+import { bindTextScaleResize } from '../dom/text-size';
 import {
   initializeTextStrokeHost,
   resetTextStrokeHost,
   syncTextStrokeHost,
-} from '../../dom/text-stroke';
+} from '../dom/text-stroke';
 import {
   createDefaultTextStyleProperties,
   hasTextStyleChange,
@@ -20,20 +20,28 @@ import {
   validateTextStyleProperties,
   verticalFlexAlignment,
   type TextStyleProperties,
-} from '../../dom/text-style';
-import { buttonEventMethods, type GuiMethodTable } from '../../runtime/gui-events';
-import type { GuiElement, PropertyRenderer } from '../../runtime/gui-node';
-import { getNodeProperties } from '../../runtime/node-properties';
+} from '../dom/text-style';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
+import { assertAllowedValue } from '../internal/validation';
+import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events';
+import type { GuiElement, PropertyRenderer } from '../node/gui-node';
+import { getNodeProperties } from '../node/properties';
+import type { PropertyValidator } from '../node/state';
 
-export type { TextXAlignment, TextYAlignment } from '../../dom/text-style';
+export type { TextXAlignment, TextYAlignment } from '../dom/text-style';
 
 /** Properties shared by text labels and text buttons. */
 export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
+
+/** Semantic HTML elements that can carry a text label's content. */
+export type TextTagName = (typeof textTagNames)[number];
+
+/** Creation-only options for a text label's native text element. */
+export type TextLabelOptions = Readonly<{ textTagName?: TextTagName }>;
 
 /** A non-interactive text node. */
 export type TextLabel = GuiElement<TextLabelProperties>;
@@ -44,13 +52,36 @@ export type TextButtonProperties = TextLabelProperties & ButtonProperties;
 /** A text node with typed button events. */
 export type TextButton = ButtonElement<TextButtonProperties>;
 
+const textTagNames = [
+  'span',
+  'p',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'strong',
+  'em',
+  'small',
+  'code',
+  'pre',
+  'blockquote',
+] as const;
+
 /** Creates a non-interactive text node. */
-export function createTextLabel(initialProperties: Partial<TextLabelProperties> = {}): TextLabel {
+export function createTextLabel(
+  initialProperties: Partial<TextLabelProperties> = {},
+  options: TextLabelOptions = {},
+): TextLabel {
+  const textTagName = options.textTagName ?? 'span';
+  assertAllowedValue(textTagName, textTagNames, 'TextLabel textTagName');
   return createTextNode(
     'TextLabel',
     document.createElement('div'),
     createDefaultTextProperties(),
     initialProperties,
+    textTagName,
   );
 }
 
@@ -69,6 +100,7 @@ export function createTextButton(
       AccessibleLabel: '',
     },
     initialProperties,
+    'span',
     (properties, changedProperties) => {
       if (changedProperties.has('Disabled') || changedProperties.has('AccessibleLabel')) {
         renderButtonProperties(element, properties);
@@ -81,7 +113,7 @@ export function createTextButton(
   return node;
 }
 
-function createDefaultTextProperties(): TextLabelProperties {
+export function createDefaultTextProperties(): TextLabelProperties {
   return {
     ...createDefaultGuiObjectProperties(),
     Name: 'TextLabel',
@@ -89,15 +121,17 @@ function createDefaultTextProperties(): TextLabelProperties {
   };
 }
 
-function createTextNode<Properties extends TextLabelProperties>(
+export function createTextNode<Properties extends TextLabelProperties>(
   className: string,
   element: HTMLElement,
   defaultProperties: Properties,
   initialProperties: Partial<Properties>,
+  textTagName: TextTagName,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   methods?: GuiMethodTable,
+  validateAdditionalProperties?: PropertyValidator<Properties>,
 ): GuiElement<Properties> {
-  const text = document.createElement('span');
+  const text = document.createElement(textTagName);
   text.dataset.framekitText = '';
   Object.assign(text.style, {
     position: 'absolute',
@@ -105,6 +139,7 @@ function createTextNode<Properties extends TextLabelProperties>(
     display: 'flex',
     pointerEvents: 'none',
     lineHeight: '1.2',
+    margin: '0',
   });
   element.prepend(text);
   initializeTextGradient(text);
@@ -133,7 +168,10 @@ function createTextNode<Properties extends TextLabelProperties>(
       renderAdditionalProperties?.(properties, changedProperties);
     },
     methods,
-    validateProperties: validateTextProperties,
+    validateProperties: (properties) => {
+      validateTextProperties(properties);
+      validateAdditionalProperties?.(properties);
+    },
   });
   bindTextScaleResize(node, element, () => {
     const properties = getNodeProperties(node);

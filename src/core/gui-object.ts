@@ -1,16 +1,16 @@
-import { connectHoverEvents } from '../dom/hover-events';
-import { setStyle } from '../dom/styles';
-import type { GuiMethodTable } from '../runtime/gui-events';
-import { createGuiNode, type GuiElement, type PropertyRenderer } from '../runtime/gui-node';
-import type { InstanceProperties } from '../runtime/node';
-import { mergeProperties } from '../runtime/node-properties';
-import type { PropertyValidator } from '../runtime/node-state';
+import { connectHoverEvents } from './dom/hover-events';
+import { setStyle } from './dom/styles';
 import {
   assertAllowedValue,
   assertBoolean,
   assertFiniteNumber,
   assertInteger,
-} from '../runtime/validation';
+} from './internal/validation';
+import type { GuiMethodTable } from './node/gui-events';
+import { createGuiNode, type GuiElement, type PropertyRenderer } from './node/gui-node';
+import type { InstanceProperties } from './node/instance';
+import { mergeProperties } from './node/properties';
+import type { PropertyValidator } from './node/state';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from './values/color3';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from './values/udim';
 import { assertVector2, vector2, type Vector2 } from './values/vector2';
@@ -76,6 +76,7 @@ type GuiObjectNodeOptions<Properties extends GuiObjectProperties> = {
   renderProperties?: PropertyRenderer<Properties> | undefined;
   methods?: GuiMethodTable | undefined;
   validateProperties?: PropertyValidator<Properties> | undefined;
+  canContainGuiChildren?: boolean;
 };
 
 /** Combines shared GUI behavior with an element's own rendering and validation. */
@@ -87,9 +88,10 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
   renderProperties,
   methods,
   validateProperties,
+  canContainGuiChildren = true,
 }: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
   element.dataset.framekit = className;
-  Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box' });
+  Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box', margin: '0' });
 
   const node = createGuiNode({
     className,
@@ -104,6 +106,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
       validateProperties?.(properties);
     },
     methods,
+    canContainGuiChildren,
   });
 
   connectHoverEvents(node, element);

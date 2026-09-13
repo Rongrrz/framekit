@@ -6,6 +6,14 @@ import { resetDocumentAfterEach } from '../../support/reset-document';
 resetDocumentAfterEach();
 
 describe('images', () => {
+  it('uses a creation-only semantic wrapper tag', () => {
+    const figure = fk.createImageLabel({}, { tagName: 'figure' });
+
+    expect(figure.element.tagName).toBe('FIGURE');
+    expect(figure.element.querySelector('img')).not.toBeNull();
+    expect(() => fk.createImageLabel({}, { tagName: 'picture' } as never)).toThrow(/tagName/);
+  });
+
   it('maps image properties to a native image element', () => {
     const image = fk.createImageLabel({
       Image: '/item.png',

@@ -1,4 +1,4 @@
-import type { Instance, InstanceProperties } from '../runtime/node';
+import type { Instance, InstanceProperties } from '../core/node/instance';
 import {
   createSpringBinding,
   type SpringBinding,
@@ -9,16 +9,16 @@ import type { AnimationGoal } from './types';
 
 const springsByNode = new WeakMap<Instance, SpringBinding<InstanceProperties>>();
 
-/** Returns the spring controls retained for a node without starting an animation. */
+/** Returns the retained spring for a node without changing its goal. */
 export function spring<Properties extends InstanceProperties>(
   node: Instance<Properties>,
 ): SpringController<Properties>;
-/** Retargets node properties and returns the retained playback controls. */
+/** Retargets a node's retained spring. */
 export function spring<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   goal: AnimationGoal<Properties>,
 ): SpringController<Properties>;
-/** Retargets node properties with settings applied only to this goal's properties. */
+/** Retargets a node's retained spring with per-property settings. */
 export function spring<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   goal: AnimationGoal<Properties>,

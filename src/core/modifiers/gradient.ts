@@ -1,8 +1,9 @@
-import { textGradientFillProperty, textGradientImageProperty } from '../../dom/text-gradient';
-import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
-import type { InstanceProperties } from '../../runtime/node';
-import { mergeProperties } from '../../runtime/node-properties';
-import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../../runtime/validation';
+import { textGradientFillProperty, textGradientImageProperty } from '../dom/text-gradient';
+import { isDisplayTextProperties } from '../dom/text-style';
+import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../internal/validation';
+import type { InstanceProperties } from '../node/instance';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
+import { mergeProperties } from '../node/properties';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import {
   assertColorSequence,
@@ -177,7 +178,7 @@ function readTargetTransparency(
 }
 
 function isTextTarget(properties: Readonly<InstanceProperties>): boolean {
-  return 'Text' in properties && !('MultiLine' in properties);
+  return isDisplayTextProperties(properties);
 }
 
 function multiplyColors(first: Color3, second: Color3): Color3 {

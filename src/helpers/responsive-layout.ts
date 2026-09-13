@@ -1,6 +1,6 @@
-import type { Instance } from '../runtime/node';
-import { getActiveNodeState } from '../runtime/node-state';
-import { assertNonNegativeFinite } from '../runtime/validation';
+import { assertNonNegativeFinite } from '../core/internal/validation';
+import type { Instance } from '../core/node/instance';
+import { getActiveNodeState } from '../core/node/state';
 
 export type ResponsiveLayoutOptions = Readonly<{
   breakpoint: number;

@@ -8,14 +8,23 @@ describe('package API', () => {
     expect(Object.keys(framekit).sort()).toEqual(['fk', 'fka', 'fkh']);
 
     expect(typeof fk.createFrame).toBe('function');
+    expect(typeof fk.createLink).toBe('function');
+    expect(typeof fk.createTextInput).toBe('function');
+    expect(typeof fk.createTextArea).toBe('function');
+    expect(fk).not.toHaveProperty('createTextBox');
     expect(typeof fk.color3FromRGB).toBe('function');
     expect(typeof fk.createValue).toBe('function');
     expect(typeof fk.createUIGradient).toBe('function');
     expect(typeof fk.createUITextStroke).toBe('function');
     expect(typeof fk.defineGuiObject).toBe('function');
 
-    expect(typeof fka.spring).toBe('function');
-    expect(typeof fka.createTween).toBe('function');
+    expect(typeof fka.TweenService.create).toBe('function');
+    expect(typeof fk.spring).toBe('function');
+    expect(Object.isFrozen(fka.TweenService)).toBe(true);
+    expect(fka.TweenService).not.toHaveProperty('spring');
+    expect(fka).not.toHaveProperty('createTween');
+    expect(fka).not.toHaveProperty('spring');
+    expect(fka).not.toHaveProperty('SpringService');
     expect(fka).not.toHaveProperty('createMotion');
     expect(fka).not.toHaveProperty('tweenInfo');
 
@@ -25,7 +34,6 @@ describe('package API', () => {
     expect(fkh).not.toHaveProperty('createSpringModifierToggle');
     expect(fk).not.toHaveProperty('createUIGlow');
 
-    expect(fk).not.toHaveProperty('spring');
     expect(fka).not.toHaveProperty('createFrame');
   });
 

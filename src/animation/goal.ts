@@ -1,5 +1,5 @@
-import type { Instance, InstanceProperties } from '../runtime/node';
-import { getPropertiesSnapshot } from '../runtime/node-properties';
+import type { Instance, InstanceProperties } from '../core/node/instance';
+import { getPropertiesSnapshot } from '../core/node/properties';
 import type { AnimationGoal } from './types';
 import {
   assertCompatibleAnimationValues,
