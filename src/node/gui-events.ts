@@ -1,6 +1,6 @@
-import type { Instance } from './node';
-import { subscribeToNodeEvent } from './node-events';
-import type { Unsubscribe } from './signal';
+import type { Unsubscribe } from '../runtime/signal';
+import { subscribeToNodeEvent } from './events';
+import type { Instance } from './instance';
 
 /** Mouse events available on every DOM-backed GUI node. */
 export type GuiEventMethods = {

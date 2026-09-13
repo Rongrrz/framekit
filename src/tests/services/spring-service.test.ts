@@ -8,11 +8,11 @@ const { advance, settle } = setupAnimationClock();
 describe('springs', () => {
   it('retains one spring controller per node', () => {
     const frame = fk.createFrame();
-    const controller = fka.spring(frame);
+    const controller = fka.SpringService.get(frame);
 
-    expect(fka.spring(frame)).toBe(controller);
-    expect(fka.spring(frame, { Rotation: 90 })).toBe(controller);
-    expect(fka.spring(fk.createFrame())).not.toBe(controller);
+    expect(fka.SpringService.get(frame)).toBe(controller);
+    expect(fka.SpringService.animate(frame, { Rotation: 90 })).toBe(controller);
+    expect(fka.SpringService.get(fk.createFrame())).not.toBe(controller);
 
     settle();
 

@@ -1,6 +1,6 @@
 import type { GuiElement, PropertyRenderer } from './gui-node';
+import type { Instance, InstanceProperties } from './instance';
 import type { LayoutNodeState, Modifier, StyleModifierState } from './modifier';
-import type { Instance, InstanceProperties } from './node';
 
 export type PropertyValidator<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,

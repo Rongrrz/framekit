@@ -16,6 +16,12 @@ describe('package API', () => {
 
     expect(typeof fka.spring).toBe('function');
     expect(typeof fka.createTween).toBe('function');
+    expect(typeof fka.SpringService.get).toBe('function');
+    expect(typeof fka.SpringService.animate).toBe('function');
+    expect(typeof fka.TweenService.create).toBe('function');
+    expect(fka.TweenService.create).toBe(fka.createTween);
+    expect(Object.isFrozen(fka.SpringService)).toBe(true);
+    expect(Object.isFrozen(fka.TweenService)).toBe(true);
     expect(fka).not.toHaveProperty('createMotion');
     expect(fka).not.toHaveProperty('tweenInfo');
 

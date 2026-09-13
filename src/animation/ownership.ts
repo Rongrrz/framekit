@@ -1,6 +1,6 @@
+import type { Instance, InstanceProperties } from '../node/instance';
+import { subscribeToPropertyWrite } from '../node/properties';
 import { throwCollectedErrors } from '../runtime/errors';
-import type { Instance, InstanceProperties } from '../runtime/node';
-import { subscribeToPropertyWrite } from '../runtime/node-properties';
 import type { Unsubscribe } from '../runtime/signal';
 
 export type AnimationOwner = {

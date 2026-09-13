@@ -1,6 +1,6 @@
-import type { Instance } from './node';
-import { onDestroy, isDestroyed } from './node-lifecycle';
-import { getActiveNodeState } from './node-state';
+import type { Instance } from '../node/instance';
+import { getActiveNodeState } from '../node/state';
+import { DestroyService } from '../services/destroy-service';
 import { createSignal, type Unsubscribe } from './signal';
 
 type ValueListener<T> = (value: T) => void;
@@ -49,7 +49,7 @@ export function watchValue<T>(
 ): Unsubscribe {
   getActiveNodeState(owner);
   listener(value.get());
-  if (isDestroyed(owner)) return doNothing;
+  if (DestroyService.isDestroyed(owner)) return doNothing;
 
   const unsubscribe = value.onChange(listener);
   let active = true;
@@ -61,7 +61,7 @@ export function watchValue<T>(
     unsubscribe();
   }
 
-  const removeCleanup = onDestroy(owner, stop);
+  const removeCleanup = DestroyService.onDestroy(owner, stop);
   return stop;
 }
 

@@ -1,4 +1,4 @@
-import type { Instance, InstanceProperties } from '../runtime/node';
+import type { Instance, InstanceProperties } from '../node/instance';
 import { setStyle } from './styles';
 import type { TextStyleProperties } from './text-style';
 

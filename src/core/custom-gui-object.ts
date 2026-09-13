@@ -1,4 +1,4 @@
-import type { PropertyValidator } from '../runtime/node-state';
+import type { PropertyValidator } from '../node/state';
 import { assertString } from '../runtime/validation';
 import {
   createDefaultGuiObjectProperties,

@@ -21,9 +21,9 @@ import {
   verticalFlexAlignment,
   type TextStyleProperties,
 } from '../../dom/text-style';
-import { buttonEventMethods, type GuiMethodTable } from '../../runtime/gui-events';
-import type { GuiElement, PropertyRenderer } from '../../runtime/gui-node';
-import { getNodeProperties } from '../../runtime/node-properties';
+import { buttonEventMethods, type GuiMethodTable } from '../../node/gui-events';
+import type { GuiElement, PropertyRenderer } from '../../node/gui-node';
+import { getNodeProperties } from '../../node/properties';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,

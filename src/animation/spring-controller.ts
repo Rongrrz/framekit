@@ -1,7 +1,7 @@
-import type { Instance, InstanceProperties } from '../runtime/node';
-import { onDestroy, isDestroyed } from '../runtime/node-lifecycle';
-import { getActiveNodeState } from '../runtime/node-state';
+import type { Instance, InstanceProperties } from '../node/instance';
+import { getActiveNodeState } from '../node/state';
 import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
+import { DestroyService } from '../services/destroy-service';
 import { prepareAnimationGoal } from './goal';
 import {
   applyAnimationProperties,
@@ -127,7 +127,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   }
 
   function advanceSprings(timestampMs: number): void {
-    if (springsByProperty.size === 0 || isDestroyed(node)) {
+    if (springsByProperty.size === 0 || DestroyService.isDestroyed(node)) {
       cancelFrame();
       return;
     }
@@ -169,10 +169,10 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   }
 
   function assertUsable(): void {
-    if (isDestroyed(node)) throw new Error('Instance has been destroyed.');
+    if (DestroyService.isDestroyed(node)) throw new Error('Instance has been destroyed.');
   }
 
-  onDestroy(node, () => {
+  DestroyService.onDestroy(node, () => {
     stopAllProperties();
     completedEmitter.clear();
   });

@@ -8,7 +8,11 @@ const { advance } = setupAnimationClock();
 describe('tweens', () => {
   it('restarts completed and cancelled playback from the latest property value', () => {
     const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.createTween(frame, { Duration: 1, EasingStyle: 'Linear' }, { Rotation: 90 });
+    const tween = fka.TweenService.create(
+      frame,
+      { Duration: 1, EasingStyle: 'Linear' },
+      { Rotation: 90 },
+    );
     const completed = vi.fn();
 
     tween.completed.subscribe(completed);

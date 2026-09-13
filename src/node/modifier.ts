@@ -1,10 +1,5 @@
-import { createNodeHandle, type Instance, type InstanceProperties } from './node';
-import {
-  createBaseState,
-  registerNode,
-  type BaseNodeState,
-  type PropertyValidator,
-} from './node-state';
+import { createNodeHandle, type Instance, type InstanceProperties } from './instance';
+import { createBaseState, registerNode, type BaseNodeState, type PropertyValidator } from './state';
 
 declare const styleModifierBrand: unique symbol;
 declare const layoutBrand: unique symbol;

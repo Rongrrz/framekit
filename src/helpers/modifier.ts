@@ -1,5 +1,5 @@
-import type { GuiElement } from '../runtime/gui-node';
-import type { Modifier } from '../runtime/modifier';
+import type { GuiElement } from '../node/gui-node';
+import type { Modifier } from '../node/modifier';
 import { assertBoolean } from '../runtime/validation';
 
 /** Attaches or detaches a retained modifier without recreating it. */

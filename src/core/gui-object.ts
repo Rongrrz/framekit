@@ -1,10 +1,10 @@
 import { connectHoverEvents } from '../dom/hover-events';
 import { setStyle } from '../dom/styles';
-import type { GuiMethodTable } from '../runtime/gui-events';
-import { createGuiNode, type GuiElement, type PropertyRenderer } from '../runtime/gui-node';
-import type { InstanceProperties } from '../runtime/node';
-import { mergeProperties } from '../runtime/node-properties';
-import type { PropertyValidator } from '../runtime/node-state';
+import type { GuiMethodTable } from '../node/gui-events';
+import { createGuiNode, type GuiElement, type PropertyRenderer } from '../node/gui-node';
+import type { InstanceProperties } from '../node/instance';
+import { mergeProperties } from '../node/properties';
+import type { PropertyValidator } from '../node/state';
 import {
   assertAllowedValue,
   assertBoolean,

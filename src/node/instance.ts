@@ -1,6 +1,7 @@
-import { destroy, isDestroyed, onDestroy } from './node-lifecycle';
-import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './node-properties';
-import type { Unsubscribe } from './signal';
+import type { Unsubscribe } from '../runtime/signal';
+import { watchValue, type Value } from '../runtime/value';
+import { DestroyService } from '../services/destroy-service';
+import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
 import {
   append,
   children,
@@ -14,7 +15,6 @@ import {
   setParent,
   toTreeString,
 } from './tree';
-import { watchValue, type Value } from './value';
 
 /** Properties shared by every FrameKit instance. */
 export type InstanceProperties = {
@@ -131,13 +131,13 @@ const methodTable = {
     printTree(this);
   },
   destroy(this: Instance): void {
-    destroy(this);
+    DestroyService.destroy(this);
   },
   isDestroyed(this: Instance): boolean {
-    return isDestroyed(this);
+    return DestroyService.isDestroyed(this);
   },
   onDestroy(this: Instance, callback: () => void): Unsubscribe {
-    return onDestroy(this, callback);
+    return DestroyService.onDestroy(this, callback);
   },
   watch<T>(this: Instance, value: Value<T>, listener: (value: T) => void): Unsubscribe {
     return watchValue(this, value, listener);

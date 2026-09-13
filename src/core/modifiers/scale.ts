@@ -1,6 +1,6 @@
-import { createStyleModifier, type StyleModifier, type Styles } from '../../runtime/modifier';
-import type { InstanceProperties } from '../../runtime/node';
-import { mergeProperties } from '../../runtime/node-properties';
+import type { InstanceProperties } from '../../node/instance';
+import { createStyleModifier, type StyleModifier, type Styles } from '../../node/modifier';
+import { mergeProperties } from '../../node/properties';
 import { assertNonNegativeFinite } from '../../runtime/validation';
 
 /** Properties for visual scaling without changing layout size. */

@@ -1,8 +1,8 @@
-export { spring } from './animation/spring';
+export { SpringService, spring } from './services/spring-service';
 export type { SpringController, SpringOptions } from './animation/spring-controller';
 export type { AnimationGoal } from './animation/types';
 
-export { createTween } from './animation/tween';
+export { TweenService, createTween } from './services/tween-service';
 export type {
   EasingDirection,
   EasingStyle,
@@ -10,4 +10,4 @@ export type {
   TweenGoal,
   TweenOptions,
   TweenPlaybackState,
-} from './animation/tween';
+} from './services/tween-service';

@@ -87,6 +87,11 @@ export type {
   NumberSequenceKeypoint,
 } from './core/values/sequence';
 
-export type { LayoutModifier, StyleModifier } from './runtime/modifier';
-export type { GuiGeometry, GuiElement } from './runtime/gui-node';
-export type { Instance, InstanceProperties } from './runtime/node';
+export type {
+  GuiElement,
+  GuiGeometry,
+  Instance,
+  InstanceProperties,
+  LayoutModifier,
+  StyleModifier,
+} from './node';

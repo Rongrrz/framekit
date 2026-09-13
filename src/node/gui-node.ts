@@ -1,4 +1,5 @@
 import { vector2, type Vector2 } from '../core/values/vector2';
+import { RenderService } from '../services/render-service';
 import { guiEventMethods, type GuiMethodTable, type GuiEventMethods } from './gui-events';
 import {
   createNodeHandle,
@@ -6,14 +7,8 @@ import {
   nodeMethods,
   type Instance,
   type InstanceProperties,
-} from './node';
-import {
-  createBaseState,
-  getActiveNodeState,
-  registerNode,
-  type PropertyValidator,
-} from './node-state';
-import { renderNode } from './render';
+} from './instance';
+import { createBaseState, getActiveNodeState, registerNode, type PropertyValidator } from './state';
 
 /** Browser-computed geometry available on every GUI element. */
 export type GuiGeometry = {
@@ -71,7 +66,7 @@ export function createGuiNode<Properties extends InstanceProperties>({
     appliedModifierStyles: new Set(),
     appliedLayoutStylesByChild: new Map(),
   });
-  renderNode(node, propertyNames);
+  RenderService.renderNode(node, propertyNames);
   return node;
 }
 

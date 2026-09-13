@@ -1,14 +1,14 @@
 import { setStyle } from '../../dom/styles';
-import { guiEventMethods } from '../../runtime/gui-events';
-import type { GuiElement } from '../../runtime/gui-node';
-import { onDestroy } from '../../runtime/node-lifecycle';
-import { setNodeProperties, getNodeProperty } from '../../runtime/node-properties';
-import { getActiveNodeState } from '../../runtime/node-state';
+import { guiEventMethods } from '../../node/gui-events';
+import type { GuiElement } from '../../node/gui-node';
+import { setNodeProperties, getNodeProperty } from '../../node/properties';
+import { getActiveNodeState } from '../../node/state';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
 } from '../../runtime/validation';
+import { DestroyService } from '../../services/destroy-service';
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,
@@ -189,7 +189,7 @@ export function createScrollingFrame(
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
   element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
 
-  onDestroy(node, () => listenerController.abort());
+  DestroyService.onDestroy(node, () => listenerController.abort());
   return node;
 }
 

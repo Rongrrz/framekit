@@ -1,5 +1,5 @@
-import type { Instance } from '../runtime/node';
-import { getActiveNodeState } from '../runtime/node-state';
+import type { Instance } from '../node/instance';
+import { getActiveNodeState } from '../node/state';
 import { assertNonNegativeFinite } from '../runtime/validation';
 
 export type ResponsiveLayoutOptions = Readonly<{

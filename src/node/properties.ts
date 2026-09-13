@@ -1,10 +1,10 @@
-import { throwCollectedErrors } from './errors';
-import type { Instance, InstanceProperties } from './node';
-import { emitNodeEvent, subscribeToNodeEvent } from './node-events';
-import { getActiveNodeState, getNodeState } from './node-state';
-import { renderPropertyChanges } from './render';
-import type { Unsubscribe } from './signal';
-import { assertString } from './validation';
+import { throwCollectedErrors } from '../runtime/errors';
+import type { Unsubscribe } from '../runtime/signal';
+import { assertString } from '../runtime/validation';
+import { RenderService } from '../services/render-service';
+import { emitNodeEvent, subscribeToNodeEvent } from './events';
+import type { Instance, InstanceProperties } from './instance';
+import { getActiveNodeState, getNodeState } from './state';
 
 const propertyWriteEventKeys = new Map<PropertyKey, symbol>();
 
@@ -146,11 +146,11 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   state.validateProperties?.(nextProperties);
   state.properties = nextProperties;
   try {
-    renderPropertyChanges(node, changedProperties);
+    RenderService.renderPropertyChanges(node, changedProperties);
   } catch (error) {
     state.properties = previousProperties;
     try {
-      renderPropertyChanges(node, changedProperties);
+      RenderService.renderPropertyChanges(node, changedProperties);
     } catch (rollbackError) {
       throw new AggregateError(
         [error, rollbackError],

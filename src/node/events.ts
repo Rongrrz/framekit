@@ -1,6 +1,6 @@
-import type { Instance } from './node';
-import { getActiveNodeState, getNodeState } from './node-state';
-import { createSignal, type SignalEmitter, type Unsubscribe } from './signal';
+import { createSignal, type SignalEmitter, type Unsubscribe } from '../runtime/signal';
+import type { Instance } from './instance';
+import { getActiveNodeState, getNodeState } from './state';
 
 const eventSignalsByNode = new WeakMap<Instance, Map<PropertyKey, SignalEmitter<unknown[]>>>();
 

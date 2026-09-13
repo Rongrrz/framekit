@@ -1,10 +1,10 @@
 import { removeStyle, setStyle } from '../dom/styles';
-import type { GuiElement } from './gui-node';
-import type { LayoutChild, LayoutNodeState, Styles } from './modifier';
-import type { Instance, InstanceProperties } from './node';
-import { getNodeState, isGuiNode, isModifierState, type GuiNodeState } from './node-state';
+import type { GuiElement } from '../node/gui-node';
+import type { Instance, InstanceProperties } from '../node/instance';
+import type { LayoutChild, LayoutNodeState, Styles } from '../node/modifier';
+import { getNodeState, isGuiNode, isModifierState, type GuiNodeState } from '../node/state';
 
-export function hasLayoutModifier(node: Instance): boolean {
+function hasLayoutModifier(node: Instance): boolean {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return false;
   for (const modifier of state.modifiers.values()) {
@@ -14,7 +14,7 @@ export function hasLayoutModifier(node: Instance): boolean {
 }
 
 /** Renders the node surfaces affected by a committed property change. */
-export function renderPropertyChanges<Properties extends InstanceProperties>(
+function renderPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
 ): void {
@@ -37,7 +37,7 @@ export function renderPropertyChanges<Properties extends InstanceProperties>(
 }
 
 /** Reapplies active layout output without clearing unchanged CSS first. */
-export function renderLayouts(node: Instance): void {
+function renderLayouts(node: Instance): void {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return;
   const guiNode = node as GuiElement;
@@ -49,7 +49,7 @@ export function renderLayouts(node: Instance): void {
 }
 
 /** Renders base properties first, followed by attached modifiers. */
-export function renderNode<Properties extends InstanceProperties>(
+function renderNode<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties> = new Set(),
 ): void {
@@ -164,3 +164,11 @@ function getLayoutChildProperties(child: GuiElement): LayoutChild {
     LayoutOrder: typeof layoutOrder === 'number' ? layoutOrder : 0,
   };
 }
+
+/** Owns the synchronous DOM projection of FrameKit node state. */
+export const RenderService = Object.freeze({
+  renderPropertyChanges,
+  renderLayouts,
+  renderNode,
+  hasLayoutModifier,
+});

@@ -1,4 +1,4 @@
-import type { GuiElement } from '../../runtime/gui-node';
+import type { GuiElement } from '../../node/gui-node';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,

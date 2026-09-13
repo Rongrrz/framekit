@@ -6,20 +6,12 @@ import {
   type TextStyleProperties,
   validateTextStyleProperties,
 } from '../../dom/text-style';
-import {
-  guiEventKeys,
-  textBoxEventMethods,
-  type TextBoxEventMethods,
-} from '../../runtime/gui-events';
-import type { GuiElement } from '../../runtime/gui-node';
-import { emitNodeEvent } from '../../runtime/node-events';
-import { onDestroy } from '../../runtime/node-lifecycle';
-import {
-  setNodeProperties,
-  getNodeProperties,
-  getNodeProperty,
-} from '../../runtime/node-properties';
+import { emitNodeEvent } from '../../node/events';
+import { guiEventKeys, textBoxEventMethods, type TextBoxEventMethods } from '../../node/gui-events';
+import type { GuiElement } from '../../node/gui-node';
+import { setNodeProperties, getNodeProperties, getNodeProperty } from '../../node/properties';
 import { assertBoolean, assertFiniteNumber, assertString } from '../../runtime/validation';
+import { DestroyService } from '../../services/destroy-service';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -125,7 +117,7 @@ export function createTextBox(initialProperties: Partial<TextBoxProperties> = {}
     listenerOptions,
   );
 
-  onDestroy(node, () => listenerController.abort());
+  DestroyService.onDestroy(node, () => listenerController.abort());
   return node;
 }
 

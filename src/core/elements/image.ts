@@ -5,8 +5,8 @@ import {
   type ButtonProperties,
   validateButtonProperties,
 } from '../../dom/button';
-import { buttonEventMethods, type GuiMethodTable } from '../../runtime/gui-events';
-import type { GuiElement, PropertyRenderer } from '../../runtime/gui-node';
+import { buttonEventMethods, type GuiMethodTable } from '../../node/gui-events';
+import type { GuiElement, PropertyRenderer } from '../../node/gui-node';
 import { assertAllowedValue, assertFiniteNumber, assertString } from '../../runtime/validation';
 import {
   createDefaultGuiObjectProperties,

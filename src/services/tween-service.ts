@@ -1,28 +1,28 @@
-import type { Instance, InstanceProperties } from '../runtime/node';
-import { onDestroy, isDestroyed } from '../runtime/node-lifecycle';
-import { getPropertiesSnapshot } from '../runtime/node-properties';
-import { getActiveNodeState } from '../runtime/node-state';
-import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
-import { assertNonNegativeFinite } from '../runtime/validation';
 import {
   assertEasingDirection,
   assertEasingStyle,
   ease,
   type EasingDirection,
   type EasingStyle,
-} from './easing';
-import { prepareAnimationGoal } from './goal';
+} from '../animation/easing';
+import { prepareAnimationGoal } from '../animation/goal';
 import {
   applyAnimationProperties,
   claimAnimationProperties,
   releaseAnimationProperties,
   type AnimationOwner,
-} from './ownership';
-import { cancelAnimationTask, scheduleAnimationTask } from './scheduler';
-import type { AnimationGoal } from './types';
-import { interpolateAnimationValue } from './value';
+} from '../animation/ownership';
+import { cancelAnimationTask, scheduleAnimationTask } from '../animation/scheduler';
+import type { AnimationGoal } from '../animation/types';
+import { interpolateAnimationValue } from '../animation/value';
+import type { Instance, InstanceProperties } from '../node/instance';
+import { getPropertiesSnapshot } from '../node/properties';
+import { getActiveNodeState } from '../node/state';
+import { createSignal, readonlySignal, type Signal } from '../runtime/signal';
+import { assertNonNegativeFinite } from '../runtime/validation';
+import { DestroyService } from './destroy-service';
 
-export type { EasingDirection, EasingStyle } from './easing';
+export type { EasingDirection, EasingStyle } from '../animation/easing';
 
 /** Timing and playback settings for a tween. */
 export type TweenOptions = Readonly<{
@@ -69,7 +69,7 @@ export type Tween = {
 };
 
 /** Creates a controllable tween that applies interpolated property values. */
-export function createTween<Properties extends InstanceProperties>(
+function create<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   options: TweenOptions,
   goal: TweenGoal<Properties>,
@@ -188,7 +188,7 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function applyProgress(progress: number): void {
-    if (isDestroyed(node)) return;
+    if (DestroyService.isDestroyed(node)) return;
     const easedProgress = ease(
       progress,
       resolvedOptions.EasingStyle,
@@ -219,10 +219,10 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function assertUsable(): void {
-    if (isDestroyed(node)) throw new Error(`${initialName} has been destroyed.`);
+    if (DestroyService.isDestroyed(node)) throw new Error(`${initialName} has been destroyed.`);
   }
 
-  onDestroy(node, () => {
+  DestroyService.onDestroy(node, () => {
     try {
       if (
         playbackState === 'Playing' ||
@@ -240,6 +240,12 @@ export function createTween<Properties extends InstanceProperties>(
 
   return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
 }
+
+/** Creates and owns explicit, timed property animations. */
+export const TweenService = Object.freeze({ create });
+
+/** Compatibility alias for code written before the service entry point was introduced. */
+export const createTween = create;
 
 function resolveTweenOptions(options: TweenOptions): ResolvedTweenOptions {
   const resolved: ResolvedTweenOptions = {

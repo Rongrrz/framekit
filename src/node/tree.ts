@@ -1,6 +1,7 @@
+import { RenderService } from '../services/render-service';
 import type { GuiElement } from './gui-node';
+import type { Instance } from './instance';
 import type { Modifier } from './modifier';
-import type { Instance } from './node';
 import {
   getActiveNodeState,
   getChildren,
@@ -8,8 +9,7 @@ import {
   isModifierState,
   isGuiNode,
   type NodeState,
-} from './node-state';
-import { hasLayoutModifier, renderNode } from './render';
+} from './state';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
 export function append(parent: Instance, child: Instance): void {
@@ -44,10 +44,15 @@ export function append(parent: Instance, child: Instance): void {
   placeChildElement(parent, parentState, child, insertionIndex);
 
   try {
-    if (previousParent && (isModifierState(childState) || hasLayoutModifier(previousParent))) {
-      renderNode(previousParent);
+    if (
+      previousParent &&
+      (isModifierState(childState) || RenderService.hasLayoutModifier(previousParent))
+    ) {
+      RenderService.renderNode(previousParent);
     }
-    if (isModifierState(childState) || hasLayoutModifier(parent)) renderNode(parent);
+    if (isModifierState(childState) || RenderService.hasLayoutModifier(parent)) {
+      RenderService.renderNode(parent);
+    }
   } catch (error) {
     unlinkNodeFromParent(child, childState);
     if (isGuiNode(child)) child.element.remove();
@@ -72,8 +77,11 @@ export function detach(node: Instance): void {
   if (!state.canHaveParent) return;
   const previousParent = unlinkNodeFromParent(node, state);
   if (isGuiNode(node)) node.element.remove();
-  if (previousParent && (isModifierState(state) || hasLayoutModifier(previousParent))) {
-    renderNode(previousParent);
+  if (
+    previousParent &&
+    (isModifierState(state) || RenderService.hasLayoutModifier(previousParent))
+  ) {
+    RenderService.renderNode(previousParent);
   }
 }
 
@@ -194,8 +202,8 @@ function restoreRendering(
   originalError: unknown,
 ): never {
   try {
-    renderNode(parent);
-    if (previousParent) renderNode(previousParent);
+    RenderService.renderNode(parent);
+    if (previousParent) RenderService.renderNode(previousParent);
   } catch (rollbackError) {
     throw new AggregateError(
       [originalError, rollbackError],

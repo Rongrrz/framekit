@@ -1,11 +1,11 @@
-import type { Instance, InstanceProperties } from '../runtime/node';
 import {
   createSpringBinding,
   type SpringBinding,
   type SpringController,
   type SpringOptions,
-} from './spring-controller';
-import type { AnimationGoal } from './types';
+} from '../animation/spring-controller';
+import type { AnimationGoal } from '../animation/types';
+import type { Instance, InstanceProperties } from '../node/instance';
 
 const springsByNode = new WeakMap<Instance, SpringBinding<InstanceProperties>>();
 
@@ -37,3 +37,15 @@ export function spring<Properties extends InstanceProperties>(
   if (goal) binding.animate(goal, settings);
   return binding.controller;
 }
+
+/** Retrieves retained spring controls or retargets a node's spring animation. */
+export const SpringService = Object.freeze({
+  get: <Properties extends InstanceProperties>(
+    node: Instance<Properties>,
+  ): SpringController<Properties> => spring(node),
+  animate: <Properties extends InstanceProperties>(
+    node: Instance<Properties>,
+    goal: AnimationGoal<Properties>,
+    settings?: SpringOptions,
+  ): SpringController<Properties> => (settings ? spring(node, goal, settings) : spring(node, goal)),
+});

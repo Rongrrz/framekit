@@ -1,9 +1,9 @@
 import type { GuiObjectProperties } from '../core/gui-object';
-import { guiEventKeys, type ButtonEventMethods } from '../runtime/gui-events';
-import type { GuiElement } from '../runtime/gui-node';
-import { emitNodeEvent } from '../runtime/node-events';
-import { onDestroy } from '../runtime/node-lifecycle';
+import { emitNodeEvent } from '../node/events';
+import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events';
+import type { GuiElement } from '../node/gui-node';
 import { assertBoolean, assertString } from '../runtime/validation';
+import { DestroyService } from '../services/destroy-service';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */
@@ -89,7 +89,7 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
 
   element.addEventListener('contextmenu', (event) => event.preventDefault(), listenerOptions);
 
-  onDestroy(node, () => listenerController.abort());
+  DestroyService.onDestroy(node, () => listenerController.abort());
 }
 
 /** Synchronizes properties shared by every FrameKit button. */

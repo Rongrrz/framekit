@@ -1,23 +1,23 @@
-import { throwCollectedErrors } from './errors';
-import type { GuiElement } from './gui-node';
-import type { Instance } from './node';
-import { getActiveNodeState, getChildren, getNodeState, isModifierState } from './node-state';
-import { hasLayoutModifier, renderNode } from './render';
-import { unlinkNodeFromParent } from './tree';
+import type { GuiElement } from '../node/gui-node';
+import type { Instance } from '../node/instance';
+import { getActiveNodeState, getChildren, getNodeState, isModifierState } from '../node/state';
+import { unlinkNodeFromParent } from '../node/tree';
+import { throwCollectedErrors } from '../runtime/errors';
+import { RenderService } from './render-service';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */
-export function destroy(node: Instance): void {
+function destroy(node: Instance): void {
   const errors: unknown[] = [];
   destroyRecursively(node, errors);
   throwCollectedErrors(errors, 'Multiple errors occurred while destroying a node.');
 }
 
-export function isDestroyed(node: Instance): boolean {
+function isDestroyed(node: Instance): boolean {
   return getNodeState(node).destroyed;
 }
 
 /** Registers a resource to release when the node is destroyed. */
-export function onDestroy(node: Instance, callback: () => void): () => void {
+function onDestroy(node: Instance, callback: () => void): () => void {
   const cleanups = getActiveNodeState(node).cleanups;
   cleanups.add(callback);
   return () => cleanups.delete(callback);
@@ -44,9 +44,9 @@ function destroyRecursively(
 
   if (state.parent) {
     const previousParent = unlinkNodeFromParent(node, state)!;
-    if (isModifierState(state) || hasLayoutModifier(previousParent)) {
+    if (isModifierState(state) || RenderService.hasLayoutModifier(previousParent)) {
       try {
-        renderNode(previousParent);
+        RenderService.renderNode(previousParent);
       } catch (error) {
         errors.push(error);
       }
@@ -72,3 +72,6 @@ function destroyRecursively(
     }
   }
 }
+
+/** Owns permanent node teardown and cleanup registration. */
+export const DestroyService = Object.freeze({ destroy, isDestroyed, onDestroy });
