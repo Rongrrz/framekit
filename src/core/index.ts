@@ -107,5 +107,3 @@ export type {
   LayoutModifier,
   StyleModifier,
 } from './node';
-
-export { spring } from '../animation/spring';
