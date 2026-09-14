@@ -28,6 +28,9 @@ function append(parent: Instance, child: Instance): void {
   if (parentState.kind === 'gui' && isGuiNode(child) && !parentState.canContainGuiChildren) {
     throw new TypeError(`${parentState.properties.Name} cannot contain GUI children.`);
   }
+  if (childState.kind === 'style') {
+    childState.validateTarget?.(childState.properties, parentState.properties);
+  }
   if (childState.parent === parent) {
     placeChildElement(parent, parentState, child, getChildren(parentState).indexOf(child));
     return;

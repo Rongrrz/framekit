@@ -4,7 +4,7 @@ import { RenderService } from '../render-service';
 import type { Unsubscribe } from '../state/signal';
 import { emitNodeEvent, subscribeToNodeEvent } from './events';
 import type { Instance, InstanceProperties } from './instance';
-import { getActiveNodeState, getNodeState } from './state';
+import { getActiveNodeState, getNodeState, type NodeState } from './state';
 
 const propertyWriteEventKeys = new Map<PropertyKey, symbol>();
 
@@ -144,6 +144,7 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
 
   const nextProperties = { ...state.properties, ...patch };
   state.validateProperties?.(nextProperties);
+  validateModifierRelationships(state, nextProperties);
   state.properties = nextProperties;
   try {
     RenderService.renderPropertyChanges(node, changedProperties);
@@ -161,6 +162,24 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   }
 
   return { previousProperties, nextProperties, changedProperties };
+}
+
+function validateModifierRelationships<Properties extends InstanceProperties>(
+  state: NodeState<Properties>,
+  nextProperties: Readonly<Properties>,
+): void {
+  if (state.kind === 'style' && state.parent) {
+    state.validateTarget?.(nextProperties, getNodeState(state.parent).properties);
+    return;
+  }
+  if (state.kind !== 'gui') return;
+
+  for (const modifier of state.modifiers.values()) {
+    const modifierState = getNodeState(modifier);
+    if (modifierState.kind === 'style') {
+      modifierState.validateTarget?.(modifierState.properties, nextProperties);
+    }
+  }
 }
 
 function emitPropertyChanges<Properties extends InstanceProperties>(

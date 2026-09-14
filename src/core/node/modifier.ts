@@ -23,6 +23,11 @@ export type ResolveStyles<Properties extends InstanceProperties> = (
   targetProperties: Readonly<InstanceProperties>,
 ) => Styles;
 
+export type ValidateModifierTarget<Properties extends InstanceProperties> = (
+  properties: Readonly<Properties>,
+  targetProperties: Readonly<InstanceProperties>,
+) => void;
+
 export type LayoutChild = Readonly<{
   Name: string;
   LayoutOrder: number;
@@ -42,6 +47,7 @@ export type StyleModifierState<Properties extends InstanceProperties = InstanceP
   BaseNodeState<Properties> & {
     kind: 'style';
     resolveStyles: ResolveStyles<Properties>;
+    validateTarget: ValidateModifierTarget<Properties> | undefined;
   };
 
 export type LayoutNodeState<Properties extends InstanceProperties = InstanceProperties> =
@@ -58,12 +64,14 @@ export function createStyleModifier<Properties extends InstanceProperties>(
   properties: Properties,
   resolveStyles: ResolveStyles<Properties>,
   validateProperties?: PropertyValidator<Properties>,
+  validateTarget?: ValidateModifierTarget<Properties>,
 ): StyleModifier<Properties> {
   const node = createNodeHandle(properties) as StyleModifier<Properties>;
   const state: StyleModifierState<Properties> = {
     ...createBaseState(className, properties, validateProperties),
     kind: 'style',
     resolveStyles,
+    validateTarget,
   };
   registerNode(node, state);
   return node;

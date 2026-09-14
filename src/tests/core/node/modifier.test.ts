@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createStyleModifier } from '../../../core/node/modifier';
 import { fk } from '../../../index';
@@ -64,13 +64,20 @@ describe('modifier attachment and validation', () => {
 
   it('rolls back a failed modifier append without corrupting its target', () => {
     const frame = fk.createFrame({ Name: 'RejectedTarget' });
-    const rejected = createStyleModifier('Rejected', { Name: 'Rejected' }, (_, target) => {
-      if (target.Name === 'RejectedTarget') throw new Error('target rejected');
-      return {};
-    });
+    const render = vi.fn(() => ({}));
+    const rejected = createStyleModifier(
+      'Rejected',
+      { Name: 'Rejected' },
+      render,
+      undefined,
+      (_, target) => {
+        if (target.Name === 'RejectedTarget') throw new Error('target rejected');
+      },
+    );
 
     expect(() => frame.addChild(rejected)).toThrow(/target rejected/);
     expect(rejected.Parent).toBeUndefined();
+    expect(render).not.toHaveBeenCalled();
 
     const corner = fk.createUICorner({ CornerRadius: 6 });
 

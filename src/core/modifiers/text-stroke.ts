@@ -43,16 +43,14 @@ export function createUITextStroke(
     ),
     resolveTextStrokeStyles,
     validateTextStrokeProperties,
+    validateTextStrokeTarget,
   );
 }
 
 function resolveTextStrokeStyles(
   properties: Readonly<UITextStrokeProperties>,
-  targetProperties: Readonly<InstanceProperties>,
+  _targetProperties: Readonly<InstanceProperties>,
 ): Styles {
-  if (!isDisplayTextProperties(targetProperties)) {
-    throw new TypeError('UITextStroke must be attached to a TextLabel or TextButton.');
-  }
   if (!properties.Enabled) return {};
 
   return {
@@ -60,6 +58,15 @@ function resolveTextStrokeStyles(
     [textStrokeContentProperty]: 'attr(data-framekit-text-content)',
     [textStrokeWidthProperty]: `${properties.Thickness}px`,
   };
+}
+
+function validateTextStrokeTarget(
+  _properties: Readonly<UITextStrokeProperties>,
+  targetProperties: Readonly<InstanceProperties>,
+): void {
+  if (!isDisplayTextProperties(targetProperties)) {
+    throw new TypeError('UITextStroke must be attached to a TextLabel or TextButton.');
+  }
 }
 
 function validateTextStrokeProperties(properties: Readonly<UITextStrokeProperties>): void {

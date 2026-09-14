@@ -57,6 +57,7 @@ export function createUIGradient(
     ),
     resolveGradientStyles,
     validateGradientProperties,
+    validateGradientTarget,
   );
 }
 
@@ -64,9 +65,6 @@ function resolveGradientStyles(
   properties: Readonly<UIGradientProperties>,
   targetProperties: Readonly<InstanceProperties>,
 ): Styles {
-  if (properties.ApplyTo === 'Text' && !isTextTarget(targetProperties)) {
-    throw new TypeError('A text UIGradient must be attached to a TextLabel or TextButton.');
-  }
   if (!properties.Enabled) return {};
 
   const targetColor = readTargetColor(targetProperties, properties.ApplyTo);
@@ -91,6 +89,15 @@ function resolveGradientStyles(
         'background-color': 'transparent',
         'background-image': image,
       };
+}
+
+function validateGradientTarget(
+  properties: Readonly<UIGradientProperties>,
+  targetProperties: Readonly<InstanceProperties>,
+): void {
+  if (properties.ApplyTo === 'Text' && !isTextTarget(targetProperties)) {
+    throw new TypeError('A text UIGradient must be attached to a TextLabel or TextButton.');
+  }
 }
 
 function validateGradientProperties(properties: Readonly<UIGradientProperties>): void {
