@@ -1,4 +1,5 @@
 import { throwCollectedErrors } from '../internal/errors';
+import { snapshotPropertyValue } from '../internal/snapshot';
 import { assertString } from '../internal/validation';
 import { RenderService } from '../render-service';
 import type { Unsubscribe } from '../state/signal';
@@ -23,13 +24,14 @@ export function setNodeProperties<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
 ): void {
-  const requestedProperties = Object.keys(patch) as (keyof Properties)[];
-  const commit = commitPropertyPatch(node, patch, requestedProperties);
+  const propertySnapshot = snapshotPropertyValue(patch);
+  const requestedProperties = Object.keys(propertySnapshot) as (keyof Properties)[];
+  const commit = commitPropertyPatch(node, propertySnapshot, requestedProperties);
   const errors: unknown[] = [];
 
   for (const property of requestedProperties) {
     try {
-      emitNodeEvent(node, getPropertyWriteEventKey(property), patch[property]);
+      emitNodeEvent(node, getPropertyWriteEventKey(property), propertySnapshot[property]);
     } catch (error) {
       errors.push(error);
     }
@@ -115,7 +117,7 @@ export function mergeProperties<Properties extends InstanceProperties>(
   initialProperties: Partial<Properties>,
 ): Properties {
   validatePropertyPatch(defaultProperties, initialProperties);
-  return { ...defaultProperties, ...initialProperties };
+  return snapshotPropertyValue({ ...defaultProperties, ...initialProperties });
 }
 
 /** Rejects unknown, missing, and non-finite property values. */

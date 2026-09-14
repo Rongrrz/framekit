@@ -94,4 +94,18 @@ describe('custom GUI objects', () => {
     };
     void invalidDefinition;
   });
+
+  it('snapshots plain custom property values', () => {
+    const settings = { label: 'Original' };
+    const createBadge = fk.defineGuiObject({
+      className: 'Badge',
+      defaultProperties: { Settings: settings },
+    });
+    const badge = createBadge();
+
+    settings.label = 'Mutated';
+
+    expect(badge.Settings).toEqual({ label: 'Original' });
+    expect(Object.isFrozen(badge.Settings)).toBe(true);
+  });
 });

@@ -96,4 +96,19 @@ describe('node properties', () => {
       AnchorPoint: fk.vector2(0, 0),
     });
   });
+
+  it('stores structured properties as immutable snapshots', () => {
+    const position = {
+      X: { Scale: 0, Offset: 10 },
+      Y: { Scale: 0, Offset: 20 },
+    };
+    const frame = fk.createFrame({ Position: position });
+
+    position.X.Offset = 999;
+
+    expect(frame.Position).toEqual(fk.udim2FromOffset(10, 20));
+    expect(Object.isFrozen(frame.Position)).toBe(true);
+    expect(Object.isFrozen(frame.Position.X)).toBe(true);
+    expect(frame.element.style.left).toBe('10px');
+  });
 });
