@@ -1,4 +1,9 @@
-import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../internal/validation';
+import {
+  assertBoolean,
+  assertFiniteNumber,
+  assertNonNegativeFinite,
+  assertUnitInterval,
+} from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
 import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
 import { mergeProperties } from '../node/properties';
@@ -64,5 +69,5 @@ function validateShadowProperties(properties: Readonly<UIShadowProperties>): voi
   assertNonNegativeFinite(properties.BlurRadius, 'BlurRadius');
   assertFiniteNumber(properties.SpreadRadius, 'SpreadRadius');
   assertColor3(properties.Color, 'Color');
-  assertFiniteNumber(properties.Transparency, 'Transparency');
+  assertUnitInterval(properties.Transparency, 'Transparency');
 }

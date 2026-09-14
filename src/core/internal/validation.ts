@@ -44,3 +44,10 @@ export function assertPositiveFinite(
     throw new TypeError(`${propertyName} must be a positive finite number.`);
   }
 }
+
+/** Rejects values outside the inclusive normalized range used by transparency properties. */
+export function assertUnitInterval(value: unknown, propertyName: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new RangeError(`${propertyName} must be between 0 and 1.`);
+  }
+}

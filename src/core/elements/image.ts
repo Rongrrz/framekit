@@ -10,7 +10,7 @@ import {
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
-import { assertAllowedValue, assertFiniteNumber, assertString } from '../internal/validation';
+import { assertAllowedValue, assertString, assertUnitInterval } from '../internal/validation';
 import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events';
 import type { GuiElement, PropertyRenderer } from '../node/gui-node';
 
@@ -149,7 +149,7 @@ function createImageNode<Properties extends ImageLabelProperties>(
         image.alt = properties.AltText;
       }
       if (changedProperties.has('ImageTransparency')) {
-        image.style.opacity = String(1 - clamp(properties.ImageTransparency, 0, 1));
+        image.style.opacity = String(1 - properties.ImageTransparency);
       }
       if (changedProperties.has('ScaleType')) {
         image.style.objectFit = objectFit[properties.ScaleType];
@@ -167,7 +167,7 @@ function validateImageProperties(
 ): void {
   assertString(properties.Image, 'Image');
   assertString(properties.AltText, 'AltText');
-  assertFiniteNumber(properties.ImageTransparency, 'ImageTransparency');
+  assertUnitInterval(properties.ImageTransparency, 'ImageTransparency');
   assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
   if ('Disabled' in properties) validateButtonProperties(properties);
   validateImageSource(properties.Image);
@@ -188,8 +188,4 @@ function validateImageSource(source: string): void {
   if (!allowedImageProtocols.has(url.protocol) && !allowedDataImage) {
     throw new TypeError(`Unsupported image URL protocol "${url.protocol}".`);
   }
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value));
 }

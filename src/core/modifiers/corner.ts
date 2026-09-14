@@ -1,4 +1,4 @@
-import { assertBoolean, assertFiniteNumber } from '../internal/validation';
+import { assertBoolean, assertNonNegativeFinite } from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
 import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
 import { mergeProperties } from '../node/properties';
@@ -25,10 +25,10 @@ export function createUICorner(initialProperties: Partial<UICornerProperties> = 
 }
 
 function resolveCornerStyles(properties: Readonly<UICornerProperties>): Styles {
-  return properties.Enabled ? { 'border-radius': `${Math.max(0, properties.CornerRadius)}px` } : {};
+  return properties.Enabled ? { 'border-radius': `${properties.CornerRadius}px` } : {};
 }
 
 function validateCornerProperties(properties: Readonly<UICornerProperties>): void {
   assertBoolean(properties.Enabled, 'Enabled');
-  assertFiniteNumber(properties.CornerRadius, 'CornerRadius');
+  assertNonNegativeFinite(properties.CornerRadius, 'CornerRadius');
 }

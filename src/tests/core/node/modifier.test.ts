@@ -95,6 +95,9 @@ describe('modifier attachment and validation', () => {
 
   it('validates domain-specific modifier values while detached', () => {
     expect(() => fk.createUIScale({ Scale: -1 })).toThrow(/non-negative finite/);
+    expect(() => fk.createUICorner({ CornerRadius: -1 })).toThrow(/non-negative finite/);
+    expect(() => fk.createUIStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
+    expect(() => fk.createUIShadow({ Transparency: 1.1 })).toThrow(/between 0 and 1/);
     expect(() => fk.createUITextStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
 
     const scale = fk.createUIScale();

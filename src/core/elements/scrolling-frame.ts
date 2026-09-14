@@ -6,7 +6,12 @@ import {
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
-import { assertAllowedValue, assertBoolean, assertNonNegativeFinite } from '../internal/validation';
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertNonNegativeFinite,
+  assertUnitInterval,
+} from '../internal/validation';
 import { guiEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
 import { setNodeProperties, getNodeProperty } from '../node/properties';
@@ -233,10 +238,7 @@ function validateScrollingFrameProperties(properties: Readonly<ScrollingFramePro
   assertAllowedValue(properties.AutomaticCanvasSize, automaticCanvasSizes, 'AutomaticCanvasSize');
   assertBoolean(properties.ScrollingEnabled, 'ScrollingEnabled');
   assertColor3(properties.ScrollBarImageColor3, 'ScrollBarImageColor3');
-  assertNonNegativeFinite(properties.ScrollBarImageTransparency, 'ScrollBarImageTransparency');
-  if (properties.ScrollBarImageTransparency > 1) {
-    throw new RangeError('ScrollBarImageTransparency must be between 0 and 1.');
-  }
+  assertUnitInterval(properties.ScrollBarImageTransparency, 'ScrollBarImageTransparency');
   assertNonNegativeFinite(properties.ScrollBarThickness, 'ScrollBarThickness');
 }
 

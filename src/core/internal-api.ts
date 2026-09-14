@@ -12,6 +12,7 @@ export {
   assertNonNegativeFinite,
   assertPositiveFinite,
   assertString,
+  assertUnitInterval,
 } from './internal/validation';
 export { createLayoutModifier, createStyleModifier } from './node/modifier';
 export type {

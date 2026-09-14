@@ -3,6 +3,7 @@ import {
   assertBoolean,
   assertNonNegativeFinite,
   assertString,
+  assertUnitInterval,
 } from '../internal/validation';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { setStyle } from './styles';
@@ -110,7 +111,7 @@ export function validateTextStyleProperties(properties: Readonly<TextStyleProper
   assertAllowedValue(properties.TextYAlignment, verticalAlignments, 'TextYAlignment');
   assertString(properties.Text, 'Text');
   assertColor3(properties.TextColor3, 'TextColor3');
-  assertNonNegativeFinite(properties.TextTransparency, 'TextTransparency');
+  assertUnitInterval(properties.TextTransparency, 'TextTransparency');
   assertNonNegativeFinite(properties.TextSize, 'TextSize');
   assertBoolean(properties.TextScaled, 'TextScaled');
   assertBoolean(properties.TextWrapped, 'TextWrapped');

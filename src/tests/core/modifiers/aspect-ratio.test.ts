@@ -55,11 +55,7 @@ describe('UI aspect ratio constraints', () => {
     expect(frame.element.style.maxHeight).toBe('100%');
   });
 
-  it('falls back to a square for invalid ratios', () => {
-    const frame = fk.createFrame();
-
-    frame.addChild(fk.createUIAspectRatioConstraint({ AspectRatio: 0 }));
-
-    expect(frame.element.style.aspectRatio).toBe('1 / 1');
+  it('rejects non-positive ratios', () => {
+    expect(() => fk.createUIAspectRatioConstraint({ AspectRatio: 0 })).toThrow(/positive finite/);
   });
 });

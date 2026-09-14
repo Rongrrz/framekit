@@ -66,6 +66,11 @@ describe('frames', () => {
     expect(frame.element.style.getPropertyValue('rotate')).toBe('-15deg');
   });
 
+  it('rejects transparency outside its documented range', () => {
+    expect(() => fk.createFrame({ BackgroundTransparency: -0.1 })).toThrow(/between 0 and 1/);
+    expect(() => fk.createFrame({ BackgroundTransparency: 1.1 })).toThrow(/between 0 and 1/);
+  });
+
   it('renders automatic sizing and descendant clipping', () => {
     const frame = fk.createFrame({ AutomaticSize: 'X', ClipsDescendants: true });
 

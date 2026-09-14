@@ -116,6 +116,19 @@ describe('tweens', () => {
     expect(tween.playbackState()).toBe('Completed');
   });
 
+  it('constrains easing overshoot to a property domain', () => {
+    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const tween = fka.TweenService.create(
+      frame,
+      { Duration: 1, EasingStyle: 'Back', EasingDirection: 'Out' },
+      { BackgroundTransparency: 1 },
+    );
+
+    tween.play();
+    expect(() => advance(750)).not.toThrow();
+    expect(frame.BackgroundTransparency).toBe(1);
+  });
+
   it('supports delay, pause, resume, and cancellation', () => {
     const frame = fk.createFrame({ BackgroundTransparency: 0 });
     const tween = fka.TweenService.create(

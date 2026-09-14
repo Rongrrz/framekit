@@ -80,4 +80,10 @@ describe('gradients', () => {
     expect(() => textLikeNode.addChild(gradient)).toThrow(/TextLabel or TextButton/);
     expect(gradient.Parent).toBeUndefined();
   });
+
+  it('rejects transparency sequence values outside the normalized range', () => {
+    expect(() => fk.createUIGradient({ Transparency: fk.numberSequence(0, 1.1) })).toThrow(
+      /between 0 and 1/,
+    );
+  });
 });

@@ -11,7 +11,7 @@ import {
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
-import { assertBoolean, assertFiniteNumber, assertString } from '../internal/validation';
+import { assertBoolean, assertString, assertUnitInterval } from '../internal/validation';
 import { emitNodeEvent } from '../node/events';
 import {
   guiEventKeys,
@@ -194,7 +194,7 @@ function validateTextControlProperties(properties: Readonly<TextControlPropertie
   assertBoolean(properties.ReadOnly, 'ReadOnly');
   assertString(properties.PlaceholderText, 'PlaceholderText');
   assertColor3(properties.PlaceholderColor3, 'PlaceholderColor3');
-  assertFiniteNumber(properties.PlaceholderTransparency, 'PlaceholderTransparency');
+  assertUnitInterval(properties.PlaceholderTransparency, 'PlaceholderTransparency');
   assertString(properties.AccessibleLabel, 'AccessibleLabel');
   assertString(properties.FieldName, 'FieldName');
   assertString(properties.AutoComplete, 'AutoComplete');
