@@ -36,7 +36,7 @@ export type GuiElement<Properties extends InstanceProperties = InstancePropertie
 export type PropertyRenderer<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
-) => void;
+) => Partial<Properties> | void;
 
 type GuiNodeOptions<Properties extends InstanceProperties> = {
   className: string;

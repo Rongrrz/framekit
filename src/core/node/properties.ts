@@ -172,7 +172,7 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
     throw error;
   }
 
-  return { previousProperties, nextProperties, changedProperties };
+  return { previousProperties, nextProperties: state.properties, changedProperties };
 }
 
 function validateModifierRelationships<Properties extends InstanceProperties>(

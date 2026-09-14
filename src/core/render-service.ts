@@ -43,7 +43,8 @@ function renderNode<Properties extends InstanceProperties>(
 ): void {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return;
-  state.renderProperties?.(state.properties, changedProperties);
+  const reconciledProperties = state.renderProperties?.(state.properties, changedProperties);
+  if (reconciledProperties) state.properties = { ...state.properties, ...reconciledProperties };
   renderDerivedStyles(node);
 }
 

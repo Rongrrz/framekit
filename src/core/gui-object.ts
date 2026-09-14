@@ -101,7 +101,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
     element,
     renderProperties: (properties, changedProperties) => {
       renderGuiObject(element, properties, changedProperties);
-      renderProperties?.(properties, changedProperties);
+      return renderProperties?.(properties, changedProperties);
     },
     validateProperties: (properties) => {
       validateGuiObjectProperties(properties);

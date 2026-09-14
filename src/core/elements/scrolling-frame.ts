@@ -193,6 +193,9 @@ export function createScrollingFrame(
           writeCanvasPosition(element, properties.CanvasPosition);
         }
         lastRenderedCanvasPosition = readCanvasPosition(element);
+        if (!positionsMatch(lastRenderedCanvasPosition, properties.CanvasPosition)) {
+          return { CanvasPosition: lastRenderedCanvasPosition };
+        }
       }
     },
     methods: scrollingFrameMethods,
@@ -201,7 +204,12 @@ export function createScrollingFrame(
 
   const syncCanvasPositionFromBrowser = (): void => {
     const browserPosition = readCanvasPosition(element);
-    if (positionsMatch(browserPosition, lastRenderedCanvasPosition)) return;
+    if (
+      positionsMatch(browserPosition, lastRenderedCanvasPosition) &&
+      positionsMatch(browserPosition, getNodeProperty(node, 'CanvasPosition'))
+    ) {
+      return;
+    }
     const canvasPosition = getNodeProperty(node, 'CanvasPosition');
     if (positionsMatch(browserPosition, canvasPosition)) {
       lastRenderedCanvasPosition = browserPosition;

@@ -88,9 +88,13 @@ describe('scrolling frames', () => {
 
     expect(scrolling.CanvasPosition).toEqual({ X: 12, Y: 34 });
 
-    const nativeScrollTo = vi.fn();
+    const nativeScrollTo = vi.fn((left?: number | ScrollToOptions, top?: number) => {
+      if (typeof left !== 'number' || top === undefined) return;
+      scrolling.element.scrollLeft = left;
+      scrolling.element.scrollTop = top;
+    });
 
-    scrolling.element.scrollTo = nativeScrollTo;
+    scrolling.element.scrollTo = nativeScrollTo as typeof scrolling.element.scrollTo;
     scrolling.CanvasPosition = fk.vector2(56, 78);
 
     expect(nativeScrollTo).toHaveBeenCalledWith(56, 78);
@@ -173,7 +177,7 @@ describe('scrolling frames', () => {
     expect(controller.isAnimating()).toBe(false);
   });
 
-  it('does not cancel an animation when the browser rounds its own scroll write', () => {
+  it('reports the browser position without cancelling an animation when a scroll write is rounded', () => {
     let frame: FrameRequestCallback | undefined;
 
     vi.stubGlobal('performance', { now: () => 0 });
@@ -196,7 +200,7 @@ describe('scrolling frames', () => {
     fk.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     frame?.(1000 / 60);
 
-    expect(scrolling.CanvasPosition.Y).not.toBe(scrolling.element.scrollTop);
+    expect(scrolling.CanvasPosition.Y).toBe(scrolling.element.scrollTop);
 
     scrolling.element.dispatchEvent(new Event('scroll'));
 
