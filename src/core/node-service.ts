@@ -54,10 +54,10 @@ function append(parent: Instance, child: Instance): void {
       previousParent &&
       (isModifierState(childState) || RenderService.hasLayoutModifier(previousParent))
     ) {
-      RenderService.renderNode(previousParent);
+      RenderService.renderDerivedStyles(previousParent);
     }
     if (isModifierState(childState) || RenderService.hasLayoutModifier(parent)) {
-      RenderService.renderNode(parent);
+      RenderService.renderDerivedStyles(parent);
     }
   } catch (error) {
     unlinkNodeFromParent(child, childState);
@@ -87,7 +87,7 @@ function detach(node: Instance): void {
     previousParent &&
     (isModifierState(state) || RenderService.hasLayoutModifier(previousParent))
   ) {
-    RenderService.renderNode(previousParent);
+    RenderService.renderDerivedStyles(previousParent);
   }
 }
 
@@ -204,8 +204,8 @@ function restoreRendering(
   originalError: unknown,
 ): never {
   try {
-    RenderService.renderNode(parent);
-    if (previousParent) RenderService.renderNode(previousParent);
+    RenderService.renderDerivedStyles(parent);
+    if (previousParent) RenderService.renderDerivedStyles(previousParent);
   } catch (rollbackError) {
     throw new AggregateError(
       [originalError, rollbackError],

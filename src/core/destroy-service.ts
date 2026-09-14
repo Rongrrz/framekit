@@ -46,7 +46,7 @@ function destroyRecursively(
     const previousParent = NodeService.unlinkNodeFromParent(node, state)!;
     if (isModifierState(state) || RenderService.hasLayoutModifier(previousParent)) {
       try {
-        RenderService.renderNode(previousParent);
+        RenderService.renderDerivedStyles(previousParent);
       } catch (error) {
         errors.push(error);
       }

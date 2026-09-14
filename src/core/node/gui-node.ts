@@ -75,8 +75,7 @@ export function createGuiNode<Properties extends InstanceProperties>({
     propertyNames,
     renderProperties,
     modifiers: new Map(),
-    appliedModifierStyles: new Set(),
-    appliedLayoutStylesByChild: new Map(),
+    layoutChildren: new Set(),
   });
   RenderService.renderNode(node, propertyNames);
   return node;

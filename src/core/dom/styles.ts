@@ -1,23 +1,88 @@
-const styleValuesByElement = new WeakMap<HTMLElement, Record<string, string>>();
+export type StyleLayer = 'modifier' | 'layout';
+export type StyleValues = Readonly<Record<string, string>>;
 
-/** Writes an inline style only when FrameKit's resolved CSS output changed. */
+type ElementStyleState = {
+  base: Record<string, string>;
+  modifier: Record<string, string>;
+  layout: Record<string, string>;
+  fallback: Record<string, string>;
+  rendered: Record<string, string>;
+};
+
+const stylesByElement = new WeakMap<HTMLElement, ElementStyleState>();
+
+/** Updates one base style while preserving any active modifier or layout override. */
 export function setStyle(element: HTMLElement, property: string, value: string): void {
-  let values = styleValuesByElement.get(element);
-  if (!values) {
-    values = Object.create(null) as Record<string, string>;
-    styleValuesByElement.set(element, values);
-  }
-  if (values[property] === value) return;
-  element.style.setProperty(property, value);
-  values[property] = value;
+  const state = getStyleState(element);
+  state.base[property] = value;
+  renderResolvedProperty(element, state, property);
 }
 
+/** Removes one base style and reveals the next owned layer or original inline value. */
 export function removeStyle(element: HTMLElement, property: string): void {
-  const values = styleValuesByElement.get(element);
-  const hasCachedValue = values !== undefined && Object.hasOwn(values, property);
-  if (!hasCachedValue && !element.style.getPropertyValue(property)) {
+  const state = getStyleState(element);
+  delete state.base[property];
+  renderResolvedProperty(element, state, property);
+}
+
+/** Reconciles a complete derived layer without disturbing base styles or the other layer. */
+export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: StyleValues): void {
+  const state = getStyleState(element);
+  const previousStyles = state[layer];
+  const affectedProperties = new Set([...Object.keys(previousStyles), ...Object.keys(styles)]);
+
+  for (const property of Object.keys(styles)) captureFallback(element, state, property);
+  state[layer] = { ...styles };
+  for (const property of affectedProperties) renderResolvedProperty(element, state, property);
+}
+
+function getStyleState(element: HTMLElement): ElementStyleState {
+  const existing = stylesByElement.get(element);
+  if (existing) return existing;
+  const created: ElementStyleState = {
+    base: Object.create(null) as Record<string, string>,
+    modifier: Object.create(null) as Record<string, string>,
+    layout: Object.create(null) as Record<string, string>,
+    fallback: Object.create(null) as Record<string, string>,
+    rendered: Object.create(null) as Record<string, string>,
+  };
+  stylesByElement.set(element, created);
+  return created;
+}
+
+function captureFallback(element: HTMLElement, state: ElementStyleState, property: string): void {
+  if (hasValue(state.base, property) || hasValue(state.fallback, property)) return;
+  const currentValue = element.style.getPropertyValue(property);
+  state.fallback[property] = currentValue;
+  state.rendered[property] = currentValue;
+}
+
+function renderResolvedProperty(
+  element: HTMLElement,
+  state: ElementStyleState,
+  property: string,
+): void {
+  const value = resolveStyleValue(state, property);
+  if (value === undefined) {
+    if (!hasValue(state.rendered, property) && !element.style.getPropertyValue(property)) return;
+    element.style.removeProperty(property);
+    delete state.rendered[property];
     return;
   }
-  element.style.removeProperty(property);
-  if (values) delete values[property];
+  if (state.rendered[property] === value) return;
+  element.style.setProperty(property, value);
+  state.rendered[property] = value;
+}
+
+function resolveStyleValue(state: ElementStyleState, property: string): string | undefined {
+  if (property === 'display' && state.base[property] === 'none') return 'none';
+  if (hasValue(state.layout, property)) return state.layout[property];
+  if (hasValue(state.modifier, property)) return state.modifier[property];
+  if (hasValue(state.base, property)) return state.base[property];
+  if (hasValue(state.fallback, property)) return state.fallback[property];
+  return undefined;
+}
+
+function hasValue(values: Record<string, string>, property: string): boolean {
+  return Object.hasOwn(values, property);
 }

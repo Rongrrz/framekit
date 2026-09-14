@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createStyleModifier } from '../../core/node/modifier';
 import { fk } from '../../index';
@@ -7,6 +7,25 @@ import { resetDocumentAfterEach } from '../support/reset-document';
 resetDocumentAfterEach();
 
 describe('composing base and modifier styles', () => {
+  it('reconciles modifiers without replaying base property renderers', () => {
+    const applyProperties = vi.fn();
+    const createTrackedNode = fk.defineGuiObject({
+      className: 'TrackedNode',
+      defaultProperties: { Value: 1 },
+      applyProperties,
+    });
+    const node = createTrackedNode();
+    const corner = fk.createUICorner({ CornerRadius: 8 });
+
+    expect(applyProperties).toHaveBeenCalledOnce();
+
+    node.addChild(corner);
+    corner.CornerRadius = 12;
+    corner.removeFromParent();
+
+    expect(applyProperties).toHaveBeenCalledOnce();
+  });
+
   it('applies, updates, and removes corner and stroke styles through the tree', () => {
     const frame = fk.createTextLabel();
     const corner = fk.createUICorner({ CornerRadius: 12 });
@@ -78,8 +97,12 @@ describe('composing base and modifier styles', () => {
     frame.addChild(conditional);
     expect(frame.element.style.backgroundColor).toContain('200');
 
+    frame.BackgroundColor3 = fk.color3FromRGB(40, 50, 60);
+
+    expect(frame.element.style.backgroundColor).toContain('200');
+
     frame.Name = 'Base';
 
-    expect(frame.element.style.backgroundColor).toContain('20');
+    expect(frame.element.style.backgroundColor).toContain('40');
   });
 });
