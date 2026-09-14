@@ -1,4 +1,3 @@
-import { DestroyService } from '../core/destroy-service';
 import { assertNonNegativeFinite } from '../core/internal/validation';
 import type { Instance, InstanceProperties } from '../core/node/instance';
 import { getPropertiesSnapshot } from '../core/node/properties';
@@ -12,13 +11,7 @@ import {
   type EasingStyle,
 } from './easing';
 import { prepareAnimationGoal } from './goal';
-import {
-  applyAnimationProperties,
-  claimAnimationProperties,
-  releaseAnimationProperties,
-  type AnimationOwner,
-} from './ownership';
-import { cancelAnimationTask, scheduleAnimationTask } from './scheduler';
+import { createAnimationRunner } from './runner';
 import type { AnimationGoal } from './types';
 import { interpolateAnimationValue } from './value';
 
@@ -97,9 +90,23 @@ function create<Properties extends InstanceProperties>(
   let startValues: Partial<Properties> = {};
   const animationPatch: Partial<Properties> = {};
 
-  const animationOwner: AnimationOwner = {
+  const runner = createAnimationRunner(node, {
+    frame: step,
     cancelPropertyFromConflict: () => finish('Cancelled'),
-  };
+    onDestroy: () => {
+      try {
+        if (
+          playbackState === 'Playing' ||
+          playbackState === 'Delayed' ||
+          playbackState === 'Paused'
+        ) {
+          finish('Cancelled');
+        }
+      } finally {
+        completedEmitter.clear();
+      }
+    },
+  });
 
   function play(): void {
     assertUsable();
@@ -115,20 +122,20 @@ function create<Properties extends InstanceProperties>(
       startedAtMs = performance.now();
     }
 
-    claimAnimationProperties(node, goalKeys, animationOwner);
+    runner.claim(goalKeys);
     playbackState = elapsedBeforePauseMs < delayMs ? 'Delayed' : 'Playing';
     if (durationMs === 0 && delayMs === 0) {
       complete();
       return;
     }
-    scheduleAnimationTask(step);
+    runner.schedule();
   }
 
   function pause(): void {
     assertUsable();
     if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
     elapsedBeforePauseMs = Math.max(0, performance.now() - startedAtMs);
-    cancelAnimationTask(step);
+    runner.cancelFrame();
     playbackState = 'Paused';
   }
 
@@ -188,7 +195,7 @@ function create<Properties extends InstanceProperties>(
   }
 
   function applyProgress(progress: number): void {
-    if (DestroyService.isDestroyed(node)) return;
+    if (runner.isDestroyed()) return;
     const easedProgress = ease(
       progress,
       resolvedOptions.EasingStyle,
@@ -202,7 +209,7 @@ function create<Properties extends InstanceProperties>(
         String(property),
       ) as Properties[keyof Properties];
     }
-    applyAnimationProperties(node, animationPatch, animationOwner);
+    runner.apply(animationPatch);
   }
 
   function complete(): void {
@@ -212,31 +219,15 @@ function create<Properties extends InstanceProperties>(
 
   function finish(nextState: 'Completed' | 'Cancelled'): void {
     if (playbackState === 'Completed' || playbackState === 'Cancelled') return;
-    cancelAnimationTask(step);
-    releaseAnimationProperties(node, goalKeys, animationOwner);
+    runner.cancelFrame();
+    runner.release(goalKeys);
     playbackState = nextState;
     completedEmitter.emit(nextState);
   }
 
   function assertUsable(): void {
-    if (DestroyService.isDestroyed(node)) throw new Error(`${initialName} has been destroyed.`);
+    runner.assertUsable(`${initialName} has been destroyed.`);
   }
-
-  DestroyService.onDestroy(node, () => {
-    try {
-      if (
-        playbackState === 'Playing' ||
-        playbackState === 'Delayed' ||
-        playbackState === 'Paused'
-      ) {
-        finish('Cancelled');
-      }
-    } finally {
-      cancelAnimationTask(step);
-      releaseAnimationProperties(node, goalKeys, animationOwner);
-      completedEmitter.clear();
-    }
-  });
 
   return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
 }

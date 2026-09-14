@@ -1,15 +1,8 @@
-import { DestroyService } from '../core/destroy-service';
 import type { Instance, InstanceProperties } from '../core/node/instance';
 import { getActiveNodeState } from '../core/node/state';
 import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
 import { prepareAnimationGoal } from './goal';
-import {
-  applyAnimationProperties,
-  claimAnimationProperties,
-  releaseAnimationProperties,
-  type AnimationOwner,
-} from './ownership';
-import { cancelAnimationTask, scheduleAnimationTask } from './scheduler';
+import { createAnimationRunner } from './runner';
 import {
   defaultSpringOptions,
   resolveSpringOptions,
@@ -57,12 +50,16 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   const springSolution: SpringSolution = { value: 0, velocity: 0 };
   const completedEmitter = createSignal<[]>();
   const completed = readonlySignal(completedEmitter);
-  let scheduled = false;
   let previousTimestampMs = 0;
 
-  const animationOwner: AnimationOwner = {
-    cancelPropertyFromConflict: (property) => stopProperty(property as keyof Properties),
-  };
+  const runner = createAnimationRunner(node, {
+    frame: advanceSprings,
+    cancelPropertyFromConflict: stopProperty,
+    onDestroy: () => {
+      springsByProperty.clear();
+      completedEmitter.clear();
+    },
+  });
 
   function animate(goal: AnimationGoal<Properties>, options?: SpringOptions): void {
     assertUsable();
@@ -74,7 +71,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
         : currentValue;
     });
     const goalProperties = preparedGoal.map(({ property }) => property);
-    claimAnimationProperties(node, goalProperties, animationOwner);
+    runner.claim(goalProperties);
 
     for (const { property, start, goal: target } of preparedGoal) {
       const existingSpring = springsByProperty.get(property);
@@ -108,26 +105,25 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     const properties = Array.from(springsByProperty.keys());
     springsByProperty.clear();
     for (const property of properties) delete animationPatch[property];
-    releaseAnimationProperties(node, properties, animationOwner);
+    runner.release(properties);
     cancelFrame();
   }
 
   function stopProperty(property: keyof Properties): void {
     if (!springsByProperty.delete(property)) return;
     delete animationPatch[property];
-    releaseAnimationProperties(node, [property], animationOwner);
+    runner.release([property]);
     if (springsByProperty.size === 0) cancelFrame();
   }
 
   function scheduleNextFrame(): void {
-    if (scheduled) return;
+    if (runner.isScheduled()) return;
     previousTimestampMs = performance.now();
-    scheduled = true;
-    scheduleAnimationTask(advanceSprings);
+    runner.schedule();
   }
 
   function advanceSprings(timestampMs: number): void {
-    if (springsByProperty.size === 0 || DestroyService.isDestroyed(node)) {
+    if (springsByProperty.size === 0 || runner.isDestroyed()) {
       cancelFrame();
       return;
     }
@@ -146,7 +142,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     }
 
     try {
-      applyAnimationProperties(node, animationPatch, animationOwner);
+      runner.apply(animationPatch);
     } catch (error) {
       stopAllProperties();
       throw error;
@@ -155,7 +151,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
       springsByProperty.delete(property);
       delete animationPatch[property];
     }
-    releaseAnimationProperties(node, settledProperties, animationOwner);
+    runner.release(settledProperties);
     if (springsByProperty.size === 0) {
       cancelFrame();
       completedEmitter.emit();
@@ -163,19 +159,12 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   }
 
   function cancelFrame(): void {
-    if (!scheduled) return;
-    scheduled = false;
-    cancelAnimationTask(advanceSprings);
+    runner.cancelFrame();
   }
 
   function assertUsable(): void {
-    if (DestroyService.isDestroyed(node)) throw new Error('Instance has been destroyed.');
+    runner.assertUsable('Instance has been destroyed.');
   }
-
-  DestroyService.onDestroy(node, () => {
-    stopAllProperties();
-    completedEmitter.clear();
-  });
 
   const controller = Object.freeze({
     stop,
