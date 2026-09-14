@@ -1,6 +1,7 @@
-import { assertBoolean } from '../core/internal/validation';
-import type { GuiElement } from '../core/node/gui-node';
-import type { Modifier } from '../core/node/modifier';
+import type { GuiElement, LayoutModifier, StyleModifier } from '../core';
+import { assertBoolean } from '../core/internal-api';
+
+type Modifier = StyleModifier | LayoutModifier;
 
 /** Attaches or detaches a retained modifier without recreating it. */
 export function setModifierAttached(

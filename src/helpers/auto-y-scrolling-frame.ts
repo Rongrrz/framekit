@@ -1,12 +1,17 @@
-import { createScrollingFrame, type ScrollingFrame } from '../core/elements/scrolling-frame';
-import { assertNonNegativeFinite } from '../core/internal/validation';
-import type { InstanceProperties } from '../core/node/instance';
 import {
-  createLayoutModifier,
+  createScrollingFrame,
+  type InstanceProperties,
   type LayoutModifier,
+  type ScrollingFrame,
+  udim2,
+  type UDim,
+} from '../core';
+import {
+  assertNonNegativeFinite,
+  assertUDim,
+  createLayoutModifier,
   type LayoutStyles,
-} from '../core/node/modifier';
-import { assertUDim, udim2, type UDim } from '../core/values/udim';
+} from '../core/internal-api';
 
 /** Options for a full-width scrolling list whose canvas follows its children. */
 export type AutoYScrollingFrameOptions = Readonly<{

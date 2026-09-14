@@ -1,6 +1,5 @@
-import { assertNonNegativeFinite } from '../core/internal/validation';
-import type { Instance } from '../core/node/instance';
-import { getActiveNodeState } from '../core/node/state';
+import type { Instance } from '../core';
+import { assertNonNegativeFinite } from '../core/internal-api';
 
 export type ResponsiveLayoutOptions = Readonly<{
   breakpoint: number;
@@ -12,7 +11,7 @@ type ResponsiveLayout = 'mobile' | 'desktop';
 
 /** Applies a viewport layout now and again whenever its breakpoint is crossed. */
 export function bindResponsiveLayout(owner: Instance, options: ResponsiveLayoutOptions): void {
-  getActiveNodeState(owner);
+  if (owner.isDestroyed()) throw new Error('Responsive layout owner has been destroyed.');
   assertNonNegativeFinite(options.breakpoint, 'Breakpoint');
 
   if (typeof options.mobile !== 'function') {
