@@ -4,6 +4,7 @@ import { RenderService } from '../render-service';
 import type { Unsubscribe } from '../state/signal';
 import { emitNodeEvent, subscribeToNodeEvent } from './events';
 import type { Instance, InstanceProperties } from './instance';
+import { getModifierTarget } from './modifier';
 import { getActiveNodeState, getNodeState, type NodeState } from './state';
 
 const propertyWriteEventKeys = new Map<PropertyKey, symbol>();
@@ -169,7 +170,10 @@ function validateModifierRelationships<Properties extends InstanceProperties>(
   nextProperties: Readonly<Properties>,
 ): void {
   if (state.kind === 'style' && state.parent) {
-    state.validateTarget?.(nextProperties, getNodeState(state.parent).properties);
+    const parentState = getNodeState(state.parent);
+    if (parentState.kind === 'gui') {
+      state.validateTarget?.(nextProperties, getModifierTarget(parentState));
+    }
     return;
   }
   if (state.kind !== 'gui') return;
@@ -177,7 +181,10 @@ function validateModifierRelationships<Properties extends InstanceProperties>(
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);
     if (modifierState.kind === 'style') {
-      modifierState.validateTarget?.(modifierState.properties, nextProperties);
+      modifierState.validateTarget?.(modifierState.properties, {
+        properties: nextProperties,
+        capabilities: state.capabilities,
+      });
     }
   }
 }

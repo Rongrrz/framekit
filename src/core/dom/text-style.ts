@@ -4,7 +4,6 @@ import {
   assertNonNegativeFinite,
   assertString,
 } from '../internal/validation';
-import type { InstanceProperties } from '../node/instance';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 import { setStyle } from './styles';
 import { renderTextSize } from './text-size';
@@ -129,11 +128,4 @@ export function hasTextStyleChange(changedProperties: ReadonlySet<PropertyKey>):
     if (typeof property === 'string' && textStylePropertyNames.has(property)) return true;
   }
   return false;
-}
-
-/** Distinguishes rendered display text from native editable text controls. */
-export function isDisplayTextProperties(
-  properties: Readonly<InstanceProperties>,
-): properties is Readonly<InstanceProperties & TextStyleProperties> {
-  return 'Text' in properties && !('PlaceholderText' in properties);
 }

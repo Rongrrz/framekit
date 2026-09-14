@@ -173,6 +173,7 @@ export function createTextNode<Properties extends TextLabelProperties>(
       renderAdditionalProperties?.(properties, changedProperties);
     },
     methods,
+    capabilities: { displayText: true },
     validateProperties: (properties) => {
       validateTextProperties(properties);
       validateAdditionalProperties?.(properties);

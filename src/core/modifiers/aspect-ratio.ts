@@ -1,8 +1,14 @@
+import type { GuiObjectProperties } from '../gui-object';
 import { assertAllowedValue, assertFiniteNumber } from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
+import {
+  createStyleModifier,
+  type ModifierTarget,
+  type StyleModifier,
+  type Styles,
+} from '../node/modifier';
 import { mergeProperties } from '../node/properties';
-import { udimToCss, type UDim2 } from '../values/udim';
+import { udimToCss } from '../values/udim';
 
 /** How an aspect-ratio constraint uses its parent's available size. */
 export type AspectType = 'FitWithinMaxSize' | 'ScaleWithParentSize';
@@ -48,7 +54,7 @@ export function createUIAspectRatioConstraint(
 
 function resolveAspectRatio(
   properties: Readonly<UIAspectRatioConstraintProperties>,
-  parentProperties: Readonly<InstanceProperties>,
+  target: ModifierTarget,
 ): Styles {
   const aspectRatio = properties.AspectRatio > 0 ? properties.AspectRatio : 1;
   const styles: Record<string, string> = { 'aspect-ratio': `${aspectRatio} / 1` };
@@ -63,9 +69,10 @@ function resolveAspectRatio(
     };
   }
 
-  if (!hasSize(parentProperties)) return styles;
-  const width = udimToCss(parentProperties.Size.X);
-  const height = udimToCss(parentProperties.Size.Y);
+  if (!target.capabilities.guiObject) return styles;
+  const targetProperties = target.properties as Readonly<GuiObjectProperties>;
+  const width = udimToCss(targetProperties.Size.X);
+  const height = udimToCss(targetProperties.Size.Y);
   return {
     ...styles,
     'max-width': width,
@@ -81,10 +88,4 @@ function validateAspectRatioProperties(
   assertAllowedValue(properties.AspectType, aspectTypes, 'AspectType');
   assertAllowedValue(properties.DominantAxis, dominantAxes, 'DominantAxis');
   assertFiniteNumber(properties.AspectRatio, 'AspectRatio');
-}
-
-function hasSize(
-  properties: Readonly<InstanceProperties>,
-): properties is Readonly<InstanceProperties & { Size: UDim2 }> {
-  return 'Size' in properties;
 }

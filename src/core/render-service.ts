@@ -1,7 +1,12 @@
 import { removeStyle, setStyle } from './dom/styles';
 import type { GuiElement } from './node/gui-node';
 import type { Instance, InstanceProperties } from './node/instance';
-import type { LayoutChild, LayoutNodeState, Styles } from './node/modifier';
+import {
+  getModifierTarget,
+  type LayoutChild,
+  type LayoutNodeState,
+  type Styles,
+} from './node/modifier';
 import { getNodeState, isGuiNode, isModifierState, type GuiNodeState } from './node/state';
 
 function hasLayoutModifier(node: Instance): boolean {
@@ -81,7 +86,7 @@ function renderNode<Properties extends InstanceProperties>(
     if (modifierState.kind === 'style') {
       mergeStyles(
         resolvedModifierStyles,
-        modifierState.resolveStyles(modifierState.properties, state.properties),
+        modifierState.resolveStyles(modifierState.properties, getModifierTarget(state)),
       );
     } else if (modifierState.kind === 'layout') {
       layoutModifiers.push(modifierState);
@@ -157,8 +162,12 @@ function clearStyles(element: HTMLElement, properties: Set<string>): void {
 }
 
 function getLayoutChildProperties(child: GuiElement): LayoutChild {
-  const properties = getNodeState(child).properties;
-  const layoutOrder = 'LayoutOrder' in properties ? properties.LayoutOrder : 0;
+  const state = getNodeState(child);
+  const properties = state.properties;
+  const layoutOrder =
+    state.kind === 'gui' && state.capabilities.guiObject
+      ? (properties as InstanceProperties & { LayoutOrder: number }).LayoutOrder
+      : 0;
   return {
     Name: properties.Name,
     LayoutOrder: typeof layoutOrder === 'number' ? layoutOrder : 0,

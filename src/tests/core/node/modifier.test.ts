@@ -71,7 +71,7 @@ describe('modifier attachment and validation', () => {
       render,
       undefined,
       (_, target) => {
-        if (target.Name === 'RejectedTarget') throw new Error('target rejected');
+        if (target.properties.Name === 'RejectedTarget') throw new Error('target rejected');
       },
     );
 

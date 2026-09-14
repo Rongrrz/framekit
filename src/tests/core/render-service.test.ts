@@ -72,7 +72,7 @@ describe('composing base and modifier styles', () => {
       BackgroundColor3: fk.color3FromRGB(20, 30, 40),
     });
     const conditional = createStyleModifier('Conditional', { Name: 'Conditional' }, (_, target) =>
-      target.Name === 'Override' ? { 'background-color': 'rgb(200 100 50)' } : {},
+      target.properties.Name === 'Override' ? { 'background-color': 'rgb(200 100 50)' } : {},
     );
 
     frame.addChild(conditional);

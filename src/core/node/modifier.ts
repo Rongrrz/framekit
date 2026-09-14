@@ -1,10 +1,23 @@
 import { createNodeHandle, type Instance, type InstanceProperties } from './instance';
-import { createBaseState, registerNode, type BaseNodeState, type PropertyValidator } from './state';
+import {
+  createBaseState,
+  registerNode,
+  type BaseNodeState,
+  type GuiCapabilities,
+  type GuiNodeState,
+  type PropertyValidator,
+} from './state';
 
 declare const styleModifierBrand: unique symbol;
 declare const layoutBrand: unique symbol;
 
 export type Styles = Readonly<Record<string, string>>;
+
+/** The stable rendering surface exposed to an attached modifier. */
+export type ModifierTarget = Readonly<{
+  properties: Readonly<InstanceProperties>;
+  capabilities: GuiCapabilities;
+}>;
 
 /** An element-less instance that styles its GUI parent. */
 export type StyleModifier<Properties extends InstanceProperties = InstanceProperties> =
@@ -20,12 +33,12 @@ export type LayoutModifier<Properties extends InstanceProperties = InstancePrope
 
 export type ResolveStyles<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
-  targetProperties: Readonly<InstanceProperties>,
+  target: ModifierTarget,
 ) => Styles;
 
 export type ValidateModifierTarget<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
-  targetProperties: Readonly<InstanceProperties>,
+  target: ModifierTarget,
 ) => void;
 
 export type LayoutChild = Readonly<{
@@ -57,6 +70,12 @@ export type LayoutNodeState<Properties extends InstanceProperties = InstanceProp
   };
 
 export type Modifier = StyleModifier | LayoutModifier;
+
+export function getModifierTarget<Properties extends InstanceProperties>(
+  state: GuiNodeState<Properties>,
+): ModifierTarget {
+  return { properties: state.properties, capabilities: state.capabilities };
+}
 
 /** Creates an element-less modifier that styles its parent. */
 export function createStyleModifier<Properties extends InstanceProperties>(

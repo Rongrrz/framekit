@@ -8,7 +8,13 @@ import {
   type Instance,
   type InstanceProperties,
 } from './instance';
-import { createBaseState, getActiveNodeState, registerNode, type PropertyValidator } from './state';
+import {
+  createBaseState,
+  getActiveNodeState,
+  registerNode,
+  type GuiCapabilities,
+  type PropertyValidator,
+} from './state';
 
 /** Browser-computed geometry available on every GUI element. */
 export type GuiGeometry = {
@@ -41,6 +47,7 @@ type GuiNodeOptions<Properties extends InstanceProperties> = {
   methods?: GuiMethodTable | undefined;
   canHaveParent?: boolean;
   canContainGuiChildren?: boolean;
+  capabilities?: Partial<GuiCapabilities>;
 };
 
 /** Creates the handle, registers its validated state, then performs the initial render. */
@@ -53,6 +60,7 @@ export function createGuiNode<Properties extends InstanceProperties>({
   methods = guiEventMethods,
   canHaveParent = true,
   canContainGuiChildren = true,
+  capabilities = {},
 }: GuiNodeOptions<Properties>): GuiElement<Properties> {
   const propertyNames = new Set(Object.keys(properties) as (keyof Properties)[]);
   const node = createNodeHandle(properties, getGuiMethodTable(methods), {
@@ -63,6 +71,7 @@ export function createGuiNode<Properties extends InstanceProperties>({
     kind: 'gui',
     children: [],
     canContainGuiChildren,
+    capabilities: Object.freeze({ guiObject: false, displayText: false, ...capabilities }),
     propertyNames,
     renderProperties,
     modifiers: new Map(),

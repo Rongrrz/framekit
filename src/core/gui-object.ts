@@ -10,7 +10,7 @@ import type { GuiMethodTable } from './node/gui-events';
 import { createGuiNode, type GuiElement, type PropertyRenderer } from './node/gui-node';
 import type { InstanceProperties } from './node/instance';
 import { mergeProperties } from './node/properties';
-import type { PropertyValidator } from './node/state';
+import type { GuiCapabilities, PropertyValidator } from './node/state';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from './values/color3';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from './values/udim';
 import { assertVector2, vector2, type Vector2 } from './values/vector2';
@@ -77,6 +77,7 @@ type GuiObjectNodeOptions<Properties extends GuiObjectProperties> = {
   methods?: GuiMethodTable | undefined;
   validateProperties?: PropertyValidator<Properties> | undefined;
   canContainGuiChildren?: boolean;
+  capabilities?: Partial<GuiCapabilities>;
 };
 
 /** Combines shared GUI behavior with an element's own rendering and validation. */
@@ -89,6 +90,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
   methods,
   validateProperties,
   canContainGuiChildren = true,
+  capabilities,
 }: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
   element.dataset.framekit = className;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box', margin: '0' });
@@ -107,6 +109,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
     },
     methods,
     canContainGuiChildren,
+    capabilities: { guiObject: true, ...capabilities },
   });
 
   connectHoverEvents(node, element);

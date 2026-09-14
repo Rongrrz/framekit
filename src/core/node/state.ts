@@ -6,6 +6,12 @@ export type PropertyValidator<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
 ) => void;
 
+/** Rendering roles declared by a GUI node rather than inferred from its property names. */
+export type GuiCapabilities = Readonly<{
+  guiObject: boolean;
+  displayText: boolean;
+}>;
+
 export type BaseNodeState<Properties extends InstanceProperties = InstanceProperties> = {
   className: string;
   properties: Properties;
@@ -26,6 +32,7 @@ export type GuiNodeState<Properties extends InstanceProperties = InstancePropert
     kind: 'gui';
     children: Instance[];
     canContainGuiChildren: boolean;
+    capabilities: GuiCapabilities;
     propertyNames: ReadonlySet<keyof Properties>;
     renderProperties: PropertyRenderer<Properties> | undefined;
     modifiers: Map<string, Modifier>;

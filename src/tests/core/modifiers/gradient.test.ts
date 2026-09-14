@@ -68,4 +68,16 @@ describe('gradients', () => {
     expect(gradient.Parent).toBeUndefined();
     expect(frame.element.style.getPropertyValue('--framekit-text-gradient-image')).toBe('');
   });
+
+  it('does not infer text support from custom property names', () => {
+    const createTextLikeNode = fk.defineGuiObject({
+      className: 'TextLikeNode',
+      defaultProperties: { Text: 'not a text renderer' },
+    });
+    const textLikeNode = createTextLikeNode();
+    const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
+
+    expect(() => textLikeNode.addChild(gradient)).toThrow(/TextLabel or TextButton/);
+    expect(gradient.Parent).toBeUndefined();
+  });
 });

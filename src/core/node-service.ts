@@ -1,6 +1,6 @@
 import type { GuiElement } from './node/gui-node';
 import type { Instance } from './node/instance';
-import type { Modifier } from './node/modifier';
+import { getModifierTarget, type Modifier } from './node/modifier';
 import {
   getActiveNodeState,
   getChildren,
@@ -29,7 +29,7 @@ function append(parent: Instance, child: Instance): void {
     throw new TypeError(`${parentState.properties.Name} cannot contain GUI children.`);
   }
   if (childState.kind === 'style') {
-    childState.validateTarget?.(childState.properties, parentState.properties);
+    childState.validateTarget?.(childState.properties, getModifierTarget(parentState));
   }
   if (childState.parent === parent) {
     placeChildElement(parent, parentState, child, getChildren(parentState).indexOf(child));

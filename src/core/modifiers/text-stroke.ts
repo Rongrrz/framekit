@@ -3,10 +3,14 @@ import {
   textStrokeContentProperty,
   textStrokeWidthProperty,
 } from '../dom/text-stroke';
-import { isDisplayTextProperties } from '../dom/text-style';
 import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
+import {
+  createStyleModifier,
+  type ModifierTarget,
+  type StyleModifier,
+  type Styles,
+} from '../node/modifier';
 import { mergeProperties } from '../node/properties';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
 
@@ -49,7 +53,7 @@ export function createUITextStroke(
 
 function resolveTextStrokeStyles(
   properties: Readonly<UITextStrokeProperties>,
-  _targetProperties: Readonly<InstanceProperties>,
+  _target: ModifierTarget,
 ): Styles {
   if (!properties.Enabled) return {};
 
@@ -62,9 +66,9 @@ function resolveTextStrokeStyles(
 
 function validateTextStrokeTarget(
   _properties: Readonly<UITextStrokeProperties>,
-  targetProperties: Readonly<InstanceProperties>,
+  target: ModifierTarget,
 ): void {
-  if (!isDisplayTextProperties(targetProperties)) {
+  if (!target.capabilities.displayText) {
     throw new TypeError('UITextStroke must be attached to a TextLabel or TextButton.');
   }
 }
