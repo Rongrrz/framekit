@@ -79,4 +79,19 @@ describe('custom GUI objects', () => {
     expect(badge.Label).toBe('Ready');
     expect(badge.element.textContent).toBe('Ready');
   });
+
+  it('rejects custom properties that shadow GUI state, methods, or fields', () => {
+    expect(() =>
+      fk.defineGuiObject({
+        className: 'BrokenBadge',
+        defaultProperties: { destroy: 'shadowed' },
+      } as never),
+    ).toThrow(/destroy.*built-in GUI member/);
+
+    const invalidDefinition = (): void => {
+      // @ts-expect-error Custom properties cannot shadow GUI handle members.
+      fk.defineGuiObject({ className: 'BrokenBadge', defaultProperties: { Parent: 'shadowed' } });
+    };
+    void invalidDefinition;
+  });
 });

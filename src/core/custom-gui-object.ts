@@ -5,7 +5,13 @@ import {
   type GuiObjectProperties,
 } from './gui-object';
 import { assertString } from './internal/validation';
+import { guiNodeMemberNames, type GuiElement } from './node/gui-node';
 import type { PropertyValidator } from './node/state';
+
+type CustomPropertyConflict<Properties extends object> =
+  Extract<keyof Properties, keyof GuiElement> extends never
+    ? unknown
+    : { readonly customPropertiesConflictWithGuiMembers: never };
 
 /** Description used to create one reusable GUI class. */
 export type GuiObjectDefinition<Properties extends object> = {
@@ -34,7 +40,7 @@ export type GuiObjectConstructor<Properties extends object> = (
 
 /** Defines a reusable GUI class without exposing FrameKit runtime internals. */
 export function defineGuiObject<Properties extends object>(
-  definition: GuiObjectDefinition<Properties>,
+  definition: GuiObjectDefinition<Properties> & CustomPropertyConflict<Properties>,
 ): GuiObjectConstructor<Properties> {
   validateDefinition(definition);
 
@@ -75,12 +81,13 @@ function validateDefinition<Properties extends object>(
     throw new TypeError('className must not be empty.');
   }
 
-  const guiPropertyNames = new Set(Object.keys(createDefaultGuiObjectProperties()));
+  const guiPropertyNames = new Set([
+    ...Object.keys(createDefaultGuiObjectProperties()),
+    ...guiNodeMemberNames,
+  ]);
   for (const property of Object.keys(definition.defaultProperties)) {
     if (guiPropertyNames.has(property)) {
-      throw new TypeError(
-        `Custom property "${property}" conflicts with a built-in GUI property. Use defaultGuiProperties to override it.`,
-      );
+      throw new TypeError(`Custom property "${property}" conflicts with a built-in GUI member.`);
     }
   }
 }
