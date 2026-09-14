@@ -6,11 +6,9 @@ const activeTasks = new Set<AnimationFrameTask>();
 const pendingTasks = new Set<AnimationFrameTask>();
 let scheduledFrame: ReturnType<typeof requestAnimationFrame> | undefined;
 let runningFrame = false;
-let requestFrameSource: typeof requestAnimationFrame | undefined;
 
 /** Schedules persistent animation work behind the runtime's single browser-frame callback. */
 export function scheduleAnimationTask(task: AnimationFrameTask): void {
-  resetForReplacedFrameSource();
   if (activeTasks.has(task) || pendingTasks.has(task)) return;
   // Work started during a callback begins on the next frame.
   if (runningFrame) pendingTasks.add(task);
@@ -54,11 +52,11 @@ function runAnimationFrame(timestamp: number): void {
   throwCollectedErrors(errors, 'Multiple animations failed during one browser frame.');
 }
 
-function resetForReplacedFrameSource(): void {
-  if (requestFrameSource === requestAnimationFrame) return;
+/** Clears scheduler state between tests without coupling production behavior to global stubs. */
+export function resetAnimationSchedulerForTests(): void {
+  if (scheduledFrame !== undefined) cancelAnimationFrame(scheduledFrame);
   activeTasks.clear();
   pendingTasks.clear();
   scheduledFrame = undefined;
   runningFrame = false;
-  requestFrameSource = requestAnimationFrame;
 }

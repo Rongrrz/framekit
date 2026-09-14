@@ -6,6 +6,29 @@ import { setupAnimationClock } from '../support/animation-clock';
 const { advance } = setupAnimationClock();
 
 describe('tweens', () => {
+  it('keeps active work when the browser frame function is replaced', () => {
+    const first = fk.createFrame({ Rotation: 0 });
+    const second = fk.createFrame({ Rotation: 0 });
+    const firstTween = fka.TweenService.create(
+      first,
+      { Duration: 1, EasingStyle: 'Linear' },
+      { Rotation: 90 },
+    );
+    const secondTween = fka.TweenService.create(
+      second,
+      { Duration: 1, EasingStyle: 'Linear' },
+      { Rotation: 180 },
+    );
+
+    firstTween.play();
+    vi.stubGlobal('requestAnimationFrame', vi.fn());
+    secondTween.play();
+    advance(500);
+
+    expect(first.Rotation).toBe(45);
+    expect(second.Rotation).toBe(90);
+  });
+
   it('restarts completed and cancelled playback from the latest property value', () => {
     const frame = fk.createFrame({ Rotation: 0 });
     const tween = fka.TweenService.create(

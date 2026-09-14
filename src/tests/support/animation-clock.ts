@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, vi } from 'vitest';
 
+import { resetAnimationSchedulerForTests } from '../../animation/scheduler';
+
 type AnimationClock = Readonly<{
   advance(milliseconds?: number): void;
   settle(maximumFrames?: number): void;
@@ -30,7 +32,10 @@ export function setupAnimationClock(): AnimationClock {
     vi.stubGlobal('cancelAnimationFrame', (frameId: number) => pendingFrames.delete(frameId));
   });
 
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    resetAnimationSchedulerForTests();
+    vi.unstubAllGlobals();
+  });
 
   function advance(milliseconds = frameDuration): void {
     nowMs += milliseconds;
