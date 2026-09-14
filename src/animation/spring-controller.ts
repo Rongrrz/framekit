@@ -11,7 +11,7 @@ import {
   type SpringSolution,
   type SpringOptions,
 } from './spring-physics';
-import type { AnimationGoal } from './types';
+import type { AnimatableProperty, AnimationGoal } from './types';
 import { composeAnimationValue, type AnimationValueKind } from './value';
 
 export type { SpringOptions } from './spring-physics';
@@ -19,7 +19,7 @@ export type { SpringOptions } from './spring-physics';
 /** Playback controls for the spring retained by one node. */
 export type SpringController<Properties extends InstanceProperties = InstanceProperties> = {
   /** Stops one property, or every property when omitted, at its current value. */
-  stop(property?: keyof AnimationGoal<Properties>): void;
+  stop(property?: AnimatableProperty<Properties>): void;
   /** Reports whether any property is currently moving. */
   isAnimating(): boolean;
   /** Emits after every active property settles. */
@@ -92,7 +92,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     scheduleNextFrame();
   }
 
-  function stop(property?: keyof AnimationGoal<Properties>): void {
+  function stop(property?: AnimatableProperty<Properties>): void {
     assertUsable();
     if (property !== undefined) {
       stopProperty(property as keyof Properties);

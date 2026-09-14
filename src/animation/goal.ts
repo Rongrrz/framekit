@@ -1,5 +1,5 @@
 import type { Instance, InstanceProperties } from '../core/node/instance';
-import { getPropertiesSnapshot } from '../core/node/properties';
+import { getPropertiesSnapshot, validateNodeProperties } from '../core/node/properties';
 import type { AnimationGoal } from './types';
 import {
   assertCompatibleAnimationValues,
@@ -46,11 +46,13 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
 ): readonly PreparedAnimationProperty<Properties>[] {
   const currentProperties = getPropertiesSnapshot(node);
   const goalProperties = Object.keys(goal) as (keyof Properties)[];
+  // AnimationGoal is a key-restricted Partial<Properties>; this view is used by runtime validation.
+  const propertyGoal = goal as unknown as Partial<Properties>;
   const messages = messagesByKind[kind];
 
   if (goalProperties.length === 0) throw new TypeError(messages.emptyGoal);
 
-  return goalProperties.map((property) => {
+  const preparedProperties = goalProperties.map((property) => {
     if (!Object.hasOwn(currentProperties, property)) {
       throw new TypeError(
         `Unknown ${kind} property "${String(property)}" on ${currentProperties.Name}.`,
@@ -58,7 +60,7 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
     }
 
     const propertyName = String(property);
-    const goalValue = goal[property];
+    const goalValue = propertyGoal[property];
     const currentValue = currentProperties[property];
     const startValue = resolveStartValue ? resolveStartValue(property, currentValue) : currentValue;
 
@@ -75,4 +77,11 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
       );
     }
   });
+
+  try {
+    validateNodeProperties(node, propertyGoal);
+  } catch (error) {
+    throw new TypeError(`The ${kind} goal contains invalid property values.`, { cause: error });
+  }
+  return preparedProperties;
 }

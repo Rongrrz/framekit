@@ -89,6 +89,18 @@ export function getNodeProperty<
   return getActiveNodeState(node).properties[property];
 }
 
+/** Validates a property patch without committing it or notifying observers. */
+export function validateNodeProperties<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
+  patch: Partial<Properties>,
+): void {
+  const state = getActiveNodeState(node);
+  validatePropertyPatch(state.properties, patch);
+  const nextProperties = { ...state.properties, ...patch };
+  state.validateProperties?.(nextProperties);
+  validateModifierRelationships(state, nextProperties);
+}
+
 function getPropertyWriteEventKey(property: PropertyKey): symbol {
   const existing = propertyWriteEventKeys.get(property);
   if (existing) return existing;
@@ -133,7 +145,7 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   requestedProperties: readonly (keyof Properties)[],
 ): PropertyCommit<Properties> | undefined {
   const state = getActiveNodeState(node);
-  validatePropertyPatch(state.properties, patch);
+  validateNodeProperties(node, patch);
 
   const previousProperties = state.properties;
   const changedProperties = new Set(
@@ -144,8 +156,6 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   if (changedProperties.size === 0) return;
 
   const nextProperties = { ...state.properties, ...patch };
-  state.validateProperties?.(nextProperties);
-  validateModifierRelationships(state, nextProperties);
   state.properties = nextProperties;
   try {
     RenderService.renderPropertyChanges(node, changedProperties);

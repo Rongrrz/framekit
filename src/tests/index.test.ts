@@ -69,4 +69,18 @@ describe('package API', () => {
     expect(typeof fk.createScrollingFrame().scrollTo).toBe('function');
     expect(fk.createScrollingFrame()).not.toHaveProperty('getCanvasPosition');
   });
+
+  it('excludes discrete numeric properties from animation goals', () => {
+    const frame = fk.createFrame();
+
+    const invalidAnimationGoals = (): void => {
+      // @ts-expect-error ZIndex changes discretely and cannot be interpolated.
+      fk.spring(frame, { ZIndex: 2 });
+      // @ts-expect-error LayoutOrder changes discretely and cannot be interpolated.
+      fka.TweenService.create(frame, { Duration: 1 }, { LayoutOrder: 2 });
+    };
+    void invalidAnimationGoals;
+
+    expect(frame.ZIndex).toBe(1);
+  });
 });

@@ -32,7 +32,7 @@ export function spring<Properties extends InstanceProperties>(
   let binding = springsByNode.get(node) as SpringBinding<Properties> | undefined;
   if (!binding) {
     binding = createSpringBinding(node);
-    springsByNode.set(node, binding as SpringBinding<InstanceProperties>);
+    springsByNode.set(node, binding as unknown as SpringBinding<InstanceProperties>);
   }
   if (goal) binding.animate(goal, settings);
   return binding.controller;

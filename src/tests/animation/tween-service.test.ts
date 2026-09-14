@@ -439,16 +439,15 @@ describe('tweens', () => {
     }
   });
 
-  it('releases property ownership when rendering an animated value fails', () => {
+  it('rejects a goal that violates the property contract before playback', () => {
     const frame = fk.createFrame();
     const scale = fk.createUIScale();
 
     frame.addChild(scale);
 
-    const invalid = fka.TweenService.create(scale, { Duration: 0 }, { Scale: -1 });
-
-    expect(() => invalid.play()).toThrow(/non-negative finite/);
-    expect(invalid.playbackState()).toBe('Cancelled');
+    expect(() => fka.TweenService.create(scale, { Duration: 0 }, { Scale: -1 })).toThrow(
+      /invalid property values/,
+    );
 
     const valid = fka.TweenService.create(scale, { Duration: 0 }, { Scale: 0.5 });
 

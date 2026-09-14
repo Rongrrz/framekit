@@ -197,7 +197,7 @@ describe('TweenService spring tweens', () => {
     expect(() => fk.spring(frame, { BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
 
-  it('releases property ownership when a spring update cannot render', () => {
+  it('rejects a goal that violates the property contract before scheduling it', () => {
     const frame = fk.createFrame();
     const scale = fk.createUIScale();
 
@@ -205,9 +205,9 @@ describe('TweenService spring tweens', () => {
 
     const controller = fk.spring(scale);
 
-    fk.spring(scale, { Scale: -1 }, { tension: 170, friction: 5 });
-
-    expect(() => settle()).toThrow(/non-negative finite/);
+    expect(() => fk.spring(scale, { Scale: -1 }, { tension: 170, friction: 5 })).toThrow(
+      /invalid property values/,
+    );
     expect(controller.isAnimating()).toBe(false);
 
     const replacement = fka.TweenService.create(scale, { Duration: 0 }, { Scale: 0.5 });
