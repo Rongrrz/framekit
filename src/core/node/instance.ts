@@ -1,8 +1,9 @@
 import { DestroyService } from '../destroy-service';
 import { NodeService } from '../node-service';
 import type { Unsubscribe } from '../state/signal';
-import { watchValue, type Value } from '../state/value';
+import type { Value } from '../state/value';
 import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
+import { watchNodeValue } from './watch-value';
 
 /** Properties shared by every FrameKit instance. */
 export type InstanceProperties = {
@@ -128,7 +129,7 @@ const methodTable = {
     return DestroyService.onDestroy(this, callback);
   },
   watch<T>(this: Instance, value: Value<T>, listener: (value: T) => void): Unsubscribe {
-    return watchValue(this, value, listener);
+    return watchNodeValue(this, value, listener);
   },
 } satisfies InstanceMethods;
 
