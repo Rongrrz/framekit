@@ -67,9 +67,11 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
       const preparedGoal = decomposeAnimationValue(goalValue, propertyName);
       assertCompatibleAnimationValues(start, preparedGoal, propertyName);
       return { property, goalValue, start, goal: preparedGoal };
-    } catch {
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error;
       throw new TypeError(
         `Property "${propertyName}" does not contain ${messages.invalidValue} values.`,
+        { cause: error },
       );
     }
   });

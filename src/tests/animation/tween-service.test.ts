@@ -423,15 +423,20 @@ describe('tweens', () => {
     expect(() => fka.TweenService.create(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
       /Unknown tween property "Missing"/,
     );
-    expect(() =>
+    try {
       fka.TweenService.create(
         frame,
         { Duration: 1 },
         {
           BackgroundTransparency: Number.NaN,
         },
-      ),
-    ).toThrow(/compatible tweenable/);
+      );
+      throw new Error('Expected the invalid goal to fail.');
+    } catch (error) {
+      expect(error).toBeInstanceOf(TypeError);
+      expect(error).toHaveProperty('message', expect.stringMatching(/compatible tweenable/));
+      expect(error).toHaveProperty('cause', expect.any(TypeError));
+    }
   });
 
   it('releases property ownership when rendering an animated value fails', () => {
