@@ -1,5 +1,5 @@
 export type StyleLayer = 'modifier' | 'layout';
-export type StyleValues = Readonly<Record<string, string>>;
+export type StyleValues = Readonly<{ [property: string]: string | undefined }>;
 
 type ElementStyleState = {
   base: Record<string, string>;
@@ -30,9 +30,14 @@ export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: S
   const state = getStyleState(element);
   const previousStyles = state[layer];
   const affectedProperties = new Set([...Object.keys(previousStyles), ...Object.keys(styles)]);
+  const nextStyles: Record<string, string> = {};
 
-  for (const property of Object.keys(styles)) captureFallback(element, state, property);
-  state[layer] = { ...styles };
+  for (const [property, value] of Object.entries(styles)) {
+    if (value === undefined) continue;
+    captureFallback(element, state, property);
+    nextStyles[property] = value;
+  }
+  state[layer] = nextStyles;
   for (const property of affectedProperties) renderResolvedProperty(element, state, property);
 }
 

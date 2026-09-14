@@ -19,6 +19,7 @@ export type {
   LayoutStyles,
   ResolveLayout,
   ResolveStyles,
+  StyleProperty,
   Styles,
 } from './node/modifier';
 export { assertUDim } from './values/udim';

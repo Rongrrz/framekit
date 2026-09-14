@@ -85,6 +85,21 @@ describe('composing base and modifier styles', () => {
     expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
   });
 
+  it('uses the declared composition policy for filter output', () => {
+    const frame = fk.createFrame();
+    const blur = createStyleModifier('Blur', { Name: 'Blur' }, () => ({
+      filter: 'blur(2px)',
+    }));
+    const contrast = createStyleModifier('Contrast', { Name: 'Contrast' }, () => ({
+      filter: 'contrast(1.2)',
+    }));
+
+    frame.addChild(blur);
+    frame.addChild(contrast);
+
+    expect(frame.element.style.filter).toBe('blur(2px) contrast(1.2)');
+  });
+
   it('restores a base style when a property change removes a derived override', () => {
     const frame = fk.createFrame({
       Name: 'Override',

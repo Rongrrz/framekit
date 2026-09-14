@@ -1,13 +1,9 @@
 import { setStyleLayer } from './dom/styles';
 import type { GuiElement } from './node/gui-node';
 import type { Instance, InstanceProperties } from './node/instance';
-import {
-  getModifierTarget,
-  type LayoutChild,
-  type LayoutNodeState,
-  type Styles,
-} from './node/modifier';
+import { getModifierTarget, type LayoutChild, type LayoutNodeState } from './node/modifier';
 import { getNodeState, isGuiNode, isModifierState } from './node/state';
+import { composeStyles, type Styles } from './node/style-output';
 
 function hasLayoutModifier(node: Instance): boolean {
   const state = getNodeState(node);
@@ -60,12 +56,12 @@ function renderDerivedStyles(node: Instance): void {
 function renderModifierStyles(node: Instance): void {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return;
-  const resolvedStyles: Record<string, string> = {};
+  let resolvedStyles: Styles = {};
 
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);
     if (modifierState.kind !== 'style') continue;
-    mergeStyles(
+    resolvedStyles = composeStyles(
       resolvedStyles,
       modifierState.resolveStyles(modifierState.properties, getModifierTarget(state)),
     );
@@ -81,8 +77,8 @@ function renderLayouts(node: Instance): void {
   const guiNode = node as GuiElement;
   const children = state.children.filter(isGuiNode);
   const childProperties = children.map(getLayoutChildProperties);
-  const parentStyles: Record<string, string> = {};
-  const stylesByChild = new Map<GuiElement, Record<string, string>>();
+  let parentStyles: Styles = {};
+  const stylesByChild = new Map<GuiElement, Styles>();
   const layouts: LayoutNodeState[] = [];
 
   for (const modifier of state.modifiers.values()) {
@@ -92,13 +88,11 @@ function renderLayouts(node: Instance): void {
 
   for (const layout of layouts) {
     const resolved = layout.resolveLayout(layout.properties, childProperties);
-    mergeStyles(parentStyles, resolved.parent);
+    parentStyles = composeStyles(parentStyles, resolved.parent);
     for (const [index, child] of children.entries()) {
       const childStyles = resolved.children[index];
       if (!childStyles) continue;
-      const accumulated = stylesByChild.get(child) ?? {};
-      mergeStyles(accumulated, childStyles);
-      stylesByChild.set(child, accumulated);
+      stylesByChild.set(child, composeStyles(stylesByChild.get(child) ?? {}, childStyles));
     }
   }
 
@@ -110,18 +104,6 @@ function renderLayouts(node: Instance): void {
     setStyleLayer(child.element, 'layout', stylesByChild.get(child) ?? {});
   }
   state.layoutChildren = nextChildren;
-}
-
-function mergeStyles(target: Record<string, string>, source: Styles): void {
-  for (const [property, value] of Object.entries(source)) {
-    if (property === 'box-shadow' && target[property] && value) {
-      target[property] = `${target[property]}, ${value}`;
-    } else if (property === 'filter' && target[property] && value) {
-      target[property] = `${target[property]} ${value}`;
-    } else {
-      target[property] = value;
-    }
-  }
 }
 
 function getLayoutChildProperties(child: GuiElement): LayoutChild {

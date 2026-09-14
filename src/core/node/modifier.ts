@@ -7,11 +7,12 @@ import {
   type GuiNodeState,
   type PropertyValidator,
 } from './state';
+import type { Styles } from './style-output';
+
+export type { StyleProperty, Styles } from './style-output';
 
 declare const styleModifierBrand: unique symbol;
 declare const layoutBrand: unique symbol;
-
-export type Styles = Readonly<Record<string, string>>;
 
 /** The stable rendering surface exposed to an attached modifier. */
 export type ModifierTarget = Readonly<{
