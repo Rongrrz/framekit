@@ -1,12 +1,40 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createStyleModifier } from '../../core/node/modifier';
+import { createLayoutModifier, createStyleModifier } from '../../core/node/modifier';
 import { fk } from '../../index';
 import { resetDocumentAfterEach } from '../support/reset-document';
 
 resetDocumentAfterEach();
 
 describe('composing base and modifier styles', () => {
+  it('recomputes parent layout only when layout inputs change', () => {
+    const parent = fk.createFrame();
+    const child = fk.createFrame();
+    const resolveLayout = vi.fn(() => ({ parent: {}, children: [{}] }));
+    const layout = createLayoutModifier(
+      'TrackedLayout',
+      { Name: 'TrackedLayout', Gap: 0 },
+      resolveLayout,
+    );
+
+    parent.addChild(child);
+    parent.addChild(layout);
+    resolveLayout.mockClear();
+
+    child.Rotation = 10;
+    child.BackgroundTransparency = 0.5;
+
+    expect(resolveLayout).not.toHaveBeenCalled();
+
+    child.LayoutOrder = 2;
+
+    expect(resolveLayout).toHaveBeenCalledOnce();
+
+    layout.setProperties({ Gap: 4 });
+
+    expect(resolveLayout).toHaveBeenCalledTimes(2);
+  });
+
   it('reconciles modifiers without replaying base property renderers', () => {
     const applyProperties = vi.fn();
     const createTrackedNode = fk.defineGuiObject({

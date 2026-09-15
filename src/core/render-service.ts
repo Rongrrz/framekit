@@ -26,17 +26,16 @@ function renderPropertyChanges<Properties extends InstanceProperties>(
 
     if (state.kind === 'layout') renderLayouts(target);
     else renderModifierStyles(target);
-
-    const targetParent = getNodeState(target).parent;
-    if (targetParent && hasLayoutModifier(targetParent)) renderLayouts(targetParent);
     return;
   }
 
   if (state.kind === 'gui') renderNode(node, changedProperties);
-  if (state.parent && hasLayoutModifier(state.parent)) renderLayouts(state.parent);
+  if (state.parent && hasLayoutModifier(state.parent) && affectsParentLayout(changedProperties)) {
+    renderLayouts(state.parent);
+  }
 }
 
-/** Renders changed base properties and then reconciles both derived style layers. */
+/** Renders changed base properties and reconciles target-dependent style modifiers. */
 function renderNode<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
@@ -45,7 +44,16 @@ function renderNode<Properties extends InstanceProperties>(
   if (state.kind !== 'gui') return;
   const reconciledProperties = state.renderProperties?.(state.properties, changedProperties);
   if (reconciledProperties) state.properties = { ...state.properties, ...reconciledProperties };
-  renderDerivedStyles(node);
+  renderModifierStyles(node);
+}
+
+function affectsParentLayout<Properties extends InstanceProperties>(
+  changedProperties: ReadonlySet<keyof Properties>,
+): boolean {
+  for (const property of changedProperties) {
+    if (property === 'Name' || property === 'LayoutOrder') return true;
+  }
+  return false;
 }
 
 /** Reconciles modifier and layout output without replaying base property renderers. */
