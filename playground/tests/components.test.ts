@@ -52,7 +52,7 @@ describe('playground pages', () => {
     expect(api.element.textContent).toContain('Instance methods');
     expect(api.findFirstChild('ScrollingFrameReferenceCard', true)).toBeDefined();
     expect(api.findFirstChild('UIListLayoutReferenceCard', true)).toBeDefined();
-    expect(api.element.textContent).toContain('fk.spring');
+    expect(api.element.textContent).toContain('fka.spring');
     expect(api.element.textContent).toContain('fkh.bindResponsiveLayout');
 
     state.layout.set('mobile');

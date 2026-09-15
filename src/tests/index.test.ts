@@ -18,12 +18,9 @@ describe('package API', () => {
     expect(typeof fk.createUITextStroke).toBe('function');
     expect(typeof fk.defineGuiObject).toBe('function');
 
-    expect(typeof fka.TweenService.create).toBe('function');
-    expect(typeof fk.spring).toBe('function');
-    expect(Object.isFrozen(fka.TweenService)).toBe(true);
-    expect(fka.TweenService).not.toHaveProperty('spring');
-    expect(fka).not.toHaveProperty('createTween');
-    expect(fka).not.toHaveProperty('spring');
+    expect(typeof fka.createTween).toBe('function');
+    expect(typeof fka.spring).toBe('function');
+    expect(fka).not.toHaveProperty('TweenService');
     expect(fka).not.toHaveProperty('SpringService');
     expect(fka).not.toHaveProperty('createMotion');
     expect(fka).not.toHaveProperty('tweenInfo');
@@ -35,6 +32,7 @@ describe('package API', () => {
     expect(fk).not.toHaveProperty('createUIGlow');
 
     expect(fka).not.toHaveProperty('createFrame');
+    expect(fk).not.toHaveProperty('spring');
   });
 
   it('keeps the core API object-centric', () => {
@@ -75,9 +73,9 @@ describe('package API', () => {
 
     const invalidAnimationGoals = (): void => {
       // @ts-expect-error ZIndex changes discretely and cannot be interpolated.
-      fk.spring(frame, { ZIndex: 2 });
+      fka.spring(frame, { ZIndex: 2 });
       // @ts-expect-error LayoutOrder changes discretely and cannot be interpolated.
-      fka.TweenService.create(frame, { Duration: 1 }, { LayoutOrder: 2 });
+      fka.createTween(frame, { Duration: 1 }, { LayoutOrder: 2 });
     };
     void invalidAnimationGoals;
 

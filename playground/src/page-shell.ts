@@ -100,7 +100,7 @@ export const createPageShell = (
         page.scrollTo(goal);
         return;
       }
-      fk.spring(page, { CanvasPosition: goal }, scrollSpringOptions);
+      fka.spring(page, { CanvasPosition: goal }, scrollSpringOptions);
     },
   });
 };

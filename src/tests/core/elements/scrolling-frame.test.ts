@@ -117,9 +117,9 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const springTarget = fk.createScrollingFrame();
-    const controller = fk.spring(springTarget);
+    const controller = fka.spring(springTarget);
 
-    fk.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
     springTarget.element.dispatchEvent(new Event('scroll'));
 
     expect(controller.isAnimating()).toBe(true);
@@ -135,7 +135,7 @@ describe('scrolling frames', () => {
     expect(springTarget.CanvasPosition).toEqual(fk.vector2(0, 40));
 
     const tweenTarget = fk.createScrollingFrame();
-    const tween = fka.TweenService.create(
+    const tween = fka.createTween(
       tweenTarget,
       { Duration: 1 },
       {
@@ -163,9 +163,9 @@ describe('scrolling frames', () => {
 
     scrolling.element.append(child);
 
-    const controller = fk.spring(scrolling);
+    const controller = fka.spring(scrolling);
 
-    fk.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
 
     expect(scrolling.element.tabIndex).toBe(0);
@@ -195,9 +195,9 @@ describe('scrolling frames', () => {
       scrolling.element.scrollTop = Math.round(top);
     });
 
-    const controller = fk.spring(scrolling);
+    const controller = fka.spring(scrolling);
 
-    fk.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     frame?.(1000 / 60);
 
     expect(scrolling.CanvasPosition.Y).toBe(scrolling.element.scrollTop);
@@ -215,9 +215,9 @@ describe('scrolling frames', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const scrolling = fk.createScrollingFrame();
-    const controller = fk.spring(scrolling);
+    const controller = fka.spring(scrolling);
 
-    fk.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
     scrolling.CanvasPosition = fk.vector2(0, 80);
 
     expect(controller.isAnimating()).toBe(false);

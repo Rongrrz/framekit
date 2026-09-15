@@ -62,7 +62,7 @@ export type Tween = {
 };
 
 /** Creates a controllable tween that applies interpolated property values. */
-function create<Properties extends InstanceProperties>(
+export function createTween<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   options: TweenOptions,
   goal: TweenGoal<Properties>,
@@ -231,9 +231,6 @@ function create<Properties extends InstanceProperties>(
 
   return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
 }
-
-/** Owns explicit timed tweens. */
-export const TweenService = Object.freeze({ create });
 
 function resolveTweenOptions(options: TweenOptions): ResolvedTweenOptions {
   const resolved: ResolvedTweenOptions = {

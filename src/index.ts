@@ -5,7 +5,7 @@
  * compose optional behavior from the public building blocks. The tests/ directory mirrors these
  * ownership boundaries.
  */
-/** Core nodes, values, hierarchy, state, events, and the concise spring entry point. */
+/** Core nodes, values, hierarchy, state, and events. */
 export * as fk from './fk';
 
 /** Springs, tweens, easing, and animation controllers. */
