@@ -299,41 +299,52 @@ describe('tweens', () => {
     expect(() => running.play()).toThrow(/destroyed/);
   });
 
-  it('finishes tween cleanup when a cancellation listener throws during destruction', () => {
+  it('reports cancellation listener failures without changing destruction', () => {
     const frame = fk.createFrame();
     const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const reportError = vi.fn();
     const listener = vi.fn(() => {
       throw new Error('listener failed');
     });
 
+    vi.stubGlobal('reportError', reportError);
     tween.completed.subscribe(listener);
     tween.play();
 
-    expect(() => frame.destroy()).toThrow(/listener failed/);
+    expect(() => frame.destroy()).not.toThrow();
     expect(tween.playbackState()).toBe('Cancelled');
     expect(tween.completed).not.toHaveProperty('emit');
     expect(tween.completed).not.toHaveProperty('clear');
     expect(listener).toHaveBeenCalledOnce();
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'listener failed' }),
+    );
   });
 
-  it('keeps a direct property write in control when tween cancellation listeners fail', () => {
+  it('keeps a direct property write in control when observers fail', () => {
     const frame = fk.createFrame({ Rotation: 0 });
     const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
+    const reportError = vi.fn();
     const changed = vi.fn();
 
+    vi.stubGlobal('reportError', reportError);
     tween.completed.subscribe(() => {
       throw new Error('cancel listener failed');
+    });
+    frame.onPropertyChanged('Rotation', () => {
+      throw new Error('property listener failed');
     });
     frame.onPropertyChanged('Rotation', changed);
     tween.play();
 
-    expect(() => (frame.Rotation = 10)).toThrow(/cancel listener failed/);
+    expect(() => (frame.Rotation = 10)).not.toThrow();
     expect(frame.Rotation).toBe(10);
     expect(tween.playbackState()).toBe('Cancelled');
     expect(changed).toHaveBeenCalledWith(10, 0);
+    expect(reportError).toHaveBeenCalledTimes(2);
   });
 
-  it('releases partial ownership when a multi-property claim fails', () => {
+  it('does not let completion observers block an ownership handoff', () => {
     const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
     const existing = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const interrupted = fka.TweenService.create(
@@ -341,44 +352,20 @@ describe('tweens', () => {
       { Duration: 1 },
       { Rotation: 90, BackgroundTransparency: 0.5 },
     );
+    const reportError = vi.fn();
 
+    vi.stubGlobal('reportError', reportError);
     existing.completed.subscribe(() => {
       throw new Error('cancel listener failed');
     });
     existing.play();
 
-    expect(() => interrupted.play()).toThrow(/cancel listener failed/);
-
-    const replacement = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 45 });
-
-    expect(() => replacement.play()).not.toThrow();
-    expect(replacement.playbackState()).toBe('Playing');
-  });
-
-  it('keeps ownership that a retained spring had before a failed claim', () => {
-    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const controller = fk.spring(frame);
-    const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
-
-    fk.spring(frame, { Rotation: 90 });
-    tween.completed.subscribe(() => {
-      throw new Error('cancel listener failed');
-    });
-    tween.play();
-
-    expect(() =>
-      fk.spring(frame, {
-        Rotation: 45,
-        BackgroundTransparency: 0.5,
-      }),
-    ).toThrow(/cancel listener failed/);
-
-    const replacement = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 20 });
-
-    replacement.play();
-
-    expect(controller.isAnimating()).toBe(false);
-    expect(replacement.playbackState()).toBe('Playing');
+    expect(() => interrupted.play()).not.toThrow();
+    expect(existing.playbackState()).toBe('Cancelled');
+    expect(interrupted.playbackState()).toBe('Playing');
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'cancel listener failed' }),
+    );
   });
 
   it('releases every directly assigned property when several cancellation listeners fail', () => {
@@ -389,7 +376,9 @@ describe('tweens', () => {
       { Duration: 1 },
       { BackgroundTransparency: 1 },
     );
+    const reportError = vi.fn();
 
+    vi.stubGlobal('reportError', reportError);
     rotation.completed.subscribe(() => {
       throw new Error('rotation cancellation failed');
     });
@@ -399,28 +388,11 @@ describe('tweens', () => {
     rotation.play();
     transparency.play();
 
-    expect(() => frame.setProperties({ Rotation: 10, BackgroundTransparency: 0.5 })).toThrow(
-      /Multiple property callbacks failed/,
-    );
+    expect(() => frame.setProperties({ Rotation: 10, BackgroundTransparency: 0.5 })).not.toThrow();
     expect(frame).toMatchObject({ Rotation: 10, BackgroundTransparency: 0.5 });
     expect(rotation.playbackState()).toBe('Cancelled');
     expect(transparency.playbackState()).toBe('Cancelled');
-  });
-
-  it('cancels after earlier property listeners fail', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
-
-    frame.onPropertyChanged('Rotation', () => {
-      throw new Error('property listener failed');
-    });
-
-    const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
-
-    tween.play();
-
-    expect(() => (frame.Rotation = 10)).toThrow(/property listener failed/);
-    expect(frame.Rotation).toBe(10);
-    expect(tween.playbackState()).toBe('Cancelled');
+    expect(reportError).toHaveBeenCalledTimes(2);
   });
 
   it('validates tween configuration and goal values', () => {

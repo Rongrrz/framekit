@@ -2,7 +2,7 @@ import { assertNonNegativeFinite } from '../core/internal/validation';
 import type { Instance, InstanceProperties } from '../core/node/instance';
 import { getPropertiesSnapshot } from '../core/node/properties';
 import { getActiveNodeState } from '../core/node/state';
-import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
+import { createSignal, emitSignalSafely, readonlySignal, type Signal } from '../core/state/signal';
 import {
   assertEasingDirection,
   assertEasingStyle,
@@ -222,7 +222,7 @@ function create<Properties extends InstanceProperties>(
     runner.cancelFrame();
     runner.release(goalKeys);
     playbackState = nextState;
-    completedEmitter.emit(nextState);
+    emitSignalSafely(completedEmitter, nextState);
   }
 
   function assertUsable(): void {

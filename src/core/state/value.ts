@@ -1,4 +1,4 @@
-import { createSignal, type Unsubscribe } from './signal';
+import { createSignal, emitSignalSafely, type Unsubscribe } from './signal';
 
 type ValueListener<T> = (value: T) => void;
 type ValueUpdater<T> = (currentValue: T) => T;
@@ -23,7 +23,7 @@ export function createValue<T>(initialValue: T): Value<T> {
   function set(nextValue: T): void {
     if (Object.is(currentValue, nextValue)) return;
     currentValue = nextValue;
-    changedSignal.emit(currentValue);
+    emitSignalSafely(changedSignal, currentValue);
   }
 
   function update(updater: ValueUpdater<T>): void {

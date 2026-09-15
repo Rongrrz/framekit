@@ -1,4 +1,3 @@
-import { throwCollectedErrors } from '../internal/errors';
 import { snapshotPropertyValue } from '../internal/snapshot';
 import { assertString } from '../internal/validation';
 import { RenderService } from '../render-service';
@@ -27,18 +26,12 @@ export function setNodeProperties<Properties extends InstanceProperties>(
   const propertySnapshot = snapshotPropertyValue(patch);
   const requestedProperties = Object.keys(propertySnapshot) as (keyof Properties)[];
   const commit = commitPropertyPatch(node, propertySnapshot, requestedProperties);
-  const errors: unknown[] = [];
 
   for (const property of requestedProperties) {
-    try {
-      emitNodeEvent(node, getPropertyWriteEventKey(property), propertySnapshot[property]);
-    } catch (error) {
-      errors.push(error);
-    }
+    emitNodeEvent(node, getPropertyWriteEventKey(property), propertySnapshot[property]);
   }
 
-  if (commit) emitPropertyChanges(node, commit, errors);
-  throwCollectedErrors(errors, 'Multiple property callbacks failed.');
+  if (commit) emitPropertyChanges(node, commit);
 }
 
 /** Observes every successful write, including writes that keep the current value. */
@@ -204,18 +197,13 @@ function validateModifierRelationships<Properties extends InstanceProperties>(
 function emitPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   commit: PropertyCommit<Properties>,
-  errors: unknown[],
 ): void {
   for (const property of commit.changedProperties) {
-    try {
-      emitNodeEvent(
-        node,
-        property,
-        commit.nextProperties[property],
-        commit.previousProperties[property],
-      );
-    } catch (error) {
-      errors.push(error);
-    }
+    emitNodeEvent(
+      node,
+      property,
+      commit.nextProperties[property],
+      commit.previousProperties[property],
+    );
   }
 }

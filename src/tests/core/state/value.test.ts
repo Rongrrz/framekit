@@ -40,6 +40,24 @@ describe('values', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
+  it('reports observer failures without changing a successful update', () => {
+    const value = fk.createValue(1);
+    const reportError = vi.fn();
+
+    vi.stubGlobal('reportError', reportError);
+    value.onChange(() => {
+      throw new Error('observer failed');
+    });
+
+    expect(() => value.set(2)).not.toThrow();
+    expect(value.get()).toBe(2);
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'observer failed' }),
+    );
+
+    vi.unstubAllGlobals();
+  });
+
   it('automatically stops node-owned observers on destruction', () => {
     const owner = fk.createFrame();
     const count = fk.createValue(1);

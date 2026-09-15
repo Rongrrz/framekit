@@ -1,6 +1,6 @@
 import type { Instance, InstanceProperties } from '../core/node/instance';
 import { getActiveNodeState } from '../core/node/state';
-import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
+import { createSignal, emitSignalSafely, readonlySignal, type Signal } from '../core/state/signal';
 import { prepareAnimationGoal } from './goal';
 import { createAnimationRunner } from './runner';
 import {
@@ -154,7 +154,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     runner.release(settledProperties);
     if (springsByProperty.size === 0) {
       cancelFrame();
-      completedEmitter.emit();
+      emitSignalSafely(completedEmitter);
     }
   }
 
