@@ -93,8 +93,6 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
     listenerOptions,
   );
 
-  element.addEventListener('contextmenu', (event) => event.preventDefault(), listenerOptions);
-
   DestroyService.onDestroy(node, () => listenerController.abort());
 }
 

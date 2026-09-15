@@ -61,6 +61,7 @@ export function createLink(initialProperties: Partial<LinkProperties> = {}): Lin
     },
     linkEventMethods,
     validateLinkProperties,
+    false,
   ) as Link;
 
   const listenerController = new AbortController();

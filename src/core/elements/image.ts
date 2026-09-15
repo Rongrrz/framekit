@@ -96,6 +96,7 @@ export function createImageButton(
       }
     },
     buttonEventMethods,
+    false,
   ) as ImageButton;
 
   initializeButtonElement(node, element);
@@ -121,6 +122,7 @@ function createImageNode<Properties extends ImageLabelProperties>(
   initialProperties: Partial<Properties>,
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   methods?: GuiMethodTable,
+  canContainGuiChildren = true,
 ): GuiElement<Properties> {
   const image = document.createElement('img');
   image.draggable = false;
@@ -158,6 +160,7 @@ function createImageNode<Properties extends ImageLabelProperties>(
       renderAdditionalProperties?.(properties, changedProperties);
     },
     methods,
+    canContainGuiChildren,
     validateProperties: validateImageProperties,
   });
 }

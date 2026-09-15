@@ -112,6 +112,8 @@ export function createTextButton(
       }
     },
     buttonEventMethods,
+    undefined,
+    false,
   ) as TextButton;
 
   initializeButtonElement(node, element);
@@ -135,6 +137,7 @@ export function createTextNode<Properties extends TextLabelProperties>(
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   methods?: GuiMethodTable,
   validateAdditionalProperties?: PropertyValidator<Properties>,
+  canContainGuiChildren = true,
 ): GuiElement<Properties> {
   const text = document.createElement(textTagName);
   text.dataset.framekitText = '';
@@ -173,6 +176,7 @@ export function createTextNode<Properties extends TextLabelProperties>(
       renderAdditionalProperties?.(properties, changedProperties);
     },
     methods,
+    canContainGuiChildren,
     capabilities: { displayText: true },
     validateProperties: (properties) => {
       validateTextProperties(properties);

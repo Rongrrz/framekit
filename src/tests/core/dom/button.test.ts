@@ -122,4 +122,16 @@ describe('buttons', () => {
     expect(button.element.disabled).toBe(false);
     expect(button.element.style.cursor).toBe('pointer');
   });
+
+  it('preserves native context menus and rejects nested GUI children', () => {
+    const textButton = fk.createTextButton();
+    const imageButton = fk.createImageButton();
+    const contextMenu = new MouseEvent('contextmenu', { cancelable: true });
+
+    textButton.element.dispatchEvent(contextMenu);
+
+    expect(contextMenu.defaultPrevented).toBe(false);
+    expect(() => textButton.addChild(fk.createFrame())).toThrow(/cannot contain GUI children/);
+    expect(() => imageButton.addChild(fk.createFrame())).toThrow(/cannot contain GUI children/);
+  });
 });

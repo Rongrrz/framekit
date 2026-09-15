@@ -49,4 +49,10 @@ describe('links', () => {
     expect(link.Href).toBe('/safe');
     expect(link.element.getAttribute('href')).toBe('/safe');
   });
+
+  it('rejects GUI children that would create invalid interactive nesting', () => {
+    const link = fk.createLink();
+
+    expect(() => link.addChild(fk.createFrame())).toThrow(/cannot contain GUI children/);
+  });
 });
