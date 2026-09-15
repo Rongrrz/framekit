@@ -64,7 +64,7 @@ export type ScrollingFrameMethods = {
 /** A native scrolling container synchronized through CanvasPosition. */
 export type ScrollingFrame = GuiElement<ScrollingFrameProperties> &
   ScrollingFrameMethods & {
-    readonly element: HTMLElementTagNameMap[ScrollingFrameTagName];
+    readonly unsafeElement: HTMLElementTagNameMap[ScrollingFrameTagName];
   };
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
@@ -93,15 +93,15 @@ Object.defineProperties(scrollingFrameMethodTable, {
   AbsoluteCanvasSize: {
     get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
-      return vector2(this.element.scrollWidth, this.element.scrollHeight);
+      return vector2(this.unsafeElement.scrollWidth, this.unsafeElement.scrollHeight);
     },
   },
   MaxCanvasPosition: {
     get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
       return vector2(
-        Math.max(0, this.element.scrollWidth - this.element.clientWidth),
-        Math.max(0, this.element.scrollHeight - this.element.clientHeight),
+        Math.max(0, this.unsafeElement.scrollWidth - this.unsafeElement.clientWidth),
+        Math.max(0, this.unsafeElement.scrollHeight - this.unsafeElement.clientHeight),
       );
     },
   },

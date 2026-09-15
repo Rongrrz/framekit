@@ -66,24 +66,24 @@ describe('composing base and modifier styles', () => {
     frame.addChild(corner);
     frame.addChild(stroke);
 
-    expect(frame.element.style.borderRadius).toBe('12px');
-    expect(frame.element.style.boxShadow).toContain('inset');
-    expect(frame.element.style.boxShadow).toContain('2px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('12px');
+    expect(frame.unsafeElement.style.boxShadow).toContain('inset');
+    expect(frame.unsafeElement.style.boxShadow).toContain('2px');
 
     corner.setProperties({ CornerRadius: 18 });
     stroke.setProperties({ BorderStrokePosition: 'Center', Thickness: 4 });
 
-    expect(frame.element.style.borderRadius).toBe('18px');
-    expect(frame.element.style.boxShadow).toContain('2px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('18px');
+    expect(frame.unsafeElement.style.boxShadow).toContain('2px');
 
     corner.setProperties({ Enabled: false });
 
-    expect(frame.element.style.borderRadius).toBe('');
+    expect(frame.unsafeElement.style.borderRadius).toBe('');
 
     corner.setProperties({ Enabled: true });
     corner.removeFromParent();
 
-    expect(frame.element.style.borderRadius).toBe('');
+    expect(frame.unsafeElement.style.borderRadius).toBe('');
 
     frame.addChild(corner);
     frame.destroy();
@@ -104,13 +104,13 @@ describe('composing base and modifier styles', () => {
     frame.addChild(stroke);
     frame.addChild(shadow);
 
-    expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
-    expect(frame.element.style.boxShadow).toContain('4px 8px 12px 0px');
+    expect(frame.unsafeElement.style.boxShadow).toContain('0px 0px 0px 2px');
+    expect(frame.unsafeElement.style.boxShadow).toContain('4px 8px 12px 0px');
 
     shadow.setProperties({ Offset: fk.vector2(-2, 6), BlurRadius: 18 });
 
-    expect(frame.element.style.boxShadow).toContain('-2px 6px 18px 0px');
-    expect(frame.element.style.boxShadow).toContain('0px 0px 0px 2px');
+    expect(frame.unsafeElement.style.boxShadow).toContain('-2px 6px 18px 0px');
+    expect(frame.unsafeElement.style.boxShadow).toContain('0px 0px 0px 2px');
   });
 
   it('uses the declared composition policy for filter output', () => {
@@ -125,7 +125,7 @@ describe('composing base and modifier styles', () => {
     frame.addChild(blur);
     frame.addChild(contrast);
 
-    expect(frame.element.style.filter).toBe('blur(2px) contrast(1.2)');
+    expect(frame.unsafeElement.style.filter).toBe('blur(2px) contrast(1.2)');
   });
 
   it('restores a base style when a property change removes a derived override', () => {
@@ -138,14 +138,14 @@ describe('composing base and modifier styles', () => {
     );
 
     frame.addChild(conditional);
-    expect(frame.element.style.backgroundColor).toContain('200');
+    expect(frame.unsafeElement.style.backgroundColor).toContain('200');
 
     frame.BackgroundColor3 = fk.color3FromRGB(40, 50, 60);
 
-    expect(frame.element.style.backgroundColor).toContain('200');
+    expect(frame.unsafeElement.style.backgroundColor).toContain('200');
 
     frame.Name = 'Base';
 
-    expect(frame.element.style.backgroundColor).toContain('40');
+    expect(frame.unsafeElement.style.backgroundColor).toContain('40');
   });
 });

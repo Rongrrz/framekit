@@ -76,7 +76,7 @@ function renderModifierStyles(node: Instance): void {
     );
   }
 
-  setStyleLayer((node as GuiElement).element, 'modifier', resolvedStyles);
+  setStyleLayer((node as GuiElement).unsafeElement, 'modifier', resolvedStyles);
 }
 
 /** Recomputes layout output and removes only declarations no longer produced by a layout. */
@@ -105,12 +105,12 @@ function renderLayouts(node: Instance): void {
     }
   }
 
-  setStyleLayer(guiNode.element, 'layout', parentStyles);
+  setStyleLayer(guiNode.unsafeElement, 'layout', parentStyles);
   const previousChildren = state.layoutChildren;
   const nextChildren = layouts.length > 0 ? new Set(children) : new Set<GuiElement>();
   for (const child of new Set([...previousChildren, ...nextChildren])) {
     if (getNodeState(child).destroyed) continue;
-    setStyleLayer(child.element, 'layout', stylesByChild.get(child) ?? {});
+    setStyleLayer(child.unsafeElement, 'layout', stylesByChild.get(child) ?? {});
   }
   state.layoutChildren = nextChildren;
 }

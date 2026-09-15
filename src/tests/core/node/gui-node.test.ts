@@ -12,7 +12,8 @@ describe('GUI handles', () => {
 
     expect(Object.isFrozen(frame)).toBe(false);
     expect(Object.hasOwn(frame, 'Name')).toBe(true);
-    expect(Object.hasOwn(frame, 'element')).toBe(true);
+    expect(Object.hasOwn(frame, 'unsafeElement')).toBe(true);
+    expect(frame).not.toHaveProperty('element');
     expect(Object.keys(frame)).toContain('Name');
     expect(descriptor?.get).toBeTypeOf('function');
     expect(descriptor?.set).toBeTypeOf('function');
@@ -27,9 +28,9 @@ describe('GUI handles', () => {
     frame.onMouseEnter(entered);
     frame.onMouseLeave(left);
     gui.onMouseEnter(entered);
-    frame.element.dispatchEvent(new MouseEvent('mouseenter'));
-    frame.element.dispatchEvent(new MouseEvent('mouseleave'));
-    gui.element.dispatchEvent(new MouseEvent('mouseenter'));
+    frame.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
+    frame.unsafeElement.dispatchEvent(new MouseEvent('mouseleave'));
+    gui.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
 
     expect(entered).toHaveBeenCalledTimes(2);
     expect(left).toHaveBeenCalledOnce();
@@ -40,7 +41,7 @@ describe('GUI handles', () => {
   it('reads browser-computed absolute geometry', () => {
     const frame = fk.createFrame();
 
-    frame.element.getBoundingClientRect = () =>
+    frame.unsafeElement.getBoundingClientRect = () =>
       ({ left: 12, top: 34, width: 320, height: 180 }) as DOMRect;
 
     expect(frame.AbsolutePosition).toEqual(fk.vector2(12, 34));

@@ -18,16 +18,16 @@ describe('screen GUIs', () => {
 
     expect(gui.isMounted()).toBe(true);
     expect(target.querySelector('[data-framekit="ScreenGui"]')).not.toBeNull();
-    expect(container.element.firstElementChild).toBe(child.element);
+    expect(container.unsafeElement.firstElementChild).toBe(child.unsafeElement);
 
     gui.addChild(child);
 
-    expect(container.element.childElementCount).toBe(0);
+    expect(container.unsafeElement.childElementCount).toBe(0);
 
-    child.element.remove();
+    child.unsafeElement.remove();
     gui.addChild(child);
 
-    expect(child.element.parentElement).toBe(gui.element);
+    expect(child.unsafeElement.parentElement).toBe(gui.unsafeElement);
 
     gui.unmount();
 
@@ -39,14 +39,14 @@ describe('screen GUIs', () => {
     const gui = fk.createScreenGui();
 
     gui.mount(target);
-    gui.element.remove();
+    gui.unsafeElement.remove();
 
     expect(gui.isMounted()).toBe(false);
 
     gui.mount(target);
 
     expect(gui.isMounted()).toBe(true);
-    expect(gui.element.parentElement).toBe(target);
+    expect(gui.unsafeElement.parentElement).toBe(target);
   });
 
   it('keeps ScreenGui instances at the hierarchy root', () => {
@@ -58,30 +58,30 @@ describe('screen GUIs', () => {
 
     expect(() => frame.addChild(gui)).toThrow(/hierarchy root/);
     expect(gui.Parent).toBeUndefined();
-    expect(gui.element.parentElement).toBe(target);
+    expect(gui.unsafeElement.parentElement).toBe(target);
     expect(gui.isMounted()).toBe(true);
 
     gui.Parent = undefined;
     gui.removeFromParent();
 
-    expect(gui.element.parentElement).toBe(target);
+    expect(gui.unsafeElement.parentElement).toBe(target);
     expect(gui.isMounted()).toBe(true);
   });
 
   it('always covers the viewport regardless of its mount target', () => {
     const gui = fk.createScreenGui();
 
-    expect(gui.element.style.position).toBe('fixed');
-    expect(gui.element.style.inset).toBe('0');
-    expect(gui.element.style.width).toBe('100%');
-    expect(gui.element.style.height).toBe('100%');
-    expect(gui.element.style.overscrollBehavior).toBe('none');
+    expect(gui.unsafeElement.style.position).toBe('fixed');
+    expect(gui.unsafeElement.style.inset).toBe('0');
+    expect(gui.unsafeElement.style.width).toBe('100%');
+    expect(gui.unsafeElement.style.height).toBe('100%');
+    expect(gui.unsafeElement.style.overscrollBehavior).toBe('none');
 
     const target = document.body.appendChild(document.createElement('main'));
 
     gui.mount(target);
 
-    expect(target.firstElementChild).toBe(gui.element);
+    expect(target.firstElementChild).toBe(gui.unsafeElement);
   });
 
   it('reports missing mount targets and rejects lifecycle calls after destruction', () => {
@@ -105,7 +105,7 @@ describe('screen GUIs', () => {
     gui.mount(document.body);
     gui.addChild(frame);
 
-    expect(gui.element.style.display).toBe('none');
+    expect(gui.unsafeElement.style.display).toBe('none');
 
     gui.destroy();
 

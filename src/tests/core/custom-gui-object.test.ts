@@ -23,11 +23,11 @@ describe('custom GUI objects', () => {
     expect(badge.ClassName).toBe('Badge');
     expect(badge.Name).toBe('Badge');
     expect(badge.Label).toBe('New');
-    expect(badge.element.textContent).toBe('New');
+    expect(badge.unsafeElement.textContent).toBe('New');
 
     badge.Label = 'Updated';
 
-    expect(badge.element.textContent).toBe('Updated');
+    expect(badge.unsafeElement.textContent).toBe('Updated');
     expect(() => badge.setProperties({ Label: '' })).toThrow(/must not be empty/);
     expect(badge.Label).toBe('Updated');
   });
@@ -45,7 +45,7 @@ describe('custom GUI objects', () => {
 
     expect(() => (badge.Label = 'Rejected')).toThrow(/render failed/);
     expect(badge.Label).toBe('Ready');
-    expect(badge.element.textContent).toBe('Ready');
+    expect(badge.unsafeElement.textContent).toBe('Ready');
   });
 
   it('reports both the property failure and a failed rendering rollback', () => {
@@ -77,7 +77,7 @@ describe('custom GUI objects', () => {
       expect.objectContaining({ message: 'rollback failed' }),
     ]);
     expect(badge.Label).toBe('Ready');
-    expect(badge.element.textContent).toBe('Ready');
+    expect(badge.unsafeElement.textContent).toBe('Ready');
   });
 
   it('rejects custom properties that shadow GUI state, methods, or fields', () => {

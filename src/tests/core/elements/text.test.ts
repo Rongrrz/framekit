@@ -11,8 +11,8 @@ describe('text labels', () => {
     const defaultLabel = fk.createTextLabel({ Text: 'Plain' });
     const heading = fk.createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
 
-    expect(defaultLabel.element.querySelector('[data-framekit-text]')?.tagName).toBe('SPAN');
-    expect(heading.element.querySelector('[data-framekit-text]')?.tagName).toBe('H1');
+    expect(defaultLabel.unsafeElement.querySelector('[data-framekit-text]')?.tagName).toBe('SPAN');
+    expect(heading.unsafeElement.querySelector('[data-framekit-text]')?.tagName).toBe('H1');
     expect(() => fk.createTextLabel({}, { textTagName: 'script' } as never)).toThrow(/textTagName/);
   });
 
@@ -29,14 +29,14 @@ describe('text labels', () => {
       TextXAlignment: 'Left',
     });
 
-    const text = label.element.querySelector<HTMLElement>('[data-framekit-text]');
+    const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]');
 
     expect(text?.textContent).toBe('Inventory');
     expect(text?.style.fontSize).toBe('24px');
-    expect(label.element.dataset.framekitTextContent).toBe('Inventory');
-    expect(label.element.querySelectorAll('[data-framekit-text-stroke]')).toHaveLength(0);
+    expect(label.unsafeElement.dataset.framekitTextContent).toBe('Inventory');
+    expect(label.unsafeElement.querySelectorAll('[data-framekit-text-stroke]')).toHaveLength(0);
     expect(text?.style.whiteSpace).toBe('pre-wrap');
-    expect(label.element.contains(child.element)).toBe(true);
+    expect(label.unsafeElement.contains(child.unsafeElement)).toBe(true);
   });
 
   it('scales text to the largest whole-pixel size that fits its bounds', () => {
@@ -54,7 +54,7 @@ describe('text labels', () => {
       },
     );
     const label = fk.createTextLabel({ Text: 'Scale me', TextSize: 24 });
-    const text = label.element.querySelector<HTMLElement>('[data-framekit-text]')!;
+    const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
     Object.defineProperties(text, {
       clientWidth: { configurable: true, get: () => availableWidth },
       clientHeight: { configurable: true, value: 40 },
@@ -74,7 +74,7 @@ describe('text labels', () => {
     label.TextScaled = true;
 
     expect(text.style.fontSize).toBe('20px');
-    expect(label.element.style.fontSize).toBe('20px');
+    expect(label.unsafeElement.style.fontSize).toBe('20px');
 
     availableWidth = 50;
     resizeText?.([], {} as ResizeObserver);
@@ -88,7 +88,7 @@ describe('text labels', () => {
 
   it('rejects invalid TextScaled values without changing the rendered size', () => {
     const label = fk.createTextLabel({ Text: 'Inventory', TextSize: 18 });
-    const text = label.element.querySelector<HTMLElement>('[data-framekit-text]')!;
+    const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
 
     expect(() => label.setProperties({ TextScaled: 'yes' } as never)).toThrow(
       /TextScaled must be a boolean/,

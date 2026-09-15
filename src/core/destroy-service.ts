@@ -34,7 +34,7 @@ function destroyRecursively(
   const children = getChildren(state);
   const subtreeElementBeingRemoved =
     ancestorElementBeingRemoved ??
-    (state.kind === 'gui' ? (node as GuiElement).element : undefined);
+    (state.kind === 'gui' ? (node as GuiElement).unsafeElement : undefined);
   for (const child of children) {
     // The whole subtree is leaving, so child teardown must not rerender its parent.
     getNodeState(child).parent = undefined;
@@ -65,7 +65,7 @@ function destroyRecursively(
 
   if (state.kind === 'gui') {
     try {
-      const element = (node as GuiElement).element;
+      const element = (node as GuiElement).unsafeElement;
       if (!ancestorElementBeingRemoved?.contains(element)) element.remove();
     } catch (error) {
       errors.push(error);

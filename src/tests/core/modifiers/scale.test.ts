@@ -12,16 +12,16 @@ describe('visual scaling', () => {
 
     frame.addChild(scale);
 
-    expect(frame.element.style.getPropertyValue('scale')).toBe('1.1');
+    expect(frame.unsafeElement.style.getPropertyValue('scale')).toBe('1.1');
     expect(frame.Size).toEqual(fk.udim2FromOffset(100, 100));
 
     scale.setProperties({ Scale: 0.8 });
 
-    expect(frame.element.style.getPropertyValue('scale')).toBe('0.8');
+    expect(frame.unsafeElement.style.getPropertyValue('scale')).toBe('0.8');
     expect(() => scale.setProperties({ Scale: Number.NaN })).toThrow(/finite/);
 
     scale.removeFromParent();
 
-    expect(frame.element.style.getPropertyValue('scale')).toBe('');
+    expect(frame.unsafeElement.style.getPropertyValue('scale')).toBe('');
   });
 });

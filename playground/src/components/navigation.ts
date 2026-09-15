@@ -103,12 +103,15 @@ export const createNavigation = (
   navigation.addChild(track);
 
   const listenerController = new AbortController();
-  page.element.addEventListener(
+  page.unsafeElement.addEventListener(
     'scroll',
     () => {
-      const maximum = Math.max(1, page.element.scrollHeight - page.element.clientHeight);
+      const maximum = Math.max(
+        1,
+        page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight,
+      );
       progress.Size = fk.udim2FromScale(
-        Math.min(1, Math.max(0, page.element.scrollTop / maximum)),
+        Math.min(1, Math.max(0, page.unsafeElement.scrollTop / maximum)),
         1,
       );
     },

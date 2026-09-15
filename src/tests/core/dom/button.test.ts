@@ -11,28 +11,28 @@ describe('buttons', () => {
     const callback = vi.fn();
     const unsubscribe = button.onClick(callback);
 
-    expect(button.element.tagName).toBe('BUTTON');
-    expect(button.element.style.appearance).toBe('none');
-    expect(button.element.style.border).toBe('0px');
-    expect(button.element.style.margin).toBe('0px');
-    expect(button.element.style.padding).toBe('0px');
-    expect(button.element.style.font).toBe('inherit');
-    expect(button.element.style.color).toBe('inherit');
-    expect(button.element.style.outline).toBe('');
-    expect(button.element.style.cursor).toBe('pointer');
+    expect(button.unsafeElement.tagName).toBe('BUTTON');
+    expect(button.unsafeElement.style.appearance).toBe('none');
+    expect(button.unsafeElement.style.border).toBe('0px');
+    expect(button.unsafeElement.style.margin).toBe('0px');
+    expect(button.unsafeElement.style.padding).toBe('0px');
+    expect(button.unsafeElement.style.font).toBe('inherit');
+    expect(button.unsafeElement.style.color).toBe('inherit');
+    expect(button.unsafeElement.style.outline).toBe('');
+    expect(button.unsafeElement.style.cursor).toBe('pointer');
     expect(button.AutoButtonColor).toBe(true);
-    expect(button.element.hasAttribute('data-framekit-auto-button-color')).toBe(true);
+    expect(button.unsafeElement.hasAttribute('data-framekit-auto-button-color')).toBe(true);
     expect(document.querySelector('[data-framekit-button-styles]')?.textContent).toContain(
       '[data-framekit-button][data-framekit-auto-button-color]:not(:disabled):hover',
     );
     expect('onTextChanged' in button).toBe(false);
 
-    button.element.click();
+    button.unsafeElement.click();
 
     expect(callback).toHaveBeenCalledOnce();
 
     unsubscribe();
-    button.element.click();
+    button.unsafeElement.click();
 
     expect(callback).toHaveBeenCalledOnce();
 
@@ -44,11 +44,11 @@ describe('buttons', () => {
   it('allows automatic hover and pressed feedback to be disabled', () => {
     const button = fk.createTextButton({ AutoButtonColor: false });
 
-    expect(button.element.hasAttribute('data-framekit-auto-button-color')).toBe(false);
+    expect(button.unsafeElement.hasAttribute('data-framekit-auto-button-color')).toBe(false);
 
     button.AutoButtonColor = true;
 
-    expect(button.element.hasAttribute('data-framekit-auto-button-color')).toBe(true);
+    expect(button.unsafeElement.hasAttribute('data-framekit-auto-button-color')).toBe(true);
     expect(() => button.setProperties({ AutoButtonColor: 'yes' as never })).toThrow(
       /AutoButtonColor/,
     );
@@ -59,28 +59,28 @@ describe('buttons', () => {
     const callback = vi.fn();
 
     button.onClick(callback);
-    button.element.click();
+    button.unsafeElement.click();
 
     expect(callback).not.toHaveBeenCalled();
-    expect(button.element.style.cursor).toBe('not-allowed');
+    expect(button.unsafeElement.style.cursor).toBe('not-allowed');
 
     button.setProperties({ Disabled: false });
 
-    expect(button.element.style.cursor).toBe('pointer');
+    expect(button.unsafeElement.style.cursor).toBe('pointer');
   });
 
   it('keeps its accessible label synchronized through a typed property', () => {
     const button = fk.createTextButton({ AccessibleLabel: 'Open settings' });
 
-    expect(button.element.getAttribute('aria-label')).toBe('Open settings');
+    expect(button.unsafeElement.getAttribute('aria-label')).toBe('Open settings');
 
     button.AccessibleLabel = 'Close settings';
 
-    expect(button.element.getAttribute('aria-label')).toBe('Close settings');
+    expect(button.unsafeElement.getAttribute('aria-label')).toBe('Close settings');
 
     button.AccessibleLabel = '';
 
-    expect(button.element.hasAttribute('aria-label')).toBe(false);
+    expect(button.unsafeElement.hasAttribute('aria-label')).toBe(false);
     expect(() => button.setProperties({ AccessibleLabel: 42 as never })).toThrow(/AccessibleLabel/);
   });
 
@@ -97,10 +97,10 @@ describe('buttons', () => {
     button.onSecondaryButtonDown(secondaryDown);
     button.onSecondaryButtonUp(secondaryUp);
     button.onSecondaryClick(secondaryClick);
-    button.element.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
-    button.element.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
-    button.element.dispatchEvent(new MouseEvent('mousedown', { button: 2 }));
-    button.element.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mousedown', { button: 2 }));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));
 
     expect(primaryDown).toHaveBeenCalledOnce();
     expect(primaryUp).toHaveBeenCalledOnce();
@@ -112,15 +112,15 @@ describe('buttons', () => {
   it('uses semantic image buttons and synchronizes their disabled state', () => {
     const button = fk.createImageButton({ Disabled: true });
 
-    expect(button.element.tagName).toBe('BUTTON');
-    expect(button.element.disabled).toBe(true);
-    expect(button.element.style.cursor).toBe('not-allowed');
+    expect(button.unsafeElement.tagName).toBe('BUTTON');
+    expect(button.unsafeElement.disabled).toBe(true);
+    expect(button.unsafeElement.style.cursor).toBe('not-allowed');
     expect(button.AutoButtonColor).toBe(true);
 
     button.setProperties({ Disabled: false });
 
-    expect(button.element.disabled).toBe(false);
-    expect(button.element.style.cursor).toBe('pointer');
+    expect(button.unsafeElement.disabled).toBe(false);
+    expect(button.unsafeElement.style.cursor).toBe('pointer');
   });
 
   it('preserves native context menus and rejects nested GUI children', () => {
@@ -128,7 +128,7 @@ describe('buttons', () => {
     const imageButton = fk.createImageButton();
     const contextMenu = new MouseEvent('contextmenu', { cancelable: true });
 
-    textButton.element.dispatchEvent(contextMenu);
+    textButton.unsafeElement.dispatchEvent(contextMenu);
 
     expect(contextMenu.defaultPrevented).toBe(false);
     expect(() => textButton.addChild(fk.createFrame())).toThrow(/cannot contain GUI children/);

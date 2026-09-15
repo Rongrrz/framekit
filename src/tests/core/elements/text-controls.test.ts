@@ -17,22 +17,22 @@ describe('native text controls', () => {
     const changed = vi.fn();
 
     input.onTextChanged(changed);
-    input.element.value = 'hello@example.com';
-    input.element.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    input.unsafeElement.value = 'hello@example.com';
+    input.unsafeElement.dispatchEvent(new InputEvent('input', { bubbles: true }));
 
-    expect(input.element.tagName).toBe('INPUT');
-    expect(input.element.type).toBe('email');
-    expect(input.element.placeholder).toBe('Email address');
-    expect(input.element.name).toBe('email');
-    expect(input.element.autocomplete).toBe('email');
-    expect(input.element.getAttribute('aria-label')).toBe('Account email');
+    expect(input.unsafeElement.tagName).toBe('INPUT');
+    expect(input.unsafeElement.type).toBe('email');
+    expect(input.unsafeElement.placeholder).toBe('Email address');
+    expect(input.unsafeElement.name).toBe('email');
+    expect(input.unsafeElement.autocomplete).toBe('email');
+    expect(input.unsafeElement.getAttribute('aria-label')).toBe('Account email');
     expect(input.Text).toBe('hello@example.com');
     expect(changed).toHaveBeenCalledWith('hello@example.com', expect.any(InputEvent));
     expect('onClick' in input).toBe(false);
 
     input.Text = 'next@example.com';
 
-    expect(input.element.value).toBe('next@example.com');
+    expect(input.unsafeElement.value).toBe('next@example.com');
   });
 
   it('uses a native textarea for multiline text', () => {
@@ -42,18 +42,18 @@ describe('native text controls', () => {
       ResizeDirection: 'Vertical',
     });
 
-    expect(area.element.tagName).toBe('TEXTAREA');
-    expect(area.element.value).toBe('First\nSecond');
-    expect(area.element.wrap).toBe('soft');
-    expect(area.element.style.resize).toBe('vertical');
+    expect(area.unsafeElement.tagName).toBe('TEXTAREA');
+    expect(area.unsafeElement.value).toBe('First\nSecond');
+    expect(area.unsafeElement.wrap).toBe('soft');
+    expect(area.unsafeElement.style.resize).toBe('vertical');
     expect(area.TextWrapped).toBe(true);
     expect(area.TextYAlignment).toBe('Top');
 
-    area.element.value = '<b>Plain text</b>\nThird';
-    area.element.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    area.unsafeElement.value = '<b>Plain text</b>\nThird';
+    area.unsafeElement.dispatchEvent(new InputEvent('input', { bubbles: true }));
 
     expect(area.Text).toBe('<b>Plain text</b>\nThird');
-    expect(area.element.querySelector('b')).toBeNull();
+    expect(area.unsafeElement.querySelector('b')).toBeNull();
   });
 
   it('maps disabled, readonly, and placeholder presentation to native state', () => {
@@ -64,16 +64,18 @@ describe('native text controls', () => {
       PlaceholderTransparency: 0.25,
     });
 
-    expect(input.element.disabled).toBe(true);
-    expect(input.element.readOnly).toBe(true);
-    expect(input.element.style.cursor).toBe('not-allowed');
-    expect(input.element.style.getPropertyValue('--framekit-placeholder-color')).toContain('10');
+    expect(input.unsafeElement.disabled).toBe(true);
+    expect(input.unsafeElement.readOnly).toBe(true);
+    expect(input.unsafeElement.style.cursor).toBe('not-allowed');
+    expect(input.unsafeElement.style.getPropertyValue('--framekit-placeholder-color')).toContain(
+      '10',
+    );
 
     input.setProperties({ Disabled: false, ReadOnly: false });
 
-    expect(input.element.disabled).toBe(false);
-    expect(input.element.readOnly).toBe(false);
-    expect(input.element.style.cursor).toBe('text');
+    expect(input.unsafeElement.disabled).toBe(false);
+    expect(input.unsafeElement.readOnly).toBe(false);
+    expect(input.unsafeElement.style.cursor).toBe('text');
   });
 
   it('rejects unsupported native modes without corrupting current state', () => {
@@ -85,9 +87,9 @@ describe('native text controls', () => {
       /ResizeDirection/,
     );
     expect(input.InputType).toBe('Search');
-    expect(input.element.type).toBe('search');
+    expect(input.unsafeElement.type).toBe('search');
     expect(area.ResizeDirection).toBe('Both');
-    expect(area.element.style.resize).toBe('both');
+    expect(area.unsafeElement.style.resize).toBe('both');
   });
 
   it('accepts modifiers but rejects GUI children that native controls cannot contain', () => {

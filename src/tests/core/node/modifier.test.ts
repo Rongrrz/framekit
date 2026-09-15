@@ -25,12 +25,12 @@ describe('modifier attachment and validation', () => {
 
     expect(() => frame.addChild(secondCorner)).toThrow(/already has a UICorner/);
     expect(secondCorner.Parent).toBeUndefined();
-    expect(frame.element.style.borderRadius).toBe('4px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('4px');
 
     firstCorner.removeFromParent();
     frame.addChild(secondCorner);
 
-    expect(frame.element.style.borderRadius).toBe('8px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('8px');
 
     const otherFrame = fk.createTextLabel();
 
@@ -38,13 +38,13 @@ describe('modifier attachment and validation', () => {
 
     expect(() => frame.addChild(firstCorner)).toThrow(/already has a UICorner/);
     expect(firstCorner.Parent).toBe(otherFrame);
-    expect(otherFrame.element.style.borderRadius).toBe('4px');
+    expect(otherFrame.unsafeElement.style.borderRadius).toBe('4px');
 
     secondCorner.destroy();
     frame.addChild(firstCorner);
 
     expect(firstCorner.Parent).toBe(frame);
-    expect(otherFrame.element.style.borderRadius).toBe('');
+    expect(otherFrame.unsafeElement.style.borderRadius).toBe('');
   });
 
   it('recomputes both parents when a modifier is moved', () => {
@@ -54,12 +54,12 @@ describe('modifier attachment and validation', () => {
 
     first.addChild(corner);
 
-    expect(first.element.style.borderRadius).toBe('10px');
+    expect(first.unsafeElement.style.borderRadius).toBe('10px');
 
     second.addChild(corner);
 
-    expect(first.element.style.borderRadius).toBe('');
-    expect(second.element.style.borderRadius).toBe('10px');
+    expect(first.unsafeElement.style.borderRadius).toBe('');
+    expect(second.unsafeElement.style.borderRadius).toBe('10px');
   });
 
   it('rolls back a failed modifier append without corrupting its target', () => {
@@ -83,7 +83,7 @@ describe('modifier attachment and validation', () => {
 
     frame.addChild(corner);
 
-    expect(frame.element.style.borderRadius).toBe('6px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('6px');
   });
 
   it('restores an attachment when detached rendering fails', () => {

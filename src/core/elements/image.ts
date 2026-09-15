@@ -37,7 +37,7 @@ export type ImageLabelProperties = GuiObjectProperties & {
 
 /** A non-interactive image node. */
 export type ImageLabel = GuiElement<ImageLabelProperties> & {
-  readonly element: HTMLElementTagNameMap[ImageLabelTagName];
+  readonly unsafeElement: HTMLElementTagNameMap[ImageLabelTagName];
 };
 
 /** Properties for an interactive image button. */

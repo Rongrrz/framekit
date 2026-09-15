@@ -369,7 +369,7 @@ Use `defaultGuiProperties` to customize inherited defaults such as `Size`, and `
 
 FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, missing values, non-finite numbers, and invalid runtime enum members. Tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
 
-`GuiElement.element` is an intentional low-level escape hatch for integrations FrameKit does not cover. Prefer FrameKit properties and operations for normal application behavior.
+`GuiElement.unsafeElement` is an intentional low-level escape hatch for integrations FrameKit does not cover. Do not use it to change hierarchy or FrameKit-owned inline styles: those mutations bypass node state and may be overwritten by the next property render. Event listeners, browser APIs, and application-owned attributes are appropriate uses.
 
 ## Playground and development
 

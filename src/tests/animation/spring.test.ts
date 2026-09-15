@@ -234,6 +234,6 @@ describe('spring animations', () => {
       BlurRadius: 28,
       Transparency: 0.25,
     });
-    expect(frame.element.style.boxShadow).toContain('12px 20px 28px 0px');
+    expect(frame.unsafeElement.style.boxShadow).toContain('12px 20px 28px 0px');
   });
 });

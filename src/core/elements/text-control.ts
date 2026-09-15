@@ -51,7 +51,7 @@ export type TextControl<
   Element extends NativeTextControl,
 > = GuiElement<Properties> &
   TextChangedEventMethods & {
-    readonly element: Element;
+    readonly unsafeElement: Element;
   };
 
 type TextControlOptions<

@@ -92,23 +92,23 @@ function validateScreenGuiProperties(properties: Readonly<ScreenGuiProperties>):
 function mountScreenGui(gui: ScreenGui, target: string | HTMLElement): void {
   getActiveNodeState(gui);
   const element = resolveMountTarget(target);
-  if (mountTargets.get(gui) === element && gui.element.parentElement === element) return;
+  if (mountTargets.get(gui) === element && gui.unsafeElement.parentElement === element) return;
 
   unmountScreenGui(gui);
   mountTargets.set(gui, element);
-  element.append(gui.element);
+  element.append(gui.unsafeElement);
 }
 
 function unmountScreenGui(gui: ScreenGui): void {
   getActiveNodeState(gui);
-  gui.element.remove();
+  gui.unsafeElement.remove();
   mountTargets.delete(gui);
 }
 
 function isScreenGuiMounted(gui: ScreenGui): boolean {
   getActiveNodeState(gui);
   const target = mountTargets.get(gui);
-  if (!target || gui.element.parentElement !== target) {
+  if (!target || gui.unsafeElement.parentElement !== target) {
     mountTargets.delete(gui);
     return false;
   }

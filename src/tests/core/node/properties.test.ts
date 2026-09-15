@@ -12,8 +12,8 @@ describe('node properties', () => {
         value,
         previousValue,
         visible: frame.Visible,
-        display: frame.element.style.display,
-        rotation: frame.element.style.getPropertyValue('rotate'),
+        display: frame.unsafeElement.style.display,
+        rotation: frame.unsafeElement.style.getPropertyValue('rotate'),
       });
     });
 
@@ -33,7 +33,7 @@ describe('node properties', () => {
     expect(() => frame.setProperties({ Rotation: 45, ZIndex: 1.5 })).toThrow(/integer/);
     expect(frame.Rotation).toBe(0);
     expect(frame.ZIndex).toBe(1);
-    expect(frame.element.style.getPropertyValue('rotate')).toBe('0deg');
+    expect(frame.unsafeElement.style.getPropertyValue('rotate')).toBe('0deg');
     expect(changed).not.toHaveBeenCalled();
   });
 
@@ -109,6 +109,6 @@ describe('node properties', () => {
     expect(frame.Position).toEqual(fk.udim2FromOffset(10, 20));
     expect(Object.isFrozen(frame.Position)).toBe(true);
     expect(Object.isFrozen(frame.Position.X)).toBe(true);
-    expect(frame.element.style.left).toBe('10px');
+    expect(frame.unsafeElement.style.left).toBe('10px');
   });
 });

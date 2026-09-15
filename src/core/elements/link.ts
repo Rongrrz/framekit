@@ -25,7 +25,7 @@ export type LinkProperties = TextLabelProperties & {
 /** A text-styled native anchor with FrameKit lifecycle and events. */
 export type Link = GuiElement<LinkProperties> &
   ClickEventMethods & {
-    readonly element: HTMLAnchorElement;
+    readonly unsafeElement: HTMLAnchorElement;
   };
 
 const linkTargets = ['_self', '_blank', '_parent', '_top'] as const;

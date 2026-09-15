@@ -21,7 +21,7 @@ export type ButtonElement<
 > = GuiElement<Properties> &
   ButtonEventMethods & {
     /** The underlying browser button element. */
-    readonly element: HTMLButtonElement;
+    readonly unsafeElement: HTMLButtonElement;
   };
 
 const documentsWithButtonStyles = new WeakSet<Document>();

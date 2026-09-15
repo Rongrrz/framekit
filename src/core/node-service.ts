@@ -60,8 +60,12 @@ function append(parent: Instance, child: Instance): void {
     }
   } catch (error) {
     if (childState.parent === parent) unlinkNodeFromParent(child, childState);
-    if (isGuiNode(child) && isGuiNode(parent) && child.element.parentElement === parent.element) {
-      child.element.remove();
+    if (
+      isGuiNode(child) &&
+      isGuiNode(parent) &&
+      child.unsafeElement.parentElement === parent.unsafeElement
+    ) {
+      child.unsafeElement.remove();
     }
     if (previousParent && childState.parent !== previousParent) {
       const previousParentState = getNodeState(previousParent);
@@ -94,7 +98,7 @@ function detach(node: Instance): void {
 
   try {
     unlinkNodeFromParent(node, state);
-    if (isGuiNode(node)) node.element.remove();
+    if (isGuiNode(node)) node.unsafeElement.remove();
     if (isModifierState(state) || RenderService.hasLayoutModifier(previousParent)) {
       RenderService.renderDerivedStyles(previousParent);
     }
@@ -211,7 +215,11 @@ function placeChildElement(
   child: Instance,
   childIndex: number,
 ): void {
-  if (!isGuiNode(child) || !isGuiNode(parent) || child.element.parentElement === parent.element) {
+  if (
+    !isGuiNode(child) ||
+    !isGuiNode(parent) ||
+    child.unsafeElement.parentElement === parent.unsafeElement
+  ) {
     return;
   }
   const siblings = getChildren(parentState);
@@ -222,7 +230,7 @@ function placeChildElement(
     nextGuiSibling = sibling;
     break;
   }
-  parent.element.insertBefore(child.element, nextGuiSibling?.element ?? null);
+  parent.unsafeElement.insertBefore(child.unsafeElement, nextGuiSibling?.unsafeElement ?? null);
 }
 
 function restoreRendering(

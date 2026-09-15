@@ -9,8 +9,8 @@ describe('images', () => {
   it('uses a creation-only semantic wrapper tag', () => {
     const figure = fk.createImageLabel({}, { tagName: 'figure' });
 
-    expect(figure.element.tagName).toBe('FIGURE');
-    expect(figure.element.querySelector('img')).not.toBeNull();
+    expect(figure.unsafeElement.tagName).toBe('FIGURE');
+    expect(figure.unsafeElement.querySelector('img')).not.toBeNull();
     expect(() => fk.createImageLabel({}, { tagName: 'picture' } as never)).toThrow(/tagName/);
   });
 
@@ -21,7 +21,7 @@ describe('images', () => {
       ScaleType: 'Crop',
       ImageTransparency: 0.25,
     });
-    const element = image.element.querySelector('img');
+    const element = image.unsafeElement.querySelector('img');
 
     expect(element?.getAttribute('src')).toBe('/item.png');
     expect(element?.alt).toBe('Item');
@@ -34,7 +34,7 @@ describe('images', () => {
 
     image.setProperties({ Image: '' });
 
-    expect(image.element.querySelector('img')?.hasAttribute('src')).toBe(false);
+    expect(image.unsafeElement.querySelector('img')?.hasAttribute('src')).toBe(false);
   });
 
   it('rejects executable URL schemes without corrupting the previous source', () => {
@@ -48,6 +48,6 @@ describe('images', () => {
       /Unsupported image URL protocol/,
     );
     expect(image.Image).toBe('/safe.png');
-    expect(image.element.querySelector('img')?.getAttribute('src')).toBe('/safe.png');
+    expect(image.unsafeElement.querySelector('img')?.getAttribute('src')).toBe('/safe.png');
   });
 });

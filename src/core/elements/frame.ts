@@ -17,7 +17,7 @@ export type FrameOptions = Readonly<{ tagName?: FrameTagName }>;
 
 /** A rectangular DOM-backed GUI container. */
 export type Frame = GuiElement<FrameProperties> & {
-  readonly element: HTMLElementTagNameMap[FrameTagName];
+  readonly unsafeElement: HTMLElementTagNameMap[FrameTagName];
 };
 
 const frameTagNames = [

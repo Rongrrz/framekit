@@ -24,21 +24,21 @@ describe('automatic vertical scrolling lists', () => {
     expect(list.ScrollingDirection).toBe('Y');
     expect(list.CanvasSize).toEqual(fk.udim2(1, 0, 0, 0));
     expect(list.AutomaticCanvasSize).toBe('Y');
-    expect(list.element.style.display).toBe('flex');
-    expect(list.element.style.flexDirection).toBe('column');
-    expect(list.element.style.gap).toBe('12px');
-    expect(first.element.style.position).toBe('relative');
-    expect(first.element.style.left).toBe('auto');
-    expect(first.element.style.top).toBe('auto');
-    expect(first.element.style.width).toBe('100%');
-    expect(first.element.style.height).toBe('32px');
-    expect(second.element.style.width).toBe('100%');
-    expect(second.element.style.height).toBe('48px');
+    expect(list.unsafeElement.style.display).toBe('flex');
+    expect(list.unsafeElement.style.flexDirection).toBe('column');
+    expect(list.unsafeElement.style.gap).toBe('12px');
+    expect(first.unsafeElement.style.position).toBe('relative');
+    expect(first.unsafeElement.style.left).toBe('auto');
+    expect(first.unsafeElement.style.top).toBe('auto');
+    expect(first.unsafeElement.style.width).toBe('100%');
+    expect(first.unsafeElement.style.height).toBe('32px');
+    expect(second.unsafeElement.style.width).toBe('100%');
+    expect(second.unsafeElement.style.height).toBe('48px');
 
     first.Size = fk.udim2FromOffset(20, 56);
 
-    expect(first.element.style.width).toBe('100%');
-    expect(first.element.style.height).toBe('56px');
+    expect(first.unsafeElement.style.width).toBe('100%');
+    expect(first.unsafeElement.style.height).toBe('56px');
   });
 
   it('rejects invalid automatic vertical list measurements', () => {

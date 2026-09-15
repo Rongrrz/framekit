@@ -17,27 +17,29 @@ describe('links', () => {
     const onClick = vi.fn((event: MouseEvent) => event.preventDefault());
 
     link.onClick(onClick);
-    link.element.dispatchEvent(new MouseEvent('click', { cancelable: true }));
+    link.unsafeElement.dispatchEvent(new MouseEvent('click', { cancelable: true }));
 
-    expect(link.element.tagName).toBe('A');
-    expect(link.element.getAttribute('href')).toBe('/guide');
-    expect(link.element.target).toBe('_blank');
-    expect(link.element.rel).toBe('help noopener');
-    expect(link.element.getAttribute('aria-label')).toBe('Read the FrameKit guide');
-    expect(link.element.querySelector('[data-framekit-text]')?.textContent).toBe('Read the guide');
+    expect(link.unsafeElement.tagName).toBe('A');
+    expect(link.unsafeElement.getAttribute('href')).toBe('/guide');
+    expect(link.unsafeElement.target).toBe('_blank');
+    expect(link.unsafeElement.rel).toBe('help noopener');
+    expect(link.unsafeElement.getAttribute('aria-label')).toBe('Read the FrameKit guide');
+    expect(link.unsafeElement.querySelector('[data-framekit-text]')?.textContent).toBe(
+      'Read the guide',
+    );
     expect(onClick).toHaveBeenCalledOnce();
   });
 
   it('updates and clears native navigation attributes', () => {
     const link = fk.createLink({ Href: '/download', Download: 'guide.pdf' });
 
-    expect(link.element.download).toBe('guide.pdf');
+    expect(link.unsafeElement.download).toBe('guide.pdf');
 
     link.setProperties({ Href: '', Download: '', AccessibleLabel: '' });
 
-    expect(link.element.hasAttribute('href')).toBe(false);
-    expect(link.element.hasAttribute('download')).toBe(false);
-    expect(link.element.hasAttribute('aria-label')).toBe(false);
+    expect(link.unsafeElement.hasAttribute('href')).toBe(false);
+    expect(link.unsafeElement.hasAttribute('download')).toBe(false);
+    expect(link.unsafeElement.hasAttribute('aria-label')).toBe(false);
   });
 
   it('rejects executable destinations without corrupting the current href', () => {
@@ -47,7 +49,7 @@ describe('links', () => {
       /Unsupported link URL protocol/,
     );
     expect(link.Href).toBe('/safe');
-    expect(link.element.getAttribute('href')).toBe('/safe');
+    expect(link.unsafeElement.getAttribute('href')).toBe('/safe');
   });
 
   it('rejects GUI children that would create invalid interactive nesting', () => {

@@ -54,14 +54,14 @@ describe('NodeService', () => {
     const parent = fk.createFrame();
     const child = fk.createFrame();
 
-    vi.spyOn(parent.element, 'insertBefore').mockImplementation(() => {
+    vi.spyOn(parent.unsafeElement, 'insertBefore').mockImplementation(() => {
       throw new Error('DOM placement failed');
     });
 
     expect(() => parent.addChild(child)).toThrow(/DOM placement failed/);
     expect(child.Parent).toBeUndefined();
     expect(parent.getChildren()).toEqual([]);
-    expect(child.element.parentElement).toBeNull();
+    expect(child.unsafeElement.parentElement).toBeNull();
   });
 
   it('formats and prints a stable hierarchy snapshot', () => {

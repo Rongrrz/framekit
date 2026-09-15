@@ -111,8 +111,8 @@ export const createDocsShell = (
   content.addChild(sidebarRail);
   content.addChild(article);
   content.addChild(outlineRail);
-  sidebar.element.style.position = 'sticky';
-  outline.element.style.position = 'sticky';
+  sidebar.unsafeElement.style.position = 'sticky';
+  outline.unsafeElement.style.position = 'sticky';
   page.addChild(content);
   return Object.freeze({ page, sidebar, article, outline });
 };
