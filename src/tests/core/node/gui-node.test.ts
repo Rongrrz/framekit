@@ -6,6 +6,18 @@ import { resetDocumentAfterEach } from '../../support/reset-document';
 resetDocumentAfterEach();
 
 describe('GUI handles', () => {
+  it('exposes properties as ordinary own accessors', () => {
+    const frame = fk.createFrame();
+    const descriptor = Object.getOwnPropertyDescriptor(frame, 'Name');
+
+    expect(Object.isFrozen(frame)).toBe(false);
+    expect(Object.hasOwn(frame, 'Name')).toBe(true);
+    expect(Object.hasOwn(frame, 'element')).toBe(true);
+    expect(Object.keys(frame)).toContain('Name');
+    expect(descriptor?.get).toBeTypeOf('function');
+    expect(descriptor?.set).toBeTypeOf('function');
+  });
+
   it('exposes hover events on non-button GUI nodes', () => {
     const frame = fk.createFrame();
     const gui = fk.createScreenGui();

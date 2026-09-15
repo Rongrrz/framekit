@@ -12,7 +12,6 @@ export type InstanceProperties = {
 };
 
 declare const nodeProperties: unique symbol;
-const propertyAccessorsByMethods = new WeakMap<object, Map<string, object>>();
 
 /** A persistent typed object in the FrameKit hierarchy. */
 export type Instance<Properties extends InstanceProperties = InstanceProperties> = {
@@ -65,9 +64,28 @@ export function createNodeHandle<Properties extends InstanceProperties>(
   methods: object = nodeMethods,
   fields: object = {},
 ): Instance<Properties> {
-  const propertyTable = getPropertyAccessors(initialProperties, methods);
-  const handle = Object.assign(Object.create(propertyTable) as object, fields);
-  return Object.freeze(handle) as Instance<Properties>;
+  const handle = Object.create(methods) as object;
+  for (const [fieldName, value] of Object.entries(fields)) {
+    Object.defineProperty(handle, fieldName, {
+      configurable: false,
+      enumerable: true,
+      writable: false,
+      value,
+    });
+  }
+  for (const propertyName of Object.keys(initialProperties)) {
+    Object.defineProperty(handle, propertyName, {
+      configurable: false,
+      enumerable: true,
+      get(this: Instance<Properties>) {
+        return getNodeProperty(this, propertyName as keyof Properties);
+      },
+      set(this: Instance<Properties>, value: Properties[keyof Properties]) {
+        setNodeProperties(this, { [propertyName]: value } as Partial<Properties>);
+      },
+    });
+  }
+  return handle as Instance<Properties>;
 }
 
 /** Creates a frozen method table that inherits another capability table. */
@@ -150,37 +168,3 @@ Object.defineProperties(methodTable, {
 });
 
 export const nodeMethods = Object.freeze(methodTable);
-
-function getPropertyAccessors<Properties extends InstanceProperties>(
-  properties: Readonly<Properties>,
-  methodTable: object,
-): object {
-  let tablesByShape = propertyAccessorsByMethods.get(methodTable);
-  if (!tablesByShape) {
-    tablesByShape = new Map();
-    propertyAccessorsByMethods.set(methodTable, tablesByShape);
-  }
-
-  // Nodes with the same methods and property names share accessors, keeping handles small.
-  const propertyNames = Object.keys(properties).sort();
-  const shape = propertyNames.join('\0');
-  const existingTable = tablesByShape.get(shape);
-  if (existingTable) return existingTable;
-
-  const propertyTable = Object.create(methodTable) as object;
-  for (const propertyName of propertyNames) {
-    Object.defineProperty(propertyTable, propertyName, {
-      enumerable: true,
-      get(this: Instance<Properties>) {
-        return getNodeProperty(this, propertyName as keyof Properties);
-      },
-      set(this: Instance<Properties>, value: Properties[keyof Properties]) {
-        setNodeProperties(this, { [propertyName]: value } as Partial<Properties>);
-      },
-    });
-  }
-
-  Object.freeze(propertyTable);
-  tablesByShape.set(shape, propertyTable);
-  return propertyTable;
-}
