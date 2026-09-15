@@ -86,6 +86,24 @@ describe('modifier attachment and validation', () => {
     expect(frame.element.style.borderRadius).toBe('6px');
   });
 
+  it('restores an attachment when detached rendering fails', () => {
+    const frame = fk.createFrame();
+    const corner = fk.createUICorner({ CornerRadius: 6 });
+    let renderMustFail = false;
+    const failing = createStyleModifier('Failing', { Name: 'Failing' }, () => {
+      if (renderMustFail) throw new Error('derived render failed');
+      return {};
+    });
+
+    frame.addChild(corner);
+    frame.addChild(failing);
+    renderMustFail = true;
+
+    expect(() => corner.removeFromParent()).toThrow(/Detaching the node failed/);
+    expect(corner.Parent).toBe(frame);
+    expect(frame.getChildren()).toContain(corner);
+  });
+
   it('rejects non-finite modifier properties at construction', () => {
     expect(() => fk.createUIStroke({ Thickness: Number.NaN })).toThrow(/Thickness.*finite/);
     expect(() => fk.createUICorner({ CornerRadius: Number.POSITIVE_INFINITY })).toThrow(

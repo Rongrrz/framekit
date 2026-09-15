@@ -45,11 +45,10 @@ function append(parent: Instance, child: Instance): void {
   const previousIndex = previousParent
     ? getChildren(getNodeState(previousParent)).indexOf(child)
     : -1;
-  unlinkNodeFromParent(child, childState);
-  const insertionIndex = linkNodeToParent(parent, parentState, child, childState);
-  placeChildElement(parent, parentState, child, insertionIndex);
-
   try {
+    unlinkNodeFromParent(child, childState);
+    const insertionIndex = linkNodeToParent(parent, parentState, child, childState);
+    placeChildElement(parent, parentState, child, insertionIndex);
     if (
       previousParent &&
       (isModifierState(childState) || RenderService.hasLayoutModifier(previousParent))
@@ -60,9 +59,11 @@ function append(parent: Instance, child: Instance): void {
       RenderService.renderDerivedStyles(parent);
     }
   } catch (error) {
-    unlinkNodeFromParent(child, childState);
-    if (isGuiNode(child)) child.element.remove();
-    if (previousParent) {
+    if (childState.parent === parent) unlinkNodeFromParent(child, childState);
+    if (isGuiNode(child) && isGuiNode(parent) && child.element.parentElement === parent.element) {
+      child.element.remove();
+    }
+    if (previousParent && childState.parent !== previousParent) {
       const previousParentState = getNodeState(previousParent);
       const restoredIndex = linkNodeToParent(
         previousParent,
@@ -73,7 +74,12 @@ function append(parent: Instance, child: Instance): void {
       );
       placeChildElement(previousParent, previousParentState, child, restoredIndex);
     }
-    restoreRendering(parent, previousParent, error);
+    restoreRendering(
+      parent,
+      previousParent,
+      error,
+      'Appending the node failed, and rendering could not be fully restored.',
+    );
   }
 }
 
@@ -81,13 +87,34 @@ function append(parent: Instance, child: Instance): void {
 function detach(node: Instance): void {
   const state = getActiveNodeState(node);
   if (!state.canHaveParent) return;
-  const previousParent = unlinkNodeFromParent(node, state);
-  if (isGuiNode(node)) node.element.remove();
-  if (
-    previousParent &&
-    (isModifierState(state) || RenderService.hasLayoutModifier(previousParent))
-  ) {
-    RenderService.renderDerivedStyles(previousParent);
+  const previousParent = state.parent;
+  if (!previousParent) return;
+  const previousParentState = getNodeState(previousParent);
+  const previousIndex = getChildren(previousParentState).indexOf(node);
+
+  try {
+    unlinkNodeFromParent(node, state);
+    if (isGuiNode(node)) node.element.remove();
+    if (isModifierState(state) || RenderService.hasLayoutModifier(previousParent)) {
+      RenderService.renderDerivedStyles(previousParent);
+    }
+  } catch (error) {
+    if (state.parent !== previousParent) {
+      const restoredIndex = linkNodeToParent(
+        previousParent,
+        previousParentState,
+        node,
+        state,
+        previousIndex,
+      );
+      placeChildElement(previousParent, previousParentState, node, restoredIndex);
+    }
+    restoreRendering(
+      previousParent,
+      undefined,
+      error,
+      'Detaching the node failed, and rendering could not be fully restored.',
+    );
   }
 }
 
@@ -202,15 +229,13 @@ function restoreRendering(
   parent: Instance,
   previousParent: Instance | undefined,
   originalError: unknown,
+  rollbackMessage: string,
 ): never {
   try {
     RenderService.renderDerivedStyles(parent);
     if (previousParent) RenderService.renderDerivedStyles(previousParent);
   } catch (rollbackError) {
-    throw new AggregateError(
-      [originalError, rollbackError],
-      'Appending the node failed, and rendering could not be fully restored.',
-    );
+    throw new AggregateError([originalError, rollbackError], rollbackMessage);
   }
   throw originalError;
 }

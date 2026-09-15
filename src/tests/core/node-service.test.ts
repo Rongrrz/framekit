@@ -50,6 +50,20 @@ describe('NodeService', () => {
     expect(() => child.setProperties({ Name: 'Too late' })).toThrow(/destroyed/);
   });
 
+  it('rolls back hierarchy state when DOM placement fails', () => {
+    const parent = fk.createFrame();
+    const child = fk.createFrame();
+
+    vi.spyOn(parent.element, 'insertBefore').mockImplementation(() => {
+      throw new Error('DOM placement failed');
+    });
+
+    expect(() => parent.addChild(child)).toThrow(/DOM placement failed/);
+    expect(child.Parent).toBeUndefined();
+    expect(parent.getChildren()).toEqual([]);
+    expect(child.element.parentElement).toBeNull();
+  });
+
   it('formats and prints a stable hierarchy snapshot', () => {
     const root = fk.createFrame({ Name: 'Root' });
     const first = fk.createFrame({ Name: 'First' });
