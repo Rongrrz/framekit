@@ -5,6 +5,7 @@ import { emitNodeEvent } from '../node/events';
 import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
 import { createRealmAbortController } from './environment';
+import { installStyles } from './stylesheet';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */
@@ -25,8 +26,6 @@ export type ButtonElement<
     readonly unsafeElement: HTMLButtonElement;
   };
 
-const documentsWithButtonStyles = new WeakSet<Document>();
-
 export function initializeButtonElement<Properties extends GuiObjectProperties & ButtonProperties>(
   node: ButtonElement<Properties>,
   element: HTMLButtonElement,
@@ -46,7 +45,7 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
     color: 'inherit',
     cursor: element.disabled ? 'not-allowed' : 'pointer',
   });
-  ensureButtonStyles(element.ownerDocument);
+  installStyles({ ownerDocument: element.ownerDocument });
 
   element.addEventListener(
     'click',
@@ -114,28 +113,4 @@ export function validateButtonProperties(properties: Readonly<ButtonProperties>)
   assertBoolean(properties.Disabled, 'Disabled');
   assertBoolean(properties.AutoButtonColor, 'AutoButtonColor');
   assertString(properties.AccessibleLabel, 'AccessibleLabel');
-}
-
-function ensureButtonStyles(ownerDocument: Document): void {
-  if (documentsWithButtonStyles.has(ownerDocument)) return;
-  const style = ownerDocument.createElement('style');
-  style.dataset.framekitButtonStyles = '';
-  style.textContent = `
-    [data-framekit-button][data-framekit-auto-button-color] {
-      transition: filter 140ms ease;
-    }
-    [data-framekit-button][data-framekit-auto-button-color]:not(:disabled):hover {
-      filter: brightness(1.06);
-    }
-    [data-framekit-button][data-framekit-auto-button-color]:not(:disabled):active {
-      filter: brightness(0.92);
-    }
-    @media (prefers-reduced-motion: reduce) {
-      [data-framekit-button][data-framekit-auto-button-color] {
-        transition-duration: 0.001ms;
-      }
-    }
-  `;
-  ownerDocument.head.append(style);
-  documentsWithButtonStyles.add(ownerDocument);
 }

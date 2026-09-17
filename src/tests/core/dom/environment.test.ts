@@ -30,8 +30,7 @@ describe('DOM ownership', () => {
       node.destroy();
     }
 
-    expect(ownerDocument.querySelector('[data-framekit-button-styles]')).not.toBeNull();
-    expect(ownerDocument.querySelector('[data-framekit-scrollbar-styles]')).not.toBeNull();
+    expect(ownerDocument.querySelectorAll('[data-framekit-styles]')).toHaveLength(1);
   });
 
   it('resolves mounts in the selected document and rejects implicit adoption', () => {

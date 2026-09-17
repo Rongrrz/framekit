@@ -5,6 +5,7 @@ import {
   type DomOptions,
 } from '../dom/environment';
 import { setStyle } from '../dom/styles';
+import { installStyles } from '../dom/stylesheet';
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,
@@ -75,7 +76,6 @@ export type ScrollingFrame = GuiElement<ScrollingFrameProperties> &
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
 const scrollingFrameTagNames = ['div', 'main', 'section', 'article', 'aside', 'nav'] as const;
-const documentsWithScrollbarStyles = new WeakSet<Document>();
 
 const scrollingFrameMethodTable = {
   ...guiEventMethods,
@@ -137,7 +137,7 @@ export function createScrollingFrame(
   element.append(canvasBounds);
   element.style.overscrollBehavior = 'none';
   element.tabIndex = 0;
-  ensureScrollbarStyles(ownerDocument);
+  installStyles({ ownerDocument });
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
   // position accepted by the browser after each FrameKit write so those events can be ignored.
   let lastRenderedCanvasPosition = readCanvasPosition(element);
@@ -250,35 +250,6 @@ function validateScrollingFrameProperties(properties: Readonly<ScrollingFramePro
 
 function isCanvasAxisAutomatic(size: AutomaticSize, axis: 'X' | 'Y'): boolean {
   return size === axis || size === 'XY';
-}
-
-function ensureScrollbarStyles(ownerDocument: Document): void {
-  if (documentsWithScrollbarStyles.has(ownerDocument)) return;
-  const style = ownerDocument.createElement('style');
-  style.dataset.framekitScrollbarStyles = '';
-  style.textContent = `
-    [data-framekit="ScrollingFrame"] {
-      scrollbar-color: var(--framekit-scrollbar-color) transparent;
-      scrollbar-gutter: stable;
-    }
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar {
-      width: var(--framekit-scrollbar-thickness);
-      height: var(--framekit-scrollbar-thickness);
-    }
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-track,
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-corner {
-      background: transparent;
-    }
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-thumb {
-      min-height: 48px;
-      border: 3px solid transparent;
-      border-radius: 999px;
-      background: var(--framekit-scrollbar-color);
-      background-clip: padding-box;
-    }
-  `;
-  ownerDocument.head.append(style);
-  documentsWithScrollbarStyles.add(ownerDocument);
 }
 
 function readCanvasPosition(element: HTMLElement): Vector2 {

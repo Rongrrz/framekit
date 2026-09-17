@@ -1,5 +1,6 @@
 import { DestroyService } from '../destroy-service';
 import { createRealmAbortController } from '../dom/environment';
+import { installStyles } from '../dom/stylesheet';
 import { bindTextScaleResize, renderTextSize } from '../dom/text-size';
 import {
   createDefaultTextStyleProperties,
@@ -67,8 +68,6 @@ type TextControlOptions<
   validateProperties?: PropertyValidator<Properties>;
 };
 
-const documentsWithTextControlStyles = new WeakSet<Document>();
-
 /** Creates a native text control with shared property synchronization and lifecycle. */
 export function createTextControl<
   Properties extends TextControlProperties,
@@ -81,7 +80,7 @@ export function createTextControl<
   renderProperties,
   validateProperties,
 }: TextControlOptions<Properties, Element>): TextControl<Properties, Element> {
-  ensureTextControlStyles(element.ownerDocument);
+  installStyles({ ownerDocument: element.ownerDocument });
   element.dataset.framekitTextControl = className;
   Object.assign(element.style, {
     appearance: 'none',
@@ -210,18 +209,4 @@ function textAlignment(alignment: TextStyleProperties['TextYAlignment']): string
 function setOptionalAttribute(element: HTMLElement, name: string, value: string): void {
   if (value) element.setAttribute(name, value);
   else element.removeAttribute(name);
-}
-
-function ensureTextControlStyles(ownerDocument: Document): void {
-  if (documentsWithTextControlStyles.has(ownerDocument)) return;
-  const style = ownerDocument.createElement('style');
-  style.dataset.framekitTextControlStyles = '';
-  style.textContent = `
-    [data-framekit-text-control]::placeholder {
-      color: var(--framekit-placeholder-color);
-      opacity: 1;
-    }
-  `;
-  ownerDocument.head.append(style);
-  documentsWithTextControlStyles.add(ownerDocument);
 }

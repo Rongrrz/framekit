@@ -22,7 +22,7 @@ describe('buttons', () => {
     expect(button.unsafeElement.style.cursor).toBe('pointer');
     expect(button.AutoButtonColor).toBe(true);
     expect(button.unsafeElement.hasAttribute('data-framekit-auto-button-color')).toBe(true);
-    expect(document.querySelector('[data-framekit-button-styles]')?.textContent).toContain(
+    expect(document.querySelector('[data-framekit-styles]')?.textContent).toContain(
       '[data-framekit-button][data-framekit-auto-button-color]:not(:disabled):hover',
     );
     expect('onTextChanged' in button).toBe(false);

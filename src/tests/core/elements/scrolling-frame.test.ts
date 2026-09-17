@@ -49,7 +49,7 @@ describe('scrolling frames', () => {
       'rgb(18 153 98 / 0.75)',
     );
     expect(scrolling.unsafeElement.style.getPropertyValue('scrollbar-width')).toBe('thin');
-    expect(document.querySelector('[data-framekit-scrollbar-styles]')?.textContent).toContain(
+    expect(document.querySelector('[data-framekit-styles]')?.textContent).toContain(
       '[data-framekit="ScrollingFrame"]::-webkit-scrollbar-thumb',
     );
 

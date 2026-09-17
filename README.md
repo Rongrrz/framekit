@@ -373,6 +373,14 @@ FrameKit treats caller-provided text as text, never HTML. Image sources accept o
 
 DOM factories accept `{ ownerDocument }` as a creation-only second argument, alongside any tag option. Use the same document for a GUI tree and its mount target; FrameKit rejects cross-document reparenting rather than silently adopting DOM without its styles and listeners. Selector mounts resolve in the GUI's own document.
 
+FrameKit automatically installs one shared stylesheet per document. Under a nonce-based Content Security Policy, authorize it before creating nodes:
+
+```ts
+fk.installStyles({ nonce: serverGeneratedNonce });
+```
+
+Pass `ownerDocument` as well for another document. FrameKit sets individual CSSOM properties rather than `style` attributes or `cssText`; this preserves compatibility with `style-src-attr 'none'`. The stylesheet nonce must match the page's `style-src` policy. See [MDN's CSP styling guidance](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
+
 ## Playground and development
 
 The playground is a complete, long-form FrameKit product page built with FrameKit itself. It demonstrates composition, scale/offset `UDim2` layout, modifiers, shared values, input, spring motion, tweens, scrolling, and lifecycle patterns.

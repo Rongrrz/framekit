@@ -1,6 +1,8 @@
 export { createFrame } from './elements/frame';
 export type { Frame, FrameOptions, FrameProperties, FrameTagName } from './elements/frame';
 export type { DomOptions } from './dom/environment';
+export { installStyles } from './dom/stylesheet';
+export type { StyleOptions } from './dom/stylesheet';
 export { defineGuiObject } from './custom-gui-object';
 export type { GuiObjectConstructor, GuiObjectDefinition } from './custom-gui-object';
 export type { AutomaticSize, GuiObject, GuiObjectProperties } from './gui-object';
