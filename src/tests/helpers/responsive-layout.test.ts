@@ -52,6 +52,24 @@ describe('responsive layouts', () => {
     expect(desktop).not.toHaveBeenCalled();
   });
 
+  it('stops responding when explicitly disposed without destroying its owner', () => {
+    const owner = fk.createFrame();
+    const mobile = vi.fn();
+    const desktop = vi.fn();
+    vi.stubGlobal('innerWidth', 640);
+    const dispose = fkh.bindResponsiveLayout(owner, { breakpoint: 700, mobile, desktop });
+
+    dispose();
+    dispose();
+    vi.stubGlobal('innerWidth', 900);
+    window.dispatchEvent(new Event('resize'));
+
+    expect(owner.isDestroyed()).toBe(false);
+    expect(mobile).toHaveBeenCalledOnce();
+    expect(desktop).not.toHaveBeenCalled();
+    owner.destroy();
+  });
+
   it('does not retain a resize listener when the initial layout destroys its owner', () => {
     const owner = fk.createFrame();
     const mobile = vi.fn(() => owner.destroy());
