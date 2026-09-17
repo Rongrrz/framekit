@@ -170,6 +170,8 @@ equip.getFullName(); // "InventoryMenu.EquipButton"
 
 Traversal reads the FrameKit hierarchy, not the HTML DOM. `getChildren()` returns direct children; `getDescendants()` returns every nested node in depth-first order. Both return snapshots, so callers cannot mutate FrameKit's internal child list.
 
+Use `child.isA('TextButton')` to test an exact built-in class and narrow a traversal result to its concrete TypeScript API. For example, `if (child.isA('TextButton')) child.Text = 'Run'` needs no cast.
+
 Every node can format or print its current subtree:
 
 ```ts

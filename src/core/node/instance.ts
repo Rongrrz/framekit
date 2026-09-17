@@ -2,6 +2,7 @@ import { DestroyService } from '../destroy-service';
 import { NodeService } from '../node-service';
 import type { Unsubscribe } from '../state/signal';
 import type { Value } from '../state/value';
+import type { InstanceClassName, InstanceOf } from './classes';
 import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
 import { watchNodeValue } from './watch-value';
 
@@ -25,6 +26,8 @@ export type Instance<Properties extends InstanceProperties = InstanceProperties>
 
 /** Operations shared by every FrameKit instance. */
 export type InstanceMethods<Properties extends InstanceProperties = InstanceProperties> = {
+  /** Tests an exact built-in class and narrows this instance to its concrete API. */
+  isA<ClassName extends InstanceClassName>(className: ClassName): this is InstanceOf<ClassName>;
   /** Validates and applies several properties in one render pass. */
   setProperties(patch: Partial<Properties>): void;
   /** Subscribes to one property and reports its new and previous values. */
@@ -100,6 +103,12 @@ export function extendMethodTable<Base extends object, Extension extends object>
 
 /** Shared prototype for node handles, keeping methods out of each instance allocation. */
 const methodTable = {
+  isA<ClassName extends InstanceClassName>(
+    this: Instance,
+    className: ClassName,
+  ): this is InstanceOf<ClassName> {
+    return NodeService.getClassName(this) === className;
+  },
   setProperties<Properties extends InstanceProperties>(
     this: Instance<Properties>,
     patch: Partial<Properties>,

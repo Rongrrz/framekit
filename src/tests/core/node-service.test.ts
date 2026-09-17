@@ -50,6 +50,20 @@ describe('NodeService', () => {
     expect(() => child.setProperties({ Name: 'Too late' })).toThrow(/destroyed/);
   });
 
+  it('narrows heterogeneous traversal results to their concrete APIs', () => {
+    const parent = fk.createFrame();
+    const button = fk.createTextButton({ Name: 'Action' });
+    parent.addChild(button);
+    const child = parent.findFirstChild('Action');
+
+    if (!child?.isA('TextButton')) throw new Error('Expected a TextButton.');
+    child.Text = 'Run';
+    child.onClick(() => undefined);
+
+    expect(button.Text).toBe('Run');
+    expect(child.isA('ImageButton')).toBe(false);
+  });
+
   it('rolls back hierarchy state when DOM placement fails', () => {
     const parent = fk.createFrame();
     const child = fk.createFrame();
