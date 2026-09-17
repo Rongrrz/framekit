@@ -6,7 +6,7 @@
  * ownership boundaries.
  */
 /** Core nodes, values, hierarchy, state, and events. */
-export * as fk from './fk';
+export * as fk from './core';
 
 /** Springs, tweens, easing, and animation controllers. */
 export * as fka from './animation';

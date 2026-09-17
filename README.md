@@ -346,7 +346,7 @@ function show(panel: fk.Frame): void {
 }
 ```
 
-Internal validation and error plumbing live under `core/internal`; they are implementation details rather than a secondary public entry point. Package consumers should import only from `framekit`.
+Internal validation and error plumbing live under `core/internal`; they are implementation details rather than a secondary public entry point. Package consumers should import only from `framekit`. Source dependency tests enforce core's independence from animation and helpers; package exports keep those implementation paths out of the consumer API.
 
 ## Reusable UI factories
 
