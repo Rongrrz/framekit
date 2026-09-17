@@ -45,7 +45,7 @@ The common vocabulary is deliberately small:
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
 | Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                     |
 | Motion        | `fka.spring`, `fka.createTween`                                                           |
-| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`, `fkh.setModifierAttached`               |
+| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`                                          |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
@@ -125,13 +125,16 @@ A parent accepts one modifier of each kind. Duplicate modifiers throw without di
 
 Use `fkh` when its optional interaction conventions fit your UI. `bindHoverScale(node, scale)` controls a caller-owned, attached `UIScale` and returns a disposer. Disposing disconnects events and stops its scale motion without destroying either node.
 
-`createAutoYScrollingFrame()` creates a full-width vertical list with a `UDim` viewport height. Its canvas follows appended children, never becomes shorter than the viewport, and `gap` adds spacing only between adjacent items:
+Compose scrolling lists explicitly, keeping the layout reference when its configuration needs to change. Set row widths through their own `Size` properties:
 
 ```ts
-const list = fkh.createAutoYScrollingFrame({
-  viewportHeight: fk.udim(1, -64),
-  gap: 12,
+const list = fk.createScrollingFrame({
+  Size: fk.udim2(1, 0, 1, -64),
+  ScrollingDirection: 'Y',
+  AutomaticCanvasSize: 'Y',
 });
+const layout = fk.createUIListLayout({ Padding: fk.udim(0, 12) });
+list.addChild(layout);
 
 list.addChild(firstRow);
 list.addChild(secondRow);

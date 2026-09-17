@@ -267,8 +267,6 @@ export const createApiPage = (
     [
       { text: 'fkh.bindResponsiveLayout(owner, options)' },
       { text: 'fkh.bindHoverScale(node, scale, 1.035)' },
-      { text: 'fkh.createAutoYScrollingFrame({ viewportHeight: fk.udim(1, -64), gap: 12 })' },
-      { text: 'fkh.setModifierAttached(modifier, true)' },
     ],
     4942,
     154,
