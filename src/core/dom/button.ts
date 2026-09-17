@@ -4,6 +4,7 @@ import { assertBoolean, assertString } from '../internal/validation';
 import { emitNodeEvent } from '../node/events';
 import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
+import { createRealmAbortController } from './environment';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */
@@ -30,7 +31,7 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
   node: ButtonElement<Properties>,
   element: HTMLButtonElement,
 ): void {
-  const listenerController = new AbortController();
+  const listenerController = createRealmAbortController(element);
   const listenerOptions = { signal: listenerController.signal };
   let secondaryButtonIsDown = false;
 

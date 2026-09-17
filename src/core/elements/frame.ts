@@ -1,3 +1,4 @@
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -13,7 +14,7 @@ export type FrameProperties = GuiObjectProperties;
 export type FrameTagName = (typeof frameTagNames)[number];
 
 /** Creation-only options for a frame's native element. */
-export type FrameOptions = Readonly<{ tagName?: FrameTagName }>;
+export type FrameOptions = Readonly<DomOptions & { tagName?: FrameTagName }>;
 
 /** A rectangular DOM-backed GUI container. */
 export type Frame = GuiElement<FrameProperties> & {
@@ -41,7 +42,7 @@ export function createFrame(
   assertAllowedValue(tagName, frameTagNames, 'Frame tagName');
   return createGuiObjectNode({
     className: 'Frame',
-    element: document.createElement(tagName),
+    element: resolveOwnerDocument(options).createElement(tagName),
     defaultProperties: { ...createDefaultGuiObjectProperties(), Name: 'Frame' },
     initialProperties,
   }) as Frame;

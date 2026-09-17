@@ -1,3 +1,4 @@
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
 import { assertAllowedValue } from '../internal/validation';
 import {
   createDefaultTextControlProperties,
@@ -26,8 +27,11 @@ const nativeResizeDirections = {
 } as const satisfies Record<TextAreaResizeDirection, string>;
 
 /** Creates a native multiline text area. */
-export function createTextArea(initialProperties: Partial<TextAreaProperties> = {}): TextArea {
-  const element = document.createElement('textarea');
+export function createTextArea(
+  initialProperties: Partial<TextAreaProperties> = {},
+  options: DomOptions = {},
+): TextArea {
+  const element = resolveOwnerDocument(options).createElement('textarea');
   return createTextControl({
     className: 'TextArea',
     element,

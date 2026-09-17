@@ -1,4 +1,5 @@
 import { DestroyService } from '../destroy-service';
+import { createRealmAbortController } from '../dom/environment';
 import { bindTextScaleResize, renderTextSize } from '../dom/text-size';
 import {
   createDefaultTextStyleProperties,
@@ -111,7 +112,7 @@ export function createTextControl<
     renderTextSize(element, getNodeProperties(node));
   });
 
-  const listenerController = new AbortController();
+  const listenerController = createRealmAbortController(element);
   element.addEventListener(
     'input',
     (event) => {

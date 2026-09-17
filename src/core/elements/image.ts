@@ -5,6 +5,7 @@ import {
   type ButtonProperties,
   validateButtonProperties,
 } from '../dom/button';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -21,7 +22,7 @@ export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 export type ImageLabelTagName = (typeof imageLabelTagNames)[number];
 
 /** Creation-only options for an image label's native wrapper. */
-export type ImageLabelOptions = Readonly<{ tagName?: ImageLabelTagName }>;
+export type ImageLabelOptions = Readonly<DomOptions & { tagName?: ImageLabelTagName }>;
 
 /** Properties shared by image labels and image buttons. */
 export type ImageLabelProperties = GuiObjectProperties & {
@@ -64,7 +65,7 @@ export function createImageLabel(
   assertAllowedValue(tagName, imageLabelTagNames, 'ImageLabel tagName');
   return createImageNode(
     'ImageLabel',
-    document.createElement(tagName),
+    resolveOwnerDocument(options).createElement(tagName),
     createDefaultImageProperties(),
     initialProperties,
   ) as ImageLabel;
@@ -73,8 +74,9 @@ export function createImageLabel(
 /** Creates an image node with button events. */
 export function createImageButton(
   initialProperties: Partial<ImageButtonProperties> = {},
+  options: DomOptions = {},
 ): ImageButton {
-  const element = document.createElement('button');
+  const element = resolveOwnerDocument(options).createElement('button');
   const node = createImageNode(
     'ImageButton',
     element,
@@ -124,7 +126,7 @@ function createImageNode<Properties extends ImageLabelProperties>(
   methods?: GuiMethodTable,
   canContainGuiChildren = true,
 ): GuiElement<Properties> {
-  const image = document.createElement('img');
+  const image = element.ownerDocument.createElement('img');
   image.draggable = false;
   image.decoding = 'async';
   image.referrerPolicy = 'no-referrer';
@@ -161,19 +163,20 @@ function createImageNode<Properties extends ImageLabelProperties>(
     },
     methods,
     canContainGuiChildren,
-    validateProperties: validateImageProperties,
+    validateProperties: (properties) => validateImageProperties(properties, element.ownerDocument),
   });
 }
 
 function validateImageProperties(
   properties: Readonly<ImageLabelProperties | ImageButtonProperties>,
+  ownerDocument: Document,
 ): void {
   assertString(properties.Image, 'Image');
   assertString(properties.AltText, 'AltText');
   assertUnitInterval(properties.ImageTransparency, 'ImageTransparency');
   assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
   if ('Disabled' in properties) validateButtonProperties(properties);
-  validateImageSource(properties.Image);
+  validateImageSource(properties.Image, ownerDocument);
 }
 
 function setImageSource(element: HTMLImageElement, source: string): void {
@@ -184,9 +187,9 @@ function setImageSource(element: HTMLImageElement, source: string): void {
   element.src = source;
 }
 
-function validateImageSource(source: string): void {
+function validateImageSource(source: string, ownerDocument: Document): void {
   if (!source) return;
-  const url = new URL(source, document.baseURI);
+  const url = new URL(source, ownerDocument.baseURI);
   const allowedDataImage = url.protocol === 'data:' && /^data:image\//i.test(source);
   if (!allowedImageProtocols.has(url.protocol) && !allowedDataImage) {
     throw new TypeError(`Unsupported image URL protocol "${url.protocol}".`);

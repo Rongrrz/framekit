@@ -2,9 +2,14 @@ import type { Instance, InstanceProperties } from '../node/instance';
 import { setStyle } from './styles';
 import type { TextStyleProperties } from './text-style';
 
-const textScaleRenders = new Map<HTMLElement, () => void>();
-let textScaleObserver: ResizeObserver | undefined;
-let textMeasureContext: CanvasRenderingContext2D | null | undefined;
+type ObserverState = {
+  observer: ResizeObserver;
+  observerConstructor: typeof ResizeObserver;
+  renders: Map<Element, () => void>;
+};
+
+const observerStatesByConstructor = new Map<typeof ResizeObserver, ObserverState>();
+const textMeasureContexts = new WeakMap<Document, CanvasRenderingContext2D | null>();
 
 /** Recalculates only the font size, which lets resize observers avoid repainting other styles. */
 export function renderTextSize(
@@ -25,7 +30,12 @@ export function renderTextSize(
 
   const maximumSize = Math.max(1, Math.floor(availableHeight));
   if (!properties.TextWrapped) {
-    const estimatedSize = estimateUnwrappedTextSize(properties, availableWidth, availableHeight);
+    const estimatedSize = estimateUnwrappedTextSize(
+      properties,
+      availableWidth,
+      availableHeight,
+      element.ownerDocument,
+    );
     if (estimatedSize !== undefined) {
       renderEstimatedTextSize(element, Math.min(maximumSize, estimatedSize), maximumSize);
       return;
@@ -56,24 +66,36 @@ export function bindTextScaleResize<Properties extends InstanceProperties & Text
   element: HTMLElement,
   render: () => void,
 ): void {
-  let observing = false;
+  let observerState: ObserverState | undefined;
   const setEnabled = (enabled: boolean): void => {
     if (!enabled) {
-      if (!observing) return;
-      observing = false;
-      textScaleObserver?.unobserve(element);
-      textScaleRenders.delete(element);
-      if (textScaleRenders.size === 0) {
-        textScaleObserver?.disconnect();
-        textScaleObserver = undefined;
+      if (!observerState) return;
+      observerState.observer.unobserve(element);
+      observerState.renders.delete(element);
+      if (observerState.renders.size === 0) {
+        observerState.observer.disconnect();
+        observerStatesByConstructor.delete(observerState.observerConstructor);
       }
+      observerState = undefined;
       return;
     }
-    if (observing || typeof ResizeObserver !== 'function') return;
-    observing = true;
-    textScaleRenders.set(element, render);
-    textScaleObserver ??= new ResizeObserver(renderScaledTextEntries);
-    textScaleObserver.observe(element);
+    const ResizeObserverConstructor =
+      element.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
+    if (observerState || typeof ResizeObserverConstructor !== 'function') return;
+    observerState = observerStatesByConstructor.get(ResizeObserverConstructor);
+    if (!observerState) {
+      const renders = new Map<Element, () => void>();
+      observerState = {
+        renders,
+        observerConstructor: ResizeObserverConstructor,
+        observer: new ResizeObserverConstructor((entries) =>
+          renderScaledTextEntries(entries, renders),
+        ),
+      };
+      observerStatesByConstructor.set(ResizeObserverConstructor, observerState);
+    }
+    observerState.renders.set(element, render);
+    observerState.observer.observe(element);
   };
 
   setEnabled(owner.TextScaled);
@@ -81,14 +103,16 @@ export function bindTextScaleResize<Properties extends InstanceProperties & Text
   owner.onDestroy(() => setEnabled(false));
 }
 
-function renderScaledTextEntries(entries: readonly ResizeObserverEntry[]): void {
+function renderScaledTextEntries(
+  entries: readonly ResizeObserverEntry[],
+  renders: ReadonlyMap<Element, () => void>,
+): void {
   if (entries.length === 0) {
-    for (const render of textScaleRenders.values()) render();
+    for (const render of renders.values()) render();
     return;
   }
   for (const entry of entries) {
-    if (!(entry.target instanceof HTMLElement)) continue;
-    textScaleRenders.get(entry.target)?.();
+    renders.get(entry.target)?.();
   }
 }
 
@@ -123,8 +147,13 @@ function estimateUnwrappedTextSize(
   properties: Readonly<TextStyleProperties>,
   availableWidth: number,
   availableHeight: number,
+  ownerDocument: Document,
 ): number | undefined {
-  textMeasureContext ??= document.createElement('canvas').getContext('2d');
+  let textMeasureContext = textMeasureContexts.get(ownerDocument);
+  if (textMeasureContext === undefined) {
+    textMeasureContext = ownerDocument.createElement('canvas').getContext('2d');
+    textMeasureContexts.set(ownerDocument, textMeasureContext);
+  }
   if (!textMeasureContext) return;
 
   const measurementSize = 100;

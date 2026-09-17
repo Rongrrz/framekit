@@ -1,4 +1,9 @@
 import { DestroyService } from '../destroy-service';
+import {
+  createRealmAbortController,
+  resolveOwnerDocument,
+  type DomOptions,
+} from '../dom/environment';
 import { setStyle } from '../dom/styles';
 import {
   type AutomaticSize,
@@ -27,7 +32,7 @@ export type ScrollingDirection = 'X' | 'Y' | 'XY';
 export type ScrollingFrameTagName = (typeof scrollingFrameTagNames)[number];
 
 /** Creation-only options for a scrolling frame's native element. */
-export type ScrollingFrameOptions = Readonly<{ tagName?: ScrollingFrameTagName }>;
+export type ScrollingFrameOptions = Readonly<DomOptions & { tagName?: ScrollingFrameTagName }>;
 
 /** Frame properties plus controlled scroll position and direction. */
 export type ScrollingFrameProperties = GuiObjectProperties & {
@@ -116,8 +121,9 @@ export function createScrollingFrame(
 ): ScrollingFrame {
   const tagName = options.tagName ?? 'div';
   assertAllowedValue(tagName, scrollingFrameTagNames, 'ScrollingFrame tagName');
-  const element = document.createElement(tagName);
-  const canvasBounds = document.createElement('div');
+  const ownerDocument = resolveOwnerDocument(options);
+  const element = ownerDocument.createElement(tagName);
+  const canvasBounds = ownerDocument.createElement('div');
 
   canvasBounds.dataset.framekitCanvasBounds = '';
   canvasBounds.setAttribute('aria-hidden', 'true');
@@ -131,7 +137,7 @@ export function createScrollingFrame(
   element.append(canvasBounds);
   element.style.overscrollBehavior = 'none';
   element.tabIndex = 0;
-  ensureScrollbarStyles(document);
+  ensureScrollbarStyles(ownerDocument);
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
   // position accepted by the browser after each FrameKit write so those events can be ignored.
   let lastRenderedCanvasPosition = readCanvasPosition(element);
@@ -223,7 +229,7 @@ export function createScrollingFrame(
     setNodeProperties(node, { CanvasPosition: browserPosition });
   };
 
-  const listenerController = new AbortController();
+  const listenerController = createRealmAbortController(element);
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
   element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
 

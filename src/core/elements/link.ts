@@ -1,4 +1,9 @@
 import { DestroyService } from '../destroy-service';
+import {
+  createRealmAbortController,
+  resolveOwnerDocument,
+  type DomOptions,
+} from '../dom/environment';
 import { assertAllowedValue, assertString } from '../internal/validation';
 import { emitNodeEvent } from '../node/events';
 import { guiEventKeys, linkEventMethods, type ClickEventMethods } from '../node/gui-events';
@@ -32,8 +37,11 @@ const linkTargets = ['_self', '_blank', '_parent', '_top'] as const;
 const allowedLinkProtocols = new Set(['http:', 'https:', 'mailto:', 'tel:', 'blob:']);
 
 /** Creates a native anchor whose navigation attributes remain property-driven. */
-export function createLink(initialProperties: Partial<LinkProperties> = {}): Link {
-  const element = document.createElement('a');
+export function createLink(
+  initialProperties: Partial<LinkProperties> = {},
+  options: DomOptions = {},
+): Link {
+  const element = resolveOwnerDocument(options).createElement('a');
   const node = createTextNode(
     'Link',
     element,
@@ -60,11 +68,11 @@ export function createLink(initialProperties: Partial<LinkProperties> = {}): Lin
       }
     },
     linkEventMethods,
-    validateLinkProperties,
+    (properties) => validateLinkProperties(properties, element.ownerDocument),
     false,
   ) as Link;
 
-  const listenerController = new AbortController();
+  const listenerController = createRealmAbortController(element);
   element.addEventListener('click', (event) => emitNodeEvent(node, guiEventKeys.click, event), {
     signal: listenerController.signal,
   });
@@ -72,18 +80,21 @@ export function createLink(initialProperties: Partial<LinkProperties> = {}): Lin
   return node;
 }
 
-function validateLinkProperties(properties: Readonly<LinkProperties>): void {
+function validateLinkProperties(
+  properties: Readonly<LinkProperties>,
+  ownerDocument: Document,
+): void {
   assertString(properties.Href, 'Href');
   assertAllowedValue(properties.Target, linkTargets, 'Target');
   assertString(properties.Rel, 'Rel');
   assertString(properties.Download, 'Download');
   assertString(properties.AccessibleLabel, 'AccessibleLabel');
-  validateLinkDestination(properties.Href);
+  validateLinkDestination(properties.Href, ownerDocument);
 }
 
-function validateLinkDestination(href: string): void {
+function validateLinkDestination(href: string, ownerDocument: Document): void {
   if (!href) return;
-  const url = new URL(href, document.baseURI);
+  const url = new URL(href, ownerDocument.baseURI);
   if (!allowedLinkProtocols.has(url.protocol)) {
     throw new TypeError(`Unsupported link URL protocol "${url.protocol}".`);
   }

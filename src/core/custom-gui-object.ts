@@ -1,3 +1,4 @@
+import { resolveOwnerDocument } from './dom/environment';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
@@ -23,6 +24,8 @@ export type GuiObjectDefinition<Properties extends object> = {
   defaultGuiProperties?: Partial<Omit<GuiObjectProperties, 'Name'>>;
   /** Creates the backing element. Defaults to a div. */
   createElement?: () => HTMLElement;
+  /** Document used by the default element factory. Ignored when createElement is supplied. */
+  ownerDocument?: Document;
   /** Applies the current custom properties to the backing element. */
   applyProperties?: (
     element: HTMLElement,
@@ -47,7 +50,8 @@ export function defineGuiObject<Properties extends object>(
   const className = definition.className;
   const defaultProperties = Object.freeze({ ...definition.defaultProperties });
   const defaultGuiProperties = Object.freeze({ ...definition.defaultGuiProperties });
-  const createElement = definition.createElement ?? (() => document.createElement('div'));
+  const createElement =
+    definition.createElement ?? (() => resolveOwnerDocument(definition).createElement('div'));
   const applyProperties = definition.applyProperties;
   const validate = definition.validate;
 

@@ -28,6 +28,13 @@ function append(parent: Instance, child: Instance): void {
   if (parentState.kind === 'gui' && isGuiNode(child) && !parentState.canContainGuiChildren) {
     throw new TypeError(`${parentState.properties.Name} cannot contain GUI children.`);
   }
+  if (
+    isGuiNode(parent) &&
+    isGuiNode(child) &&
+    parent.unsafeElement.ownerDocument !== child.unsafeElement.ownerDocument
+  ) {
+    throw new TypeError('GUI parent and child must belong to the same document.');
+  }
   if (childState.kind === 'style') {
     childState.validateTarget?.(childState.properties, getModifierTarget(parentState));
   }

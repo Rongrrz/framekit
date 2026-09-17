@@ -371,6 +371,8 @@ FrameKit treats caller-provided text as text, never HTML. Image sources accept o
 
 `GuiElement.unsafeElement` is an intentional low-level escape hatch for integrations FrameKit does not cover. Do not use it to change hierarchy or FrameKit-owned inline styles: those mutations bypass node state and may be overwritten by the next property render. Event listeners, browser APIs, and application-owned attributes are appropriate uses.
 
+DOM factories accept `{ ownerDocument }` as a creation-only second argument, alongside any tag option. Use the same document for a GUI tree and its mount target; FrameKit rejects cross-document reparenting rather than silently adopting DOM without its styles and listeners. Selector mounts resolve in the GUI's own document.
+
 ## Playground and development
 
 The playground is a complete, long-form FrameKit product page built with FrameKit itself. It demonstrates composition, scale/offset `UDim2` layout, modifiers, shared values, input, spring motion, tweens, scrolling, and lifecycle patterns.
