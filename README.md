@@ -345,25 +345,22 @@ function show(panel: fk.Frame): void {
 
 Internal validation and error plumbing live under `core/internal`; they are implementation details rather than a secondary public entry point. Package consumers should import only from `framekit`.
 
-## Custom GUI classes
+## Reusable UI factories
 
-`defineGuiObject()` is the supported extension point when an application needs a reusable node type. It returns an ordinary factory; created objects use the same properties, hierarchy, geometry, events, and lifecycle as built-in nodes.
+Compose built-in nodes in ordinary functions. Return the parts that callers need to update; destroying the root destroys its owned descendants.
 
 ```ts
-const createBadge = fk.defineGuiObject({
-  className: 'Badge',
-  defaultProperties: { Label: 'New' },
-  applyProperties(element, properties) {
-    element.textContent = properties.Label;
-  },
-});
+function createBadge(text: string) {
+  const frame = fk.createFrame({ Name: 'Badge' });
+  const label = fk.createTextLabel({ Text: text, Size: fk.udim2FromScale(1, 1) });
+  frame.addChild(label);
+  return { frame, label };
+}
 
-const badge = createBadge({ Label: 'Featured' });
-badge.Label = 'Updated';
-badge.Parent = panel;
+const badge = createBadge('Featured');
+badge.label.Text = 'Updated';
+badge.frame.Parent = panel;
 ```
-
-Use `defaultGuiProperties` to customize inherited defaults such as `Size`, and `validate` when custom properties have runtime constraints. Defining a class does not introduce components, rerenders, or a separate lifecycle.
 
 ## Safety boundaries
 

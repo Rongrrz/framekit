@@ -16,7 +16,7 @@ describe('package API', () => {
     expect(typeof fk.createValue).toBe('function');
     expect(typeof fk.createUIGradient).toBe('function');
     expect(typeof fk.createUITextStroke).toBe('function');
-    expect(typeof fk.defineGuiObject).toBe('function');
+    expect(fk).not.toHaveProperty('defineGuiObject');
 
     expect(typeof fka.createTween).toBe('function');
     expect(typeof fka.spring).toBe('function');

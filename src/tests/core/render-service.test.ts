@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createDefaultGuiObjectProperties, createGuiObjectNode } from '../../core/gui-object';
 import { createLayoutModifier, createStyleModifier } from '../../core/node/modifier';
 import { fk } from '../../index';
 import { resetDocumentAfterEach } from '../support/reset-document';
@@ -37,12 +38,13 @@ describe('composing base and modifier styles', () => {
 
   it('reconciles modifiers without replaying base property renderers', () => {
     const applyProperties = vi.fn();
-    const createTrackedNode = fk.defineGuiObject({
+    const node = createGuiObjectNode({
       className: 'TrackedNode',
-      defaultProperties: { Value: 1 },
-      applyProperties,
+      element: document.createElement('div'),
+      defaultProperties: { ...createDefaultGuiObjectProperties(), Value: 1 },
+      initialProperties: {},
+      renderProperties: applyProperties,
     });
-    const node = createTrackedNode();
     const corner = fk.createUICorner({ CornerRadius: 8 });
 
     expect(applyProperties).toHaveBeenCalledOnce();

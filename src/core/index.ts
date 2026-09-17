@@ -3,8 +3,6 @@ export type { Frame, FrameOptions, FrameProperties, FrameTagName } from './eleme
 export type { DomOptions } from './dom/environment';
 export { installStyles } from './dom/stylesheet';
 export type { StyleOptions } from './dom/stylesheet';
-export { defineGuiObject } from './custom-gui-object';
-export type { GuiObjectConstructor, GuiObjectDefinition } from './custom-gui-object';
 export type { AutomaticSize, GuiObject, GuiObjectProperties } from './gui-object';
 
 export { createImageButton, createImageLabel } from './elements/image';

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { createDefaultGuiObjectProperties, createGuiObjectNode } from '../../../core/gui-object';
 import { fk } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
 
@@ -72,11 +73,12 @@ describe('gradients', () => {
   });
 
   it('does not infer text support from custom property names', () => {
-    const createTextLikeNode = fk.defineGuiObject({
+    const textLikeNode = createGuiObjectNode({
       className: 'TextLikeNode',
-      defaultProperties: { Text: 'not a text renderer' },
+      element: document.createElement('div'),
+      defaultProperties: { ...createDefaultGuiObjectProperties(), Text: 'not a text renderer' },
+      initialProperties: {},
     });
-    const textLikeNode = createTextLikeNode();
     const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
 
     expect(() => textLikeNode.addChild(gradient)).toThrow(/TextLabel or TextButton/);

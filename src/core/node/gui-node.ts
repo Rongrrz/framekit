@@ -87,16 +87,6 @@ export function createGuiNode<Properties extends InstanceProperties>({
 const guiMethodTables = new WeakMap<object, object>();
 const guiNodeMethods = createGuiNodeMethods();
 
-/** Property names reserved by every public GUI handle. */
-export const guiNodeMemberNames = Object.freeze([
-  ...new Set([
-    ...Object.getOwnPropertyNames(nodeMethods),
-    ...Object.getOwnPropertyNames(guiNodeMethods),
-    ...Object.keys(guiEventMethods),
-    'unsafeElement',
-  ]),
-]);
-
 function getGuiMethodTable(methods: GuiMethodTable): object {
   const existing = guiMethodTables.get(methods);
   if (existing) return existing;

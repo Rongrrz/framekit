@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createStyleModifier } from '../../../core/node/modifier';
 import { fk } from '../../../index';
 
 describe('node properties', () => {
@@ -34,6 +35,23 @@ describe('node properties', () => {
     expect(frame.Rotation).toBe(0);
     expect(frame.ZIndex).toBe(1);
     expect(frame.unsafeElement.style.getPropertyValue('rotate')).toBe('0deg');
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('restores committed state and rendering when a derived renderer rejects an update', () => {
+    const frame = fk.createFrame({ Name: 'Ready' });
+    const changed = vi.fn();
+    const modifier = createStyleModifier('Fragile', { Name: 'Fragile' }, (_, target) => {
+      if (target.properties.Name === 'Rejected') throw new Error('render failed');
+      return { 'border-radius': '4px' };
+    });
+
+    frame.addChild(modifier);
+    frame.onPropertyChanged('Name', changed);
+
+    expect(() => (frame.Name = 'Rejected')).toThrow(/render failed/);
+    expect(frame.Name).toBe('Ready');
+    expect(frame.unsafeElement.style.borderRadius).toBe('4px');
     expect(changed).not.toHaveBeenCalled();
   });
 
