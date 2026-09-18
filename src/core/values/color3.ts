@@ -29,7 +29,7 @@ export function color3FromHex(hex: string): Color3 {
 
 /** Converts a color and Roblox-style transparency to a CSS color string. */
 export function color3ToCss(value: Color3, transparency = 0): string {
-  const alpha = 1 - clamp(transparency, 0, 1);
+  const alpha = 1 - transparency;
   return `rgb(${value.R} ${value.G} ${value.B} / ${alpha})`;
 }
 

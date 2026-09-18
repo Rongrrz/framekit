@@ -1,3 +1,4 @@
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
 import { assertAllowedValue } from '../internal/validation';
 import {
   createDefaultTextControlProperties,
@@ -28,8 +29,11 @@ const nativeInputTypes = {
 } as const satisfies Record<TextInputType, string>;
 
 /** Creates a native single-line text input. */
-export function createTextInput(initialProperties: Partial<TextInputProperties> = {}): TextInput {
-  const element = document.createElement('input');
+export function createTextInput(
+  initialProperties: Partial<TextInputProperties> = {},
+  options: DomOptions = {},
+): TextInput {
+  const element = resolveOwnerDocument(options).createElement('input');
   return createTextControl({
     className: 'TextInput',
     element,

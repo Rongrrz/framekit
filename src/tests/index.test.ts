@@ -16,25 +16,24 @@ describe('package API', () => {
     expect(typeof fk.createValue).toBe('function');
     expect(typeof fk.createUIGradient).toBe('function');
     expect(typeof fk.createUITextStroke).toBe('function');
-    expect(typeof fk.defineGuiObject).toBe('function');
+    expect(fk).not.toHaveProperty('defineGuiObject');
 
-    expect(typeof fka.TweenService.create).toBe('function');
-    expect(typeof fk.spring).toBe('function');
-    expect(Object.isFrozen(fka.TweenService)).toBe(true);
-    expect(fka.TweenService).not.toHaveProperty('spring');
-    expect(fka).not.toHaveProperty('createTween');
-    expect(fka).not.toHaveProperty('spring');
+    expect(typeof fka.createTween).toBe('function');
+    expect(typeof fka.spring).toBe('function');
+    expect(fka).not.toHaveProperty('TweenService');
     expect(fka).not.toHaveProperty('SpringService');
     expect(fka).not.toHaveProperty('createMotion');
     expect(fka).not.toHaveProperty('tweenInfo');
 
     expect(typeof fkh.bindHoverScale).toBe('function');
-    expect(typeof fkh.createAutoYScrollingFrame).toBe('function');
-    expect(typeof fkh.setModifierAttached).toBe('function');
+    expect(typeof fkh.bindResponsiveLayout).toBe('function');
+    expect(fkh).not.toHaveProperty('createAutoYScrollingFrame');
+    expect(fkh).not.toHaveProperty('setModifierAttached');
     expect(fkh).not.toHaveProperty('createSpringModifierToggle');
     expect(fk).not.toHaveProperty('createUIGlow');
 
     expect(fka).not.toHaveProperty('createFrame');
+    expect(fk).not.toHaveProperty('spring');
   });
 
   it('keeps the core API object-centric', () => {
@@ -55,9 +54,11 @@ describe('package API', () => {
     expect(frame.Name).toBe('Shop');
 
     expect(typeof frame.setProperties).toBe('function');
-    expect(typeof frame.addChild).toBe('function');
+    expect(frame).not.toHaveProperty('addChild');
+    expect(frame).not.toHaveProperty('removeFromParent');
     expect(typeof frame.getDescendants).toBe('function');
-    expect(typeof frame.printTree).toBe('function');
+    expect(frame).not.toHaveProperty('printTree');
+    expect(frame).not.toHaveProperty('watch');
     expect(typeof frame.destroy).toBe('function');
 
     expect(fk).not.toHaveProperty('append');

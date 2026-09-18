@@ -62,25 +62,23 @@ export const createHomePage = (
     desktop: { Size: fk.udim2FromOffset(620, 94), Position: fk.udim2FromOffset(0, 86) },
     mobile: { Size: fk.udim2FromOffset(358, 70), Position: fk.udim2FromOffset(0, 58) },
   });
-  product.addChild(
-    fk.createUIGradient({
-      ApplyTo: 'Text',
-      Color: fk.colorSequence(
-        { Time: 0, Value: fk.color3FromHex('#76edad') },
-        { Time: 0.45, Value: fk.color3FromHex('#70b2ff') },
-        { Time: 0.85, Value: fk.color3FromHex('#af8eff') },
-        { Time: 1, Value: fk.color3FromHex('#af8eff') },
-      ),
-      Rotation: 10,
-    }),
-  );
+  fk.createUIGradient({
+    ApplyTo: 'Text',
+    Color: fk.colorSequence(
+      { Time: 0, Value: fk.color3FromHex('#76edad') },
+      { Time: 0.45, Value: fk.color3FromHex('#70b2ff') },
+      { Time: 0.85, Value: fk.color3FromHex('#af8eff') },
+      { Time: 1, Value: fk.color3FromHex('#af8eff') },
+    ),
+    Rotation: 10,
+  }).Parent = product;
   const productStroke = fk.createUITextStroke({
     Color: themeColor(theme, 'border'),
     Transparency: 0,
     Thickness: 5,
   });
   bindThemeColors(productStroke, theme, (palette) => ({ Color: palette.border }));
-  product.addChild(productStroke);
+  productStroke.Parent = product;
   const title = createText(theme, {
     text: 'Typed UI objects\nfor the web',
     size: fk.udim2FromOffset(650, 150),
@@ -147,8 +145,8 @@ export const createHomePage = (
   start.onClick(() => navigate('guide'));
   api.onClick(() => navigate('api'));
   install.onClick(() => void copyCommand(install, 'npm i framekit', 'COPY  npm i framekit'));
-  for (const child of [product, title, body, start, api, install]) content.addChild(child);
-  content.addChild(createHomeVisual(layout, theme));
+  for (const child of [product, title, body, start, api, install]) child.Parent = content;
+  createHomeVisual(layout, theme).Parent = content;
 
   for (const [index, [icon, title, description, accent]] of features.entries()) {
     const card = createFeatureCard(theme, icon, title, description, accent);
@@ -162,7 +160,7 @@ export const createHomePage = (
         Position: fk.udim2FromOffset((index % 2) * 187, 974 + Math.floor(index / 2) * 294),
       },
     });
-    content.addChild(card);
+    card.Parent = content;
   }
   const source = createButton(theme, {
     label: 'SOURCE  🔗',
@@ -179,8 +177,8 @@ export const createHomePage = (
     desktop: { Position: fk.udim2FromOffset(0, 1040) },
     mobile: { Position: fk.udim2FromOffset(0, 1570) },
   });
-  content.addChild(source);
-  page.addChild(content);
+  source.Parent = content;
+  content.Parent = page;
   return page;
 };
 
@@ -198,22 +196,20 @@ const createHomeVisual = (layout: fk.Value<PlaygroundLayout>, theme: ThemeValue)
     BlurRadius: 90,
   });
   bindThemeColors(glow, theme, (palette) => ({ Color: palette.blue }));
-  visual.addChild(glow);
+  glow.Parent = visual;
   bindLayoutProperties(visual, layout, visual, {
     desktop: { Size: fk.udim2FromOffset(440, 430), Position: fk.udim2FromOffset(776, 88) },
     mobile: { Size: fk.udim2FromOffset(358, 370), Position: fk.udim2FromOffset(0, 568) },
   });
-  visual.addChild(
-    createText(theme, {
-      text: 'APP.TS',
-      size: fk.udim2FromOffset(120, 26),
-      position: fk.udim2FromOffset(22, 18),
-      color: 'textFaint',
-      textSize: typeScale.caption,
-      font: fonts.mono,
-      weight: 800,
-    }),
-  );
+  createText(theme, {
+    text: 'APP.TS',
+    size: fk.udim2FromOffset(120, 26),
+    position: fk.udim2FromOffset(22, 18),
+    color: 'textFaint',
+    textSize: typeScale.caption,
+    font: fonts.mono,
+    weight: 800,
+  }).Parent = visual;
   appendCodeLines(
     visual,
     theme,
@@ -241,20 +237,18 @@ const createHomeVisual = (layout: fk.Value<PlaygroundLayout>, theme: ThemeValue)
     desktop: { Size: fk.udim2(1, -44, 0, 90), Position: fk.udim2FromOffset(22, 318) },
     mobile: { Size: fk.udim2(1, -44, 0, 68), Position: fk.udim2FromOffset(22, 284) },
   });
-  result.addChild(
-    createText(theme, {
-      text: '🌳  ScreenGui  /  Card',
-      size: fk.udim2(1, -28, 1, -20),
-      position: fk.udim2FromOffset(14, 10),
-      color: 'accent',
-      textSize: typeScale.code,
-      scaled: true,
-      font: fonts.mono,
-      weight: 800,
-      xAlignment: 'Center',
-    }),
-  );
-  visual.addChild(result);
+  createText(theme, {
+    text: '🌳  ScreenGui  /  Card',
+    size: fk.udim2(1, -28, 1, -20),
+    position: fk.udim2FromOffset(14, 10),
+    color: 'accent',
+    textSize: typeScale.code,
+    scaled: true,
+    font: fonts.mono,
+    weight: 800,
+    xAlignment: 'Center',
+  }).Parent = result;
+  result.Parent = visual;
   return visual;
 };
 
@@ -270,35 +264,29 @@ const createFeatureCard = (
     background: 'surface',
     radius: 16,
   });
-  card.addChild(
-    createText(theme, {
-      text: icon,
-      size: fk.udim2FromOffset(44, 44),
-      position: fk.udim2FromOffset(20, 18),
-      textSize: 24,
-      xAlignment: 'Center',
-    }),
-  );
-  card.addChild(
-    createText(theme, {
-      text: title,
-      size: fk.udim2(1, -40, 0, 38),
-      position: fk.udim2FromOffset(20, 78),
-      color: accent,
-      textSize: typeScale.subsection,
-      weight: 800,
-    }),
-  );
-  card.addChild(
-    createText(theme, {
-      text: body,
-      size: fk.udim2(1, -40, 0, 92),
-      position: fk.udim2FromOffset(20, 120),
-      color: 'textMuted',
-      textSize: typeScale.small,
-      wrapped: true,
-      yAlignment: 'Top',
-    }),
-  );
+  createText(theme, {
+    text: icon,
+    size: fk.udim2FromOffset(44, 44),
+    position: fk.udim2FromOffset(20, 18),
+    textSize: 24,
+    xAlignment: 'Center',
+  }).Parent = card;
+  createText(theme, {
+    text: title,
+    size: fk.udim2(1, -40, 0, 38),
+    position: fk.udim2FromOffset(20, 78),
+    color: accent,
+    textSize: typeScale.subsection,
+    weight: 800,
+  }).Parent = card;
+  createText(theme, {
+    text: body,
+    size: fk.udim2(1, -40, 0, 92),
+    position: fk.udim2FromOffset(20, 120),
+    color: 'textMuted',
+    textSize: typeScale.small,
+    wrapped: true,
+    yAlignment: 'Top',
+  }).Parent = card;
   return card;
 };

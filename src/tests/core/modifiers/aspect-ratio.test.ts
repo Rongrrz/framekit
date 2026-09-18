@@ -10,32 +10,32 @@ describe('UI aspect ratio constraints', () => {
     const frame = fk.createFrame({ Size: fk.udim2FromOffset(200, 100) });
     const constraint = fk.createUIAspectRatioConstraint();
 
-    frame.addChild(constraint);
+    constraint.Parent = frame;
 
     expect(constraint).toMatchObject({
       AspectRatio: 1,
       AspectType: 'FitWithinMaxSize',
       DominantAxis: 'Width',
     });
-    expect(frame.element.style.aspectRatio).toBe('1 / 1');
-    expect(frame.element.style.width).toBe('200px');
-    expect(frame.element.style.height).toBe('auto');
-    expect(frame.element.style.maxWidth).toBe('200px');
-    expect(frame.element.style.maxHeight).toBe('100px');
+    expect(frame.unsafeElement.style.aspectRatio).toBe('1 / 1');
+    expect(frame.unsafeElement.style.width).toBe('200px');
+    expect(frame.unsafeElement.style.height).toBe('auto');
+    expect(frame.unsafeElement.style.maxWidth).toBe('200px');
+    expect(frame.unsafeElement.style.maxHeight).toBe('100px');
 
     constraint.setProperties({ AspectRatio: 2, DominantAxis: 'Height' });
 
-    expect(frame.element.style.aspectRatio).toBe('2 / 1');
-    expect(frame.element.style.width).toBe('auto');
-    expect(frame.element.style.height).toBe('100px');
+    expect(frame.unsafeElement.style.aspectRatio).toBe('2 / 1');
+    expect(frame.unsafeElement.style.width).toBe('auto');
+    expect(frame.unsafeElement.style.height).toBe('100px');
 
-    constraint.removeFromParent();
+    constraint.Parent = undefined;
 
-    expect(frame.element.style.aspectRatio).toBe('');
-    expect(frame.element.style.maxWidth).toBe('');
-    expect(frame.element.style.maxHeight).toBe('');
-    expect(frame.element.style.width).toBe('200px');
-    expect(frame.element.style.height).toBe('100px');
+    expect(frame.unsafeElement.style.aspectRatio).toBe('');
+    expect(frame.unsafeElement.style.maxWidth).toBe('');
+    expect(frame.unsafeElement.style.maxHeight).toBe('');
+    expect(frame.unsafeElement.style.width).toBe('200px');
+    expect(frame.unsafeElement.style.height).toBe('100px');
   });
 
   it('can scale from its parent while maintaining the ratio', () => {
@@ -46,20 +46,16 @@ describe('UI aspect ratio constraints', () => {
       DominantAxis: 'Height',
     });
 
-    frame.addChild(constraint);
+    constraint.Parent = frame;
 
-    expect(frame.element.style.aspectRatio).toBe(`${16 / 9} / 1`);
-    expect(frame.element.style.width).toBe('auto');
-    expect(frame.element.style.height).toBe('100%');
-    expect(frame.element.style.maxWidth).toBe('100%');
-    expect(frame.element.style.maxHeight).toBe('100%');
+    expect(frame.unsafeElement.style.aspectRatio).toBe(`${16 / 9} / 1`);
+    expect(frame.unsafeElement.style.width).toBe('auto');
+    expect(frame.unsafeElement.style.height).toBe('100%');
+    expect(frame.unsafeElement.style.maxWidth).toBe('100%');
+    expect(frame.unsafeElement.style.maxHeight).toBe('100%');
   });
 
-  it('falls back to a square for invalid ratios', () => {
-    const frame = fk.createFrame();
-
-    frame.addChild(fk.createUIAspectRatioConstraint({ AspectRatio: 0 }));
-
-    expect(frame.element.style.aspectRatio).toBe('1 / 1');
+  it('rejects non-positive ratios', () => {
+    expect(() => fk.createUIAspectRatioConstraint({ AspectRatio: 0 })).toThrow(/positive finite/);
   });
 });

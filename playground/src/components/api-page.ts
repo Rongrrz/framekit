@@ -98,11 +98,11 @@ export const createApiPage = (
     [
       { text: 'node.setProperties(patch)' },
       { text: "node.onPropertyChanged('Visible', listener)" },
-      { text: 'node.addChild(child)' },
-      { text: 'node.removeFromParent()' },
+      { text: 'child.Parent = node' },
+      { text: 'node.Parent = undefined' },
       { text: 'node.getChildren() / getDescendants()' },
       { text: "node.findFirstChild('Name', true)" },
-      { text: 'node.watch(value, listener)', color: 'blue' },
+      { text: "child.isA('TextButton')", color: 'blue' },
       { text: 'node.destroy() / isDestroyed()', color: 'orange' },
     ],
     870,
@@ -192,7 +192,7 @@ export const createApiPage = (
       { text: 'const value = fk.createValue(initial);', color: 'purple' },
       { text: 'value.get()' },
       { text: 'value.set(next)' },
-      { text: 'owner.watch(value, listener)', color: 'accent' },
+      { text: 'owner.onDestroy(value.onChange(listener))', color: 'accent' },
       { text: '' },
       { text: 'const event = fk.createSignal<[number]>();' },
       { text: 'event.subscribe(listener)' },
@@ -234,14 +234,14 @@ export const createApiPage = (
     theme,
     'AnimationApiCode',
     [
-      { text: 'const tween = fka.TweenService.create(card, {' },
+      { text: 'const tween = fka.createTween(card, {' },
       { text: '  Duration: 0.3,' },
       { text: "  EasingStyle: 'Quad'," },
       { text: '}, { Rotation: 12 });' },
       { text: 'tween.play();', color: 'blue' },
       { text: '' },
-      { text: 'fk.spring(card, { Rotation: 0 });', color: 'purple' },
-      { text: "fk.spring(card).stop('Rotation');" },
+      { text: 'fka.spring(card, { Rotation: 0 });', color: 'purple' },
+      { text: "fka.spring(card).stop('Rotation');" },
     ],
     4390,
     260,
@@ -266,9 +266,7 @@ export const createApiPage = (
     'HelpersApiCode',
     [
       { text: 'fkh.bindResponsiveLayout(owner, options)' },
-      { text: 'fkh.bindHoverScale(node, 1.035)' },
-      { text: 'fkh.createAutoYScrollingFrame({ viewportHeight: fk.udim(1, -64), gap: 12 })' },
-      { text: 'fkh.setModifierAttached(modifier, true)' },
+      { text: 'fkh.bindHoverScale(node, scale, 1.035)' },
     ],
     4942,
     154,
@@ -284,9 +282,8 @@ const appendReferenceCards = (
   startY: number,
 ): void => {
   for (const [index, [name, description, color]] of items.entries()) {
-    parent.addChild(
-      createReferenceCard(layout, theme, name, description, color, startY + index * 82),
-    );
+    createReferenceCard(layout, theme, name, description, color, startY + index * 82).Parent =
+      parent;
   }
 };
 
@@ -330,7 +327,7 @@ const createReferenceCard = (
     desktop: { Size: fk.udim2(1, -226, 1, -20), Position: fk.udim2FromOffset(208, 10) },
     mobile: { Size: fk.udim2(1, -174, 1, -16), Position: fk.udim2FromOffset(164, 8) },
   });
-  card.addChild(title);
-  card.addChild(body);
+  title.Parent = card;
+  body.Parent = card;
   return card;
 };

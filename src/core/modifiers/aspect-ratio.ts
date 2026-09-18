@@ -1,5 +1,5 @@
 import type { GuiObjectProperties } from '../gui-object';
-import { assertAllowedValue, assertFiniteNumber } from '../internal/validation';
+import { assertAllowedValue, assertPositiveFinite } from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
 import {
   createStyleModifier,
@@ -56,8 +56,7 @@ function resolveAspectRatio(
   properties: Readonly<UIAspectRatioConstraintProperties>,
   target: ModifierTarget,
 ): Styles {
-  const aspectRatio = properties.AspectRatio > 0 ? properties.AspectRatio : 1;
-  const styles: Record<string, string> = { 'aspect-ratio': `${aspectRatio} / 1` };
+  const styles: Record<string, string> = { 'aspect-ratio': `${properties.AspectRatio} / 1` };
 
   if (properties.AspectType === 'ScaleWithParentSize') {
     return {
@@ -87,5 +86,5 @@ function validateAspectRatioProperties(
 ): void {
   assertAllowedValue(properties.AspectType, aspectTypes, 'AspectType');
   assertAllowedValue(properties.DominantAxis, dominantAxes, 'DominantAxis');
-  assertFiniteNumber(properties.AspectRatio, 'AspectRatio');
+  assertPositiveFinite(properties.AspectRatio, 'AspectRatio');
 }

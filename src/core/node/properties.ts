@@ -1,6 +1,6 @@
-import { throwCollectedErrors } from '../internal/errors';
+import { snapshotPropertyValue } from '../internal/snapshot';
 import { assertString } from '../internal/validation';
-import { RenderService } from '../render-service';
+import * as rendering from '../render';
 import type { Unsubscribe } from '../state/signal';
 import { emitNodeEvent, subscribeToNodeEvent } from './events';
 import type { Instance, InstanceProperties } from './instance';
@@ -23,20 +23,15 @@ export function setNodeProperties<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
 ): void {
-  const requestedProperties = Object.keys(patch) as (keyof Properties)[];
-  const commit = commitPropertyPatch(node, patch, requestedProperties);
-  const errors: unknown[] = [];
+  const propertySnapshot = snapshotPropertyValue(patch);
+  const requestedProperties = Object.keys(propertySnapshot) as (keyof Properties)[];
+  const commit = commitPropertyPatch(node, propertySnapshot, requestedProperties);
 
   for (const property of requestedProperties) {
-    try {
-      emitNodeEvent(node, getPropertyWriteEventKey(property), patch[property]);
-    } catch (error) {
-      errors.push(error);
-    }
+    emitNodeEvent(node, getPropertyWriteEventKey(property), propertySnapshot[property]);
   }
 
-  if (commit) emitPropertyChanges(node, commit, errors);
-  throwCollectedErrors(errors, 'Multiple property callbacks failed.');
+  if (commit) emitPropertyChanges(node, commit);
 }
 
 /** Observes every successful write, including writes that keep the current value. */
@@ -89,6 +84,18 @@ export function getNodeProperty<
   return getActiveNodeState(node).properties[property];
 }
 
+/** Validates a property patch without committing it or notifying observers. */
+export function validateNodeProperties<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
+  patch: Partial<Properties>,
+): void {
+  const state = getActiveNodeState(node);
+  validatePropertyPatch(state.properties, patch);
+  const nextProperties = { ...state.properties, ...patch };
+  state.validateProperties?.(nextProperties);
+  validateModifierRelationships(state, nextProperties);
+}
+
 function getPropertyWriteEventKey(property: PropertyKey): symbol {
   const existing = propertyWriteEventKeys.get(property);
   if (existing) return existing;
@@ -103,7 +110,7 @@ export function mergeProperties<Properties extends InstanceProperties>(
   initialProperties: Partial<Properties>,
 ): Properties {
   validatePropertyPatch(defaultProperties, initialProperties);
-  return { ...defaultProperties, ...initialProperties };
+  return snapshotPropertyValue({ ...defaultProperties, ...initialProperties });
 }
 
 /** Rejects unknown, missing, and non-finite property values. */
@@ -133,7 +140,7 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   requestedProperties: readonly (keyof Properties)[],
 ): PropertyCommit<Properties> | undefined {
   const state = getActiveNodeState(node);
-  validatePropertyPatch(state.properties, patch);
+  validateNodeProperties(node, patch);
 
   const previousProperties = state.properties;
   const changedProperties = new Set(
@@ -144,15 +151,13 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   if (changedProperties.size === 0) return;
 
   const nextProperties = { ...state.properties, ...patch };
-  state.validateProperties?.(nextProperties);
-  validateModifierRelationships(state, nextProperties);
   state.properties = nextProperties;
   try {
-    RenderService.renderPropertyChanges(node, changedProperties);
+    rendering.renderPropertyChanges(node, changedProperties);
   } catch (error) {
     state.properties = previousProperties;
     try {
-      RenderService.renderPropertyChanges(node, changedProperties);
+      rendering.renderPropertyChanges(node, changedProperties);
     } catch (rollbackError) {
       throw new AggregateError(
         [error, rollbackError],
@@ -162,7 +167,7 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
     throw error;
   }
 
-  return { previousProperties, nextProperties, changedProperties };
+  return { previousProperties, nextProperties: state.properties, changedProperties };
 }
 
 function validateModifierRelationships<Properties extends InstanceProperties>(
@@ -192,18 +197,13 @@ function validateModifierRelationships<Properties extends InstanceProperties>(
 function emitPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   commit: PropertyCommit<Properties>,
-  errors: unknown[],
 ): void {
   for (const property of commit.changedProperties) {
-    try {
-      emitNodeEvent(
-        node,
-        property,
-        commit.nextProperties[property],
-        commit.previousProperties[property],
-      );
-    } catch (error) {
-      errors.push(error);
-    }
+    emitNodeEvent(
+      node,
+      property,
+      commit.nextProperties[property],
+      commit.previousProperties[property],
+    );
   }
 }

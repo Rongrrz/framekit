@@ -11,9 +11,9 @@ describe('modifier attachment and validation', () => {
     const parentModifier = fk.createUICorner();
     const corner = fk.createUICorner({ CornerRadius: 8 });
 
-    expect(() => parentModifier.addChild(corner)).toThrow(/cannot contain child nodes/);
+    expect(() => (corner.Parent = parentModifier)).toThrow(/cannot contain child nodes/);
     expect(corner.Parent).toBeUndefined();
-    expect(() => corner.addChild(fk.createFrame())).toThrow(/cannot contain child nodes/);
+    expect(() => (fk.createFrame().Parent = corner)).toThrow(/cannot contain child nodes/);
   });
 
   it('allows only one modifier of each kind per parent', () => {
@@ -21,30 +21,30 @@ describe('modifier attachment and validation', () => {
     const firstCorner = fk.createUICorner({ CornerRadius: 4 });
     const secondCorner = fk.createUICorner({ CornerRadius: 8 });
 
-    frame.addChild(firstCorner);
+    firstCorner.Parent = frame;
 
-    expect(() => frame.addChild(secondCorner)).toThrow(/already has a UICorner/);
+    expect(() => (secondCorner.Parent = frame)).toThrow(/already has a UICorner/);
     expect(secondCorner.Parent).toBeUndefined();
-    expect(frame.element.style.borderRadius).toBe('4px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('4px');
 
-    firstCorner.removeFromParent();
-    frame.addChild(secondCorner);
+    firstCorner.Parent = undefined;
+    secondCorner.Parent = frame;
 
-    expect(frame.element.style.borderRadius).toBe('8px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('8px');
 
     const otherFrame = fk.createTextLabel();
 
-    otherFrame.addChild(firstCorner);
+    firstCorner.Parent = otherFrame;
 
-    expect(() => frame.addChild(firstCorner)).toThrow(/already has a UICorner/);
+    expect(() => (firstCorner.Parent = frame)).toThrow(/already has a UICorner/);
     expect(firstCorner.Parent).toBe(otherFrame);
-    expect(otherFrame.element.style.borderRadius).toBe('4px');
+    expect(otherFrame.unsafeElement.style.borderRadius).toBe('4px');
 
     secondCorner.destroy();
-    frame.addChild(firstCorner);
+    firstCorner.Parent = frame;
 
     expect(firstCorner.Parent).toBe(frame);
-    expect(otherFrame.element.style.borderRadius).toBe('');
+    expect(otherFrame.unsafeElement.style.borderRadius).toBe('');
   });
 
   it('recomputes both parents when a modifier is moved', () => {
@@ -52,14 +52,14 @@ describe('modifier attachment and validation', () => {
     const second = fk.createTextLabel();
     const corner = fk.createUICorner({ CornerRadius: 10 });
 
-    first.addChild(corner);
+    corner.Parent = first;
 
-    expect(first.element.style.borderRadius).toBe('10px');
+    expect(first.unsafeElement.style.borderRadius).toBe('10px');
 
-    second.addChild(corner);
+    corner.Parent = second;
 
-    expect(first.element.style.borderRadius).toBe('');
-    expect(second.element.style.borderRadius).toBe('10px');
+    expect(first.unsafeElement.style.borderRadius).toBe('');
+    expect(second.unsafeElement.style.borderRadius).toBe('10px');
   });
 
   it('rolls back a failed modifier append without corrupting its target', () => {
@@ -75,15 +75,33 @@ describe('modifier attachment and validation', () => {
       },
     );
 
-    expect(() => frame.addChild(rejected)).toThrow(/target rejected/);
+    expect(() => (rejected.Parent = frame)).toThrow(/target rejected/);
     expect(rejected.Parent).toBeUndefined();
     expect(render).not.toHaveBeenCalled();
 
     const corner = fk.createUICorner({ CornerRadius: 6 });
 
-    frame.addChild(corner);
+    corner.Parent = frame;
 
-    expect(frame.element.style.borderRadius).toBe('6px');
+    expect(frame.unsafeElement.style.borderRadius).toBe('6px');
+  });
+
+  it('restores an attachment when detached rendering fails', () => {
+    const frame = fk.createFrame();
+    const corner = fk.createUICorner({ CornerRadius: 6 });
+    let renderMustFail = false;
+    const failing = createStyleModifier('Failing', { Name: 'Failing' }, () => {
+      if (renderMustFail) throw new Error('derived render failed');
+      return {};
+    });
+
+    corner.Parent = frame;
+    failing.Parent = frame;
+    renderMustFail = true;
+
+    expect(() => (corner.Parent = undefined)).toThrow(/Detaching the node failed/);
+    expect(corner.Parent).toBe(frame);
+    expect(frame.getChildren()).toContain(corner);
   });
 
   it('rejects non-finite modifier properties at construction', () => {
@@ -95,6 +113,9 @@ describe('modifier attachment and validation', () => {
 
   it('validates domain-specific modifier values while detached', () => {
     expect(() => fk.createUIScale({ Scale: -1 })).toThrow(/non-negative finite/);
+    expect(() => fk.createUICorner({ CornerRadius: -1 })).toThrow(/non-negative finite/);
+    expect(() => fk.createUIStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
+    expect(() => fk.createUIShadow({ Transparency: 1.1 })).toThrow(/between 0 and 1/);
     expect(() => fk.createUITextStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
 
     const scale = fk.createUIScale();

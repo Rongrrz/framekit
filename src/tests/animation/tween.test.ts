@@ -2,19 +2,36 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { fk, fka } from '../../index';
 import { setupAnimationClock } from '../support/animation-clock';
+import { destroyNodesAfterEach } from '../support/node-cleanup';
 
 const { advance } = setupAnimationClock();
+const trackNode = destroyNodesAfterEach();
 
 describe('tweens', () => {
+  it('rejects discrete goals at runtime and snapshots structured goals at creation', () => {
+    const frame = trackNode(fk.createFrame());
+    const position = { X: { Scale: 0, Offset: 100 }, Y: { Scale: 0, Offset: 40 } };
+    const tween = fka.createTween(frame, { Duration: 0 }, { Position: position });
+
+    expect(() => fka.createTween(frame, { Duration: 1 }, { ZIndex: 2 } as never)).toThrow(
+      /discretely/,
+    );
+    expect(() => fka.spring(frame, { LayoutOrder: 2 } as never)).toThrow(/discretely/);
+    position.X.Offset = 999;
+    tween.play();
+
+    expect(frame.Position).toEqual(fk.udim2FromOffset(100, 40));
+  });
+
   it('keeps active work when the browser frame function is replaced', () => {
-    const first = fk.createFrame({ Rotation: 0 });
-    const second = fk.createFrame({ Rotation: 0 });
-    const firstTween = fka.TweenService.create(
+    const first = trackNode(fk.createFrame({ Rotation: 0 }));
+    const second = trackNode(fk.createFrame({ Rotation: 0 }));
+    const firstTween = fka.createTween(
       first,
       { Duration: 1, EasingStyle: 'Linear' },
       { Rotation: 90 },
     );
-    const secondTween = fka.TweenService.create(
+    const secondTween = fka.createTween(
       second,
       { Duration: 1, EasingStyle: 'Linear' },
       { Rotation: 180 },
@@ -30,12 +47,8 @@ describe('tweens', () => {
   });
 
   it('restarts completed and cancelled playback from the latest property value', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.TweenService.create(
-      frame,
-      { Duration: 1, EasingStyle: 'Linear' },
-      { Rotation: 90 },
-    );
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
+    const tween = fka.createTween(frame, { Duration: 1, EasingStyle: 'Linear' }, { Rotation: 90 });
     const completed = vi.fn();
 
     tween.completed.subscribe(completed);
@@ -65,8 +78,8 @@ describe('tweens', () => {
   });
 
   it('repeats indefinitely until explicitly cancelled', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.TweenService.create(
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
+    const tween = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear', RepeatCount: -1, Reverses: true },
       { Rotation: 90 },
@@ -86,11 +99,13 @@ describe('tweens', () => {
   });
 
   it('interpolates numbers and structured FrameKit values', () => {
-    const frame = fk.createFrame({
-      Position: fk.udim2FromOffset(0, 10),
-      BackgroundColor3: fk.color3FromRGB(0, 50, 100),
-    });
-    const tween = fka.TweenService.create(
+    const frame = trackNode(
+      fk.createFrame({
+        Position: fk.udim2FromOffset(0, 10),
+        BackgroundColor3: fk.color3FromRGB(0, 50, 100),
+      }),
+    );
+    const tween = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
@@ -116,9 +131,22 @@ describe('tweens', () => {
     expect(tween.playbackState()).toBe('Completed');
   });
 
+  it('constrains easing overshoot to a property domain', () => {
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
+    const tween = fka.createTween(
+      frame,
+      { Duration: 1, EasingStyle: 'Back', EasingDirection: 'Out' },
+      { BackgroundTransparency: 1 },
+    );
+
+    tween.play();
+    expect(() => advance(750)).not.toThrow();
+    expect(frame.BackgroundTransparency).toBe(1);
+  });
+
   it('supports delay, pause, resume, and cancellation', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const tween = fka.TweenService.create(
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
+    const tween = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.25 },
       {
@@ -148,8 +176,8 @@ describe('tweens', () => {
   });
 
   it('lets a direct assignment cancel a paused tween', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
+    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
 
     tween.play();
     advance(250);
@@ -162,8 +190,8 @@ describe('tweens', () => {
   });
 
   it('returns to the start when reversing and completes repeats', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const tween = fka.TweenService.create(
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
+    const tween = fka.createTween(
       frame,
       {
         Duration: 0.1,
@@ -197,10 +225,10 @@ describe('tweens', () => {
   });
 
   it('cancels conflicting tweens but allows disjoint properties', () => {
-    const frame = fk.createFrame();
-    const first = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
-    const second = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
-    const position = fka.TweenService.create(
+    const frame = trackNode(fk.createFrame());
+    const first = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const second = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
+    const position = fka.createTween(
       frame,
       { Duration: 1 },
       {
@@ -218,22 +246,22 @@ describe('tweens', () => {
   });
 
   it('keeps ownership consistent when cancellation listeners start another tween', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
-    const first = fka.TweenService.create(
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
+    const first = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
         BackgroundTransparency: 1,
       },
     );
-    const reentrant = fka.TweenService.create(
+    const reentrant = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
         BackgroundTransparency: 0.75,
       },
     );
-    const latest = fka.TweenService.create(
+    const latest = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
       {
@@ -255,15 +283,15 @@ describe('tweens', () => {
   });
 
   it('finishes zero-duration tweens and cancels playback with node destruction', () => {
-    const frame = fk.createFrame();
-    const instant = fka.TweenService.create(frame, { Duration: 0 }, { BackgroundTransparency: 1 });
+    const frame = trackNode(fk.createFrame());
+    const instant = fka.createTween(frame, { Duration: 0 }, { BackgroundTransparency: 1 });
 
     instant.play();
 
     expect(frame.BackgroundTransparency).toBe(1);
     expect(instant.playbackState()).toBe('Completed');
 
-    const delayed = fka.TweenService.create(
+    const delayed = fka.createTween(
       frame,
       { Duration: 0, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.1 },
       {
@@ -277,7 +305,7 @@ describe('tweens', () => {
     expect(frame.BackgroundTransparency).toBe(0.5);
     expect(delayed.playbackState()).toBe('Completed');
 
-    const running = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 0 });
+    const running = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0 });
 
     running.play();
     frame.destroy();
@@ -286,97 +314,82 @@ describe('tweens', () => {
     expect(() => running.play()).toThrow(/destroyed/);
   });
 
-  it('finishes tween cleanup when a cancellation listener throws during destruction', () => {
-    const frame = fk.createFrame();
-    const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+  it('reports cancellation listener failures without changing destruction', () => {
+    const frame = trackNode(fk.createFrame());
+    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const reportError = vi.fn();
     const listener = vi.fn(() => {
       throw new Error('listener failed');
     });
 
+    vi.stubGlobal('reportError', reportError);
     tween.completed.subscribe(listener);
     tween.play();
 
-    expect(() => frame.destroy()).toThrow(/listener failed/);
+    expect(() => frame.destroy()).not.toThrow();
     expect(tween.playbackState()).toBe('Cancelled');
     expect(tween.completed).not.toHaveProperty('emit');
     expect(tween.completed).not.toHaveProperty('clear');
     expect(listener).toHaveBeenCalledOnce();
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'listener failed' }),
+    );
   });
 
-  it('keeps a direct property write in control when tween cancellation listeners fail', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
-    const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
+  it('keeps a direct property write in control when observers fail', () => {
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
+    const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const reportError = vi.fn();
     const changed = vi.fn();
 
+    vi.stubGlobal('reportError', reportError);
     tween.completed.subscribe(() => {
       throw new Error('cancel listener failed');
+    });
+    frame.onPropertyChanged('Rotation', () => {
+      throw new Error('property listener failed');
     });
     frame.onPropertyChanged('Rotation', changed);
     tween.play();
 
-    expect(() => (frame.Rotation = 10)).toThrow(/cancel listener failed/);
+    expect(() => (frame.Rotation = 10)).not.toThrow();
     expect(frame.Rotation).toBe(10);
     expect(tween.playbackState()).toBe('Cancelled');
     expect(changed).toHaveBeenCalledWith(10, 0);
+    expect(reportError).toHaveBeenCalledTimes(2);
   });
 
-  it('releases partial ownership when a multi-property claim fails', () => {
-    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const existing = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
-    const interrupted = fka.TweenService.create(
+  it('does not let completion observers block an ownership handoff', () => {
+    const frame = trackNode(fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
+    const existing = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const interrupted = fka.createTween(
       frame,
       { Duration: 1 },
       { Rotation: 90, BackgroundTransparency: 0.5 },
     );
+    const reportError = vi.fn();
 
+    vi.stubGlobal('reportError', reportError);
     existing.completed.subscribe(() => {
       throw new Error('cancel listener failed');
     });
     existing.play();
 
-    expect(() => interrupted.play()).toThrow(/cancel listener failed/);
-
-    const replacement = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 45 });
-
-    expect(() => replacement.play()).not.toThrow();
-    expect(replacement.playbackState()).toBe('Playing');
-  });
-
-  it('keeps ownership that a retained spring had before a failed claim', () => {
-    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const controller = fk.spring(frame);
-    const tween = fka.TweenService.create(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
-
-    fk.spring(frame, { Rotation: 90 });
-    tween.completed.subscribe(() => {
-      throw new Error('cancel listener failed');
-    });
-    tween.play();
-
-    expect(() =>
-      fk.spring(frame, {
-        Rotation: 45,
-        BackgroundTransparency: 0.5,
-      }),
-    ).toThrow(/cancel listener failed/);
-
-    const replacement = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 20 });
-
-    replacement.play();
-
-    expect(controller.isAnimating()).toBe(false);
-    expect(replacement.playbackState()).toBe('Playing');
+    expect(() => interrupted.play()).not.toThrow();
+    expect(existing.playbackState()).toBe('Cancelled');
+    expect(interrupted.playbackState()).toBe('Playing');
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'cancel listener failed' }),
+    );
   });
 
   it('releases every directly assigned property when several cancellation listeners fail', () => {
-    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
-    const rotation = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
-    const transparency = fka.TweenService.create(
-      frame,
-      { Duration: 1 },
-      { BackgroundTransparency: 1 },
-    );
+    const frame = trackNode(fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
+    const rotation = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const transparency = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const reportError = vi.fn();
 
+    vi.stubGlobal('reportError', reportError);
     rotation.completed.subscribe(() => {
       throw new Error('rotation cancellation failed');
     });
@@ -386,45 +399,26 @@ describe('tweens', () => {
     rotation.play();
     transparency.play();
 
-    expect(() => frame.setProperties({ Rotation: 10, BackgroundTransparency: 0.5 })).toThrow(
-      /Multiple property callbacks failed/,
-    );
+    expect(() => frame.setProperties({ Rotation: 10, BackgroundTransparency: 0.5 })).not.toThrow();
     expect(frame).toMatchObject({ Rotation: 10, BackgroundTransparency: 0.5 });
     expect(rotation.playbackState()).toBe('Cancelled');
     expect(transparency.playbackState()).toBe('Cancelled');
-  });
-
-  it('cancels after earlier property listeners fail', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
-
-    frame.onPropertyChanged('Rotation', () => {
-      throw new Error('property listener failed');
-    });
-
-    const tween = fka.TweenService.create(frame, { Duration: 1 }, { Rotation: 90 });
-
-    tween.play();
-
-    expect(() => (frame.Rotation = 10)).toThrow(/property listener failed/);
-    expect(frame.Rotation).toBe(10);
-    expect(tween.playbackState()).toBe('Cancelled');
+    expect(reportError).toHaveBeenCalledTimes(2);
   });
 
   it('validates tween configuration and goal values', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
 
-    expect(() => fka.TweenService.create(frame, { Duration: -1 }, { Rotation: 1 })).toThrow(
-      /duration/,
+    expect(() => fka.createTween(frame, { Duration: -1 }, { Rotation: 1 })).toThrow(/duration/);
+    expect(() => fka.createTween(frame, { Duration: 1, RepeatCount: -2 }, { Rotation: 1 })).toThrow(
+      /repeat count/,
     );
-    expect(() =>
-      fka.TweenService.create(frame, { Duration: 1, RepeatCount: -2 }, { Rotation: 1 }),
-    ).toThrow(/repeat count/);
-    expect(() => fka.TweenService.create(frame, { Duration: 1 }, {})).toThrow(/goal property/);
-    expect(() => fka.TweenService.create(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
+    expect(() => fka.createTween(frame, { Duration: 1 }, {})).toThrow(/goal property/);
+    expect(() => fka.createTween(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
       /Unknown tween property "Missing"/,
     );
     try {
-      fka.TweenService.create(
+      fka.createTween(
         frame,
         { Duration: 1 },
         {
@@ -439,18 +433,17 @@ describe('tweens', () => {
     }
   });
 
-  it('releases property ownership when rendering an animated value fails', () => {
-    const frame = fk.createFrame();
-    const scale = fk.createUIScale();
+  it('rejects a goal that violates the property contract before playback', () => {
+    const frame = trackNode(fk.createFrame());
+    const scale = trackNode(fk.createUIScale());
 
-    frame.addChild(scale);
+    scale.Parent = frame;
 
-    const invalid = fka.TweenService.create(scale, { Duration: 0 }, { Scale: -1 });
+    expect(() => fka.createTween(scale, { Duration: 0 }, { Scale: -1 })).toThrow(
+      /invalid property values/,
+    );
 
-    expect(() => invalid.play()).toThrow(/non-negative finite/);
-    expect(invalid.playbackState()).toBe('Cancelled');
-
-    const valid = fka.TweenService.create(scale, { Duration: 0 }, { Scale: 0.5 });
+    const valid = fka.createTween(scale, { Duration: 0 }, { Scale: 0.5 });
 
     valid.play();
 

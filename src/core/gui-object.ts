@@ -5,6 +5,7 @@ import {
   assertBoolean,
   assertFiniteNumber,
   assertInteger,
+  assertUnitInterval,
 } from './internal/validation';
 import type { GuiMethodTable } from './node/gui-events';
 import { createGuiNode, type GuiElement, type PropertyRenderer } from './node/gui-node';
@@ -101,7 +102,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
     element,
     renderProperties: (properties, changedProperties) => {
       renderGuiObject(element, properties, changedProperties);
-      renderProperties?.(properties, changedProperties);
+      return renderProperties?.(properties, changedProperties);
     },
     validateProperties: (properties) => {
       validateGuiObjectProperties(properties);
@@ -177,7 +178,7 @@ function validateGuiObjectProperties(properties: Readonly<GuiObjectProperties>):
   assertFiniteNumber(properties.Rotation, 'Rotation');
   assertBoolean(properties.Visible, 'Visible');
   assertColor3(properties.BackgroundColor3, 'BackgroundColor3');
-  assertFiniteNumber(properties.BackgroundTransparency, 'BackgroundTransparency');
+  assertUnitInterval(properties.BackgroundTransparency, 'BackgroundTransparency');
   assertInteger(properties.ZIndex, 'ZIndex');
   assertInteger(properties.LayoutOrder, 'LayoutOrder');
   assertBoolean(properties.ClipsDescendants, 'ClipsDescendants');

@@ -1,3 +1,4 @@
+import { installStyles } from './stylesheet';
 import {
   horizontalFlexAlignment,
   verticalFlexAlignment,
@@ -10,11 +11,10 @@ export const textStrokeWidthProperty = '--framekit-text-stroke-width';
 
 const textStrokeAlignProperty = '--framekit-text-stroke-align';
 const textStrokeJustifyProperty = '--framekit-text-stroke-justify';
-const documentsWithTextStrokeStyles = new WeakSet<Document>();
 
 /** Prepares one text host to render an optional outline without another DOM node. */
 export function initializeTextStrokeHost(host: HTMLElement): void {
-  ensureTextStrokeStyles(host.ownerDocument);
+  installStyles({ ownerDocument: host.ownerDocument });
   host.dataset.framekitTextStrokeHost = '';
 }
 
@@ -42,33 +42,4 @@ export function syncTextStrokeHost(
     horizontalFlexAlignment[properties.TextXAlignment],
   );
   host.style.setProperty(textStrokeAlignProperty, verticalFlexAlignment[properties.TextYAlignment]);
-}
-
-function ensureTextStrokeStyles(ownerDocument: Document): void {
-  if (documentsWithTextStrokeStyles.has(ownerDocument)) return;
-  const style = ownerDocument.createElement('style');
-  style.dataset.framekitTextStrokeStyles = '';
-  style.textContent = `
-    [data-framekit-text-stroke-host]::before {
-      content: var(${textStrokeContentProperty}, none) / "";
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: var(${textStrokeAlignProperty});
-      justify-content: var(${textStrokeJustifyProperty});
-      pointer-events: none;
-      user-select: none;
-      color: transparent;
-      white-space: inherit;
-      text-align: inherit;
-      font: inherit;
-      line-height: 1.2;
-      -webkit-text-fill-color: transparent;
-      -webkit-text-stroke-color: var(${textStrokeColorProperty}, transparent);
-      -webkit-text-stroke-width: var(${textStrokeWidthProperty}, 0px);
-      paint-order: stroke fill;
-    }
-  `;
-  ownerDocument.head.append(style);
-  documentsWithTextStrokeStyles.add(ownerDocument);
 }

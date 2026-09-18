@@ -1,6 +1,6 @@
 import type { Instance, InstanceProperties } from '../core/node/instance';
 import { getActiveNodeState } from '../core/node/state';
-import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
+import { createSignal, emitSignalSafely, readonlySignal, type Signal } from '../core/state/signal';
 import { prepareAnimationGoal } from './goal';
 import { createAnimationRunner } from './runner';
 import {
@@ -11,7 +11,7 @@ import {
   type SpringSolution,
   type SpringOptions,
 } from './spring-physics';
-import type { AnimationGoal } from './types';
+import type { AnimatableProperty, AnimationGoal } from './types';
 import { composeAnimationValue, type AnimationValueKind } from './value';
 
 export type { SpringOptions } from './spring-physics';
@@ -19,7 +19,7 @@ export type { SpringOptions } from './spring-physics';
 /** Playback controls for the spring retained by one node. */
 export type SpringController<Properties extends InstanceProperties = InstanceProperties> = {
   /** Stops one property, or every property when omitted, at its current value. */
-  stop(property?: keyof AnimationGoal<Properties>): void;
+  stop(property?: AnimatableProperty<Properties>): void;
   /** Reports whether any property is currently moving. */
   isAnimating(): boolean;
   /** Emits after every active property settles. */
@@ -92,7 +92,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     scheduleNextFrame();
   }
 
-  function stop(property?: keyof AnimationGoal<Properties>): void {
+  function stop(property?: AnimatableProperty<Properties>): void {
     assertUsable();
     if (property !== undefined) {
       stopProperty(property as keyof Properties);
@@ -154,7 +154,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     runner.release(settledProperties);
     if (springsByProperty.size === 0) {
       cancelFrame();
-      completedEmitter.emit();
+      emitSignalSafely(completedEmitter);
     }
   }
 

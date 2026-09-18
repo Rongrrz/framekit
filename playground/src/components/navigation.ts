@@ -2,6 +2,7 @@ import { fk } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
+import { watchOwnedValue } from '../owned-value';
 import type { SitePage } from '../router';
 import { bindThemeColors, fonts, typeScale, type ThemeMode, type ThemeValue } from '../theme';
 import { createButton, createText } from '../ui';
@@ -40,8 +41,8 @@ export const createNavigation = (
     weight: 850,
   });
   mark.onClick(() => navigate('home'));
-  navigation.addChild(mark);
-  navigation.addChild(brand);
+  mark.Parent = navigation;
+  brand.Parent = navigation;
 
   const guide = createButton(theme, {
     label: 'Guide',
@@ -73,9 +74,9 @@ export const createNavigation = (
   guide.onClick(() => navigate('guide'));
   api.onClick(() => navigate('api'));
   source.onClick(() => window.open(repositoryUrl, '_blank', 'noopener,noreferrer'));
-  navigation.addChild(guide);
-  navigation.addChild(api);
-  navigation.addChild(source);
+  guide.Parent = navigation;
+  api.Parent = navigation;
+  source.Parent = navigation;
 
   const themeToggle = createButton(theme, {
     label: '🌞  Light',
@@ -88,7 +89,7 @@ export const createNavigation = (
     textSize: typeScale.caption,
   });
   themeToggle.onClick(() => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
-  navigation.addChild(themeToggle);
+  themeToggle.Parent = navigation;
 
   const track = fk.createFrame({
     Name: 'ScrollProgressTrack',
@@ -99,16 +100,19 @@ export const createNavigation = (
   const progress = fk.createFrame({ Name: 'ScrollProgress', Size: fk.udim2FromScale(0, 1) });
   bindThemeColors(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
   bindThemeColors(progress, theme, (palette) => ({ BackgroundColor3: palette.accent }));
-  track.addChild(progress);
-  navigation.addChild(track);
+  progress.Parent = track;
+  track.Parent = navigation;
 
   const listenerController = new AbortController();
-  page.element.addEventListener(
+  page.unsafeElement.addEventListener(
     'scroll',
     () => {
-      const maximum = Math.max(1, page.element.scrollHeight - page.element.clientHeight);
+      const maximum = Math.max(
+        1,
+        page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight,
+      );
       progress.Size = fk.udim2FromScale(
-        Math.min(1, Math.max(0, page.element.scrollTop / maximum)),
+        Math.min(1, Math.max(0, page.unsafeElement.scrollTop / maximum)),
         1,
       );
     },
@@ -121,12 +125,12 @@ export const createNavigation = (
     guide.TextColor3 = route.get() === 'guide' ? palette.accent : palette.textMuted;
     api.TextColor3 = route.get() === 'api' ? palette.accent : palette.textMuted;
   };
-  navigation.watch(route, updateNavigation);
-  navigation.watch(mode, (currentMode) => {
+  watchOwnedValue(navigation, route, updateNavigation);
+  watchOwnedValue(navigation, mode, (currentMode) => {
     themeToggle.Text = currentMode === 'dark' ? '🌞  Light' : '🌙  Dark';
     themeToggle.AccessibleLabel = `Switch to ${currentMode === 'dark' ? 'light' : 'dark'} mode`;
   });
-  navigation.watch(theme, updateNavigation);
+  watchOwnedValue(navigation, theme, updateNavigation);
   bindLayoutProperties(navigation, layout, brand, {
     desktop: { Visible: true },
     mobile: { Visible: false },

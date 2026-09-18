@@ -1,4 +1,4 @@
-import { throwCollectedErrors } from '../internal/errors';
+import { reportObserverError, throwCollectedErrors } from '../internal/errors';
 
 /** Stops a subscription or unregisters cleanup work. Safe to call repeatedly. */
 export type Unsubscribe = () => void;
@@ -50,4 +50,16 @@ export function readonlySignal<Arguments extends unknown[]>(
   emitter: SignalEmitter<Arguments>,
 ): Signal<Arguments> {
   return Object.freeze({ subscribe: emitter.subscribe });
+}
+
+/** Publishes an owned lifecycle event without letting observers alter its outcome. */
+export function emitSignalSafely<Arguments extends unknown[]>(
+  emitter: SignalEmitter<Arguments>,
+  ...args: Arguments
+): void {
+  try {
+    emitter.emit(...args);
+  } catch (error) {
+    reportObserverError(error);
+  }
 }

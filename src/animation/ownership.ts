@@ -59,7 +59,8 @@ export function applyAnimationProperties<Properties extends InstanceProperties>(
   patch: Partial<Properties>,
   owner: AnimationOwner,
 ): void {
-  const properties = Object.keys(patch) as (keyof Properties)[];
+  const constrainedPatch = constrainAnimationPatch(patch);
+  const properties = Object.keys(constrainedPatch) as (keyof Properties)[];
   const propertyClaims = claimsByNode.get(node);
   for (const property of properties) {
     if (propertyClaims?.get(property)?.owner !== owner) {
@@ -76,10 +77,10 @@ export function applyAnimationProperties<Properties extends InstanceProperties>(
         value: writes.get(property),
       }))
     : undefined;
-  for (const property of properties) writes.set(property, patch[property]);
+  for (const property of properties) writes.set(property, constrainedPatch[property]);
 
   try {
-    node.setProperties(patch);
+    node.setProperties(constrainedPatch);
   } finally {
     if (previousWrites) {
       for (const previous of previousWrites) {
@@ -90,6 +91,43 @@ export function applyAnimationProperties<Properties extends InstanceProperties>(
       writes.clear();
     }
   }
+}
+
+const unitIntervalProperties = new Set<PropertyKey>([
+  'BackgroundTransparency',
+  'ImageTransparency',
+  'PlaceholderTransparency',
+  'ScrollBarImageTransparency',
+  'TextTransparency',
+  'Transparency',
+]);
+const nonNegativeProperties = new Set<PropertyKey>([
+  'BlurRadius',
+  'CornerRadius',
+  'Scale',
+  'ScrollBarThickness',
+  'Thickness',
+]);
+
+/** Keeps easing overshoot inside property domains that ordinary writes enforce. */
+function constrainAnimationPatch<Properties extends InstanceProperties>(
+  patch: Partial<Properties>,
+): Partial<Properties> {
+  const constrained = { ...patch };
+  for (const property of Object.keys(constrained) as (keyof Properties)[]) {
+    const value = constrained[property];
+    if (typeof value !== 'number') continue;
+
+    const constrainedValue = unitIntervalProperties.has(property)
+      ? Math.min(1, Math.max(0, value))
+      : nonNegativeProperties.has(property)
+        ? Math.max(0, value)
+        : property === 'AspectRatio'
+          ? Math.max(Number.EPSILON, value)
+          : value;
+    constrained[property] = constrainedValue as Properties[keyof Properties];
+  }
+  return constrained;
 }
 
 function createPropertyClaim<Properties extends InstanceProperties>(

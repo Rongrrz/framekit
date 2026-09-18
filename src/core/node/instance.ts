@@ -1,9 +1,8 @@
-import { DestroyService } from '../destroy-service';
-import { NodeService } from '../node-service';
+import * as hierarchy from '../hierarchy';
+import * as lifecycle from '../lifecycle';
 import type { Unsubscribe } from '../state/signal';
-import type { Value } from '../state/value';
+import type { InstanceClassName, InstanceOf } from './classes';
 import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
-import { watchNodeValue } from './watch-value';
 
 /** Properties shared by every FrameKit instance. */
 export type InstanceProperties = {
@@ -12,7 +11,6 @@ export type InstanceProperties = {
 };
 
 declare const nodeProperties: unique symbol;
-const propertyAccessorsByMethods = new WeakMap<object, Map<string, object>>();
 
 /** A persistent typed object in the FrameKit hierarchy. */
 export type Instance<Properties extends InstanceProperties = InstanceProperties> = {
@@ -26,6 +24,8 @@ export type Instance<Properties extends InstanceProperties = InstanceProperties>
 
 /** Operations shared by every FrameKit instance. */
 export type InstanceMethods<Properties extends InstanceProperties = InstanceProperties> = {
+  /** Tests an exact built-in class and narrows this instance to its concrete API. */
+  isA<ClassName extends InstanceClassName>(className: ClassName): this is InstanceOf<ClassName>;
   /** Validates and applies several properties in one render pass. */
   setProperties(patch: Partial<Properties>): void;
   /** Subscribes to one property and reports its new and previous values. */
@@ -33,10 +33,6 @@ export type InstanceMethods<Properties extends InstanceProperties = InstanceProp
     property: Property,
     listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
   ): Unsubscribe;
-  /** Reparents a child beneath this node. */
-  addChild(child: Instance): void;
-  /** Detaches this node without destroying it. */
-  removeFromParent(): void;
   /** Returns a snapshot of the direct children. */
   getChildren(): readonly Instance[];
   /** Returns a depth-first snapshot of every nested child. */
@@ -47,16 +43,12 @@ export type InstanceMethods<Properties extends InstanceProperties = InstanceProp
   getFullName(): string;
   /** Formats this node and its descendants as a readable tree. */
   toTreeString(): string;
-  /** Prints `toTreeString()` to the console. */
-  printTree(): void;
   /** Permanently destroys this node and its descendants. */
   destroy(): void;
   /** Reports whether this node has been destroyed. */
   isDestroyed(): boolean;
   /** Registers cleanup work and returns a function that unregisters it. */
   onDestroy(callback: () => void): Unsubscribe;
-  /** Watches a value immediately and until this node is destroyed. */
-  watch<T>(value: Value<T>, listener: (value: T) => void): Unsubscribe;
 };
 
 /** Creates a node handle with direct property access. */
@@ -65,9 +57,28 @@ export function createNodeHandle<Properties extends InstanceProperties>(
   methods: object = nodeMethods,
   fields: object = {},
 ): Instance<Properties> {
-  const propertyTable = getPropertyAccessors(initialProperties, methods);
-  const handle = Object.assign(Object.create(propertyTable) as object, fields);
-  return Object.freeze(handle) as Instance<Properties>;
+  const handle = Object.create(methods) as object;
+  for (const [fieldName, value] of Object.entries(fields)) {
+    Object.defineProperty(handle, fieldName, {
+      configurable: false,
+      enumerable: true,
+      writable: false,
+      value,
+    });
+  }
+  for (const propertyName of Object.keys(initialProperties)) {
+    Object.defineProperty(handle, propertyName, {
+      configurable: false,
+      enumerable: true,
+      get(this: Instance<Properties>) {
+        return getNodeProperty(this, propertyName as keyof Properties);
+      },
+      set(this: Instance<Properties>, value: Properties[keyof Properties]) {
+        setNodeProperties(this, { [propertyName]: value } as Partial<Properties>);
+      },
+    });
+  }
+  return handle as Instance<Properties>;
 }
 
 /** Creates a frozen method table that inherits another capability table. */
@@ -82,6 +93,12 @@ export function extendMethodTable<Base extends object, Extension extends object>
 
 /** Shared prototype for node handles, keeping methods out of each instance allocation. */
 const methodTable = {
+  isA<ClassName extends InstanceClassName>(
+    this: Instance,
+    className: ClassName,
+  ): this is InstanceOf<ClassName> {
+    return hierarchy.getClassName(this) === className;
+  },
   setProperties<Properties extends InstanceProperties>(
     this: Instance<Properties>,
     patch: Partial<Properties>,
@@ -95,92 +112,46 @@ const methodTable = {
   ): Unsubscribe {
     return subscribeToPropertyChange(this, property, listener);
   },
-  addChild(this: Instance, child: Instance): void {
-    NodeService.append(this, child);
-  },
-  removeFromParent(this: Instance): void {
-    NodeService.detach(this);
-  },
   getChildren(this: Instance): readonly Instance[] {
-    return NodeService.children(this);
+    return hierarchy.children(this);
   },
   getDescendants(this: Instance): readonly Instance[] {
-    return NodeService.descendants(this);
+    return hierarchy.descendants(this);
   },
   findFirstChild(this: Instance, name: string, recursive = false): Instance | undefined {
-    return NodeService.findFirstChild(this, name, recursive);
+    return hierarchy.findFirstChild(this, name, recursive);
   },
   getFullName(this: Instance): string {
-    return NodeService.getFullName(this);
+    return hierarchy.getFullName(this);
   },
   toTreeString(this: Instance): string {
-    return NodeService.toTreeString(this);
-  },
-  printTree(this: Instance): void {
-    NodeService.printTree(this);
+    return hierarchy.toTreeString(this);
   },
   destroy(this: Instance): void {
-    DestroyService.destroy(this);
+    lifecycle.destroy(this);
   },
   isDestroyed(this: Instance): boolean {
-    return DestroyService.isDestroyed(this);
+    return lifecycle.isDestroyed(this);
   },
   onDestroy(this: Instance, callback: () => void): Unsubscribe {
-    return DestroyService.onDestroy(this, callback);
-  },
-  watch<T>(this: Instance, value: Value<T>, listener: (value: T) => void): Unsubscribe {
-    return watchNodeValue(this, value, listener);
+    return lifecycle.onDestroy(this, callback);
   },
 } satisfies InstanceMethods;
 
 Object.defineProperties(methodTable, {
   ClassName: {
     get(this: Instance): string {
-      return NodeService.getClassName(this);
+      return hierarchy.getClassName(this);
     },
   },
   Parent: {
     get(this: Instance): Instance | undefined {
-      return NodeService.getParent(this);
+      return hierarchy.getParent(this);
     },
     set(this: Instance, newParent: Instance | undefined) {
-      NodeService.setParent(this, newParent);
+      hierarchy.setParent(this, newParent);
     },
   },
 });
 
 export const nodeMethods = Object.freeze(methodTable);
-
-function getPropertyAccessors<Properties extends InstanceProperties>(
-  properties: Readonly<Properties>,
-  methodTable: object,
-): object {
-  let tablesByShape = propertyAccessorsByMethods.get(methodTable);
-  if (!tablesByShape) {
-    tablesByShape = new Map();
-    propertyAccessorsByMethods.set(methodTable, tablesByShape);
-  }
-
-  // Nodes with the same methods and property names share accessors, keeping handles small.
-  const propertyNames = Object.keys(properties).sort();
-  const shape = propertyNames.join('\0');
-  const existingTable = tablesByShape.get(shape);
-  if (existingTable) return existingTable;
-
-  const propertyTable = Object.create(methodTable) as object;
-  for (const propertyName of propertyNames) {
-    Object.defineProperty(propertyTable, propertyName, {
-      enumerable: true,
-      get(this: Instance<Properties>) {
-        return getNodeProperty(this, propertyName as keyof Properties);
-      },
-      set(this: Instance<Properties>, value: Properties[keyof Properties]) {
-        setNodeProperties(this, { [propertyName]: value } as Partial<Properties>);
-      },
-    });
-  }
-
-  Object.freeze(propertyTable);
-  tablesByShape.set(shape, propertyTable);
-  return propertyTable;
-}

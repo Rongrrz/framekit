@@ -5,7 +5,7 @@ import { getModifierTarget, type LayoutChild, type LayoutNodeState } from './nod
 import { getNodeState, isGuiNode, isModifierState } from './node/state';
 import { composeStyles, type Styles } from './node/style-output';
 
-function hasLayoutModifier(node: Instance): boolean {
+export function hasLayoutModifier(node: Instance): boolean {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return false;
   for (const modifier of state.modifiers.values()) {
@@ -15,7 +15,7 @@ function hasLayoutModifier(node: Instance): boolean {
 }
 
 /** Renders the node surfaces affected by a committed property change. */
-function renderPropertyChanges<Properties extends InstanceProperties>(
+export function renderPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
 ): void {
@@ -26,29 +26,38 @@ function renderPropertyChanges<Properties extends InstanceProperties>(
 
     if (state.kind === 'layout') renderLayouts(target);
     else renderModifierStyles(target);
-
-    const targetParent = getNodeState(target).parent;
-    if (targetParent && hasLayoutModifier(targetParent)) renderLayouts(targetParent);
     return;
   }
 
   if (state.kind === 'gui') renderNode(node, changedProperties);
-  if (state.parent && hasLayoutModifier(state.parent)) renderLayouts(state.parent);
+  if (state.parent && hasLayoutModifier(state.parent) && affectsParentLayout(changedProperties)) {
+    renderLayouts(state.parent);
+  }
 }
 
-/** Renders changed base properties and then reconciles both derived style layers. */
-function renderNode<Properties extends InstanceProperties>(
+/** Renders changed base properties and reconciles target-dependent style modifiers. */
+export function renderNode<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
 ): void {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return;
-  state.renderProperties?.(state.properties, changedProperties);
-  renderDerivedStyles(node);
+  const reconciledProperties = state.renderProperties?.(state.properties, changedProperties);
+  if (reconciledProperties) state.properties = { ...state.properties, ...reconciledProperties };
+  renderModifierStyles(node);
+}
+
+function affectsParentLayout<Properties extends InstanceProperties>(
+  changedProperties: ReadonlySet<keyof Properties>,
+): boolean {
+  for (const property of changedProperties) {
+    if (property === 'Name' || property === 'LayoutOrder') return true;
+  }
+  return false;
 }
 
 /** Reconciles modifier and layout output without replaying base property renderers. */
-function renderDerivedStyles(node: Instance): void {
+export function renderDerivedStyles(node: Instance): void {
   renderModifierStyles(node);
   renderLayouts(node);
 }
@@ -67,7 +76,7 @@ function renderModifierStyles(node: Instance): void {
     );
   }
 
-  setStyleLayer((node as GuiElement).element, 'modifier', resolvedStyles);
+  setStyleLayer((node as GuiElement).unsafeElement, 'modifier', resolvedStyles);
 }
 
 /** Recomputes layout output and removes only declarations no longer produced by a layout. */
@@ -96,12 +105,12 @@ function renderLayouts(node: Instance): void {
     }
   }
 
-  setStyleLayer(guiNode.element, 'layout', parentStyles);
+  setStyleLayer(guiNode.unsafeElement, 'layout', parentStyles);
   const previousChildren = state.layoutChildren;
   const nextChildren = layouts.length > 0 ? new Set(children) : new Set<GuiElement>();
   for (const child of new Set([...previousChildren, ...nextChildren])) {
     if (getNodeState(child).destroyed) continue;
-    setStyleLayer(child.element, 'layout', stylesByChild.get(child) ?? {});
+    setStyleLayer(child.unsafeElement, 'layout', stylesByChild.get(child) ?? {});
   }
   state.layoutChildren = nextChildren;
 }
@@ -118,12 +127,3 @@ function getLayoutChildProperties(child: GuiElement): LayoutChild {
     LayoutOrder: typeof layoutOrder === 'number' ? layoutOrder : 0,
   };
 }
-
-/** Owns the synchronous DOM projection of FrameKit node state. */
-export const RenderService = Object.freeze({
-  renderPropertyChanges,
-  renderNode,
-  renderDerivedStyles,
-  renderLayouts,
-  hasLayoutModifier,
-});

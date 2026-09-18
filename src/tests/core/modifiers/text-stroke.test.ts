@@ -10,7 +10,7 @@ describe('text strokes', () => {
     const frame = fk.createFrame();
     const stroke = fk.createUITextStroke();
 
-    expect(() => frame.addChild(stroke)).toThrow(/TextLabel or TextButton/);
+    expect(() => (stroke.Parent = frame)).toThrow(/TextLabel or TextButton/);
     expect(stroke.Parent).toBeUndefined();
   });
 
@@ -22,33 +22,37 @@ describe('text strokes', () => {
       Thickness: 2,
     });
 
-    label.addChild(stroke);
+    stroke.Parent = label;
 
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
       'rgb(10 20 30 / 0.75)',
     );
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-content')).toBe(
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-content')).toBe(
       'attr(data-framekit-text-content)',
     );
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('2px');
-    expect(label.element.querySelectorAll('[data-framekit-text-stroke]')).toHaveLength(0);
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-width')).toBe('2px');
+    expect(label.unsafeElement.querySelectorAll('[data-framekit-text-stroke]')).toHaveLength(0);
 
     stroke.setProperties({ Thickness: 3, Transparency: 0.5 });
 
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
       'rgb(10 20 30 / 0.5)',
     );
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('3px');
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-width')).toBe('3px');
 
     stroke.Enabled = false;
 
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-content')).toBe('none');
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('0px');
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-content')).toBe(
+      'none',
+    );
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-width')).toBe('0px');
 
     stroke.Enabled = true;
-    stroke.removeFromParent();
+    stroke.Parent = undefined;
 
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-content')).toBe('none');
-    expect(label.element.style.getPropertyValue('--framekit-text-stroke-width')).toBe('0px');
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-content')).toBe(
+      'none',
+    );
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-width')).toBe('0px');
   });
 });

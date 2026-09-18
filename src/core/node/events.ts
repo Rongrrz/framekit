@@ -1,4 +1,9 @@
-import { createSignal, type SignalEmitter, type Unsubscribe } from '../state/signal';
+import {
+  createSignal,
+  emitSignalSafely,
+  type SignalEmitter,
+  type Unsubscribe,
+} from '../state/signal';
 import type { Instance } from './instance';
 import { getActiveNodeState, getNodeState } from './state';
 
@@ -36,8 +41,6 @@ export function emitNodeEvent<Arguments extends unknown[]>(
   ...args: Arguments
 ): void {
   if (getNodeState(node).destroyed) return;
-  eventSignalsByNode
-    .get(node)
-    ?.get(eventKey)
-    ?.emit(...args);
+  const emitter = eventSignalsByNode.get(node)?.get(eventKey);
+  if (emitter) emitSignalSafely(emitter, ...args);
 }

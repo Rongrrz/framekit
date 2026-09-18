@@ -10,18 +10,18 @@ describe('DOM cleanup', () => {
     const root = fk.createFrame();
     const nested = fk.createFrame();
     const moved = fk.createFrame();
-    const nestedRemove = vi.spyOn(nested.element, 'remove');
-    const movedRemove = vi.spyOn(moved.element, 'remove');
+    const nestedRemove = vi.spyOn(nested.unsafeElement, 'remove');
+    const movedRemove = vi.spyOn(moved.unsafeElement, 'remove');
 
-    root.addChild(nested);
-    root.addChild(moved);
-    document.body.append(moved.element);
+    nested.Parent = root;
+    moved.Parent = root;
+    document.body.append(moved.unsafeElement);
 
     root.destroy();
 
     expect(nestedRemove).not.toHaveBeenCalled();
     expect(movedRemove).toHaveBeenCalledOnce();
-    expect(document.body.contains(moved.element)).toBe(false);
+    expect(document.body.contains(moved.unsafeElement)).toBe(false);
     expect(nested.isDestroyed()).toBe(true);
     expect(moved.isDestroyed()).toBe(true);
   });
@@ -35,7 +35,7 @@ describe('resource cleanup', () => {
     const rootFailure = new Error('root cleanup failed');
     const finalCleanup = vi.fn();
 
-    root.addChild(child);
+    child.Parent = root;
     child.onDestroy(() => {
       throw childFailure;
     });
@@ -63,8 +63,8 @@ describe('resource cleanup', () => {
     const second = fk.createFrame({ Name: 'Second' });
     const completedCleanup = vi.fn();
 
-    root.addChild(first);
-    root.addChild(second);
+    first.Parent = root;
+    second.Parent = root;
     first.onDestroy(() => {
       throw new Error('cleanup failed');
     });

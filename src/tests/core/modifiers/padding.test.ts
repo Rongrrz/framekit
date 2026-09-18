@@ -15,23 +15,23 @@ describe('UI padding', () => {
       PaddingLeft: fk.udim(0, 16),
     });
 
-    frame.addChild(padding);
+    padding.Parent = frame;
 
-    expect(frame.element.style.paddingTop).toBe('8px');
-    expect(frame.element.style.paddingRight).toBe('calc(10% + 4px)');
-    expect(frame.element.style.paddingBottom).toBe('12px');
-    expect(frame.element.style.paddingLeft).toBe('16px');
+    expect(frame.unsafeElement.style.paddingTop).toBe('8px');
+    expect(frame.unsafeElement.style.paddingRight).toBe('calc(10% + 4px)');
+    expect(frame.unsafeElement.style.paddingBottom).toBe('12px');
+    expect(frame.unsafeElement.style.paddingLeft).toBe('16px');
 
     padding.setProperties({ PaddingLeft: fk.udim(0, 24) });
 
-    expect(frame.element.style.paddingLeft).toBe('24px');
+    expect(frame.unsafeElement.style.paddingLeft).toBe('24px');
 
-    padding.removeFromParent();
+    padding.Parent = undefined;
 
-    expect(frame.element.style.paddingTop).toBe('');
-    expect(frame.element.style.paddingRight).toBe('');
-    expect(frame.element.style.paddingBottom).toBe('');
-    expect(frame.element.style.paddingLeft).toBe('');
+    expect(frame.unsafeElement.style.paddingTop).toBe('');
+    expect(frame.unsafeElement.style.paddingRight).toBe('');
+    expect(frame.unsafeElement.style.paddingBottom).toBe('');
+    expect(frame.unsafeElement.style.paddingLeft).toBe('');
   });
 
   it('composes with list layouts without replacing their styles', () => {
@@ -39,16 +39,16 @@ describe('UI padding', () => {
     const padding = fk.createUIPadding({ PaddingLeft: fk.udim(0, 10) });
     const layout = fk.createUIListLayout({ Padding: fk.udim(0, 6) });
 
-    frame.addChild(padding);
-    frame.addChild(layout);
+    padding.Parent = frame;
+    layout.Parent = frame;
 
-    expect(frame.element.style.paddingLeft).toBe('10px');
-    expect(frame.element.style.display).toBe('flex');
-    expect(frame.element.style.gap).toBe('6px');
+    expect(frame.unsafeElement.style.paddingLeft).toBe('10px');
+    expect(frame.unsafeElement.style.display).toBe('flex');
+    expect(frame.unsafeElement.style.gap).toBe('6px');
 
-    layout.removeFromParent();
+    layout.Parent = undefined;
 
-    expect(frame.element.style.paddingLeft).toBe('10px');
-    expect(frame.element.style.display).toBe('');
+    expect(frame.unsafeElement.style.paddingLeft).toBe('10px');
+    expect(frame.unsafeElement.style.display).toBe('');
   });
 });

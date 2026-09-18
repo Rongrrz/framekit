@@ -1,9 +1,11 @@
-import { DestroyService } from '../destroy-service';
 import type { GuiObjectProperties } from '../gui-object';
 import { assertBoolean, assertString } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { emitNodeEvent } from '../node/events';
 import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
+import { createRealmAbortController } from './environment';
+import { installStyles } from './stylesheet';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */
@@ -21,16 +23,14 @@ export type ButtonElement<
 > = GuiElement<Properties> &
   ButtonEventMethods & {
     /** The underlying browser button element. */
-    readonly element: HTMLButtonElement;
+    readonly unsafeElement: HTMLButtonElement;
   };
-
-const documentsWithButtonStyles = new WeakSet<Document>();
 
 export function initializeButtonElement<Properties extends GuiObjectProperties & ButtonProperties>(
   node: ButtonElement<Properties>,
   element: HTMLButtonElement,
 ): void {
-  const listenerController = new AbortController();
+  const listenerController = createRealmAbortController(element);
   const listenerOptions = { signal: listenerController.signal };
   let secondaryButtonIsDown = false;
 
@@ -45,7 +45,7 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
     color: 'inherit',
     cursor: element.disabled ? 'not-allowed' : 'pointer',
   });
-  ensureButtonStyles(element.ownerDocument);
+  installStyles({ ownerDocument: element.ownerDocument });
 
   element.addEventListener(
     'click',
@@ -93,9 +93,7 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
     listenerOptions,
   );
 
-  element.addEventListener('contextmenu', (event) => event.preventDefault(), listenerOptions);
-
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
 }
 
 /** Synchronizes properties shared by every FrameKit button. */
@@ -115,28 +113,4 @@ export function validateButtonProperties(properties: Readonly<ButtonProperties>)
   assertBoolean(properties.Disabled, 'Disabled');
   assertBoolean(properties.AutoButtonColor, 'AutoButtonColor');
   assertString(properties.AccessibleLabel, 'AccessibleLabel');
-}
-
-function ensureButtonStyles(ownerDocument: Document): void {
-  if (documentsWithButtonStyles.has(ownerDocument)) return;
-  const style = ownerDocument.createElement('style');
-  style.dataset.framekitButtonStyles = '';
-  style.textContent = `
-    [data-framekit-button][data-framekit-auto-button-color] {
-      transition: filter 140ms ease;
-    }
-    [data-framekit-button][data-framekit-auto-button-color]:not(:disabled):hover {
-      filter: brightness(1.06);
-    }
-    [data-framekit-button][data-framekit-auto-button-color]:not(:disabled):active {
-      filter: brightness(0.92);
-    }
-    @media (prefers-reduced-motion: reduce) {
-      [data-framekit-button][data-framekit-auto-button-color] {
-        transition-duration: 0.001ms;
-      }
-    }
-  `;
-  ownerDocument.head.append(style);
-  documentsWithButtonStyles.add(ownerDocument);
 }

@@ -1,6 +1,11 @@
 import { textGradientFillProperty, textGradientImageProperty } from '../dom/text-gradient';
 import type { GuiObjectProperties } from '../gui-object';
-import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../internal/validation';
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertFiniteNumber,
+  assertUnitInterval,
+} from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
 import {
   createStyleModifier,
@@ -109,6 +114,9 @@ function validateGradientProperties(properties: Readonly<UIGradientProperties>):
   assertBoolean(properties.Enabled, 'Enabled');
   assertColorSequence(properties.Color);
   assertNumberSequence(properties.Transparency);
+  for (const keypoint of properties.Transparency) {
+    assertUnitInterval(keypoint.Value, 'Transparency');
+  }
   assertFiniteNumber(properties.Rotation, 'Rotation');
   assertVector2(properties.Offset, 'Offset');
   assertAllowedValue(properties.ApplyTo, ['Background', 'Text'], 'ApplyTo');

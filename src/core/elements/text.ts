@@ -5,6 +5,7 @@ import {
   type ButtonProperties,
   validateButtonProperties,
 } from '../dom/button';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
 import { initializeTextGradient, resetTextGradientHost } from '../dom/text-gradient';
 import { bindTextScaleResize } from '../dom/text-size';
 import {
@@ -41,7 +42,7 @@ export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
 export type TextTagName = (typeof textTagNames)[number];
 
 /** Creation-only options for a text label's native text element. */
-export type TextLabelOptions = Readonly<{ textTagName?: TextTagName }>;
+export type TextLabelOptions = Readonly<DomOptions & { textTagName?: TextTagName }>;
 
 /** A non-interactive text node. */
 export type TextLabel = GuiElement<TextLabelProperties>;
@@ -78,7 +79,7 @@ export function createTextLabel(
   assertAllowedValue(textTagName, textTagNames, 'TextLabel textTagName');
   return createTextNode(
     'TextLabel',
-    document.createElement('div'),
+    resolveOwnerDocument(options).createElement('div'),
     createDefaultTextProperties(),
     initialProperties,
     textTagName,
@@ -88,8 +89,9 @@ export function createTextLabel(
 /** Creates a text node with button events. */
 export function createTextButton(
   initialProperties: Partial<TextButtonProperties> = {},
+  options: DomOptions = {},
 ): TextButton {
-  const element = document.createElement('button');
+  const element = resolveOwnerDocument(options).createElement('button');
   const node = createTextNode(
     'TextButton',
     element,
@@ -112,6 +114,8 @@ export function createTextButton(
       }
     },
     buttonEventMethods,
+    undefined,
+    false,
   ) as TextButton;
 
   initializeButtonElement(node, element);
@@ -135,8 +139,9 @@ export function createTextNode<Properties extends TextLabelProperties>(
   renderAdditionalProperties?: PropertyRenderer<Properties>,
   methods?: GuiMethodTable,
   validateAdditionalProperties?: PropertyValidator<Properties>,
+  canContainGuiChildren = true,
 ): GuiElement<Properties> {
-  const text = document.createElement(textTagName);
+  const text = element.ownerDocument.createElement(textTagName);
   text.dataset.framekitText = '';
   Object.assign(text.style, {
     position: 'absolute',
@@ -173,6 +178,7 @@ export function createTextNode<Properties extends TextLabelProperties>(
       renderAdditionalProperties?.(properties, changedProperties);
     },
     methods,
+    canContainGuiChildren,
     capabilities: { displayText: true },
     validateProperties: (properties) => {
       validateTextProperties(properties);

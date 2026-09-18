@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { createStyleModifier } from '../../../core/node/modifier';
 import { fk } from '../../../index';
 
 describe('node properties', () => {
@@ -12,8 +13,8 @@ describe('node properties', () => {
         value,
         previousValue,
         visible: frame.Visible,
-        display: frame.element.style.display,
-        rotation: frame.element.style.getPropertyValue('rotate'),
+        display: frame.unsafeElement.style.display,
+        rotation: frame.unsafeElement.style.getPropertyValue('rotate'),
       });
     });
 
@@ -33,7 +34,24 @@ describe('node properties', () => {
     expect(() => frame.setProperties({ Rotation: 45, ZIndex: 1.5 })).toThrow(/integer/);
     expect(frame.Rotation).toBe(0);
     expect(frame.ZIndex).toBe(1);
-    expect(frame.element.style.getPropertyValue('rotate')).toBe('0deg');
+    expect(frame.unsafeElement.style.getPropertyValue('rotate')).toBe('0deg');
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('restores committed state and rendering when a derived renderer rejects an update', () => {
+    const frame = fk.createFrame({ Name: 'Ready' });
+    const changed = vi.fn();
+    const modifier = createStyleModifier('Fragile', { Name: 'Fragile' }, (_, target) => {
+      if (target.properties.Name === 'Rejected') throw new Error('render failed');
+      return { 'border-radius': '4px' };
+    });
+
+    modifier.Parent = frame;
+    frame.onPropertyChanged('Name', changed);
+
+    expect(() => (frame.Name = 'Rejected')).toThrow(/render failed/);
+    expect(frame.Name).toBe('Ready');
+    expect(frame.unsafeElement.style.borderRadius).toBe('4px');
     expect(changed).not.toHaveBeenCalled();
   });
 
@@ -95,5 +113,39 @@ describe('node properties', () => {
       Visible: true,
       AnchorPoint: fk.vector2(0, 0),
     });
+  });
+
+  it('stores structured properties as immutable snapshots', () => {
+    const position = {
+      X: { Scale: 0, Offset: 10 },
+      Y: { Scale: 0, Offset: 20 },
+    };
+    const frame = fk.createFrame({ Position: position });
+
+    position.X.Offset = 999;
+
+    expect(frame.Position).toEqual(fk.udim2FromOffset(10, 20));
+    expect(Object.isFrozen(frame.Position)).toBe(true);
+    expect(Object.isFrozen(frame.Position.X)).toBe(true);
+    expect(frame.unsafeElement.style.left).toBe('10px');
+  });
+
+  it('evaluates accessor-backed frozen inputs once instead of retaining live getters', () => {
+    let offset = 10;
+    const position = Object.freeze({
+      X: Object.freeze({
+        Scale: 0,
+        get Offset() {
+          return offset;
+        },
+      }),
+      Y: fk.udim(0, 20),
+    });
+    const frame = fk.createFrame({ Position: position });
+
+    offset = 999;
+
+    expect(frame.Position).toEqual(fk.udim2FromOffset(10, 20));
+    expect(frame.unsafeElement.style.left).toBe('10px');
   });
 });

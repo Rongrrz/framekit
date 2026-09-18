@@ -1,5 +1,7 @@
 import { fk, fka } from 'framekit';
 
+import { watchOwnedValue } from './owned-value';
+
 export type ThemeMode = 'dark' | 'light';
 
 export type ThemePalette = Readonly<{
@@ -103,7 +105,7 @@ export const bindThemeColors = <Properties extends fk.InstanceProperties>(
   theme: ThemeValue,
   derive: (palette: ThemePalette) => Partial<Properties>,
 ): void => {
-  instance.watch(theme, (palette) => instance.setProperties(derive(palette)));
+  watchOwnedValue(instance, theme, (palette) => instance.setProperties(derive(palette)));
 };
 
 export const themeColor = (theme: ThemeValue, token: ThemeToken): fk.Color3 => theme.get()[token];
@@ -124,7 +126,7 @@ export const bindThemeTransition = (
   transition.onPropertyChanged('Rotation', (progress) => {
     palette.set(interpolatePalette(progress));
   });
-  owner.watch(mode, (nextMode) => {
+  watchOwnedValue(owner, mode, (nextMode) => {
     const goal = nextMode === 'light' ? 1 : 0;
     if (!state.initialized || prefersReducedMotion()) {
       state.initialized = true;
@@ -132,9 +134,9 @@ export const bindThemeTransition = (
       palette.set(themes[nextMode]);
       return;
     }
-    fk.spring(transition, { Rotation: goal }, themeSpringOptions);
+    fka.spring(transition, { Rotation: goal }, themeSpringOptions);
   });
-  owner.watch(palette, applyDocumentPalette);
+  watchOwnedValue(owner, palette, applyDocumentPalette);
   owner.onDestroy(() => {
     transition.destroy();
     for (const property of documentPaletteProperties) {
@@ -164,7 +166,7 @@ export const bindDocumentTheme = (owner: fk.Instance, theme: fk.Value<ThemeMode>
   const previousTheme = root.getAttribute('data-framekit-theme');
   const previousThemeColor = themeColorMeta?.content;
 
-  owner.watch(theme, (mode) => {
+  watchOwnedValue(owner, theme, (mode) => {
     root.setAttribute('data-framekit-theme', mode);
     if (themeColorMeta) themeColorMeta.content = documentThemeColors[mode];
     try {

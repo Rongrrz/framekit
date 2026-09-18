@@ -1,5 +1,6 @@
-import type { Instance } from '../core';
-import { assertNonNegativeFinite } from '../core/internal-api';
+import type { GuiElement, Unsubscribe } from '../core';
+import { createRealmAbortController } from '../core/dom/environment';
+import { assertNonNegativeFinite } from '../core/internal/validation';
 
 export type ResponsiveLayoutOptions = Readonly<{
   breakpoint: number;
@@ -10,7 +11,10 @@ export type ResponsiveLayoutOptions = Readonly<{
 type ResponsiveLayout = 'mobile' | 'desktop';
 
 /** Applies a viewport layout now and again whenever its breakpoint is crossed. */
-export function bindResponsiveLayout(owner: Instance, options: ResponsiveLayoutOptions): void {
+export function bindResponsiveLayout(
+  owner: GuiElement,
+  options: ResponsiveLayoutOptions,
+): Unsubscribe {
   if (owner.isDestroyed()) throw new Error('Responsive layout owner has been destroyed.');
   assertNonNegativeFinite(options.breakpoint, 'Breakpoint');
 
@@ -23,22 +27,31 @@ export function bindResponsiveLayout(owner: Instance, options: ResponsiveLayoutO
   }
 
   let currentLayout: ResponsiveLayout | undefined;
+  const ownerWindow = owner.unsafeElement.ownerDocument.defaultView;
+  if (!ownerWindow) throw new Error('Responsive layout requires a document with a window.');
 
   const updateLayout = (): void => {
-    const nextLayout = window.innerWidth < options.breakpoint ? 'mobile' : 'desktop';
+    const nextLayout = ownerWindow.innerWidth < options.breakpoint ? 'mobile' : 'desktop';
 
     if (nextLayout === currentLayout) return;
 
-    currentLayout = nextLayout;
     options[nextLayout]();
+    currentLayout = nextLayout;
   };
 
   updateLayout();
-  if (owner.isDestroyed()) return;
+  if (owner.isDestroyed()) return () => undefined;
 
-  const listenerController = new AbortController();
-  window.addEventListener('resize', updateLayout, {
+  const listenerController = createRealmAbortController(owner.unsafeElement);
+  ownerWindow.addEventListener('resize', updateLayout, {
     signal: listenerController.signal,
   });
-  owner.onDestroy(() => listenerController.abort());
+  const unregisterDestroy = owner.onDestroy(dispose);
+
+  function dispose(): void {
+    listenerController.abort();
+    unregisterDestroy();
+  }
+
+  return dispose;
 }

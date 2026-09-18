@@ -54,7 +54,7 @@ export const createDocsShell = (
     Size: fk.udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
     BackgroundTransparency: 1,
   });
-  sidebarRail.addChild(createRailDivider(theme, 'Right'));
+  createRailDivider(theme, 'Right').Parent = sidebarRail;
   const sidebar = fk.createFrame({
     Name: `${name}Sidebar`,
     Size: fk.udim2FromOffset(243, 600),
@@ -73,7 +73,7 @@ export const createDocsShell = (
     Position: fk.udim2FromOffset(1020, 0),
     BackgroundTransparency: 1,
   });
-  outlineRail.addChild(createRailDivider(theme, 'Left'));
+  createRailDivider(theme, 'Left').Parent = outlineRail;
   const outline = fk.createFrame({
     Name: `${name}Outline`,
     Size: fk.udim2FromOffset(196, 520),
@@ -106,14 +106,14 @@ export const createDocsShell = (
     mobile: { Visible: false },
   });
 
-  sidebarRail.addChild(sidebar);
-  outlineRail.addChild(outline);
-  content.addChild(sidebarRail);
-  content.addChild(article);
-  content.addChild(outlineRail);
-  sidebar.element.style.position = 'sticky';
-  outline.element.style.position = 'sticky';
-  page.addChild(content);
+  sidebar.Parent = sidebarRail;
+  outline.Parent = outlineRail;
+  sidebarRail.Parent = content;
+  article.Parent = content;
+  outlineRail.Parent = content;
+  sidebar.unsafeElement.style.position = 'sticky';
+  outline.unsafeElement.style.position = 'sticky';
+  content.Parent = page;
   return Object.freeze({ page, sidebar, article, outline });
 };
 
@@ -136,15 +136,13 @@ export const appendSidebarGroup = (
   startY: number,
   onNavigate: (offset: number) => void,
 ): void => {
-  parent.addChild(
-    createText(theme, {
-      text: title,
-      size: fk.udim2(1, -28, 0, 28),
-      position: fk.udim2FromOffset(0, startY),
-      textSize: typeScale.caption,
-      weight: 800,
-    }),
-  );
+  createText(theme, {
+    text: title,
+    size: fk.udim2(1, -28, 0, 28),
+    position: fk.udim2FromOffset(0, startY),
+    textSize: typeScale.caption,
+    weight: 800,
+  }).Parent = parent;
   for (const [index, item] of items.entries()) {
     const link = createButton(theme, {
       label: item.label,
@@ -157,7 +155,7 @@ export const appendSidebarGroup = (
     });
     link.TextXAlignment = 'Left';
     link.onClick(() => onNavigate(item.offset));
-    parent.addChild(link);
+    link.Parent = parent;
   }
 };
 
@@ -167,15 +165,13 @@ export const appendOutline = (
   items: readonly NavigationItem[],
   onNavigate: (offset: number) => void,
 ): void => {
-  parent.addChild(
-    createText(theme, {
-      text: 'On this page',
-      size: fk.udim2(1, -28, 0, 28),
-      position: fk.udim2FromOffset(20, 0),
-      textSize: typeScale.caption,
-      weight: 800,
-    }),
-  );
+  createText(theme, {
+    text: 'On this page',
+    size: fk.udim2(1, -28, 0, 28),
+    position: fk.udim2FromOffset(20, 0),
+    textSize: typeScale.caption,
+    weight: 800,
+  }).Parent = parent;
   for (const [index, item] of items.entries()) {
     const link = createButton(theme, {
       label: item.label,
@@ -188,7 +184,7 @@ export const appendOutline = (
     });
     link.TextXAlignment = 'Left';
     link.onClick(() => onNavigate(item.offset));
-    parent.addChild(link);
+    link.Parent = parent;
   }
 };
 
@@ -199,38 +195,32 @@ export const appendArticleTitle = (
   title: string,
   body: string,
 ): void => {
-  parent.addChild(
-    createText(theme, {
-      text: eyebrow,
-      size: fk.udim2(1, 0, 0, 24),
-      color: 'accent',
-      textSize: typeScale.caption,
-      font: fonts.mono,
-      weight: 800,
-    }),
-  );
-  parent.addChild(
-    createText(theme, {
-      text: title,
-      size: fk.udim2(1, 0, 0, 74),
-      position: fk.udim2FromOffset(0, 34),
-      textSize: typeScale.page,
-      scaled: true,
-      wrapped: true,
-      weight: 900,
-    }),
-  );
-  parent.addChild(
-    createText(theme, {
-      text: body,
-      size: fk.udim2(1, 0, 0, 104),
-      position: fk.udim2FromOffset(0, 126),
-      color: 'textMuted',
-      textSize: typeScale.body,
-      wrapped: true,
-      yAlignment: 'Top',
-    }),
-  );
+  createText(theme, {
+    text: eyebrow,
+    size: fk.udim2(1, 0, 0, 24),
+    color: 'accent',
+    textSize: typeScale.caption,
+    font: fonts.mono,
+    weight: 800,
+  }).Parent = parent;
+  createText(theme, {
+    text: title,
+    size: fk.udim2(1, 0, 0, 74),
+    position: fk.udim2FromOffset(0, 34),
+    textSize: typeScale.page,
+    scaled: true,
+    wrapped: true,
+    weight: 900,
+  }).Parent = parent;
+  createText(theme, {
+    text: body,
+    size: fk.udim2(1, 0, 0, 104),
+    position: fk.udim2FromOffset(0, 126),
+    color: 'textMuted',
+    textSize: typeScale.body,
+    wrapped: true,
+    yAlignment: 'Top',
+  }).Parent = parent;
 };
 
 export const appendArticleSection = (
@@ -240,27 +230,23 @@ export const appendArticleSection = (
   body: string,
   y: number,
 ): void => {
-  parent.addChild(
-    createText(theme, {
-      text: title,
-      size: fk.udim2(1, 0, 0, 48),
-      position: fk.udim2FromOffset(0, y),
-      textSize: typeScale.section,
-      scaled: true,
-      weight: 850,
-    }),
-  );
-  parent.addChild(
-    createText(theme, {
-      text: body,
-      size: fk.udim2(1, 0, 0, 104),
-      position: fk.udim2FromOffset(0, y + 62),
-      color: 'textMuted',
-      textSize: typeScale.body,
-      wrapped: true,
-      yAlignment: 'Top',
-    }),
-  );
+  createText(theme, {
+    text: title,
+    size: fk.udim2(1, 0, 0, 48),
+    position: fk.udim2FromOffset(0, y),
+    textSize: typeScale.section,
+    scaled: true,
+    weight: 850,
+  }).Parent = parent;
+  createText(theme, {
+    text: body,
+    size: fk.udim2(1, 0, 0, 104),
+    position: fk.udim2FromOffset(0, y + 62),
+    color: 'textMuted',
+    textSize: typeScale.body,
+    wrapped: true,
+    yAlignment: 'Top',
+  }).Parent = parent;
 };
 
 export const appendCodeBlock = (
@@ -279,7 +265,7 @@ export const appendCodeBlock = (
     radius: 12,
   });
   appendCodeLines(block, theme, lines, 20, 27);
-  parent.addChild(block);
+  block.Parent = parent;
 };
 
 export const appendCallout = (
@@ -296,15 +282,13 @@ export const appendCallout = (
     border: 'accentMuted',
     radius: 10,
   });
-  callout.addChild(
-    createText(theme, {
-      text,
-      size: fk.udim2(1, -32, 1, -20),
-      position: fk.udim2FromOffset(16, 10),
-      color: 'text',
-      textSize: typeScale.small,
-      wrapped: true,
-    }),
-  );
-  parent.addChild(callout);
+  createText(theme, {
+    text,
+    size: fk.udim2(1, -32, 1, -20),
+    position: fk.udim2FromOffset(16, 10),
+    color: 'text',
+    textSize: typeScale.small,
+    wrapped: true,
+  }).Parent = callout;
+  callout.Parent = parent;
 };

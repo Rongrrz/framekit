@@ -1,6 +1,7 @@
 import { fk } from 'framekit';
 
 import { bindLayoutProperties, pageHeight, type PlaygroundLayout } from './layout';
+import { watchOwnedValue } from './owned-value';
 
 export type SitePage = 'home' | 'guide' | 'api';
 
@@ -41,7 +42,7 @@ export const createRoutedPage = (
     desktop: { Size: fk.udim2(1, 0, 0, pageHeight.desktop[page]) },
     mobile: { Size: fk.udim2(1, 0, 0, pageHeight.mobile[page]) },
   });
-  frame.watch(route, (currentPage) => {
+  watchOwnedValue(frame, route, (currentPage) => {
     frame.Visible = currentPage === page;
   });
   return frame;

@@ -1,12 +1,23 @@
-import { DestroyService } from '../destroy-service';
+import {
+  createRealmAbortController,
+  resolveOwnerDocument,
+  type DomOptions,
+} from '../dom/environment';
 import { setStyle } from '../dom/styles';
+import { installStyles } from '../dom/stylesheet';
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
-import { assertAllowedValue, assertBoolean, assertNonNegativeFinite } from '../internal/validation';
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertNonNegativeFinite,
+  assertUnitInterval,
+} from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { guiEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
 import { setNodeProperties, getNodeProperty } from '../node/properties';
@@ -22,7 +33,7 @@ export type ScrollingDirection = 'X' | 'Y' | 'XY';
 export type ScrollingFrameTagName = (typeof scrollingFrameTagNames)[number];
 
 /** Creation-only options for a scrolling frame's native element. */
-export type ScrollingFrameOptions = Readonly<{ tagName?: ScrollingFrameTagName }>;
+export type ScrollingFrameOptions = Readonly<DomOptions & { tagName?: ScrollingFrameTagName }>;
 
 /** Frame properties plus controlled scroll position and direction. */
 export type ScrollingFrameProperties = GuiObjectProperties & {
@@ -59,13 +70,12 @@ export type ScrollingFrameMethods = {
 /** A native scrolling container synchronized through CanvasPosition. */
 export type ScrollingFrame = GuiElement<ScrollingFrameProperties> &
   ScrollingFrameMethods & {
-    readonly element: HTMLElementTagNameMap[ScrollingFrameTagName];
+    readonly unsafeElement: HTMLElementTagNameMap[ScrollingFrameTagName];
   };
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
 const scrollingFrameTagNames = ['div', 'main', 'section', 'article', 'aside', 'nav'] as const;
-const documentsWithScrollbarStyles = new WeakSet<Document>();
 
 const scrollingFrameMethodTable = {
   ...guiEventMethods,
@@ -88,15 +98,15 @@ Object.defineProperties(scrollingFrameMethodTable, {
   AbsoluteCanvasSize: {
     get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
-      return vector2(this.element.scrollWidth, this.element.scrollHeight);
+      return vector2(this.unsafeElement.scrollWidth, this.unsafeElement.scrollHeight);
     },
   },
   MaxCanvasPosition: {
     get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
       return vector2(
-        Math.max(0, this.element.scrollWidth - this.element.clientWidth),
-        Math.max(0, this.element.scrollHeight - this.element.clientHeight),
+        Math.max(0, this.unsafeElement.scrollWidth - this.unsafeElement.clientWidth),
+        Math.max(0, this.unsafeElement.scrollHeight - this.unsafeElement.clientHeight),
       );
     },
   },
@@ -111,8 +121,9 @@ export function createScrollingFrame(
 ): ScrollingFrame {
   const tagName = options.tagName ?? 'div';
   assertAllowedValue(tagName, scrollingFrameTagNames, 'ScrollingFrame tagName');
-  const element = document.createElement(tagName);
-  const canvasBounds = document.createElement('div');
+  const ownerDocument = resolveOwnerDocument(options);
+  const element = ownerDocument.createElement(tagName);
+  const canvasBounds = ownerDocument.createElement('div');
 
   canvasBounds.dataset.framekitCanvasBounds = '';
   canvasBounds.setAttribute('aria-hidden', 'true');
@@ -126,7 +137,7 @@ export function createScrollingFrame(
   element.append(canvasBounds);
   element.style.overscrollBehavior = 'none';
   element.tabIndex = 0;
-  ensureScrollbarStyles(document);
+  installStyles({ ownerDocument });
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
   // position accepted by the browser after each FrameKit write so those events can be ignored.
   let lastRenderedCanvasPosition = readCanvasPosition(element);
@@ -193,6 +204,9 @@ export function createScrollingFrame(
           writeCanvasPosition(element, properties.CanvasPosition);
         }
         lastRenderedCanvasPosition = readCanvasPosition(element);
+        if (!positionsMatch(lastRenderedCanvasPosition, properties.CanvasPosition)) {
+          return { CanvasPosition: lastRenderedCanvasPosition };
+        }
       }
     },
     methods: scrollingFrameMethods,
@@ -201,7 +215,12 @@ export function createScrollingFrame(
 
   const syncCanvasPositionFromBrowser = (): void => {
     const browserPosition = readCanvasPosition(element);
-    if (positionsMatch(browserPosition, lastRenderedCanvasPosition)) return;
+    if (
+      positionsMatch(browserPosition, lastRenderedCanvasPosition) &&
+      positionsMatch(browserPosition, getNodeProperty(node, 'CanvasPosition'))
+    ) {
+      return;
+    }
     const canvasPosition = getNodeProperty(node, 'CanvasPosition');
     if (positionsMatch(browserPosition, canvasPosition)) {
       lastRenderedCanvasPosition = browserPosition;
@@ -210,11 +229,11 @@ export function createScrollingFrame(
     setNodeProperties(node, { CanvasPosition: browserPosition });
   };
 
-  const listenerController = new AbortController();
+  const listenerController = createRealmAbortController(element);
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
   element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
 
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
   return node;
 }
 
@@ -225,44 +244,12 @@ function validateScrollingFrameProperties(properties: Readonly<ScrollingFramePro
   assertAllowedValue(properties.AutomaticCanvasSize, automaticCanvasSizes, 'AutomaticCanvasSize');
   assertBoolean(properties.ScrollingEnabled, 'ScrollingEnabled');
   assertColor3(properties.ScrollBarImageColor3, 'ScrollBarImageColor3');
-  assertNonNegativeFinite(properties.ScrollBarImageTransparency, 'ScrollBarImageTransparency');
-  if (properties.ScrollBarImageTransparency > 1) {
-    throw new RangeError('ScrollBarImageTransparency must be between 0 and 1.');
-  }
+  assertUnitInterval(properties.ScrollBarImageTransparency, 'ScrollBarImageTransparency');
   assertNonNegativeFinite(properties.ScrollBarThickness, 'ScrollBarThickness');
 }
 
 function isCanvasAxisAutomatic(size: AutomaticSize, axis: 'X' | 'Y'): boolean {
   return size === axis || size === 'XY';
-}
-
-function ensureScrollbarStyles(ownerDocument: Document): void {
-  if (documentsWithScrollbarStyles.has(ownerDocument)) return;
-  const style = ownerDocument.createElement('style');
-  style.dataset.framekitScrollbarStyles = '';
-  style.textContent = `
-    [data-framekit="ScrollingFrame"] {
-      scrollbar-color: var(--framekit-scrollbar-color) transparent;
-      scrollbar-gutter: stable;
-    }
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar {
-      width: var(--framekit-scrollbar-thickness);
-      height: var(--framekit-scrollbar-thickness);
-    }
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-track,
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-corner {
-      background: transparent;
-    }
-    [data-framekit="ScrollingFrame"]::-webkit-scrollbar-thumb {
-      min-height: 48px;
-      border: 3px solid transparent;
-      border-radius: 999px;
-      background: var(--framekit-scrollbar-color);
-      background-clip: padding-box;
-    }
-  `;
-  ownerDocument.head.append(style);
-  documentsWithScrollbarStyles.add(ownerDocument);
 }
 
 function readCanvasPosition(element: HTMLElement): Vector2 {

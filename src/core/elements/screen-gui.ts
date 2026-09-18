@@ -1,7 +1,8 @@
-import { DestroyService } from '../destroy-service';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
 import { connectHoverEvents } from '../dom/hover-events';
 import { setStyle } from '../dom/styles';
 import { assertBoolean, assertInteger } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { guiEventMethods } from '../node/gui-events';
 import { createGuiNode, type GuiElement } from '../node/gui-node';
 import type { InstanceProperties } from '../node/instance';
@@ -45,8 +46,11 @@ const screenGuiMethods = Object.freeze({
 const mountTargets = new WeakMap<ScreenGui, HTMLElement>();
 
 /** Creates an unmounted full-viewport GUI root. */
-export function createScreenGui(initialProperties: Partial<ScreenGuiProperties> = {}): ScreenGui {
-  const element = document.createElement('div');
+export function createScreenGui(
+  initialProperties: Partial<ScreenGuiProperties> = {},
+  options: DomOptions = {},
+): ScreenGui {
+  const element = resolveOwnerDocument(options).createElement('div');
   element.dataset.framekit = 'ScreenGui';
   Object.assign(element.style, {
     position: 'fixed',
@@ -79,7 +83,7 @@ export function createScreenGui(initialProperties: Partial<ScreenGuiProperties> 
   }) as ScreenGui;
 
   connectHoverEvents(gui, element);
-  DestroyService.onDestroy(gui, () => mountTargets.delete(gui));
+  lifecycle.onDestroy(gui, () => mountTargets.delete(gui));
   return gui;
 }
 
@@ -91,35 +95,37 @@ function validateScreenGuiProperties(properties: Readonly<ScreenGuiProperties>):
 /** Mounts a full-viewport ScreenGui beneath the supplied DOM owner. */
 function mountScreenGui(gui: ScreenGui, target: string | HTMLElement): void {
   getActiveNodeState(gui);
-  const element = resolveMountTarget(target);
-  if (mountTargets.get(gui) === element && gui.element.parentElement === element) return;
+  const element = resolveMountTarget(gui, target);
+  if (element.ownerDocument !== gui.unsafeElement.ownerDocument) {
+    throw new TypeError('ScreenGui cannot be mounted into a different document.');
+  }
+  if (mountTargets.get(gui) === element && gui.unsafeElement.parentElement === element) return;
 
-  unmountScreenGui(gui);
+  element.append(gui.unsafeElement);
   mountTargets.set(gui, element);
-  element.append(gui.element);
 }
 
 function unmountScreenGui(gui: ScreenGui): void {
   getActiveNodeState(gui);
-  gui.element.remove();
+  gui.unsafeElement.remove();
   mountTargets.delete(gui);
 }
 
 function isScreenGuiMounted(gui: ScreenGui): boolean {
   getActiveNodeState(gui);
   const target = mountTargets.get(gui);
-  if (!target || gui.element.parentElement !== target) {
+  if (!target || gui.unsafeElement.parentElement !== target) {
     mountTargets.delete(gui);
     return false;
   }
   return true;
 }
 
-function resolveMountTarget(target: string | HTMLElement): HTMLElement {
+function resolveMountTarget(gui: ScreenGui, target: string | HTMLElement): HTMLElement {
   if (typeof target !== 'string') return target;
   let element: HTMLElement | null;
   try {
-    element = document.querySelector<HTMLElement>(target);
+    element = gui.unsafeElement.ownerDocument.querySelector<HTMLElement>(target);
   } catch {
     throw new TypeError(`Unable to mount ScreenGui: "${target}" is not a valid selector.`);
   }

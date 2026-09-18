@@ -16,30 +16,30 @@ describe('UI list layouts', () => {
     const second = fk.createFrame({ Name: 'Second', LayoutOrder: 1 });
     const layout = fk.createUIListLayout({ Padding: fk.udim(0, 8) });
 
-    frame.addChild(first);
-    frame.addChild(second);
-    frame.addChild(layout);
+    first.Parent = frame;
+    second.Parent = frame;
+    layout.Parent = frame;
 
-    expect(frame.element.style.display).toBe('flex');
-    expect(frame.element.style.flexDirection).toBe('column');
-    expect(frame.element.style.gap).toBe('8px');
-    expect(first.element.style.position).toBe('relative');
-    expect(first.element.style.left).toBe('auto');
-    expect(first.element.style.order).toBe('1');
-    expect(second.element.style.order).toBe('0');
+    expect(frame.unsafeElement.style.display).toBe('flex');
+    expect(frame.unsafeElement.style.flexDirection).toBe('column');
+    expect(frame.unsafeElement.style.gap).toBe('8px');
+    expect(first.unsafeElement.style.position).toBe('relative');
+    expect(first.unsafeElement.style.left).toBe('auto');
+    expect(first.unsafeElement.style.order).toBe('1');
+    expect(second.unsafeElement.style.order).toBe('0');
 
     first.setProperties({ Position: fk.udim2FromOffset(25, 30), LayoutOrder: 0 });
 
-    expect(first.element.style.left).toBe('auto');
-    expect(first.element.style.order).toBe('0');
-    expect(second.element.style.order).toBe('1');
+    expect(first.unsafeElement.style.left).toBe('auto');
+    expect(first.unsafeElement.style.order).toBe('0');
+    expect(second.unsafeElement.style.order).toBe('1');
 
-    layout.removeFromParent();
+    layout.Parent = undefined;
 
-    expect(frame.element.style.display).toBe('');
-    expect(first.element.style.position).toBe('absolute');
-    expect(first.element.style.left).toBe('25px');
-    expect(first.element.style.top).toBe('30px');
+    expect(frame.unsafeElement.style.display).toBe('');
+    expect(first.unsafeElement.style.position).toBe('absolute');
+    expect(first.unsafeElement.style.left).toBe('25px');
+    expect(first.unsafeElement.style.top).toBe('30px');
   });
 
   it('updates direction, alignment, wrapping, and name sorting', () => {
@@ -48,13 +48,13 @@ describe('UI list layouts', () => {
     const alpha = fk.createFrame({ Name: 'Alpha' });
     const layout = fk.createUIListLayout({ SortOrder: 'Name' });
 
-    frame.addChild(zebra);
-    frame.addChild(alpha);
-    frame.addChild(layout);
+    zebra.Parent = frame;
+    alpha.Parent = frame;
+    layout.Parent = frame;
 
-    expect(frame.element.style.display).toBe('none');
-    expect(zebra.element.style.order).toBe('1');
-    expect(alpha.element.style.order).toBe('0');
+    expect(frame.unsafeElement.style.display).toBe('none');
+    expect(zebra.unsafeElement.style.order).toBe('1');
+    expect(alpha.unsafeElement.style.order).toBe('0');
 
     frame.setProperties({ Visible: true });
     layout.setProperties({
@@ -64,17 +64,17 @@ describe('UI list layouts', () => {
       Wraps: true,
     });
 
-    expect(frame.element.style.display).toBe('flex');
-    expect(frame.element.style.flexDirection).toBe('row');
-    expect(frame.element.style.flexWrap).toBe('wrap');
-    expect(frame.element.style.justifyContent).toBe('center');
-    expect(frame.element.style.alignItems).toBe('flex-end');
-    expect(frame.element.style.alignContent).toBe('flex-end');
+    expect(frame.unsafeElement.style.display).toBe('flex');
+    expect(frame.unsafeElement.style.flexDirection).toBe('row');
+    expect(frame.unsafeElement.style.flexWrap).toBe('wrap');
+    expect(frame.unsafeElement.style.justifyContent).toBe('center');
+    expect(frame.unsafeElement.style.alignItems).toBe('flex-end');
+    expect(frame.unsafeElement.style.alignContent).toBe('flex-end');
 
     zebra.setProperties({ Name: 'Aardvark' });
 
-    expect(zebra.element.style.order).toBe('0');
-    expect(alpha.element.style.order).toBe('1');
+    expect(zebra.unsafeElement.style.order).toBe('0');
+    expect(alpha.unsafeElement.style.order).toBe('1');
   });
 
   it('preserves layout positioning when a child modifier updates', () => {
@@ -82,25 +82,25 @@ describe('UI list layouts', () => {
     const child = fk.createFrame({ Position: fk.udim2FromOffset(40, 50) });
     const scale = fk.createUIScale();
 
-    child.addChild(scale);
-    container.addChild(child);
-    container.addChild(fk.createUIListLayout());
+    scale.Parent = child;
+    child.Parent = container;
+    fk.createUIListLayout().Parent = container;
 
-    expect(child.element.style.position).toBe('relative');
-    expect(child.element.style.left).toBe('auto');
+    expect(child.unsafeElement.style.position).toBe('relative');
+    expect(child.unsafeElement.style.left).toBe('auto');
 
     scale.setProperties({ Scale: 1.05 });
 
-    expect(child.element.style.position).toBe('relative');
-    expect(child.element.style.left).toBe('auto');
-    expect(child.element.style.getPropertyValue('scale')).toBe('1.05');
+    expect(child.unsafeElement.style.position).toBe('relative');
+    expect(child.unsafeElement.style.left).toBe('auto');
+    expect(child.unsafeElement.style.getPropertyValue('scale')).toBe('1.05');
   });
 
   it('rejects element-less parents', () => {
     const parentModifier = fk.createUICorner();
     const layout = fk.createUIListLayout();
 
-    expect(() => parentModifier.addChild(layout)).toThrow(/cannot contain child nodes/);
+    expect(() => (layout.Parent = parentModifier)).toThrow(/cannot contain child nodes/);
     expect(layout.Parent).toBeUndefined();
   });
 });

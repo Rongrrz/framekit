@@ -1,4 +1,9 @@
-import { assertAllowedValue, assertBoolean, assertFiniteNumber } from '../internal/validation';
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertNonNegativeFinite,
+  assertUnitInterval,
+} from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
 import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
 import { mergeProperties } from '../node/properties';
@@ -51,7 +56,7 @@ function resolveStrokeStyles(properties: Readonly<UIStrokeProperties>): Styles {
 }
 
 function resolveStrokeShadow(properties: Readonly<UIStrokeProperties>): string {
-  const thickness = Math.max(0, properties.Thickness);
+  const thickness = properties.Thickness;
   const color = color3ToCss(properties.Color, properties.Transparency);
   if (properties.BorderStrokePosition === 'Inner') {
     return `inset 0px 0px 0px ${thickness}px ${color}`;
@@ -69,7 +74,7 @@ function validateStrokeProperties(properties: Readonly<UIStrokeProperties>): voi
     borderStrokePositions,
     'BorderStrokePosition',
   );
-  assertFiniteNumber(properties.Thickness, 'Thickness');
+  assertNonNegativeFinite(properties.Thickness, 'Thickness');
   assertColor3(properties.Color, 'Color');
-  assertFiniteNumber(properties.Transparency, 'Transparency');
+  assertUnitInterval(properties.Transparency, 'Transparency');
 }

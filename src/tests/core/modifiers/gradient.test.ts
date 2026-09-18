@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { createDefaultGuiObjectProperties, createGuiObjectNode } from '../../../core/gui-object';
 import { fk } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
 
@@ -15,16 +16,16 @@ describe('gradients', () => {
       Offset: fk.vector2(0.1, 0),
     });
 
-    frame.addChild(gradient);
+    gradient.Parent = frame;
 
-    expect(frame.element.style.backgroundImage).toContain('linear-gradient(90deg');
-    expect(frame.element.style.backgroundImage).toContain('rgb(255 0 0 / 1) 10%');
-    expect(frame.element.style.backgroundImage).toContain('rgb(0 0 255 / 0.5) 110%');
-    expect(frame.element.style.backgroundColor).toBe('transparent');
+    expect(frame.unsafeElement.style.backgroundImage).toContain('linear-gradient(90deg');
+    expect(frame.unsafeElement.style.backgroundImage).toContain('rgb(255 0 0 / 1) 10%');
+    expect(frame.unsafeElement.style.backgroundImage).toContain('rgb(0 0 255 / 0.5) 110%');
+    expect(frame.unsafeElement.style.backgroundColor).toBe('transparent');
 
     gradient.Enabled = false;
 
-    expect(frame.element.style.backgroundImage).toBe('');
+    expect(frame.unsafeElement.style.backgroundImage).toBe('');
   });
 
   it('applies a UIGradient to text without reaching into its rendered span', () => {
@@ -38,24 +39,26 @@ describe('gradients', () => {
       Color: fk.colorSequence(fk.color3FromRGB(255, 0, 0), fk.color3FromRGB(0, 0, 255)),
     });
 
-    label.addChild(gradient);
+    gradient.Parent = label;
 
-    expect(label.element.style.backgroundImage).toBe('');
-    expect(label.element.style.backgroundColor).not.toBe('transparent');
-    expect(label.element.style.getPropertyValue('--framekit-text-gradient-image')).toContain(
+    expect(label.unsafeElement.style.backgroundImage).toBe('');
+    expect(label.unsafeElement.style.backgroundColor).not.toBe('transparent');
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-image')).toContain(
       'linear-gradient(90deg',
     );
-    expect(label.element.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
       'transparent',
     );
-    const renderedText = label.element.querySelector<HTMLElement>('[data-framekit-text]');
+    const renderedText = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]');
     expect(renderedText?.style.backgroundClip).toBe('text');
     expect(renderedText?.style.getPropertyValue('-webkit-background-clip')).toBe('text');
 
     gradient.Enabled = false;
 
-    expect(label.element.style.getPropertyValue('--framekit-text-gradient-image')).toBe('none');
-    expect(label.element.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-image')).toBe(
+      'none',
+    );
+    expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
       'currentcolor',
     );
   });
@@ -64,20 +67,27 @@ describe('gradients', () => {
     const frame = fk.createFrame();
     const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
 
-    expect(() => frame.addChild(gradient)).toThrow(/TextLabel or TextButton/);
+    expect(() => (gradient.Parent = frame)).toThrow(/TextLabel or TextButton/);
     expect(gradient.Parent).toBeUndefined();
-    expect(frame.element.style.getPropertyValue('--framekit-text-gradient-image')).toBe('');
+    expect(frame.unsafeElement.style.getPropertyValue('--framekit-text-gradient-image')).toBe('');
   });
 
   it('does not infer text support from custom property names', () => {
-    const createTextLikeNode = fk.defineGuiObject({
+    const textLikeNode = createGuiObjectNode({
       className: 'TextLikeNode',
-      defaultProperties: { Text: 'not a text renderer' },
+      element: document.createElement('div'),
+      defaultProperties: { ...createDefaultGuiObjectProperties(), Text: 'not a text renderer' },
+      initialProperties: {},
     });
-    const textLikeNode = createTextLikeNode();
     const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
 
-    expect(() => textLikeNode.addChild(gradient)).toThrow(/TextLabel or TextButton/);
+    expect(() => (gradient.Parent = textLikeNode)).toThrow(/TextLabel or TextButton/);
     expect(gradient.Parent).toBeUndefined();
+  });
+
+  it('rejects transparency sequence values outside the normalized range', () => {
+    expect(() => fk.createUIGradient({ Transparency: fk.numberSequence(0, 1.1) })).toThrow(
+      /between 0 and 1/,
+    );
   });
 });

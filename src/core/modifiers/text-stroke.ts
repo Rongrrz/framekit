@@ -3,7 +3,7 @@ import {
   textStrokeContentProperty,
   textStrokeWidthProperty,
 } from '../dom/text-stroke';
-import { assertBoolean, assertFiniteNumber, assertNonNegativeFinite } from '../internal/validation';
+import { assertBoolean, assertNonNegativeFinite, assertUnitInterval } from '../internal/validation';
 import type { InstanceProperties } from '../node/instance';
 import {
   createStyleModifier,
@@ -76,6 +76,6 @@ function validateTextStrokeTarget(
 function validateTextStrokeProperties(properties: Readonly<UITextStrokeProperties>): void {
   assertBoolean(properties.Enabled, 'Enabled');
   assertColor3(properties.Color, 'Color');
-  assertFiniteNumber(properties.Transparency, 'Transparency');
+  assertUnitInterval(properties.Transparency, 'Transparency');
   assertNonNegativeFinite(properties.Thickness, 'Thickness');
 }

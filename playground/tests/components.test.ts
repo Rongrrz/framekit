@@ -36,24 +36,24 @@ describe('playground pages', () => {
       () => undefined,
     );
     const sidebar = guide.findFirstChild('GuidePageSidebar', true) as fk.Frame;
-    expect(sidebar.element.style.position).toBe('sticky');
-    expect(guide.element.textContent).toContain('Create your first interface');
-    expect(guide.element.textContent).toContain('TextScaled: true');
-    expect(guide.element.textContent).toContain('Bind reactive values');
-    expect(guide.element.textContent).toContain('Respond to the viewport');
-    expect(guide.element.textContent).toContain('Clean up one owner');
+    expect(sidebar.unsafeElement.style.position).toBe('sticky');
+    expect(guide.unsafeElement.textContent).toContain('Create your first interface');
+    expect(guide.unsafeElement.textContent).toContain('TextScaled: true');
+    expect(guide.unsafeElement.textContent).toContain('Bind reactive values');
+    expect(guide.unsafeElement.textContent).toContain('Respond to the viewport');
+    expect(guide.unsafeElement.textContent).toContain('Clean up one owner');
     guide.destroy();
   });
 
   it('documents core APIs and optional namespaces', () => {
     const state = createState('api');
     const api = createApiPage(state.layout, state.theme, state.route, () => undefined);
-    expect(api.element.textContent).toContain('Factories');
-    expect(api.element.textContent).toContain('Instance methods');
+    expect(api.unsafeElement.textContent).toContain('Factories');
+    expect(api.unsafeElement.textContent).toContain('Instance methods');
     expect(api.findFirstChild('ScrollingFrameReferenceCard', true)).toBeDefined();
     expect(api.findFirstChild('UIListLayoutReferenceCard', true)).toBeDefined();
-    expect(api.element.textContent).toContain('fk.spring');
-    expect(api.element.textContent).toContain('fkh.bindResponsiveLayout');
+    expect(api.unsafeElement.textContent).toContain('fka.spring');
+    expect(api.unsafeElement.textContent).toContain('fkh.bindResponsiveLayout');
 
     state.layout.set('mobile');
     const cornerCard = api.findFirstChild('UICornerReferenceCard', true) as fk.Frame;

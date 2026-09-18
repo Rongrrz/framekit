@@ -31,7 +31,7 @@ describe('playground application', () => {
     const app = createPlaygroundApp('desktop', 'dark');
     const home = app.findFirstChild('HomePage', true) as fk.Frame;
     const guide = app.findFirstChild('GuidePage', true) as fk.Frame;
-    (app.findFirstChild('GuideNavButton', true) as fk.TextButton).element.click();
+    (app.findFirstChild('GuideNavButton', true) as fk.TextButton).unsafeElement.click();
     expect(window.location.hash).toBe('#/guide');
     expect(home.Visible).toBe(false);
     expect(app.findFirstChild('GuidePage', true)).toBe(guide);
@@ -46,7 +46,7 @@ describe('playground application', () => {
     const app = createPlaygroundApp('desktop', 'dark');
     const page = app.findFirstChild('FrameKitPlaygroundPage', true) as fk.ScrollingFrame;
     const toggle = app.findFirstChild('ThemeToggleButton', true) as fk.TextButton;
-    toggle.element.click();
+    toggle.unsafeElement.click();
     expect(document.documentElement.dataset.framekitTheme).toBe('light');
     expect(toggle.Text).toContain('Dark');
     expect(page.BackgroundColor3).toEqual(fk.color3FromRGB(245, 247, 250));

@@ -1,4 +1,5 @@
-import { DestroyService } from '../destroy-service';
+import { createRealmAbortController } from '../dom/environment';
+import { installStyles } from '../dom/stylesheet';
 import { bindTextScaleResize, renderTextSize } from '../dom/text-size';
 import {
   createDefaultTextStyleProperties,
@@ -11,7 +12,8 @@ import {
   createGuiObjectNode,
   type GuiObjectProperties,
 } from '../gui-object';
-import { assertBoolean, assertFiniteNumber, assertString } from '../internal/validation';
+import { assertBoolean, assertString, assertUnitInterval } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { emitNodeEvent } from '../node/events';
 import {
   guiEventKeys,
@@ -51,7 +53,7 @@ export type TextControl<
   Element extends NativeTextControl,
 > = GuiElement<Properties> &
   TextChangedEventMethods & {
-    readonly element: Element;
+    readonly unsafeElement: Element;
   };
 
 type TextControlOptions<
@@ -66,8 +68,6 @@ type TextControlOptions<
   validateProperties?: PropertyValidator<Properties>;
 };
 
-const documentsWithTextControlStyles = new WeakSet<Document>();
-
 /** Creates a native text control with shared property synchronization and lifecycle. */
 export function createTextControl<
   Properties extends TextControlProperties,
@@ -80,7 +80,7 @@ export function createTextControl<
   renderProperties,
   validateProperties,
 }: TextControlOptions<Properties, Element>): TextControl<Properties, Element> {
-  ensureTextControlStyles(element.ownerDocument);
+  installStyles({ ownerDocument: element.ownerDocument });
   element.dataset.framekitTextControl = className;
   Object.assign(element.style, {
     appearance: 'none',
@@ -111,7 +111,7 @@ export function createTextControl<
     renderTextSize(element, getNodeProperties(node));
   });
 
-  const listenerController = new AbortController();
+  const listenerController = createRealmAbortController(element);
   element.addEventListener(
     'input',
     (event) => {
@@ -130,7 +130,7 @@ export function createTextControl<
     },
     { signal: listenerController.signal },
   );
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
   return node;
 }
 
@@ -194,7 +194,7 @@ function validateTextControlProperties(properties: Readonly<TextControlPropertie
   assertBoolean(properties.ReadOnly, 'ReadOnly');
   assertString(properties.PlaceholderText, 'PlaceholderText');
   assertColor3(properties.PlaceholderColor3, 'PlaceholderColor3');
-  assertFiniteNumber(properties.PlaceholderTransparency, 'PlaceholderTransparency');
+  assertUnitInterval(properties.PlaceholderTransparency, 'PlaceholderTransparency');
   assertString(properties.AccessibleLabel, 'AccessibleLabel');
   assertString(properties.FieldName, 'FieldName');
   assertString(properties.AutoComplete, 'AutoComplete');
@@ -209,18 +209,4 @@ function textAlignment(alignment: TextStyleProperties['TextYAlignment']): string
 function setOptionalAttribute(element: HTMLElement, name: string, value: string): void {
   if (value) element.setAttribute(name, value);
   else element.removeAttribute(name);
-}
-
-function ensureTextControlStyles(ownerDocument: Document): void {
-  if (documentsWithTextControlStyles.has(ownerDocument)) return;
-  const style = ownerDocument.createElement('style');
-  style.dataset.framekitTextControlStyles = '';
-  style.textContent = `
-    [data-framekit-text-control]::placeholder {
-      color: var(--framekit-placeholder-color);
-      opacity: 1;
-    }
-  `;
-  ownerDocument.head.append(style);
-  documentsWithTextControlStyles.add(ownerDocument);
 }

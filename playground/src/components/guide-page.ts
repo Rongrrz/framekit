@@ -142,7 +142,7 @@ export const createGuidePage = (
     shell.article,
     theme,
     'Bind reactive values',
-    'A Value stores small pieces of state. watch runs immediately, updates on later changes, and automatically stops when its owner is destroyed.',
+    'A Value stores small pieces of state. Subscribe with onChange and register its unsubscribe with the node that owns the binding.',
     1772,
   );
   appendCodeBlock(
@@ -152,9 +152,9 @@ export const createGuidePage = (
     [
       { text: 'const count = fk.createValue(0);', color: 'purple' },
       { text: '' },
-      { text: 'message.watch(count, (value) => {' },
+      { text: 'message.onDestroy(count.onChange((value) => {' },
       { text: '  message.Text = `Count: ${value}`;', color: 'accent' },
-      { text: '});' },
+      { text: '}));' },
       { text: '' },
       { text: 'count.set(count.get() + 1);' },
     ],
@@ -223,6 +223,6 @@ export const createGuidePage = (
     foreground: 'accent',
   });
   next.onClick(() => navigate('api'));
-  shell.article.addChild(next);
+  next.Parent = shell.article;
   return shell.page;
 };

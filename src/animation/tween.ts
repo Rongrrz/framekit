@@ -2,7 +2,7 @@ import { assertNonNegativeFinite } from '../core/internal/validation';
 import type { Instance, InstanceProperties } from '../core/node/instance';
 import { getPropertiesSnapshot } from '../core/node/properties';
 import { getActiveNodeState } from '../core/node/state';
-import { createSignal, readonlySignal, type Signal } from '../core/state/signal';
+import { createSignal, emitSignalSafely, readonlySignal, type Signal } from '../core/state/signal';
 import {
   assertEasingDirection,
   assertEasingStyle,
@@ -62,7 +62,7 @@ export type Tween = {
 };
 
 /** Creates a controllable tween that applies interpolated property values. */
-function create<Properties extends InstanceProperties>(
+export function createTween<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   options: TweenOptions,
   goal: TweenGoal<Properties>,
@@ -182,14 +182,7 @@ function create<Properties extends InstanceProperties>(
     try {
       applyProgress(progress);
     } catch (error) {
-      try {
-        finish('Cancelled');
-      } catch (completionError) {
-        throw new AggregateError(
-          [error, completionError],
-          'A tween update and its cancellation listener both failed.',
-        );
-      }
+      finish('Cancelled');
       throw error;
     }
   }
@@ -222,7 +215,7 @@ function create<Properties extends InstanceProperties>(
     runner.cancelFrame();
     runner.release(goalKeys);
     playbackState = nextState;
-    completedEmitter.emit(nextState);
+    emitSignalSafely(completedEmitter, nextState);
   }
 
   function assertUsable(): void {
@@ -231,9 +224,6 @@ function create<Properties extends InstanceProperties>(
 
   return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
 }
-
-/** Owns explicit timed tweens. */
-export const TweenService = Object.freeze({ create });
 
 function resolveTweenOptions(options: TweenOptions): ResolvedTweenOptions {
   const resolved: ResolvedTweenOptions = {

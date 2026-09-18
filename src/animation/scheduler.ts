@@ -51,12 +51,3 @@ function runAnimationFrame(timestamp: number): void {
 
   throwCollectedErrors(errors, 'Multiple animations failed during one browser frame.');
 }
-
-/** Clears scheduler state between tests without coupling production behavior to global stubs. */
-export function resetAnimationSchedulerForTests(): void {
-  if (scheduledFrame !== undefined) cancelAnimationFrame(scheduledFrame);
-  activeTasks.clear();
-  pendingTasks.clear();
-  scheduledFrame = undefined;
-  runningFrame = false;
-}
