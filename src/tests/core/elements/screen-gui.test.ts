@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { fk } from '../../../index';
 import { resetDocumentAfterEach } from '../../support/reset-document';
@@ -6,6 +6,21 @@ import { resetDocumentAfterEach } from '../../support/reset-document';
 resetDocumentAfterEach();
 
 describe('screen GUIs', () => {
+  it('preserves its previous mount when new DOM placement fails', () => {
+    const previous = document.body.appendChild(document.createElement('main'));
+    const rejected = document.body.appendChild(document.createElement('aside'));
+    const gui = fk.createScreenGui();
+    gui.mount(previous);
+    vi.spyOn(rejected, 'append').mockImplementation(() => {
+      throw new Error('mount rejected');
+    });
+
+    expect(() => gui.mount(rejected)).toThrow(/mount rejected/);
+    expect(gui.isMounted()).toBe(true);
+    expect(gui.unsafeElement.parentElement).toBe(previous);
+    gui.destroy();
+  });
+
   it('mounts, reparents, unmounts, and synchronizes the DOM tree', () => {
     const target = document.body.appendChild(document.createElement('main'));
     const gui = fk.createScreenGui();

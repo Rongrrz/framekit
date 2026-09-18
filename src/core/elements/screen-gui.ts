@@ -101,9 +101,8 @@ function mountScreenGui(gui: ScreenGui, target: string | HTMLElement): void {
   }
   if (mountTargets.get(gui) === element && gui.unsafeElement.parentElement === element) return;
 
-  unmountScreenGui(gui);
-  mountTargets.set(gui, element);
   element.append(gui.unsafeElement);
+  mountTargets.set(gui, element);
 }
 
 function unmountScreenGui(gui: ScreenGui): void {

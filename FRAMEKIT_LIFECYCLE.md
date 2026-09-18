@@ -125,7 +125,7 @@ Cleanup continues after individual callbacks fail. One failure is rethrown; mult
 
 The FrameKit hierarchy is authoritative; DOM traversal does not reveal logical ownership. `getChildren()` and `getDescendants()` return snapshots. `Name` is editable data, while `ClassName` identifies the concrete type. Events and value subscriptions are synchronous; register unsubscribers with `onDestroy()` when a node owns them.
 
-`GuiElement.element` is an escape hatch: direct DOM edits do not update FrameKit state. Destroy permanently removes a subtree; detach or unmount when objects should remain reusable.
+`GuiElement.unsafeElement` is an escape hatch: direct DOM edits do not update FrameKit state. Destroy permanently removes a subtree; detach or unmount when objects should remain reusable.
 
 ## A practical debugging path
 
