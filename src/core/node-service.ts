@@ -198,11 +198,6 @@ function toTreeString(node: Instance): string {
   return lines.join('\n');
 }
 
-/** Prints the current hierarchy snapshot to the console. */
-function printTree(node: Instance): void {
-  console.log(toTreeString(node));
-}
-
 type TreeLine = { current: Instance; prefix: string; isLast: boolean };
 
 function pushTreeLines(pending: TreeLine[], nodes: readonly Instance[], prefix: string): void {
@@ -309,6 +304,5 @@ export const NodeService = Object.freeze({
   findFirstChild,
   getFullName,
   toTreeString,
-  printTree,
   unlinkNodeFromParent,
 });

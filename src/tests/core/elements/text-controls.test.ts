@@ -97,10 +97,10 @@ describe('native text controls', () => {
     const corner = fk.createUICorner();
     const child = fk.createFrame();
 
-    input.addChild(corner);
+    corner.Parent = input;
 
     expect(input.getChildren()).toEqual([corner]);
-    expect(() => input.addChild(child)).toThrow(/cannot contain GUI children/);
+    expect(() => (child.Parent = input)).toThrow(/cannot contain GUI children/);
     expect(input.getChildren()).toEqual([corner]);
     expect(child.Parent).toBeUndefined();
   });

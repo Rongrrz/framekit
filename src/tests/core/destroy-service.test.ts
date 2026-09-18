@@ -13,8 +13,8 @@ describe('DOM cleanup', () => {
     const nestedRemove = vi.spyOn(nested.unsafeElement, 'remove');
     const movedRemove = vi.spyOn(moved.unsafeElement, 'remove');
 
-    root.addChild(nested);
-    root.addChild(moved);
+    nested.Parent = root;
+    moved.Parent = root;
     document.body.append(moved.unsafeElement);
 
     root.destroy();
@@ -35,7 +35,7 @@ describe('resource cleanup', () => {
     const rootFailure = new Error('root cleanup failed');
     const finalCleanup = vi.fn();
 
-    root.addChild(child);
+    child.Parent = root;
     child.onDestroy(() => {
       throw childFailure;
     });
@@ -63,8 +63,8 @@ describe('resource cleanup', () => {
     const second = fk.createFrame({ Name: 'Second' });
     const completedCleanup = vi.fn();
 
-    root.addChild(first);
-    root.addChild(second);
+    first.Parent = root;
+    second.Parent = root;
     first.onDestroy(() => {
       throw new Error('cleanup failed');
     });

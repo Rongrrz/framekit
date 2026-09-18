@@ -18,8 +18,8 @@ describe('composing base and modifier styles', () => {
       resolveLayout,
     );
 
-    parent.addChild(child);
-    parent.addChild(layout);
+    child.Parent = parent;
+    layout.Parent = parent;
     resolveLayout.mockClear();
 
     child.Rotation = 10;
@@ -49,9 +49,9 @@ describe('composing base and modifier styles', () => {
 
     expect(applyProperties).toHaveBeenCalledOnce();
 
-    node.addChild(corner);
+    corner.Parent = node;
     corner.CornerRadius = 12;
-    corner.removeFromParent();
+    corner.Parent = undefined;
 
     expect(applyProperties).toHaveBeenCalledOnce();
   });
@@ -65,8 +65,8 @@ describe('composing base and modifier styles', () => {
       BorderStrokePosition: 'Inner',
     });
 
-    frame.addChild(corner);
-    frame.addChild(stroke);
+    corner.Parent = frame;
+    stroke.Parent = frame;
 
     expect(frame.unsafeElement.style.borderRadius).toBe('12px');
     expect(frame.unsafeElement.style.boxShadow).toContain('inset');
@@ -83,11 +83,11 @@ describe('composing base and modifier styles', () => {
     expect(frame.unsafeElement.style.borderRadius).toBe('');
 
     corner.setProperties({ Enabled: true });
-    corner.removeFromParent();
+    corner.Parent = undefined;
 
     expect(frame.unsafeElement.style.borderRadius).toBe('');
 
-    frame.addChild(corner);
+    corner.Parent = frame;
     frame.destroy();
 
     expect(corner.isDestroyed()).toBe(true);
@@ -103,8 +103,8 @@ describe('composing base and modifier styles', () => {
       BlurRadius: 12,
     });
 
-    frame.addChild(stroke);
-    frame.addChild(shadow);
+    stroke.Parent = frame;
+    shadow.Parent = frame;
 
     expect(frame.unsafeElement.style.boxShadow).toContain('0px 0px 0px 2px');
     expect(frame.unsafeElement.style.boxShadow).toContain('4px 8px 12px 0px');
@@ -124,8 +124,8 @@ describe('composing base and modifier styles', () => {
       filter: 'contrast(1.2)',
     }));
 
-    frame.addChild(blur);
-    frame.addChild(contrast);
+    blur.Parent = frame;
+    contrast.Parent = frame;
 
     expect(frame.unsafeElement.style.filter).toBe('blur(2px) contrast(1.2)');
   });
@@ -139,7 +139,7 @@ describe('composing base and modifier styles', () => {
       target.properties.Name === 'Override' ? { 'background-color': 'rgb(200 100 50)' } : {},
     );
 
-    frame.addChild(conditional);
+    conditional.Parent = frame;
     expect(frame.unsafeElement.style.backgroundColor).toContain('200');
 
     frame.BackgroundColor3 = fk.color3FromRGB(40, 50, 60);

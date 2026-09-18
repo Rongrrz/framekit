@@ -9,8 +9,8 @@ describe('NodeService', () => {
     const child = fk.createFrame({ Name: 'Child' });
     const grandchild = fk.createFrame({ Name: 'Grandchild' });
 
-    first.addChild(child);
-    child.addChild(grandchild);
+    child.Parent = first;
+    grandchild.Parent = child;
 
     expect(first.getChildren()).toEqual([child]);
     expect(first.findFirstChild('Grandchild', true)).toBe(grandchild);
@@ -29,7 +29,7 @@ describe('NodeService', () => {
     expect(second.getChildren()).toEqual([]);
     expect(child.Parent).toBeUndefined();
 
-    second.addChild(child);
+    child.Parent = second;
     second.destroy();
 
     expect(child.isDestroyed()).toBe(true);
@@ -40,9 +40,9 @@ describe('NodeService', () => {
     const root = fk.createFrame();
     const child = fk.createFrame();
 
-    root.addChild(child);
+    child.Parent = root;
 
-    expect(() => child.addChild(root)).toThrow(/descendants/);
+    expect(() => (root.Parent = child)).toThrow(/descendants/);
     expect(() => (root.Parent = child)).toThrow(/descendants/);
 
     child.destroy();
@@ -53,7 +53,7 @@ describe('NodeService', () => {
   it('narrows heterogeneous traversal results to their concrete APIs', () => {
     const parent = fk.createFrame();
     const button = fk.createTextButton({ Name: 'Action' });
-    parent.addChild(button);
+    button.Parent = parent;
     const child = parent.findFirstChild('Action');
 
     if (!child?.isA('TextButton')) throw new Error('Expected a TextButton.');
@@ -72,21 +72,21 @@ describe('NodeService', () => {
       throw new Error('DOM placement failed');
     });
 
-    expect(() => parent.addChild(child)).toThrow(/DOM placement failed/);
+    expect(() => (child.Parent = parent)).toThrow(/DOM placement failed/);
     expect(child.Parent).toBeUndefined();
     expect(parent.getChildren()).toEqual([]);
     expect(child.unsafeElement.parentElement).toBeNull();
   });
 
-  it('formats and prints a stable hierarchy snapshot', () => {
+  it('formats a stable hierarchy snapshot', () => {
     const root = fk.createFrame({ Name: 'Root' });
     const first = fk.createFrame({ Name: 'First' });
     const second = fk.createFrame({ Name: 'Second' });
     const grandchild = fk.createFrame({ Name: 'Grandchild' });
 
-    root.addChild(first);
-    root.addChild(second);
-    first.addChild(grandchild);
+    first.Parent = root;
+    second.Parent = root;
+    grandchild.Parent = first;
 
     const expected = [
       'Root [Frame]',
@@ -96,13 +96,5 @@ describe('NodeService', () => {
     ].join('\n');
 
     expect(root.toTreeString()).toBe(expected);
-
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-
-    root.printTree();
-
-    expect(log).toHaveBeenCalledWith(expected);
-
-    log.mockRestore();
   });
 });

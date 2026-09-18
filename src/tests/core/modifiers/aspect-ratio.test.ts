@@ -10,7 +10,7 @@ describe('UI aspect ratio constraints', () => {
     const frame = fk.createFrame({ Size: fk.udim2FromOffset(200, 100) });
     const constraint = fk.createUIAspectRatioConstraint();
 
-    frame.addChild(constraint);
+    constraint.Parent = frame;
 
     expect(constraint).toMatchObject({
       AspectRatio: 1,
@@ -29,7 +29,7 @@ describe('UI aspect ratio constraints', () => {
     expect(frame.unsafeElement.style.width).toBe('auto');
     expect(frame.unsafeElement.style.height).toBe('100px');
 
-    constraint.removeFromParent();
+    constraint.Parent = undefined;
 
     expect(frame.unsafeElement.style.aspectRatio).toBe('');
     expect(frame.unsafeElement.style.maxWidth).toBe('');
@@ -46,7 +46,7 @@ describe('UI aspect ratio constraints', () => {
       DominantAxis: 'Height',
     });
 
-    frame.addChild(constraint);
+    constraint.Parent = frame;
 
     expect(frame.unsafeElement.style.aspectRatio).toBe(`${16 / 9} / 1`);
     expect(frame.unsafeElement.style.width).toBe('auto');

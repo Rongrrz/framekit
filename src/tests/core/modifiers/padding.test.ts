@@ -15,7 +15,7 @@ describe('UI padding', () => {
       PaddingLeft: fk.udim(0, 16),
     });
 
-    frame.addChild(padding);
+    padding.Parent = frame;
 
     expect(frame.unsafeElement.style.paddingTop).toBe('8px');
     expect(frame.unsafeElement.style.paddingRight).toBe('calc(10% + 4px)');
@@ -26,7 +26,7 @@ describe('UI padding', () => {
 
     expect(frame.unsafeElement.style.paddingLeft).toBe('24px');
 
-    padding.removeFromParent();
+    padding.Parent = undefined;
 
     expect(frame.unsafeElement.style.paddingTop).toBe('');
     expect(frame.unsafeElement.style.paddingRight).toBe('');
@@ -39,14 +39,14 @@ describe('UI padding', () => {
     const padding = fk.createUIPadding({ PaddingLeft: fk.udim(0, 10) });
     const layout = fk.createUIListLayout({ Padding: fk.udim(0, 6) });
 
-    frame.addChild(padding);
-    frame.addChild(layout);
+    padding.Parent = frame;
+    layout.Parent = frame;
 
     expect(frame.unsafeElement.style.paddingLeft).toBe('10px');
     expect(frame.unsafeElement.style.display).toBe('flex');
     expect(frame.unsafeElement.style.gap).toBe('6px');
 
-    layout.removeFromParent();
+    layout.Parent = undefined;
 
     expect(frame.unsafeElement.style.paddingLeft).toBe('10px');
     expect(frame.unsafeElement.style.display).toBe('');

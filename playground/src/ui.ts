@@ -77,10 +77,10 @@ export const addRoundedBorder = (
   strokeColor: ThemeToken = 'border',
   thickness = 1,
 ): void => {
-  instance.addChild(fk.createUICorner({ CornerRadius: radius }));
+  fk.createUICorner({ CornerRadius: radius }).Parent = instance;
   const stroke = fk.createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
   bindThemeColors(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
-  instance.addChild(stroke);
+  stroke.Parent = instance;
 };
 
 export const createSurface = (theme: ThemeValue, options: SurfaceOptions): fk.Frame => {
@@ -161,6 +161,6 @@ export const appendCodeLines = (
       font: fonts.mono,
       name: `CodeLine${index + 1}`,
     });
-    parent.addChild(label);
+    label.Parent = parent;
     return label;
   });

@@ -201,7 +201,7 @@ describe('spring animations', () => {
     const frame = fk.createFrame();
     const scale = fk.createUIScale();
 
-    frame.addChild(scale);
+    scale.Parent = frame;
 
     const controller = fka.spring(scale);
 
@@ -221,7 +221,7 @@ describe('spring animations', () => {
     const frame = fk.createFrame();
     const shadow = fk.createUIShadow();
 
-    frame.addChild(shadow);
+    shadow.Parent = frame;
     fka.spring(shadow, {
       Offset: fk.vector2(12, 20),
       BlurRadius: 28,

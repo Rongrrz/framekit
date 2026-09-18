@@ -101,11 +101,11 @@ The scheduler uses one browser-frame callback for all active animation tasks. Ta
 
 ### Attach and reparent
 
-`parent.addChild(child)` and `child.Parent = parent` share one operation. It validates active nodes, rejects cycles, root-only children, and modifier parents, then updates the child list, DOM position, and affected rendering. A render failure restores the old parent, child index, DOM position, and rendering.
+`child.Parent = parent` validates active nodes, rejects cycles, root-only children, and modifier parents, then updates the child list, DOM position, and affected rendering. A render failure restores the old parent, child index, DOM position, and rendering.
 
 ### Detach
 
-`child.removeFromParent()` or `child.Parent = undefined` removes hierarchy and GUI DOM attachment without destroying the node, descendants, properties, listeners, or animations. The node can be reused. Detaching an unparented node is a no-op; detaching from a layout parent rerenders that parent.
+`child.Parent = undefined` removes hierarchy and GUI DOM attachment without destroying the node, descendants, properties, listeners, or animations. The node can be reused. Detaching an unparented node is a no-op; detaching from a layout parent rerenders that parent.
 
 ### ScreenGui mount and unmount
 
@@ -123,7 +123,7 @@ Cleanup continues after individual callbacks fail. One failure is rethrown; mult
 
 ## Useful invariants and boundaries
 
-The FrameKit hierarchy is authoritative; DOM traversal does not reveal logical ownership. `getChildren()` and `getDescendants()` return snapshots. `Name` is editable data, while `ClassName` identifies the concrete type. Events and value watches are synchronous, and `watch()` runs immediately before later changes until stopped or destroyed.
+The FrameKit hierarchy is authoritative; DOM traversal does not reveal logical ownership. `getChildren()` and `getDescendants()` return snapshots. `Name` is editable data, while `ClassName` identifies the concrete type. Events and value subscriptions are synchronous; register unsubscribers with `onDestroy()` when a node owns them.
 
 `GuiElement.element` is an escape hatch: direct DOM edits do not update FrameKit state. Destroy permanently removes a subtree; detach or unmount when objects should remain reusable.
 

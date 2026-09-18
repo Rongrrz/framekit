@@ -131,7 +131,7 @@ describe('buttons', () => {
     textButton.unsafeElement.dispatchEvent(contextMenu);
 
     expect(contextMenu.defaultPrevented).toBe(false);
-    expect(() => textButton.addChild(fk.createFrame())).toThrow(/cannot contain GUI children/);
-    expect(() => imageButton.addChild(fk.createFrame())).toThrow(/cannot contain GUI children/);
+    expect(() => (fk.createFrame().Parent = textButton)).toThrow(/cannot contain GUI children/);
+    expect(() => (fk.createFrame().Parent = imageButton)).toThrow(/cannot contain GUI children/);
   });
 });

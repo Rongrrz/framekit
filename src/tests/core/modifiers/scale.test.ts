@@ -10,7 +10,7 @@ describe('visual scaling', () => {
     const frame = fk.createFrame();
     const scale = fk.createUIScale({ Scale: 1.1 });
 
-    frame.addChild(scale);
+    scale.Parent = frame;
 
     expect(frame.unsafeElement.style.getPropertyValue('scale')).toBe('1.1');
     expect(frame.Size).toEqual(fk.udim2FromOffset(100, 100));
@@ -20,7 +20,7 @@ describe('visual scaling', () => {
     expect(frame.unsafeElement.style.getPropertyValue('scale')).toBe('0.8');
     expect(() => scale.setProperties({ Scale: Number.NaN })).toThrow(/finite/);
 
-    scale.removeFromParent();
+    scale.Parent = undefined;
 
     expect(frame.unsafeElement.style.getPropertyValue('scale')).toBe('');
   });

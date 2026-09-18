@@ -11,9 +11,9 @@ describe('modifier attachment and validation', () => {
     const parentModifier = fk.createUICorner();
     const corner = fk.createUICorner({ CornerRadius: 8 });
 
-    expect(() => parentModifier.addChild(corner)).toThrow(/cannot contain child nodes/);
+    expect(() => (corner.Parent = parentModifier)).toThrow(/cannot contain child nodes/);
     expect(corner.Parent).toBeUndefined();
-    expect(() => corner.addChild(fk.createFrame())).toThrow(/cannot contain child nodes/);
+    expect(() => (fk.createFrame().Parent = corner)).toThrow(/cannot contain child nodes/);
   });
 
   it('allows only one modifier of each kind per parent', () => {
@@ -21,27 +21,27 @@ describe('modifier attachment and validation', () => {
     const firstCorner = fk.createUICorner({ CornerRadius: 4 });
     const secondCorner = fk.createUICorner({ CornerRadius: 8 });
 
-    frame.addChild(firstCorner);
+    firstCorner.Parent = frame;
 
-    expect(() => frame.addChild(secondCorner)).toThrow(/already has a UICorner/);
+    expect(() => (secondCorner.Parent = frame)).toThrow(/already has a UICorner/);
     expect(secondCorner.Parent).toBeUndefined();
     expect(frame.unsafeElement.style.borderRadius).toBe('4px');
 
-    firstCorner.removeFromParent();
-    frame.addChild(secondCorner);
+    firstCorner.Parent = undefined;
+    secondCorner.Parent = frame;
 
     expect(frame.unsafeElement.style.borderRadius).toBe('8px');
 
     const otherFrame = fk.createTextLabel();
 
-    otherFrame.addChild(firstCorner);
+    firstCorner.Parent = otherFrame;
 
-    expect(() => frame.addChild(firstCorner)).toThrow(/already has a UICorner/);
+    expect(() => (firstCorner.Parent = frame)).toThrow(/already has a UICorner/);
     expect(firstCorner.Parent).toBe(otherFrame);
     expect(otherFrame.unsafeElement.style.borderRadius).toBe('4px');
 
     secondCorner.destroy();
-    frame.addChild(firstCorner);
+    firstCorner.Parent = frame;
 
     expect(firstCorner.Parent).toBe(frame);
     expect(otherFrame.unsafeElement.style.borderRadius).toBe('');
@@ -52,11 +52,11 @@ describe('modifier attachment and validation', () => {
     const second = fk.createTextLabel();
     const corner = fk.createUICorner({ CornerRadius: 10 });
 
-    first.addChild(corner);
+    corner.Parent = first;
 
     expect(first.unsafeElement.style.borderRadius).toBe('10px');
 
-    second.addChild(corner);
+    corner.Parent = second;
 
     expect(first.unsafeElement.style.borderRadius).toBe('');
     expect(second.unsafeElement.style.borderRadius).toBe('10px');
@@ -75,13 +75,13 @@ describe('modifier attachment and validation', () => {
       },
     );
 
-    expect(() => frame.addChild(rejected)).toThrow(/target rejected/);
+    expect(() => (rejected.Parent = frame)).toThrow(/target rejected/);
     expect(rejected.Parent).toBeUndefined();
     expect(render).not.toHaveBeenCalled();
 
     const corner = fk.createUICorner({ CornerRadius: 6 });
 
-    frame.addChild(corner);
+    corner.Parent = frame;
 
     expect(frame.unsafeElement.style.borderRadius).toBe('6px');
   });
@@ -95,11 +95,11 @@ describe('modifier attachment and validation', () => {
       return {};
     });
 
-    frame.addChild(corner);
-    frame.addChild(failing);
+    corner.Parent = frame;
+    failing.Parent = frame;
     renderMustFail = true;
 
-    expect(() => corner.removeFromParent()).toThrow(/Detaching the node failed/);
+    expect(() => (corner.Parent = undefined)).toThrow(/Detaching the node failed/);
     expect(corner.Parent).toBe(frame);
     expect(frame.getChildren()).toContain(corner);
   });

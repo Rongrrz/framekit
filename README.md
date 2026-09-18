@@ -12,7 +12,7 @@ const card = fk.createFrame({
   Rotation: 2,
 });
 
-gui.addChild(card);
+card.Parent = gui;
 gui.mount('#app');
 ```
 
@@ -38,12 +38,12 @@ The common vocabulary is deliberately small:
 | ------------- | ----------------------------------------------------------------------------------------- |
 | Elements      | `createScreenGui`, frames, text, native text controls, images, and links                  |
 | Modifiers     | `createUICorner`, gradients, border and text strokes, shadows, padding, scale, and layout |
-| Hierarchy     | `Parent`, `ClassName`, `addChild`, `getChildren`, `getDescendants`, `findFirstChild`      |
+| Hierarchy     | `Parent`, `ClassName`, `isA`, `getChildren`, `getDescendants`, `findFirstChild`           |
 | Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`         |
 | Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry      |
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                     |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
-| Shared values | `createValue`, `node.watch`; optional when a plain variable is enough                     |
+| Shared values | `createValue`, `onChange`; optional when a plain variable is enough                       |
 | Motion        | `fka.spring`, `fka.createTween`                                                           |
 | Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`                                          |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
@@ -97,28 +97,22 @@ const panel = fk.createFrame({
   BackgroundColor3: fk.color3FromHex('#171820'),
 });
 
-panel.addChild(fk.createUICorner({ CornerRadius: 18 }));
-panel.addChild(
-  fk.createUIGradient({
-    Color: fk.colorSequence(fk.color3FromHex('#9e83ee'), fk.color3FromHex('#5f9cf5')),
-    Rotation: 90,
-  }),
-);
-panel.addChild(
-  fk.createUIStroke({
-    Color: fk.color3FromHex('#9e83ee'),
-    Thickness: 2,
-    BorderStrokePosition: 'Outer',
-  }),
-);
-panel.addChild(
-  fk.createUIPadding({
-    PaddingTop: fk.udim(0, 16),
-    PaddingRight: fk.udim(0, 16),
-    PaddingBottom: fk.udim(0, 16),
-    PaddingLeft: fk.udim(0, 16),
-  }),
-);
+fk.createUICorner({ CornerRadius: 18 }).Parent = panel;
+fk.createUIGradient({
+  Color: fk.colorSequence(fk.color3FromHex('#9e83ee'), fk.color3FromHex('#5f9cf5')),
+  Rotation: 90,
+}).Parent = panel;
+fk.createUIStroke({
+  Color: fk.color3FromHex('#9e83ee'),
+  Thickness: 2,
+  BorderStrokePosition: 'Outer',
+}).Parent = panel;
+fk.createUIPadding({
+  PaddingTop: fk.udim(0, 16),
+  PaddingRight: fk.udim(0, 16),
+  PaddingBottom: fk.udim(0, 16),
+  PaddingLeft: fk.udim(0, 16),
+}).Parent = panel;
 ```
 
 A parent accepts one modifier of each kind. Duplicate modifiers throw without disturbing either tree. `UIListLayout` controls the positions of its parent's direct GUI children while attached; detaching it restores their own `Position` and `AnchorPoint` rendering.
@@ -134,10 +128,10 @@ const list = fk.createScrollingFrame({
   AutomaticCanvasSize: 'Y',
 });
 const layout = fk.createUIListLayout({ Padding: fk.udim(0, 12) });
-list.addChild(layout);
+layout.Parent = list;
 
-list.addChild(firstRow);
-list.addChild(secondRow);
+firstRow.Parent = list;
+secondRow.Parent = list;
 ```
 
 `bindResponsiveLayout()` applies one layout immediately, then switches only when the viewport crosses its breakpoint. It returns a disposer; its resize listener is also removed when the owner is destroyed.
@@ -152,9 +146,9 @@ fkh.bindResponsiveLayout(panel, {
 
 ## Hierarchy and input
 
-Nodes are persistent objects with explicit ownership. `removeFromParent()` keeps a node reusable. `destroy()` recursively releases its descendants, event listeners, watched values, and animations.
+Nodes are persistent objects with explicit ownership. Setting `Parent = undefined` keeps a node reusable. `destroy()` recursively releases its descendants, event listeners, registered subscriptions, and animations.
 
-`Name` is editable application data. `ClassName` identifies the node's concrete FrameKit type. `Parent` is a live hierarchy property: assign another node to reparent, or `undefined` to detach. `addChild()` is the convenient parent-first spelling of the same operation.
+`Name` is editable application data. `ClassName` identifies the node's concrete FrameKit type. `Parent` is the single hierarchy mutation API: assign another node to reparent, or `undefined` to detach.
 
 ```ts
 const menu = fk.createFrame({ Name: 'InventoryMenu' });
@@ -175,7 +169,7 @@ Use `child.isA('TextButton')` to test an exact built-in class and narrow a trave
 Every node can format or print its current subtree:
 
 ```ts
-gui.printTree();
+console.log(gui.toTreeString());
 ```
 
 ```text
@@ -221,16 +215,18 @@ panel.onPropertyChanged('Position', (position, previousPosition) => {
 
 The event fires for direct assignments, `setProperties()`, animations, and browser-driven synchronization. Assigning the current value again does not fire it.
 
-Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createValue()` provides explicit `get()`, `set()`, and `update()` methods. `node.watch()` runs once immediately, runs again when the value changes, and stops automatically when that node is destroyed:
+Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createValue()` provides explicit `get()`, `set()`, and `update()` methods. Subscribe with `onChange()` and register its unsubscribe with the node that owns the binding:
 
 ```ts
 const selectedItem = fk.createValue('Sword');
-label.watch(selectedItem, (item) => {
+const renderItem = (item: string) => {
   label.Text = item;
-});
+};
+renderItem(selectedItem.get());
+label.onDestroy(selectedItem.onChange(renderItem));
 ```
 
-There is no dependency tracking or render cycle. A watched callback is simply a synchronous callback.
+There is no dependency tracking or render cycle. Value listeners run synchronously when the value changes.
 
 All GUI nodes expose `onMouseEnter()` and `onMouseLeave()`. Button nodes add `onClick()`, primary-button, and secondary-button methods.
 
@@ -290,7 +286,7 @@ Call `fka.spring()` with a node and its goal. FrameKit retains the spring for yo
 
 ```ts
 const scale = fk.createUIScale();
-button.addChild(scale);
+scale.Parent = button;
 
 button.onMouseEnter(() => fka.spring(scale, { Scale: 1.04 }));
 button.onMouseLeave(() => fka.spring(scale, { Scale: 1 }));
@@ -358,7 +354,7 @@ Compose built-in nodes in ordinary functions. Return the parts that callers need
 function createBadge(text: string) {
   const frame = fk.createFrame({ Name: 'Badge' });
   const label = fk.createTextLabel({ Text: text, Size: fk.udim2FromScale(1, 1) });
-  frame.addChild(label);
+  label.Parent = frame;
   return { frame, label };
 }
 

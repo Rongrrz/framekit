@@ -7,7 +7,7 @@ describe('shadows', () => {
     const frame = fk.createFrame();
     const shadow = fk.createUIShadow();
 
-    frame.addChild(shadow);
+    shadow.Parent = frame;
 
     expect(() => shadow.setProperties({ BlurRadius: -1 })).toThrow(/BlurRadius/);
     expect(shadow.BlurRadius).toBe(16);

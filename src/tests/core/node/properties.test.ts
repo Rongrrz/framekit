@@ -46,7 +46,7 @@ describe('node properties', () => {
       return { 'border-radius': '4px' };
     });
 
-    frame.addChild(modifier);
+    modifier.Parent = frame;
     frame.onPropertyChanged('Name', changed);
 
     expect(() => (frame.Name = 'Rejected')).toThrow(/render failed/);

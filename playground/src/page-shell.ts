@@ -1,6 +1,7 @@
 import { fk, fka } from 'framekit';
 
 import { pageHeight, pageWidth, type PlaygroundLayout } from './layout';
+import { watchOwnedValue } from './owned-value';
 import type { SitePage } from './router';
 import { bindThemeColors, scrollbarThickness, themeColor, type ThemeValue } from './theme';
 
@@ -51,10 +52,10 @@ export const createPageShell = (
     BackgroundColor3: palette.canvas,
     ScrollBarImageColor3: palette.textFaint,
   }));
-  content.addChild(contentScale);
-  scrollSizer.addChild(content);
-  page.addChild(scrollSizer);
-  app.addChild(page);
+  contentScale.Parent = content;
+  content.Parent = scrollSizer;
+  scrollSizer.Parent = page;
+  page.Parent = app;
 
   function calculateScale(currentLayout: PlaygroundLayout): number {
     const availableWidth = Math.max(1, window.innerWidth - scrollbarThickness);
@@ -84,8 +85,8 @@ export const createPageShell = (
   const listenerController = new AbortController();
   window.addEventListener('resize', updateCanvas, { signal: listenerController.signal });
   app.onDestroy(() => listenerController.abort());
-  app.watch(layout, updateCanvas);
-  app.watch(route, () => {
+  watchOwnedValue(app, layout, updateCanvas);
+  watchOwnedValue(app, route, () => {
     page.CanvasPosition = fk.vector2(0, 0);
     updateCanvas();
   });

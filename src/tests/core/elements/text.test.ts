@@ -20,7 +20,7 @@ describe('text labels', () => {
     const label = fk.createTextLabel();
     const child = fk.createTextLabel();
 
-    label.addChild(child);
+    child.Parent = label;
     label.setProperties({
       Text: 'Inventory',
       TextColor3: fk.color3FromRGB(10, 20, 30),

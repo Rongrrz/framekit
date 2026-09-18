@@ -41,11 +41,11 @@ describe('DOM ownership', () => {
     const frame = fk.createFrame({}, { ownerDocument });
 
     gui.mount('#app');
-    gui.addChild(frame);
+    frame.Parent = gui;
 
     expect(target.firstElementChild).toBe(gui.unsafeElement);
     expect(() => gui.mount(document.body)).toThrow(/different document/);
-    expect(() => frame.addChild(fk.createFrame())).toThrow(/same document/);
+    expect(() => (fk.createFrame().Parent = frame)).toThrow(/same document/);
     expect(gui.isMounted()).toBe(true);
 
     gui.destroy();

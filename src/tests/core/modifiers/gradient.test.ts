@@ -16,7 +16,7 @@ describe('gradients', () => {
       Offset: fk.vector2(0.1, 0),
     });
 
-    frame.addChild(gradient);
+    gradient.Parent = frame;
 
     expect(frame.unsafeElement.style.backgroundImage).toContain('linear-gradient(90deg');
     expect(frame.unsafeElement.style.backgroundImage).toContain('rgb(255 0 0 / 1) 10%');
@@ -39,7 +39,7 @@ describe('gradients', () => {
       Color: fk.colorSequence(fk.color3FromRGB(255, 0, 0), fk.color3FromRGB(0, 0, 255)),
     });
 
-    label.addChild(gradient);
+    gradient.Parent = label;
 
     expect(label.unsafeElement.style.backgroundImage).toBe('');
     expect(label.unsafeElement.style.backgroundColor).not.toBe('transparent');
@@ -67,7 +67,7 @@ describe('gradients', () => {
     const frame = fk.createFrame();
     const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
 
-    expect(() => frame.addChild(gradient)).toThrow(/TextLabel or TextButton/);
+    expect(() => (gradient.Parent = frame)).toThrow(/TextLabel or TextButton/);
     expect(gradient.Parent).toBeUndefined();
     expect(frame.unsafeElement.style.getPropertyValue('--framekit-text-gradient-image')).toBe('');
   });
@@ -81,7 +81,7 @@ describe('gradients', () => {
     });
     const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
 
-    expect(() => textLikeNode.addChild(gradient)).toThrow(/TextLabel or TextButton/);
+    expect(() => (gradient.Parent = textLikeNode)).toThrow(/TextLabel or TextButton/);
     expect(gradient.Parent).toBeUndefined();
   });
 

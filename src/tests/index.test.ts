@@ -54,9 +54,11 @@ describe('package API', () => {
     expect(frame.Name).toBe('Shop');
 
     expect(typeof frame.setProperties).toBe('function');
-    expect(typeof frame.addChild).toBe('function');
+    expect(frame).not.toHaveProperty('addChild');
+    expect(frame).not.toHaveProperty('removeFromParent');
     expect(typeof frame.getDescendants).toBe('function');
-    expect(typeof frame.printTree).toBe('function');
+    expect(frame).not.toHaveProperty('printTree');
+    expect(frame).not.toHaveProperty('watch');
     expect(typeof frame.destroy).toBe('function');
 
     expect(fk).not.toHaveProperty('append');

@@ -418,7 +418,7 @@ describe('tweens', () => {
     const frame = fk.createFrame();
     const scale = fk.createUIScale();
 
-    frame.addChild(scale);
+    scale.Parent = frame;
 
     expect(() => fka.createTween(scale, { Duration: 0 }, { Scale: -1 })).toThrow(
       /invalid property values/,

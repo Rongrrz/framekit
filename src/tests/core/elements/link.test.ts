@@ -55,6 +55,6 @@ describe('links', () => {
   it('rejects GUI children that would create invalid interactive nesting', () => {
     const link = fk.createLink();
 
-    expect(() => link.addChild(fk.createFrame())).toThrow(/cannot contain GUI children/);
+    expect(() => (fk.createFrame().Parent = link)).toThrow(/cannot contain GUI children/);
   });
 });

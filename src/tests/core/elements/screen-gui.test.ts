@@ -13,19 +13,19 @@ describe('screen GUIs', () => {
     const child = fk.createFrame();
 
     gui.mount(target);
-    gui.addChild(container);
-    container.addChild(child);
+    container.Parent = gui;
+    child.Parent = container;
 
     expect(gui.isMounted()).toBe(true);
     expect(target.querySelector('[data-framekit="ScreenGui"]')).not.toBeNull();
     expect(container.unsafeElement.firstElementChild).toBe(child.unsafeElement);
 
-    gui.addChild(child);
+    child.Parent = gui;
 
     expect(container.unsafeElement.childElementCount).toBe(0);
 
     child.unsafeElement.remove();
-    gui.addChild(child);
+    child.Parent = gui;
 
     expect(child.unsafeElement.parentElement).toBe(gui.unsafeElement);
 
@@ -56,13 +56,13 @@ describe('screen GUIs', () => {
 
     gui.mount(target);
 
-    expect(() => frame.addChild(gui)).toThrow(/hierarchy root/);
+    expect(() => (gui.Parent = frame)).toThrow(/hierarchy root/);
     expect(gui.Parent).toBeUndefined();
     expect(gui.unsafeElement.parentElement).toBe(target);
     expect(gui.isMounted()).toBe(true);
 
     gui.Parent = undefined;
-    gui.removeFromParent();
+    gui.Parent = undefined;
 
     expect(gui.unsafeElement.parentElement).toBe(target);
     expect(gui.isMounted()).toBe(true);
@@ -103,7 +103,7 @@ describe('screen GUIs', () => {
     const frame = fk.createFrame();
 
     gui.mount(document.body);
-    gui.addChild(frame);
+    frame.Parent = gui;
 
     expect(gui.unsafeElement.style.display).toBe('none');
 

@@ -63,7 +63,8 @@ describe('values', () => {
     const count = fk.createValue(1);
     const listener = vi.fn();
 
-    owner.watch(count, listener);
+    listener(count.get());
+    owner.onDestroy(count.onChange(listener));
     count.set(2);
     owner.destroy();
     count.set(3);

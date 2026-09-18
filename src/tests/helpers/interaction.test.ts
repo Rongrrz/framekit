@@ -9,7 +9,7 @@ describe('hover scale', () => {
   it('controls an explicitly owned scale only while bound', () => {
     const frame = fk.createFrame();
     const scale = fk.createUIScale();
-    frame.addChild(scale);
+    scale.Parent = frame;
     const dispose = fkh.bindHoverScale(frame, scale, 1.05);
 
     frame.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));

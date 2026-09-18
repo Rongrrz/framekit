@@ -1,5 +1,6 @@
 import { fk } from 'framekit';
 
+import { watchOwnedValue } from './owned-value';
 import type { SitePage } from './router';
 
 export type PlaygroundLayout = 'desktop' | 'mobile';
@@ -21,5 +22,7 @@ export const bindLayoutProperties = <Properties extends fk.InstanceProperties>(
   instance: fk.Instance<Properties>,
   properties: Responsive<Partial<Properties>>,
 ): void => {
-  owner.watch(layout, (currentLayout) => instance.setProperties(properties[currentLayout]));
+  watchOwnedValue(owner, layout, (currentLayout) =>
+    instance.setProperties(properties[currentLayout]),
+  );
 };

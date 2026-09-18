@@ -33,10 +33,10 @@ export const createPlaygroundApp = (
   bindDocumentTheme(app, theme);
   bindThemeTransition(app, theme, palette);
   bindHashRouter(app, route);
-  content.addChild(createHomePage(layout, palette, route, navigate));
-  content.addChild(createGuidePage(layout, palette, route, scrollTo, navigate));
-  content.addChild(createApiPage(layout, palette, route, scrollTo));
-  app.addChild(createNavigation(page, route, navigate, layout, theme, palette));
+  createHomePage(layout, palette, route, navigate).Parent = content;
+  createGuidePage(layout, palette, route, scrollTo, navigate).Parent = content;
+  createApiPage(layout, palette, route, scrollTo).Parent = content;
+  createNavigation(page, route, navigate, layout, theme, palette).Parent = app;
 
   if (forcedLayout === undefined) {
     fkh.bindResponsiveLayout(app, {

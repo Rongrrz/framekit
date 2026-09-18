@@ -10,7 +10,7 @@ describe('text strokes', () => {
     const frame = fk.createFrame();
     const stroke = fk.createUITextStroke();
 
-    expect(() => frame.addChild(stroke)).toThrow(/TextLabel or TextButton/);
+    expect(() => (stroke.Parent = frame)).toThrow(/TextLabel or TextButton/);
     expect(stroke.Parent).toBeUndefined();
   });
 
@@ -22,7 +22,7 @@ describe('text strokes', () => {
       Thickness: 2,
     });
 
-    label.addChild(stroke);
+    stroke.Parent = label;
 
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
       'rgb(10 20 30 / 0.75)',
@@ -48,7 +48,7 @@ describe('text strokes', () => {
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-width')).toBe('0px');
 
     stroke.Enabled = true;
-    stroke.removeFromParent();
+    stroke.Parent = undefined;
 
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-content')).toBe(
       'none',

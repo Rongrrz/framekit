@@ -1,10 +1,8 @@
 import { DestroyService } from '../destroy-service';
 import { NodeService } from '../node-service';
 import type { Unsubscribe } from '../state/signal';
-import type { Value } from '../state/value';
 import type { InstanceClassName, InstanceOf } from './classes';
 import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
-import { watchNodeValue } from './watch-value';
 
 /** Properties shared by every FrameKit instance. */
 export type InstanceProperties = {
@@ -35,10 +33,6 @@ export type InstanceMethods<Properties extends InstanceProperties = InstanceProp
     property: Property,
     listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
   ): Unsubscribe;
-  /** Reparents a child beneath this node. */
-  addChild(child: Instance): void;
-  /** Detaches this node without destroying it. */
-  removeFromParent(): void;
   /** Returns a snapshot of the direct children. */
   getChildren(): readonly Instance[];
   /** Returns a depth-first snapshot of every nested child. */
@@ -49,16 +43,12 @@ export type InstanceMethods<Properties extends InstanceProperties = InstanceProp
   getFullName(): string;
   /** Formats this node and its descendants as a readable tree. */
   toTreeString(): string;
-  /** Prints `toTreeString()` to the console. */
-  printTree(): void;
   /** Permanently destroys this node and its descendants. */
   destroy(): void;
   /** Reports whether this node has been destroyed. */
   isDestroyed(): boolean;
   /** Registers cleanup work and returns a function that unregisters it. */
   onDestroy(callback: () => void): Unsubscribe;
-  /** Watches a value immediately and until this node is destroyed. */
-  watch<T>(value: Value<T>, listener: (value: T) => void): Unsubscribe;
 };
 
 /** Creates a node handle with direct property access. */
@@ -122,12 +112,6 @@ const methodTable = {
   ): Unsubscribe {
     return subscribeToPropertyChange(this, property, listener);
   },
-  addChild(this: Instance, child: Instance): void {
-    NodeService.append(this, child);
-  },
-  removeFromParent(this: Instance): void {
-    NodeService.detach(this);
-  },
   getChildren(this: Instance): readonly Instance[] {
     return NodeService.children(this);
   },
@@ -143,9 +127,6 @@ const methodTable = {
   toTreeString(this: Instance): string {
     return NodeService.toTreeString(this);
   },
-  printTree(this: Instance): void {
-    NodeService.printTree(this);
-  },
   destroy(this: Instance): void {
     DestroyService.destroy(this);
   },
@@ -154,9 +135,6 @@ const methodTable = {
   },
   onDestroy(this: Instance, callback: () => void): Unsubscribe {
     return DestroyService.onDestroy(this, callback);
-  },
-  watch<T>(this: Instance, value: Value<T>, listener: (value: T) => void): Unsubscribe {
-    return watchNodeValue(this, value, listener);
   },
 } satisfies InstanceMethods;
 
