@@ -182,14 +182,7 @@ export function createTween<Properties extends InstanceProperties>(
     try {
       applyProgress(progress);
     } catch (error) {
-      try {
-        finish('Cancelled');
-      } catch (completionError) {
-        throw new AggregateError(
-          [error, completionError],
-          'A tween update and its cancellation listener both failed.',
-        );
-      }
+      finish('Cancelled');
       throw error;
     }
   }

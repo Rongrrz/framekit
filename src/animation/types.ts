@@ -4,7 +4,13 @@ import type { UDim, UDim2 } from '../core/values/udim';
 import type { Vector2 } from '../core/values/vector2';
 
 type AnimatableValue = number | Color3 | Vector2 | UDim | UDim2;
-type DiscreteProperty = 'LayoutOrder' | 'ZIndex';
+const discreteProperties = ['LayoutOrder', 'ZIndex'] as const;
+type DiscreteProperty = (typeof discreteProperties)[number];
+
+/** Mirrors the discrete-property exclusion at the JavaScript caller boundary. */
+export function isDiscreteAnimationProperty(property: PropertyKey): boolean {
+  return discreteProperties.some((discreteProperty) => discreteProperty === property);
+}
 
 /** Property names whose values can be interpolated continuously. */
 export type AnimatableProperty<Properties extends InstanceProperties> = {

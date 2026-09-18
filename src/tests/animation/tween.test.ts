@@ -8,6 +8,21 @@ const { advance } = setupAnimationClock();
 const trackNode = destroyNodesAfterEach();
 
 describe('tweens', () => {
+  it('rejects discrete goals at runtime and snapshots structured goals at creation', () => {
+    const frame = trackNode(fk.createFrame());
+    const position = { X: { Scale: 0, Offset: 100 }, Y: { Scale: 0, Offset: 40 } };
+    const tween = fka.createTween(frame, { Duration: 0 }, { Position: position });
+
+    expect(() => fka.createTween(frame, { Duration: 1 }, { ZIndex: 2 } as never)).toThrow(
+      /discretely/,
+    );
+    expect(() => fka.spring(frame, { LayoutOrder: 2 } as never)).toThrow(/discretely/);
+    position.X.Offset = 999;
+    tween.play();
+
+    expect(frame.Position).toEqual(fk.udim2FromOffset(100, 40));
+  });
+
   it('keeps active work when the browser frame function is replaced', () => {
     const first = trackNode(fk.createFrame({ Rotation: 0 }));
     const second = trackNode(fk.createFrame({ Rotation: 0 }));
