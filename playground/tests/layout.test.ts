@@ -1,14 +1,25 @@
+import { fk } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { contentWidth, pageHeight, pageWidth } from '../src/layout';
+import { bindLayoutProperties, type PlaygroundLayout } from '../src/layout';
 
 describe('playground layout', () => {
-  it('provides deliberate dimensions for every page and viewport', () => {
-    for (const layout of ['mobile', 'desktop'] as const) {
-      expect(contentWidth[layout]).toBeLessThan(pageWidth[layout]);
-      expect(pageHeight[layout].home).toBeGreaterThan(1000);
-      expect(pageHeight[layout].guide).toBeGreaterThan(pageHeight[layout].home);
-      expect(pageHeight[layout].api).toBeGreaterThan(pageHeight[layout].guide);
-    }
+  it('applies layout patches immediately and only for the owner lifetime', () => {
+    const owner = fk.createFrame();
+    const frame = fk.createFrame();
+    const layout = fk.createValue<PlaygroundLayout>('desktop');
+    bindLayoutProperties(owner, layout, frame, {
+      desktop: { Size: fk.udim2FromOffset(400, 200), Visible: true },
+      mobile: { Size: fk.udim2FromOffset(200, 300), Visible: false },
+    });
+    expect(frame.Size).toEqual(fk.udim2FromOffset(400, 200));
+    layout.set('mobile');
+    expect(frame.Size).toEqual(fk.udim2FromOffset(200, 300));
+    expect(frame.Visible).toBe(false);
+    owner.destroy();
+    layout.set('desktop');
+    expect(frame.Size).toEqual(fk.udim2FromOffset(200, 300));
+    expect(frame.isDestroyed()).toBe(false);
+    frame.destroy();
   });
 });

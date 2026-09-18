@@ -160,6 +160,22 @@ describe('tooltips', () => {
     expect(tooltip.Position).toEqual(fk.udim2FromOffset(712, 538));
   });
 
+  it.each([
+    ['top', 200, 0, 210, 52],
+    ['bottom', 200, 560, 210, 508],
+    ['left', 0, 200, 112, 200],
+    ['right', 700, 200, 608, 200],
+  ] as const)(
+    'flips anchored %s placement when that side does not fit',
+    (placement, left, top, x, y) => {
+      const { target, tooltip, moveTarget } = fixture();
+      moveTarget(rect(left, top, 100, 40));
+      fkh.withToolTip(target, tooltip, { placement, delay: 0 });
+      pointer(target.unsafeElement, 'pointerenter');
+      expect(tooltip.Position).toEqual(fk.udim2FromOffset(x, y));
+    },
+  );
+
   it.each(['frame', 'text'])(
     'fades cursor-following %s content on exit without moving or accepting tooltip hover',
     async (content) => {

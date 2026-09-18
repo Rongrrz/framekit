@@ -96,6 +96,21 @@ describe('spring animations', () => {
     expect(frame.BackgroundTransparency).toBe(0);
   });
 
+  it.each([
+    ['underdamped', 10],
+    ['critically damped', 20],
+    ['overdamped', 40],
+  ] as const)('settles a %s spring exactly at its goal', (_, friction) => {
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
+    const controller = fka.spring(frame, { Rotation: 90 }, { tension: 100, friction });
+    advance();
+    expect(frame.Rotation).toBeGreaterThan(0);
+    expect(frame.Rotation).toBeLessThan(90);
+    settle();
+    expect(frame.Rotation).toBe(90);
+    expect(controller.isAnimating()).toBe(false);
+  });
+
   it('arbitrates property ownership with tweens in both directions', () => {
     const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const controller = fka.spring(frame);
@@ -176,14 +191,39 @@ describe('spring animations', () => {
       BackgroundTransparency: 1,
       Position: fk.udim2FromOffset(100, 100),
     });
+    advance();
+    const stoppedPosition = frame.Position;
     controller.stop('Position');
 
     expect(controller.isAnimating()).toBe(true);
+    settle();
+    expect(frame.Position).toEqual(stoppedPosition);
+    expect(frame.BackgroundTransparency).toBe(1);
+    fka.spring(frame, { BackgroundTransparency: 0 });
 
     frame.destroy();
 
     expect(controller.isAnimating()).toBe(false);
     expect(() => fka.spring(frame, { BackgroundTransparency: 0 })).toThrow(/destroyed/);
+  });
+
+  it('stops all properties without completing and can animate again', () => {
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
+    const controller = fka.spring(frame, { Rotation: 90, BackgroundTransparency: 1 });
+    const completed = vi.fn();
+    controller.completed.subscribe(completed);
+    advance();
+    const rotation = frame.Rotation;
+    controller.stop();
+    controller.stop();
+    settle();
+    expect(controller.isAnimating()).toBe(false);
+    expect(frame.Rotation).toBe(rotation);
+    expect(completed).not.toHaveBeenCalled();
+    fka.spring(frame, { Rotation: 45 });
+    settle();
+    expect(frame.Rotation).toBe(45);
+    expect(completed).toHaveBeenCalledOnce();
   });
 
   it('validates options and spring goals', () => {

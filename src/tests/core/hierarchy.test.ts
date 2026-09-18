@@ -42,12 +42,16 @@ describe('hierarchy', () => {
 
     child.Parent = root;
 
+    expect(() => (root.Parent = root)).toThrow(/itself/);
     expect(() => (root.Parent = child)).toThrow(/descendants/);
-    expect(() => (root.Parent = child)).toThrow(/descendants/);
+    expect(root.getChildren()).toEqual([child]);
+    expect(child.Parent).toBe(root);
 
     child.destroy();
 
     expect(() => child.setProperties({ Name: 'Too late' })).toThrow(/destroyed/);
+    expect(() => (child.Parent = root)).toThrow(/destroyed/);
+    expect(() => (root.Parent = child)).toThrow(/destroyed/);
   });
 
   it('narrows heterogeneous traversal results to their concrete APIs', () => {
@@ -76,6 +80,52 @@ describe('hierarchy', () => {
     expect(child.Parent).toBeUndefined();
     expect(parent.getChildren()).toEqual([]);
     expect(child.unsafeElement.parentElement).toBeNull();
+  });
+
+  it('restores the original sibling order when reparenting fails', () => {
+    const previous = fk.createFrame();
+    const rejected = fk.createFrame();
+    const first = fk.createFrame();
+    const middle = fk.createFrame();
+    const last = fk.createFrame();
+    for (const child of [first, middle, last]) child.Parent = previous;
+    vi.spyOn(rejected.unsafeElement, 'insertBefore').mockImplementation(() => {
+      throw new Error('placement failed');
+    });
+
+    expect(() => (middle.Parent = rejected)).toThrow(/placement failed/);
+    expect(middle.Parent).toBe(previous);
+    expect(previous.getChildren()).toEqual([first, middle, last]);
+    expect(Array.from(previous.unsafeElement.children)).toEqual([
+      first.unsafeElement,
+      middle.unsafeElement,
+      last.unsafeElement,
+    ]);
+    expect(rejected.getChildren()).toEqual([]);
+    previous.destroy();
+    rejected.destroy();
+  });
+
+  it('returns independent traversal snapshots and prefers direct name matches', () => {
+    const root = fk.createFrame();
+    const branch = fk.createFrame();
+    const nested = fk.createFrame({ Name: 'Match' });
+    branch.Parent = root;
+    nested.Parent = branch;
+    const children = root.getChildren();
+    const descendants = root.getDescendants();
+
+    expect(root.findFirstChild('Match')).toBeUndefined();
+    expect(root.findFirstChild('Match', true)).toBe(nested);
+    const direct = fk.createFrame({ Name: 'Match' });
+    direct.Parent = root;
+
+    expect(root.findFirstChild('Match', true)).toBe(direct);
+    expect(root.findFirstChild('Missing', true)).toBeUndefined();
+    expect(children).toEqual([branch]);
+    expect(descendants).toEqual([branch, nested]);
+    expect(root.getDescendants()).toEqual([branch, nested, direct]);
+    root.destroy();
   });
 
   it('formats a stable hierarchy snapshot', () => {

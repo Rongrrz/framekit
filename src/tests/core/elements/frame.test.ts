@@ -57,15 +57,6 @@ describe('frames', () => {
     expect(setProperty).not.toHaveBeenCalled();
   });
 
-  it('rejects non-finite rotations without disturbing the rendered angle', () => {
-    const frame = fk.createFrame({ Rotation: -15 });
-
-    expect(frame.unsafeElement.style.getPropertyValue('rotate')).toBe('-15deg');
-    expect(() => frame.setProperties({ Rotation: Number.NaN })).toThrow(/finite/);
-    expect(frame.Rotation).toBe(-15);
-    expect(frame.unsafeElement.style.getPropertyValue('rotate')).toBe('-15deg');
-  });
-
   it('rejects transparency outside its documented range', () => {
     expect(() => fk.createFrame({ BackgroundTransparency: -0.1 })).toThrow(/between 0 and 1/);
     expect(() => fk.createFrame({ BackgroundTransparency: 1.1 })).toThrow(/between 0 and 1/);

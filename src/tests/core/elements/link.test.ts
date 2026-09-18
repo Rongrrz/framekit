@@ -42,15 +42,25 @@ describe('links', () => {
     expect(link.unsafeElement.hasAttribute('aria-label')).toBe(false);
   });
 
-  it('rejects executable destinations without corrupting the current href', () => {
-    const link = fk.createLink({ Href: '/safe' });
+  it.each(['javascript:alert(1)', ' JaVaScRiPt:alert(1)', 'data:text/html,unsafe'])(
+    'rejects unsafe destination %s without corrupting the current href',
+    (href) => {
+      const link = fk.createLink({ Href: '/safe' });
 
-    expect(() => link.setProperties({ Href: 'javascript:alert(1)' })).toThrow(
-      /Unsupported link URL protocol/,
-    );
-    expect(link.Href).toBe('/safe');
-    expect(link.unsafeElement.getAttribute('href')).toBe('/safe');
-  });
+      expect(() => link.setProperties({ Href: href })).toThrow(/Unsupported link URL protocol/);
+      expect(link.Href).toBe('/safe');
+      expect(link.unsafeElement.getAttribute('href')).toBe('/safe');
+    },
+  );
+
+  it.each(['mailto:hello@example.com', 'tel:+15555550123', 'https://example.com/guide'])(
+    'preserves supported destination %s',
+    (Href) => {
+      const link = fk.createLink({ Href });
+      expect(link.unsafeElement.getAttribute('href')).toBe(Href);
+      link.destroy();
+    },
+  );
 
   it('rejects GUI children that would create invalid interactive nesting', () => {
     const link = fk.createLink();

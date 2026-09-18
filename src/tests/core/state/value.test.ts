@@ -12,6 +12,7 @@ describe('values', () => {
 
     count.set(2);
     count.set(2);
+    count.update((current) => current);
     count.update((current) => current + 3);
     unsubscribe();
     count.set(8);
@@ -30,14 +31,16 @@ describe('values', () => {
     expect(value.get()).toBe(second);
   });
 
-  it('does not publish when an updater returns the current value', () => {
-    const value = fk.createValue(2);
+  it('uses Object.is equality, including NaN and signed zero', () => {
+    const value = fk.createValue(Number.NaN);
     const listener = vi.fn();
-
     value.onChange(listener);
-    value.update((current) => current);
-
-    expect(listener).not.toHaveBeenCalled();
+    value.set(Number.NaN);
+    value.set(0);
+    value.set(-0);
+    value.set(-0);
+    expect(listener.mock.calls).toEqual([[0], [-0]]);
+    expect(Object.is(value.get(), -0)).toBe(true);
   });
 
   it('reports observer failures without changing a successful update', () => {
@@ -58,17 +61,16 @@ describe('values', () => {
     vi.unstubAllGlobals();
   });
 
-  it('automatically stops node-owned observers on destruction', () => {
-    const owner = fk.createFrame();
-    const count = fk.createValue(1);
+  it('leaves state unchanged when an updater throws', () => {
+    const value = fk.createValue(1);
     const listener = vi.fn();
-
-    listener(count.get());
-    owner.onDestroy(count.onChange(listener));
-    count.set(2);
-    owner.destroy();
-    count.set(3);
-
-    expect(listener.mock.calls).toEqual([[1], [2]]);
+    value.onChange(listener);
+    expect(() =>
+      value.update(() => {
+        throw new Error('update failed');
+      }),
+    ).toThrow(/update failed/);
+    expect(value.get()).toBe(1);
+    expect(listener).not.toHaveBeenCalled();
   });
 });

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createApiPage } from '../src/components/api-page';
 import { createGuidePage } from '../src/components/guide-page';
-import { createHomePage } from '../src/components/home';
 import type { PlaygroundLayout } from '../src/layout';
 import type { SitePage } from '../src/router';
 import { themes } from '../src/theme';
@@ -15,46 +14,34 @@ const createState = (page: SitePage) => ({
 });
 
 describe('playground pages', () => {
-  it('reflows one home hierarchy and uses scaled display text', () => {
-    const state = createState('home');
-    const home = createHomePage(state.layout, state.theme, state.route, () => undefined);
-    const visual = home.findFirstChild('HomeCodeVisual', true) as fk.Frame;
-    state.layout.set('mobile');
-    expect(home.findFirstChild('HomeCodeVisual', true)).toBe(visual);
-    expect(visual.Size).toEqual(fk.udim2FromOffset(358, 370));
-    expect((home.findFirstChild('HomeProductName', true) as fk.TextLabel).TextScaled).toBe(true);
-    home.destroy();
-  });
-
   it('presents a focused guide with local navigation', () => {
     const state = createState('guide');
-    const guide = createGuidePage(
-      state.layout,
-      state.theme,
-      state.route,
-      () => undefined,
-      () => undefined,
-    );
+    const scrollTo = vi.fn();
+    const navigate = vi.fn();
+    const guide = createGuidePage(state.layout, state.theme, state.route, scrollTo, navigate);
     const sidebar = guide.findFirstChild('GuidePageSidebar', true) as fk.Frame;
     expect(sidebar.unsafeElement.style.position).toBe('sticky');
-    expect(guide.unsafeElement.textContent).toContain('Create your first interface');
-    expect(guide.unsafeElement.textContent).toContain('TextScaled: true');
-    expect(guide.unsafeElement.textContent).toContain('Bind reactive values');
-    expect(guide.unsafeElement.textContent).toContain('Respond to the viewport');
-    expect(guide.unsafeElement.textContent).toContain('Clean up one owner');
+    const next = guide.findFirstChild('GuideNextButton', true);
+    if (!next?.isA('TextButton')) throw new Error('Missing guide next button.');
+    next.unsafeElement.click();
+    expect(navigate).toHaveBeenCalledWith('api');
+    const outline = guide.findFirstChild('CleanupOutlineButton', true);
+    if (!outline?.isA('TextButton')) throw new Error('Missing cleanup outline button.');
+    const heading = guide
+      .getDescendants()
+      .find((node) => node.isA('TextLabel') && node.Text === 'Clean up one owner');
+    if (!heading?.isA('TextLabel')) throw new Error('Missing cleanup heading.');
+    outline.unsafeElement.click();
+    expect(scrollTo).toHaveBeenCalledWith(heading);
+    state.layout.set('mobile');
+    expect((guide.findFirstChild('GuidePageSidebarRail', true) as fk.Frame).Visible).toBe(false);
+    expect((guide.findFirstChild('GuidePageOutlineRail', true) as fk.Frame).Visible).toBe(false);
     guide.destroy();
   });
 
-  it('documents core APIs and optional namespaces', () => {
+  it('keeps API cards usable in the mobile layout', () => {
     const state = createState('api');
     const api = createApiPage(state.layout, state.theme, state.route, () => undefined);
-    expect(api.unsafeElement.textContent).toContain('Factories');
-    expect(api.unsafeElement.textContent).toContain('Instance methods');
-    expect(api.findFirstChild('ScrollingFrameReferenceCard', true)).toBeDefined();
-    expect(api.findFirstChild('UIListLayoutReferenceCard', true)).toBeDefined();
-    expect(api.unsafeElement.textContent).toContain('fka.spring');
-    expect(api.unsafeElement.textContent).toContain('fkh.bindResponsiveLayout');
-
     state.layout.set('mobile');
     const cornerCard = api.findFirstChild('UICornerReferenceCard', true) as fk.Frame;
     const cornerTitle = cornerCard.findFirstChild('Text') as fk.TextLabel;

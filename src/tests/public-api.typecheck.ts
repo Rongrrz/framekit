@@ -3,6 +3,13 @@ import { fk, fka, fkh } from '../index.js';
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
   const frame = fk.createFrame();
+  const frameViews: readonly [fk.Frame, fk.Instance, fk.GuiElement, fk.GuiObject] = [
+    frame,
+    frame,
+    frame,
+    frame,
+  ];
+  void frameViews;
   const button = fk.createTextButton();
   const scale = fk.createUIScale();
   scale.Parent = button;

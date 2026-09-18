@@ -54,19 +54,46 @@ describe('buttons', () => {
     );
   });
 
-  it('does not fire button press events while disabled', () => {
-    const button = fk.createTextButton({ Disabled: true });
+  it.each([
+    ['text', fk.createTextButton],
+    ['image', fk.createImageButton],
+  ] as const)('suppresses all %s button press events while disabled', (_, createButton) => {
+    const button = createButton({ Disabled: true });
     const callback = vi.fn();
+    expect(button.unsafeElement.tagName).toBe('BUTTON');
+    expect(button.unsafeElement.type).toBe('button');
+    expect(button.unsafeElement.disabled).toBe(true);
+    expect(button.AutoButtonColor).toBe(true);
 
     button.onClick(callback);
-    button.unsafeElement.click();
+    button.onPrimaryButtonDown(callback);
+    button.onPrimaryButtonUp(callback);
+    button.onSecondaryButtonDown(callback);
+    button.onSecondaryButtonUp(callback);
+    button.onSecondaryClick(callback);
+    for (const [type, mouseButton] of [
+      ['click', 0],
+      ['mousedown', 0],
+      ['mouseup', 0],
+      ['mousedown', 2],
+      ['mouseup', 2],
+    ] as const) {
+      button.unsafeElement.dispatchEvent(new MouseEvent(type, { button: mouseButton }));
+    }
 
     expect(callback).not.toHaveBeenCalled();
     expect(button.unsafeElement.style.cursor).toBe('not-allowed');
 
     button.setProperties({ Disabled: false });
 
+    expect(button.unsafeElement.disabled).toBe(false);
     expect(button.unsafeElement.style.cursor).toBe('pointer');
+    button.unsafeElement.click();
+    expect(callback).toHaveBeenCalledOnce();
+    button.destroy();
+    button.unsafeElement.dispatchEvent(new MouseEvent('click'));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
+    expect(callback).toHaveBeenCalledOnce();
   });
 
   it('keeps its accessible label synchronized through a typed property', () => {
@@ -109,20 +136,6 @@ describe('buttons', () => {
     expect(secondaryClick).toHaveBeenCalledOnce();
   });
 
-  it('uses semantic image buttons and synchronizes their disabled state', () => {
-    const button = fk.createImageButton({ Disabled: true });
-
-    expect(button.unsafeElement.tagName).toBe('BUTTON');
-    expect(button.unsafeElement.disabled).toBe(true);
-    expect(button.unsafeElement.style.cursor).toBe('not-allowed');
-    expect(button.AutoButtonColor).toBe(true);
-
-    button.setProperties({ Disabled: false });
-
-    expect(button.unsafeElement.disabled).toBe(false);
-    expect(button.unsafeElement.style.cursor).toBe('pointer');
-  });
-
   it('preserves native context menus and rejects nested GUI children', () => {
     const textButton = fk.createTextButton();
     const imageButton = fk.createImageButton();
@@ -133,5 +146,22 @@ describe('buttons', () => {
     expect(contextMenu.defaultPrevented).toBe(false);
     expect(() => (fk.createFrame().Parent = textButton)).toThrow(/cannot contain GUI children/);
     expect(() => (fk.createFrame().Parent = imageButton)).toThrow(/cannot contain GUI children/);
+  });
+
+  it('only emits a secondary click for a press and release without leaving the button', () => {
+    const button = fk.createTextButton();
+    const clicked = vi.fn();
+    button.onSecondaryClick(clicked);
+    button.unsafeElement.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));
+    expect(clicked).not.toHaveBeenCalled();
+    button.unsafeElement.dispatchEvent(new MouseEvent('mousedown', { button: 2 }));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mouseleave'));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));
+    expect(clicked).not.toHaveBeenCalled();
+    button.unsafeElement.dispatchEvent(new MouseEvent('mousedown', { button: 2 }));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));
+    button.unsafeElement.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));
+    expect(clicked).toHaveBeenCalledOnce();
+    button.destroy();
   });
 });

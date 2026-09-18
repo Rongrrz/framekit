@@ -144,6 +144,28 @@ describe('tweens', () => {
     expect(frame.BackgroundTransparency).toBe(1);
   });
 
+  it.each([
+    ['In', 5.625],
+    ['Out', 39.375],
+    ['InOut', 11.25],
+  ] as const)(
+    'applies the %s easing direction to playback progress',
+    (EasingDirection, expected) => {
+      const frame = trackNode(fk.createFrame({ Rotation: 0 }));
+      const tween = fka.createTween(
+        frame,
+        { Duration: 1, EasingStyle: 'Quad', EasingDirection },
+        { Rotation: 90 },
+      );
+      tween.play();
+      advance(250);
+      expect(frame.Rotation).toBe(expected);
+      advance(750);
+      expect(frame.Rotation).toBe(90);
+      expect(tween.playbackState()).toBe('Completed');
+    },
+  );
+
   it('supports delay, pause, resume, and cancellation', () => {
     const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const tween = fka.createTween(
@@ -417,20 +439,15 @@ describe('tweens', () => {
     expect(() => fka.createTween(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
       /Unknown tween property "Missing"/,
     );
-    try {
-      fka.createTween(
-        frame,
-        { Duration: 1 },
-        {
-          BackgroundTransparency: Number.NaN,
-        },
-      );
-      throw new Error('Expected the invalid goal to fail.');
-    } catch (error) {
-      expect(error).toBeInstanceOf(TypeError);
-      expect(error).toHaveProperty('message', expect.stringMatching(/compatible tweenable/));
-      expect(error).toHaveProperty('cause', expect.any(TypeError));
-    }
+    expect(() =>
+      fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: Number.NaN }),
+    ).toThrow(
+      expect.objectContaining({
+        name: 'TypeError',
+        message: expect.stringMatching(/compatible tweenable/),
+        cause: expect.any(TypeError),
+      }),
+    );
   });
 
   it('rejects a goal that violates the property contract before playback', () => {

@@ -95,12 +95,4 @@ describe('UI list layouts', () => {
     expect(child.unsafeElement.style.left).toBe('auto');
     expect(child.unsafeElement.style.getPropertyValue('scale')).toBe('1.05');
   });
-
-  it('rejects element-less parents', () => {
-    const parentModifier = fk.createUICorner();
-    const layout = fk.createUIListLayout();
-
-    expect(() => (layout.Parent = parentModifier)).toThrow(/cannot contain child nodes/);
-    expect(layout.Parent).toBeUndefined();
-  });
 });

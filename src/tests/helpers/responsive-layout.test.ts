@@ -24,14 +24,40 @@ describe('responsive layouts', () => {
     window.dispatchEvent(new Event('resize'));
     expect(mobile).toHaveBeenCalledOnce();
 
+    vi.stubGlobal('innerWidth', 700);
+    window.dispatchEvent(new Event('resize'));
+    expect(desktop).toHaveBeenCalledOnce();
     vi.stubGlobal('innerWidth', 900);
     window.dispatchEvent(new Event('resize'));
     expect(desktop).toHaveBeenCalledOnce();
+    vi.stubGlobal('innerWidth', 699);
+    window.dispatchEvent(new Event('resize'));
+    expect(mobile).toHaveBeenCalledTimes(2);
 
     owner.destroy();
-    vi.stubGlobal('innerWidth', 500);
+    vi.stubGlobal('innerWidth', 900);
     window.dispatchEvent(new Event('resize'));
+    expect(mobile).toHaveBeenCalledTimes(2);
+    expect(desktop).toHaveBeenCalledOnce();
+  });
+
+  it('uses the owner document viewport rather than the global window', () => {
+    const iframe = document.body.appendChild(document.createElement('iframe'));
+    const ownerDocument = iframe.contentDocument!;
+    const ownerWindow = ownerDocument.defaultView!;
+    const owner = fk.createFrame({}, { ownerDocument });
+    const mobile = vi.fn();
+    const desktop = vi.fn();
+    vi.stubGlobal('innerWidth', 1200);
+    Object.defineProperty(ownerWindow, 'innerWidth', { configurable: true, value: 400 });
+    fkh.bindResponsiveLayout(owner, { breakpoint: 700, mobile, desktop });
     expect(mobile).toHaveBeenCalledOnce();
+    expect(desktop).not.toHaveBeenCalled();
+    Object.defineProperty(ownerWindow, 'innerWidth', { configurable: true, value: 700 });
+    ownerWindow.dispatchEvent(new ownerWindow.Event('resize'));
+    expect(desktop).toHaveBeenCalledOnce();
+    owner.destroy();
+    iframe.remove();
   });
 
   it('rejects destroyed responsive owners before applying a layout', () => {

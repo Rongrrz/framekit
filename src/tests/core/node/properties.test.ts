@@ -86,13 +86,15 @@ describe('node properties', () => {
   it('rejects invalid primitive values and enum members without changing state', () => {
     expect(() => fk.createFrame({ Rotation: Number.NaN })).toThrow(/Rotation.*finite/);
 
-    const frame = fk.createFrame();
+    const frame = fk.createFrame({ Rotation: -15 });
 
     expect(() => frame.setProperties({ ZIndex: 1.5 })).toThrow(/ZIndex.*integer/);
+    expect(() => (frame.Rotation = Number.POSITIVE_INFINITY)).toThrow(/Rotation.*finite/);
     expect(() => frame.setProperties({ AutomaticSize: 'Invalid' } as never)).toThrow(
       /AutomaticSize/,
     );
-    expect(frame).toMatchObject({ ZIndex: 1, AutomaticSize: 'None', Visible: true });
+    expect(frame).toMatchObject({ Rotation: -15, ZIndex: 1, AutomaticSize: 'None', Visible: true });
+    expect(frame.unsafeElement.style.getPropertyValue('rotate')).toBe('-15deg');
   });
 
   it('rejects malformed JavaScript values at the rendering boundary', () => {
