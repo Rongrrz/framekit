@@ -61,7 +61,7 @@ export const createApiPage = (
     shell.article,
     theme,
     'Factories',
-    'Factories create persistent instances. Every initial properties object is optional and type checked.',
+    'Factories create persistent instances. Initial properties are optional and typed. Every DOM factory accepts { ownerDocument } as a second argument, alongside any tag option.',
     310,
   );
   appendCodeBlock(
@@ -88,7 +88,7 @@ export const createApiPage = (
     shell.article,
     theme,
     'Instance methods',
-    'Every instance shares hierarchy, inspection, property observation, value binding, and lifecycle methods.',
+    'Every instance shares hierarchy, inspection, property observation, and lifecycle methods. Use onDestroy to register subscription cleanup.',
     748,
   );
   appendCodeBlock(
@@ -181,7 +181,7 @@ export const createApiPage = (
     shell.article,
     theme,
     'Values and signals',
-    'Values model mutable state. Signals model typed events. Both return explicit subscriptions, while instance.watch adds owner-based cleanup.',
+    'Values model mutable state. Signals model typed events. Register the unsubscribe function with owner.onDestroy to release a subscription when its owner is destroyed.',
     2838,
   );
   appendCodeBlock(
