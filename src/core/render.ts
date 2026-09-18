@@ -5,7 +5,7 @@ import { getModifierTarget, type LayoutChild, type LayoutNodeState } from './nod
 import { getNodeState, isGuiNode, isModifierState } from './node/state';
 import { composeStyles, type Styles } from './node/style-output';
 
-function hasLayoutModifier(node: Instance): boolean {
+export function hasLayoutModifier(node: Instance): boolean {
   const state = getNodeState(node);
   if (state.kind !== 'gui') return false;
   for (const modifier of state.modifiers.values()) {
@@ -15,7 +15,7 @@ function hasLayoutModifier(node: Instance): boolean {
 }
 
 /** Renders the node surfaces affected by a committed property change. */
-function renderPropertyChanges<Properties extends InstanceProperties>(
+export function renderPropertyChanges<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
 ): void {
@@ -36,7 +36,7 @@ function renderPropertyChanges<Properties extends InstanceProperties>(
 }
 
 /** Renders changed base properties and reconciles target-dependent style modifiers. */
-function renderNode<Properties extends InstanceProperties>(
+export function renderNode<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
 ): void {
@@ -57,7 +57,7 @@ function affectsParentLayout<Properties extends InstanceProperties>(
 }
 
 /** Reconciles modifier and layout output without replaying base property renderers. */
-function renderDerivedStyles(node: Instance): void {
+export function renderDerivedStyles(node: Instance): void {
   renderModifierStyles(node);
   renderLayouts(node);
 }
@@ -127,12 +127,3 @@ function getLayoutChildProperties(child: GuiElement): LayoutChild {
     LayoutOrder: typeof layoutOrder === 'number' ? layoutOrder : 0,
   };
 }
-
-/** Owns the synchronous DOM projection of FrameKit node state. */
-export const RenderService = Object.freeze({
-  renderPropertyChanges,
-  renderNode,
-  renderDerivedStyles,
-  renderLayouts,
-  hasLayoutModifier,
-});

@@ -330,7 +330,7 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree follows those same boundaries:
 
-- `core/` — the `fk` surface with direct `node-service.ts`, `render-service.ts`, and `destroy-service.ts` entry points
+- `core/` — the `fk` surface; hierarchy, rendering, and lifecycle each have a direct owning module
 - `core/node/` — private node handles, state, properties, and event implementation
 - `animation/` — the `fka` surface with spring and tween mechanics
 - `helpers/` — optional composed behavior exposed through `fkh`

@@ -1,5 +1,5 @@
-import { DestroyService } from '../destroy-service';
-import { NodeService } from '../node-service';
+import * as hierarchy from '../hierarchy';
+import * as lifecycle from '../lifecycle';
 import type { Unsubscribe } from '../state/signal';
 import type { InstanceClassName, InstanceOf } from './classes';
 import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
@@ -97,7 +97,7 @@ const methodTable = {
     this: Instance,
     className: ClassName,
   ): this is InstanceOf<ClassName> {
-    return NodeService.getClassName(this) === className;
+    return hierarchy.getClassName(this) === className;
   },
   setProperties<Properties extends InstanceProperties>(
     this: Instance<Properties>,
@@ -113,43 +113,43 @@ const methodTable = {
     return subscribeToPropertyChange(this, property, listener);
   },
   getChildren(this: Instance): readonly Instance[] {
-    return NodeService.children(this);
+    return hierarchy.children(this);
   },
   getDescendants(this: Instance): readonly Instance[] {
-    return NodeService.descendants(this);
+    return hierarchy.descendants(this);
   },
   findFirstChild(this: Instance, name: string, recursive = false): Instance | undefined {
-    return NodeService.findFirstChild(this, name, recursive);
+    return hierarchy.findFirstChild(this, name, recursive);
   },
   getFullName(this: Instance): string {
-    return NodeService.getFullName(this);
+    return hierarchy.getFullName(this);
   },
   toTreeString(this: Instance): string {
-    return NodeService.toTreeString(this);
+    return hierarchy.toTreeString(this);
   },
   destroy(this: Instance): void {
-    DestroyService.destroy(this);
+    lifecycle.destroy(this);
   },
   isDestroyed(this: Instance): boolean {
-    return DestroyService.isDestroyed(this);
+    return lifecycle.isDestroyed(this);
   },
   onDestroy(this: Instance, callback: () => void): Unsubscribe {
-    return DestroyService.onDestroy(this, callback);
+    return lifecycle.onDestroy(this, callback);
   },
 } satisfies InstanceMethods;
 
 Object.defineProperties(methodTable, {
   ClassName: {
     get(this: Instance): string {
-      return NodeService.getClassName(this);
+      return hierarchy.getClassName(this);
     },
   },
   Parent: {
     get(this: Instance): Instance | undefined {
-      return NodeService.getParent(this);
+      return hierarchy.getParent(this);
     },
     set(this: Instance, newParent: Instance | undefined) {
-      NodeService.setParent(this, newParent);
+      hierarchy.setParent(this, newParent);
     },
   },
 });

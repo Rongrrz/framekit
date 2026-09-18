@@ -1,4 +1,3 @@
-import { DestroyService } from '../destroy-service';
 import { createRealmAbortController } from '../dom/environment';
 import { installStyles } from '../dom/stylesheet';
 import { bindTextScaleResize, renderTextSize } from '../dom/text-size';
@@ -14,6 +13,7 @@ import {
   type GuiObjectProperties,
 } from '../gui-object';
 import { assertBoolean, assertString, assertUnitInterval } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { emitNodeEvent } from '../node/events';
 import {
   guiEventKeys,
@@ -130,7 +130,7 @@ export function createTextControl<
     },
     { signal: listenerController.signal },
   );
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
   return node;
 }
 

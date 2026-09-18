@@ -1,4 +1,4 @@
-import { DestroyService } from '../destroy-service';
+import * as lifecycle from '../lifecycle';
 import { emitNodeEvent } from '../node/events';
 import { guiEventKeys } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
@@ -20,5 +20,5 @@ export function connectHoverEvents(node: GuiElement, element: HTMLElement): void
     listenerOptions,
   );
 
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
 }

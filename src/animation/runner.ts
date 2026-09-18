@@ -1,4 +1,4 @@
-import { DestroyService } from '../core/destroy-service';
+import * as lifecycle from '../core/lifecycle';
 import type { Instance, InstanceProperties } from '../core/node/instance';
 import {
   applyAnimationProperties,
@@ -65,10 +65,10 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
   }
 
   function assertUsable(message: string): void {
-    if (DestroyService.isDestroyed(node)) throw new Error(message);
+    if (lifecycle.isDestroyed(node)) throw new Error(message);
   }
 
-  DestroyService.onDestroy(node, () => {
+  lifecycle.onDestroy(node, () => {
     try {
       options.onDestroy();
     } finally {
@@ -84,7 +84,7 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
     schedule,
     cancelFrame,
     isScheduled: () => scheduled,
-    isDestroyed: () => DestroyService.isDestroyed(node),
+    isDestroyed: () => lifecycle.isDestroyed(node),
     assertUsable,
   });
 }

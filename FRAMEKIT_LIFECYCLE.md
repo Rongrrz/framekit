@@ -8,7 +8,7 @@ Every factory creates one long-lived node. It owns:
 
 - a typed property record and hierarchy position (`Parent` and children);
 - a DOM element when it is GUI-backed;
-- optional element-less modifiers, listeners, value watches, cleanup callbacks, and animation ownership.
+- optional element-less modifiers, listeners, registered subscriptions, cleanup callbacks, and animation ownership.
 
 FrameKit does not recreate nodes or run a hidden render loop. A property or hierarchy operation immediately updates the affected DOM surface. Animation frames are the one exception: the shared animation scheduler asks active animations to produce the next property patch once per browser frame.
 
@@ -32,7 +32,7 @@ flowchart TD
 
 ## Creation and first render
 
-A factory creates a GUI element when needed (modifiers have none), combines and validates defaults with initial properties, creates a frozen public handle over private state, and applies initial styles. A node may exist unattached: its element is real but remains outside the document until its parent is attached or a `ScreenGui` is mounted. Invalid initial properties prevent creation.
+A factory creates a GUI element when needed (modifiers have none), combines and validates defaults with initial properties, creates a public handle with own property accessors over private state, and applies initial styles. Structured property values are immutable snapshots. A node may exist unattached: its element is real but remains outside the document until its parent is attached or a `ScreenGui` is mounted. Invalid initial properties prevent creation.
 
 ## Changing properties
 
@@ -40,11 +40,11 @@ Direct assignments and `setProperties({...})` enter the same synchronous path.
 
 The property-change cycle is:
 
-1. **Collect and validate.** A direct assignment is a one-property patch; `setProperties()` keeps all supplied properties in one transaction. Unknown, missing, non-finite, or property-invalid values are rejected, then the custom validator checks the complete proposed record.
+1. **Collect and validate.** A direct assignment is a one-property patch; `setProperties()` keeps all supplied properties in one transaction. Unknown, missing, non-finite, or property-invalid values are rejected, then the node's validator checks the complete proposed record.
 2. **Compute changes.** Values use `Object.is`; an all-equal patch does not replace state or render.
-3. **Commit and render.** The new record becomes authoritative. The runtime renders base properties, recomposes modifiers and layouts, and may recalculate affected parents or children.
+3. **Commit and render.** The new record becomes authoritative. The runtime renders changed base properties and target-dependent modifiers. Parent layout is recalculated only for its child inputs (`Name` and `LayoutOrder`). Native scrolling reconciles `CanvasPosition` to the value actually accepted by the browser.
 4. **Restore failures.** If rendering throws, the old record is restored and rerendered. A failed restoration produces an `AggregateError`.
-5. **Notify observers.** Internal write events cover every requested property, while `onPropertyChanged()` receives only changed properties with `(nextValue, previousValue)`. Callback errors do not roll back state; remaining callbacks still run and failures are aggregated.
+5. **Notify observers.** Internal write events cover every requested property, while `onPropertyChanged()` receives only changed properties with `(nextValue, previousValue)`. Remaining callbacks still run after a callback fails. Observer errors are reported through the platform error reporter (or console fallback), without turning a successful mutation into a thrown failure.
 
 ### What “batching” means here
 
@@ -62,7 +62,7 @@ The property-change cycle is:
 
 The runtime keeps application properties as the base surface and modifier output as derived styles.
 
-- A GUI node without modifiers can render only changed properties. With modifiers, FrameKit clears old derived styles, renders the complete base surface, resolves style modifiers in tree order, and applies the result.
+- A GUI node renders only changed base properties, then resolves attached style modifiers in tree order. Separate style layers restore base declarations when derived output no longer overrides them.
 - `box-shadow` combines with commas, `filter` with spaces, and other conflicts use the later modifier.
 - Layout modifiers compute parent styles and direct-child placement. Changing or removing one rerenders the parent and restores child base geometry where layout output no longer applies.
 - A hidden base element keeps `display: none`.
@@ -75,7 +75,7 @@ Springs and tweens do not mutate private animation-only copies of the UI. They r
 
 ### Tweens
 
-`fka.TweenService.create(node, options, goal)` validates its goal at creation. `play()` snapshots current values, claims the goal properties, and schedules work.
+`fka.createTween(node, options, goal)` validates its goal at creation. `play()` snapshots current values, claims the goal properties, and schedules work.
 
 - `Delay` enters `Delayed`; zero duration with no delay completes synchronously.
 - `pause()` keeps ownership and resumes from the paused time; `cancel()` releases claims and emits `Cancelled`.
@@ -83,7 +83,7 @@ Springs and tweens do not mutate private animation-only copies of the UI. They r
 
 ### Springs
 
-Each node retains one spring controller. Calling `fk.spring(node, goal)` again retargets per-property springs from current visual values while preserving velocity. Properties settle independently; `completed` emits when all active properties settle.
+Each node retains one spring controller. Calling `fka.spring(node, goal)` again retargets per-property springs from current visual values while preserving velocity. Properties settle independently; `completed` emits when all active properties settle.
 
 ### Ownership rules
 
@@ -117,7 +117,7 @@ The scheduler uses one browser-frame callback for all active animation tasks. Ta
 
 1. Children are detached and destroyed first without intermediate subtree rerenders.
 2. The node is unlinked and affected layout or modifier output is rerendered.
-3. It is marked destroyed, cleanups release listeners, watches, animations, and mount bookkeeping, and its GUI element is removed unless an ancestor already removed it.
+3. It is marked destroyed, cleanups release listeners, registered subscriptions, animations, and mount bookkeeping, and its GUI element is removed unless an ancestor already removed it.
 
 Cleanup continues after individual callbacks fail. One failure is rethrown; multiple failures become an `AggregateError`. Operations that require a live node, including property reads and new animation work, throw after destruction. Destroying an already-destroyed node is otherwise harmless.
 

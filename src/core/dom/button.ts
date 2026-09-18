@@ -1,6 +1,6 @@
-import { DestroyService } from '../destroy-service';
 import type { GuiObjectProperties } from '../gui-object';
 import { assertBoolean, assertString } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { emitNodeEvent } from '../node/events';
 import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
@@ -93,7 +93,7 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
     listenerOptions,
   );
 
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
 }
 
 /** Synchronizes properties shared by every FrameKit button. */

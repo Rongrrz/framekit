@@ -1,6 +1,6 @@
 import { snapshotPropertyValue } from '../internal/snapshot';
 import { assertString } from '../internal/validation';
-import { RenderService } from '../render-service';
+import * as rendering from '../render';
 import type { Unsubscribe } from '../state/signal';
 import { emitNodeEvent, subscribeToNodeEvent } from './events';
 import type { Instance, InstanceProperties } from './instance';
@@ -153,11 +153,11 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   const nextProperties = { ...state.properties, ...patch };
   state.properties = nextProperties;
   try {
-    RenderService.renderPropertyChanges(node, changedProperties);
+    rendering.renderPropertyChanges(node, changedProperties);
   } catch (error) {
     state.properties = previousProperties;
     try {
-      RenderService.renderPropertyChanges(node, changedProperties);
+      rendering.renderPropertyChanges(node, changedProperties);
     } catch (rollbackError) {
       throw new AggregateError(
         [error, rollbackError],

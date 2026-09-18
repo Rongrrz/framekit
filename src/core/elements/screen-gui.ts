@@ -1,8 +1,8 @@
-import { DestroyService } from '../destroy-service';
 import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
 import { connectHoverEvents } from '../dom/hover-events';
 import { setStyle } from '../dom/styles';
 import { assertBoolean, assertInteger } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { guiEventMethods } from '../node/gui-events';
 import { createGuiNode, type GuiElement } from '../node/gui-node';
 import type { InstanceProperties } from '../node/instance';
@@ -83,7 +83,7 @@ export function createScreenGui(
   }) as ScreenGui;
 
   connectHoverEvents(gui, element);
-  DestroyService.onDestroy(gui, () => mountTargets.delete(gui));
+  lifecycle.onDestroy(gui, () => mountTargets.delete(gui));
   return gui;
 }
 

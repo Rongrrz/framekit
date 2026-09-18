@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { fk } from '../../index';
 
-describe('NodeService', () => {
+describe('hierarchy', () => {
   it('tracks, reparents, finds, and destroys children', () => {
     const first = fk.createFrame({ Name: 'First' });
     const second = fk.createFrame({ Name: 'Second' });

@@ -1,23 +1,23 @@
+import * as hierarchy from './hierarchy';
 import { throwCollectedErrors } from './internal/errors';
-import { NodeService } from './node-service';
 import type { GuiElement } from './node/gui-node';
 import type { Instance } from './node/instance';
 import { getActiveNodeState, getChildren, getNodeState, isModifierState } from './node/state';
-import { RenderService } from './render-service';
+import * as rendering from './render';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */
-function destroy(node: Instance): void {
+export function destroy(node: Instance): void {
   const errors: unknown[] = [];
   destroyRecursively(node, errors);
   throwCollectedErrors(errors, 'Multiple errors occurred while destroying a node.');
 }
 
-function isDestroyed(node: Instance): boolean {
+export function isDestroyed(node: Instance): boolean {
   return getNodeState(node).destroyed;
 }
 
 /** Registers a resource to release when the node is destroyed. */
-function onDestroy(node: Instance, callback: () => void): () => void {
+export function onDestroy(node: Instance, callback: () => void): () => void {
   const cleanups = getActiveNodeState(node).cleanups;
   cleanups.add(callback);
   return () => cleanups.delete(callback);
@@ -43,10 +43,10 @@ function destroyRecursively(
   children.length = 0;
 
   if (state.parent) {
-    const previousParent = NodeService.unlinkNodeFromParent(node, state)!;
-    if (isModifierState(state) || RenderService.hasLayoutModifier(previousParent)) {
+    const previousParent = hierarchy.unlinkNodeFromParent(node, state)!;
+    if (isModifierState(state) || rendering.hasLayoutModifier(previousParent)) {
       try {
-        RenderService.renderDerivedStyles(previousParent);
+        rendering.renderDerivedStyles(previousParent);
       } catch (error) {
         errors.push(error);
       }
@@ -72,6 +72,3 @@ function destroyRecursively(
     }
   }
 }
-
-/** Owns permanent node teardown and cleanup registration. */
-export const DestroyService = Object.freeze({ destroy, isDestroyed, onDestroy });

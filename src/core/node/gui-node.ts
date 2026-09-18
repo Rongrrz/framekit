@@ -1,4 +1,4 @@
-import { RenderService } from '../render-service';
+import * as rendering from '../render';
 import { vector2, type Vector2 } from '../values/vector2';
 import { guiEventMethods, type GuiMethodTable, type GuiEventMethods } from './gui-events';
 import {
@@ -80,7 +80,7 @@ export function createGuiNode<Properties extends InstanceProperties>({
     modifiers: new Map(),
     layoutChildren: new Set(),
   });
-  RenderService.renderNode(node, propertyNames);
+  rendering.renderNode(node, propertyNames);
   return node;
 }
 

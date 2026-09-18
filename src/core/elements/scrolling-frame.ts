@@ -1,4 +1,3 @@
-import { DestroyService } from '../destroy-service';
 import {
   createRealmAbortController,
   resolveOwnerDocument,
@@ -18,6 +17,7 @@ import {
   assertNonNegativeFinite,
   assertUnitInterval,
 } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { guiEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
 import { setNodeProperties, getNodeProperty } from '../node/properties';
@@ -233,7 +233,7 @@ export function createScrollingFrame(
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
   element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
 
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
   return node;
 }
 

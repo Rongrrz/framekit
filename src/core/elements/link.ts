@@ -1,10 +1,10 @@
-import { DestroyService } from '../destroy-service';
 import {
   createRealmAbortController,
   resolveOwnerDocument,
   type DomOptions,
 } from '../dom/environment';
 import { assertAllowedValue, assertString } from '../internal/validation';
+import * as lifecycle from '../lifecycle';
 import { emitNodeEvent } from '../node/events';
 import { guiEventKeys, linkEventMethods, type ClickEventMethods } from '../node/gui-events';
 import type { GuiElement } from '../node/gui-node';
@@ -76,7 +76,7 @@ export function createLink(
   element.addEventListener('click', (event) => emitNodeEvent(node, guiEventKeys.click, event), {
     signal: listenerController.signal,
   });
-  DestroyService.onDestroy(node, () => listenerController.abort());
+  lifecycle.onDestroy(node, () => listenerController.abort());
   return node;
 }
 

@@ -9,7 +9,7 @@ import {
   isGuiNode,
   type NodeState,
 } from './node/state';
-import { RenderService } from './render-service';
+import * as rendering from './render';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
 function append(parent: Instance, child: Instance): void {
@@ -58,12 +58,12 @@ function append(parent: Instance, child: Instance): void {
     placeChildElement(parent, parentState, child, insertionIndex);
     if (
       previousParent &&
-      (isModifierState(childState) || RenderService.hasLayoutModifier(previousParent))
+      (isModifierState(childState) || rendering.hasLayoutModifier(previousParent))
     ) {
-      RenderService.renderDerivedStyles(previousParent);
+      rendering.renderDerivedStyles(previousParent);
     }
-    if (isModifierState(childState) || RenderService.hasLayoutModifier(parent)) {
-      RenderService.renderDerivedStyles(parent);
+    if (isModifierState(childState) || rendering.hasLayoutModifier(parent)) {
+      rendering.renderDerivedStyles(parent);
     }
   } catch (error) {
     if (childState.parent === parent) unlinkNodeFromParent(child, childState);
@@ -106,8 +106,8 @@ function detach(node: Instance): void {
   try {
     unlinkNodeFromParent(node, state);
     if (isGuiNode(node)) node.unsafeElement.remove();
-    if (isModifierState(state) || RenderService.hasLayoutModifier(previousParent)) {
-      RenderService.renderDerivedStyles(previousParent);
+    if (isModifierState(state) || rendering.hasLayoutModifier(previousParent)) {
+      rendering.renderDerivedStyles(previousParent);
     }
   } catch (error) {
     if (state.parent !== previousParent) {
@@ -129,27 +129,27 @@ function detach(node: Instance): void {
   }
 }
 
-function getParent(node: Instance): Instance | undefined {
+export function getParent(node: Instance): Instance | undefined {
   return getActiveNodeState(node).parent;
 }
 
-function getClassName(node: Instance): string {
+export function getClassName(node: Instance): string {
   return getActiveNodeState(node).className;
 }
 
 /** Reparents a node, or detaches it when `newParent` is undefined. */
-function setParent(node: Instance, newParent: Instance | undefined): void {
+export function setParent(node: Instance, newParent: Instance | undefined): void {
   if (newParent) append(newParent, node);
   else detach(node);
 }
 
 /** Returns a snapshot of the node's direct children. */
-function children(node: Instance): readonly Instance[] {
+export function children(node: Instance): readonly Instance[] {
   return [...getChildren(getActiveNodeState(node))];
 }
 
 /** Returns every descendant in depth-first hierarchy order. */
-function descendants(node: Instance): readonly Instance[] {
+export function descendants(node: Instance): readonly Instance[] {
   const descendantNodes: Instance[] = [];
   const pending = [...getChildren(getActiveNodeState(node))].reverse();
   while (pending.length > 0) {
@@ -164,7 +164,11 @@ function descendants(node: Instance): readonly Instance[] {
 }
 
 /** Finds the first child with a matching name, optionally searching all descendants. */
-function findFirstChild(node: Instance, name: string, recursive = false): Instance | undefined {
+export function findFirstChild(
+  node: Instance,
+  name: string,
+  recursive = false,
+): Instance | undefined {
   const matchingChild = getChildren(getActiveNodeState(node)).find(
     (child) => getNodeState(child).properties.Name === name,
   );
@@ -173,7 +177,7 @@ function findFirstChild(node: Instance, name: string, recursive = false): Instan
 }
 
 /** Returns the dot-separated hierarchy path from the root to this node. */
-function getFullName(node: Instance): string {
+export function getFullName(node: Instance): string {
   getActiveNodeState(node);
   const names: string[] = [];
   for (let current: Instance | undefined = node; current; current = getNodeState(current).parent) {
@@ -183,7 +187,7 @@ function getFullName(node: Instance): string {
 }
 
 /** Formats a stable, human-readable snapshot of a node hierarchy. */
-function toTreeString(node: Instance): string {
+export function toTreeString(node: Instance): string {
   const lines = [formatNode(node)];
   const rootChildren = getChildren(getActiveNodeState(node));
   const pending: TreeLine[] = [];
@@ -242,8 +246,8 @@ function restoreRendering(
   rollbackMessage: string,
 ): never {
   try {
-    RenderService.renderDerivedStyles(parent);
-    if (previousParent) RenderService.renderDerivedStyles(previousParent);
+    rendering.renderDerivedStyles(parent);
+    if (previousParent) rendering.renderDerivedStyles(previousParent);
   } catch (rollbackError) {
     throw new AggregateError([originalError, rollbackError], rollbackMessage);
   }
@@ -277,7 +281,7 @@ function linkNodeToParent(
 }
 
 /** Removes a node from the authoritative hierarchy state and returns its previous parent. */
-function unlinkNodeFromParent(node: Instance, state: NodeState): Instance | undefined {
+export function unlinkNodeFromParent(node: Instance, state: NodeState): Instance | undefined {
   const previousParent = state.parent;
   if (!previousParent) return undefined;
 
@@ -291,18 +295,3 @@ function unlinkNodeFromParent(node: Instance, state: NodeState): Instance | unde
   state.parent = undefined;
   return previousParent;
 }
-
-/** Owns hierarchy reads and mutations for every FrameKit node. */
-export const NodeService = Object.freeze({
-  append,
-  detach,
-  getParent,
-  getClassName,
-  setParent,
-  children,
-  descendants,
-  findFirstChild,
-  getFullName,
-  toTreeString,
-  unlinkNodeFromParent,
-});
