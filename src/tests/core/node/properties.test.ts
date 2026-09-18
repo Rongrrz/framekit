@@ -129,4 +129,23 @@ describe('node properties', () => {
     expect(Object.isFrozen(frame.Position.X)).toBe(true);
     expect(frame.unsafeElement.style.left).toBe('10px');
   });
+
+  it('evaluates accessor-backed frozen inputs once instead of retaining live getters', () => {
+    let offset = 10;
+    const position = Object.freeze({
+      X: Object.freeze({
+        Scale: 0,
+        get Offset() {
+          return offset;
+        },
+      }),
+      Y: fk.udim(0, 20),
+    });
+    const frame = fk.createFrame({ Position: position });
+
+    offset = 999;
+
+    expect(frame.Position).toEqual(fk.udim2FromOffset(10, 20));
+    expect(frame.unsafeElement.style.left).toBe('10px');
+  });
 });

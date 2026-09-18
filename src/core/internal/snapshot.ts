@@ -41,7 +41,8 @@ function isImmutableSnapshot(value: object, checked: WeakSet<object>): boolean {
 
   for (const key of Reflect.ownKeys(value)) {
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (!descriptor?.enumerable || !('value' in descriptor)) continue;
+    if (!descriptor?.enumerable) continue;
+    if (!('value' in descriptor)) return false;
     const child = descriptor.value;
     if (isSnapshotContainer(child) && !isImmutableSnapshot(child, checked)) return false;
   }
