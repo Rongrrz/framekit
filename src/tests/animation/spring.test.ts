@@ -2,17 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { fk, fka } from '../../index';
 import { setupAnimationClock } from '../support/animation-clock';
+import { destroyNodesAfterEach } from '../support/node-cleanup';
 
 const { advance, settle } = setupAnimationClock();
+const trackNode = destroyNodesAfterEach();
 
 describe('spring animations', () => {
   it('retains one spring controller per node', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
     const controller = fka.spring(frame);
 
     expect(fka.spring(frame)).toBe(controller);
     expect(fka.spring(frame, { Rotation: 90 })).toBe(controller);
-    expect(fka.spring(fk.createFrame())).not.toBe(controller);
+    expect(fka.spring(trackNode(fk.createFrame()))).not.toBe(controller);
 
     settle();
 
@@ -21,8 +23,8 @@ describe('spring animations', () => {
   });
 
   it('applies call settings only to properties in that goal', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0, Rotation: 0 });
-    const control = fk.createFrame({ BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0, Rotation: 0 }));
+    const control = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const slow = { tension: 40, friction: 12 } as const;
 
     fka.spring(frame, { BackgroundTransparency: 1 }, slow);
@@ -40,11 +42,13 @@ describe('spring animations', () => {
   });
 
   it('springs numbers and structured values exactly to their goals', () => {
-    const frame = fk.createFrame({
-      Position: fk.udim2FromOffset(0, 0),
-      Size: fk.udim2FromOffset(100, 100),
-      BackgroundColor3: fk.color3FromRGB(0, 0, 0),
-    });
+    const frame = trackNode(
+      fk.createFrame({
+        Position: fk.udim2FromOffset(0, 0),
+        Size: fk.udim2FromOffset(100, 100),
+        BackgroundColor3: fk.color3FromRGB(0, 0, 0),
+      }),
+    );
     const controller = fka.spring(frame);
     const completed = vi.fn();
 
@@ -74,7 +78,7 @@ describe('spring animations', () => {
   });
 
   it('preserves velocity when retargeted', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const settings = { tension: 170, friction: 5 } as const;
 
     fka.spring(frame, { BackgroundTransparency: 1 }, settings);
@@ -93,7 +97,7 @@ describe('spring animations', () => {
   });
 
   it('arbitrates property ownership with tweens in both directions', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const controller = fka.spring(frame);
 
     fka.spring(frame, { BackgroundTransparency: 1 });
@@ -115,7 +119,7 @@ describe('spring animations', () => {
   });
 
   it('lets direct property changes take control from active animations', () => {
-    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
     const controller = fka.spring(frame);
 
     fka.spring(frame, { Rotation: 90 });
@@ -140,7 +144,7 @@ describe('spring animations', () => {
   });
 
   it('stops when a direct assignment keeps the current value', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
     const controller = fka.spring(frame);
 
     fka.spring(frame, { Rotation: 90 });
@@ -151,7 +155,7 @@ describe('spring animations', () => {
   });
 
   it('keeps an animation when a rejected assignment never takes effect', () => {
-    const scale = fk.createUIScale();
+    const scale = trackNode(fk.createUIScale());
     const controller = fka.spring(scale);
 
     fka.spring(scale, { Scale: 2 });
@@ -165,7 +169,7 @@ describe('spring animations', () => {
   });
 
   it('stops individual properties and releases everything on destruction', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
     const controller = fka.spring(frame);
 
     fka.spring(frame, {
@@ -183,7 +187,7 @@ describe('spring animations', () => {
   });
 
   it('validates options and spring goals', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
 
     expect(() => fka.spring(frame, { Rotation: 1 }, { tension: 0 })).toThrow(/tension/);
     expect(() => fka.spring(frame, { Rotation: 1 }, { friction: Number.NaN })).toThrow(/friction/);
@@ -198,8 +202,8 @@ describe('spring animations', () => {
   });
 
   it('rejects a goal that violates the property contract before scheduling it', () => {
-    const frame = fk.createFrame();
-    const scale = fk.createUIScale();
+    const frame = trackNode(fk.createFrame());
+    const scale = trackNode(fk.createUIScale());
 
     scale.Parent = frame;
 
@@ -218,8 +222,8 @@ describe('spring animations', () => {
   });
 
   it('springs shadow properties through the same API', () => {
-    const frame = fk.createFrame();
-    const shadow = fk.createUIShadow();
+    const frame = trackNode(fk.createFrame());
+    const shadow = trackNode(fk.createUIShadow());
 
     shadow.Parent = frame;
     fka.spring(shadow, {

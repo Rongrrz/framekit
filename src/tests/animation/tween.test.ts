@@ -2,13 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { fk, fka } from '../../index';
 import { setupAnimationClock } from '../support/animation-clock';
+import { destroyNodesAfterEach } from '../support/node-cleanup';
 
 const { advance } = setupAnimationClock();
+const trackNode = destroyNodesAfterEach();
 
 describe('tweens', () => {
   it('keeps active work when the browser frame function is replaced', () => {
-    const first = fk.createFrame({ Rotation: 0 });
-    const second = fk.createFrame({ Rotation: 0 });
+    const first = trackNode(fk.createFrame({ Rotation: 0 }));
+    const second = trackNode(fk.createFrame({ Rotation: 0 }));
     const firstTween = fka.createTween(
       first,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -30,7 +32,7 @@ describe('tweens', () => {
   });
 
   it('restarts completed and cancelled playback from the latest property value', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
     const tween = fka.createTween(frame, { Duration: 1, EasingStyle: 'Linear' }, { Rotation: 90 });
     const completed = vi.fn();
 
@@ -61,7 +63,7 @@ describe('tweens', () => {
   });
 
   it('repeats indefinitely until explicitly cancelled', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
     const tween = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear', RepeatCount: -1, Reverses: true },
@@ -82,10 +84,12 @@ describe('tweens', () => {
   });
 
   it('interpolates numbers and structured FrameKit values', () => {
-    const frame = fk.createFrame({
-      Position: fk.udim2FromOffset(0, 10),
-      BackgroundColor3: fk.color3FromRGB(0, 50, 100),
-    });
+    const frame = trackNode(
+      fk.createFrame({
+        Position: fk.udim2FromOffset(0, 10),
+        BackgroundColor3: fk.color3FromRGB(0, 50, 100),
+      }),
+    );
     const tween = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -113,7 +117,7 @@ describe('tweens', () => {
   });
 
   it('constrains easing overshoot to a property domain', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const tween = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Back', EasingDirection: 'Out' },
@@ -126,7 +130,7 @@ describe('tweens', () => {
   });
 
   it('supports delay, pause, resume, and cancellation', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const tween = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.25 },
@@ -157,7 +161,7 @@ describe('tweens', () => {
   });
 
   it('lets a direct assignment cancel a paused tween', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
     const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
 
     tween.play();
@@ -171,7 +175,7 @@ describe('tweens', () => {
   });
 
   it('returns to the start when reversing and completes repeats', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const tween = fka.createTween(
       frame,
       {
@@ -206,7 +210,7 @@ describe('tweens', () => {
   });
 
   it('cancels conflicting tweens but allows disjoint properties', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
     const first = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const second = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
     const position = fka.createTween(
@@ -227,7 +231,7 @@ describe('tweens', () => {
   });
 
   it('keeps ownership consistent when cancellation listeners start another tween', () => {
-    const frame = fk.createFrame({ BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
     const first = fka.createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -264,7 +268,7 @@ describe('tweens', () => {
   });
 
   it('finishes zero-duration tweens and cancels playback with node destruction', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
     const instant = fka.createTween(frame, { Duration: 0 }, { BackgroundTransparency: 1 });
 
     instant.play();
@@ -296,7 +300,7 @@ describe('tweens', () => {
   });
 
   it('reports cancellation listener failures without changing destruction', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
     const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const reportError = vi.fn();
     const listener = vi.fn(() => {
@@ -318,7 +322,7 @@ describe('tweens', () => {
   });
 
   it('keeps a direct property write in control when observers fail', () => {
-    const frame = fk.createFrame({ Rotation: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
     const tween = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
     const reportError = vi.fn();
     const changed = vi.fn();
@@ -341,7 +345,7 @@ describe('tweens', () => {
   });
 
   it('does not let completion observers block an ownership handoff', () => {
-    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
     const existing = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const interrupted = fka.createTween(
       frame,
@@ -365,7 +369,7 @@ describe('tweens', () => {
   });
 
   it('releases every directly assigned property when several cancellation listeners fail', () => {
-    const frame = fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 });
+    const frame = trackNode(fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
     const rotation = fka.createTween(frame, { Duration: 1 }, { Rotation: 90 });
     const transparency = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const reportError = vi.fn();
@@ -388,7 +392,7 @@ describe('tweens', () => {
   });
 
   it('validates tween configuration and goal values', () => {
-    const frame = fk.createFrame();
+    const frame = trackNode(fk.createFrame());
 
     expect(() => fka.createTween(frame, { Duration: -1 }, { Rotation: 1 })).toThrow(/duration/);
     expect(() => fka.createTween(frame, { Duration: 1, RepeatCount: -2 }, { Rotation: 1 })).toThrow(
@@ -415,8 +419,8 @@ describe('tweens', () => {
   });
 
   it('rejects a goal that violates the property contract before playback', () => {
-    const frame = fk.createFrame();
-    const scale = fk.createUIScale();
+    const frame = trackNode(fk.createFrame());
+    const scale = trackNode(fk.createUIScale());
 
     scale.Parent = frame;
 
