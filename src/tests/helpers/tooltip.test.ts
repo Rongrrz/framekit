@@ -169,7 +169,7 @@ describe('tooltips', () => {
         delay: 0,
       });
       pointer(target.unsafeElement, 'pointerenter');
-      clock.advance(150);
+      clock.advance(400);
       await Promise.resolve();
       const bubble = document.getElementById(
         target.unsafeElement.getAttribute('aria-describedby')!,
@@ -182,10 +182,11 @@ describe('tooltips', () => {
       moveTarget(rect(400, 400, 100, 40));
       pointer(target.unsafeElement, 'pointermove', 450, 450);
       clock.advance(60);
-      expect(layer.style.opacity).toBe('0.5');
+      expect(Number(layer.style.opacity)).toBeGreaterThan(0);
+      expect(Number(layer.style.opacity)).toBeLessThan(1);
       expect([bubble.style.left, bubble.style.top]).toEqual(position);
       expect(layer.style.display).not.toBe('none');
-      clock.advance(60);
+      clock.advance(400);
       await Promise.resolve();
       expect(layer.style.display).toBe('none');
       expect(tooltip.isDestroyed()).toBe(false);
@@ -198,14 +199,16 @@ describe('tooltips', () => {
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     vi.advanceTimersByTime(300);
-    clock.advance(150);
+    clock.advance(400);
     await Promise.resolve();
     pointer(target.unsafeElement, 'pointerleave');
     clock.advance(60);
-    expect(layer.unsafeElement.style.opacity).toBe('0.5');
+    const fadingOpacity = layer.unsafeElement.style.opacity;
+    expect(Number(fadingOpacity)).toBeGreaterThan(0);
+    expect(Number(fadingOpacity)).toBeLessThan(1);
     pointer(target.unsafeElement, 'pointerenter', 310, 260);
-    expect(layer.unsafeElement.style.opacity).toBe('0.5');
-    clock.advance(120);
+    expect(layer.unsafeElement.style.opacity).toBe(fadingOpacity);
+    clock.advance(400);
     await Promise.resolve();
     expect(layer.unsafeElement.style.opacity).toBe('1');
     expect(layer.Enabled).toBe(true);
@@ -216,11 +219,13 @@ describe('tooltips', () => {
     expect(tooltip.Position).toEqual(fk.udim2FromOffset(210, 252));
     target.unsafeElement.blur();
     clock.advance(60);
-    expect(layer.unsafeElement.style.opacity).toBe('0.5');
+    const blurredOpacity = layer.unsafeElement.style.opacity;
+    expect(Number(blurredOpacity)).toBeGreaterThan(0);
+    expect(Number(blurredOpacity)).toBeLessThan(1);
     target.unsafeElement.focus();
-    expect(layer.unsafeElement.style.opacity).toBe('0.5');
+    expect(layer.unsafeElement.style.opacity).toBe(blurredOpacity);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    clock.advance(120);
+    clock.advance(400);
     await Promise.resolve();
     expect(layer.Enabled).toBe(false);
   });

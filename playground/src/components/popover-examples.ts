@@ -34,7 +34,7 @@ export const appendPopoverExamples = (
   });
   status.Parent = article;
   let count = 0;
-  for (const [index, label] of ['Hover dropdown', 'Custom animation'].entries()) {
+  for (const [index, label] of ['Default spring', 'Custom fade + blur'].entries()) {
     const trigger = createButton(theme, {
       label,
       name: `PopoverExample${index + 1}`,
@@ -112,7 +112,7 @@ export const appendPopoverExamples = (
       { text: '// Return a promise to finish hiding after your animation.' },
       { text: '// Honor signal to cancel on re-entry or disposal.' },
       { text: '// The same hooks work with fkh.withToolTip().' },
-      { text: '// Omit hooks for the built-in fade and reduced-motion support.' },
+      { text: '// Omit hooks for the built-in spring and reduced-motion support.' },
     ],
     6570,
     340,

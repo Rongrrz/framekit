@@ -246,25 +246,32 @@ describe('popovers', () => {
 });
 
 describe('floating panel transitions', () => {
-  it('fades in and reverses a partially complete fade without jumping opacity', async () => {
+  it('springs opacity and retains momentum when its goal reverses', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false }));
     const { target, bind } = fixture();
     const { layer } = bind();
     target.unsafeElement.click();
     expect(layer.unsafeElement.style.opacity).toBe('0');
     clock.advance(75);
-    expect(layer.unsafeElement.style.opacity).toBe('0.5');
+    const openingOpacity = layer.unsafeElement.style.opacity;
+    expect(Number(openingOpacity)).toBeGreaterThan(0);
+    expect(Number(openingOpacity)).toBeLessThan(1);
     target.unsafeElement.click();
-    expect(layer.unsafeElement.style.opacity).toBe('0.5');
-    clock.advance(30);
-    expect(layer.unsafeElement.style.opacity).toBe('0.25');
+    expect(layer.unsafeElement.style.opacity).toBe(openingOpacity);
+    clock.advance(1);
+    expect(Number(layer.unsafeElement.style.opacity)).toBeGreaterThan(Number(openingOpacity));
+    clock.advance(60);
+    const closingOpacity = layer.unsafeElement.style.opacity;
+    expect(Number(closingOpacity)).toBeLessThan(Number(openingOpacity));
     target.unsafeElement.click();
-    expect(layer.unsafeElement.style.opacity).toBe('0.25');
-    clock.advance(150);
+    expect(layer.unsafeElement.style.opacity).toBe(closingOpacity);
+    clock.advance(1);
+    expect(Number(layer.unsafeElement.style.opacity)).toBeLessThan(Number(closingOpacity));
+    clock.advance(400);
     await Promise.resolve();
     expect(layer.unsafeElement.style.opacity).toBe('1');
     target.unsafeElement.click();
-    clock.advance(120);
+    clock.advance(400);
     await Promise.resolve();
     expect(layer.Enabled).toBe(false);
   });

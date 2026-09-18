@@ -15,9 +15,9 @@ export type PopoverOptions = Readonly<{
   gap?: number;
   /** Hover delay in milliseconds. Focus and click open immediately. Defaults to 150. */
   delay?: number;
-  /** Replaces the default fade-in. Content is visible before this hook runs. */
+  /** Replaces the default spring fade-in. Content is visible before this hook runs. */
   onShow?: FloatingPanelHook;
-  /** Replaces the default fade-out. Return a promise to delay hiding until it settles. */
+  /** Replaces the default spring fade-out. Return a promise to delay hiding until it settles. */
   onHide?: FloatingPanelHook;
 }>;
 

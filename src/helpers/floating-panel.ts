@@ -1,3 +1,8 @@
+import {
+  solveSpring,
+  type ResolvedSpringOptions,
+  type SpringSolution,
+} from '../animation/spring-physics.js';
 import { createRealmAbortController } from '../core/dom/environment.js';
 import { setStyle } from '../core/dom/styles.js';
 import {
@@ -45,6 +50,14 @@ const focusableContent =
   'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 const oppositeSide = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const;
 const viewportMargin = 8;
+// Critical damping makes opacity settle quickly without bouncing beyond its visible range.
+const panelSpringOptions = {
+  tension: 900,
+  friction: 60,
+  mass: 1,
+  precision: 0.005,
+  restVelocity: 0.08,
+} satisfies ResolvedSpringOptions;
 let nextPanelId = 0;
 
 /** Validates before generated content is allocated or caller-owned content is changed. */
@@ -147,6 +160,7 @@ export const bindFloatingPanel = (
   let timer: number | undefined;
   let frame: number | undefined;
   let transition: Readonly<{ controller: AbortController; showing: boolean }> | undefined;
+  const springMotion: SpringSolution = { value: 0, velocity: 0 };
 
   const active = (): boolean => pinned || (hoverEnabled && (hovered || panelHovered || focused));
   const stopTransition = (): void => {
@@ -218,10 +232,13 @@ export const bindFloatingPanel = (
     };
     try {
       // Custom animations act on content; the owned layer must not mask their opacity.
-      if (hook) setStyle(layerElement, 'opacity', '1');
+      if (hook) {
+        springMotion.velocity = 0;
+        setStyle(layerElement, 'opacity', '1');
+      }
       const result = hook
         ? hook({ content, signal: current.controller.signal })
-        : fadePanel(layerElement, showing, current.controller.signal, window);
+        : springPanel(layerElement, showing, current.controller.signal, window, springMotion);
       if (!result) finish();
       else void result.then(finish, fail);
     } catch (error) {
@@ -233,6 +250,7 @@ export const bindFloatingPanel = (
     if (disposed || dismissed || !active()) return;
     content.Visible = true;
     if (!layer.Enabled) {
+      springMotion.velocity = 0;
       setStyle(layerElement, 'opacity', options.onShow ? '1' : '0');
       layer.Enabled = true;
       if (supportsPopover) layerElement.showPopover();
@@ -476,21 +494,26 @@ const restoreAttribute = (element: HTMLElement, name: string, value: string | nu
   else element.setAttribute(name, value);
 };
 
-/** Default fades run on the owned layer so a custom panel's appearance remains caller-owned. */
-const fadePanel = (
+/** Springs the owned layer's opacity, retaining velocity when an in-flight transition reverses. */
+const springPanel = (
   element: HTMLElement,
   showing: boolean,
   signal: AbortSignal,
   window: Window,
+  motion: SpringSolution,
 ): void | Promise<void> => {
   const destination = showing ? 1 : 0;
-  const start = Number(element.style.opacity || '1');
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || start === destination) {
+  motion.value = Number(element.style.opacity || '1');
+  if (
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ||
+    (motion.value === destination && Math.abs(motion.velocity) <= panelSpringOptions.restVelocity)
+  ) {
+    motion.value = destination;
+    motion.velocity = 0;
     setStyle(element, 'opacity', String(destination));
     return;
   }
-  const duration = (showing ? 150 : 120) * Math.abs(destination - start);
-  const started = window.performance.now();
+  let previousTimestamp = window.performance.now();
   return new Promise<void>((resolve) => {
     let frame: number;
     const complete = (): void => {
@@ -500,9 +523,25 @@ const fadePanel = (
     };
     const tick = (): void => {
       if (signal.aborted) return;
-      const progress = Math.min(1, (window.performance.now() - started) / duration);
-      setStyle(element, 'opacity', String(start + (destination - start) * progress));
-      if (progress === 1) complete();
+      const now = window.performance.now();
+      solveSpring(
+        motion.value,
+        motion.velocity,
+        destination,
+        Math.max(0, (now - previousTimestamp) / 1000),
+        panelSpringOptions,
+        motion,
+      );
+      previousTimestamp = now;
+      const settled =
+        Math.abs(motion.value - destination) <= panelSpringOptions.precision &&
+        Math.abs(motion.velocity) <= panelSpringOptions.restVelocity;
+      if (settled) {
+        motion.value = destination;
+        motion.velocity = 0;
+      }
+      setStyle(element, 'opacity', String(Math.max(0, Math.min(1, motion.value))));
+      if (settled) complete();
       else frame = window.requestAnimationFrame(tick);
     };
     signal.addEventListener('abort', complete, { once: true });
