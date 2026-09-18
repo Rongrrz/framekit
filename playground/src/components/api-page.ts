@@ -1,9 +1,9 @@
-import { fk } from 'framekit';
+import { fk, fkh } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
 import { fonts, typeScale, type ThemeToken, type ThemeValue } from '../theme';
-import { createSurface, createText } from '../ui';
+import { createButton, createSurface, createText } from '../ui';
 import {
   appendArticleSection,
   appendArticleTitle,
@@ -245,10 +245,24 @@ export const createApiPage = (
     [
       { text: 'fkh.bindResponsiveLayout(owner, options)' },
       { text: 'fkh.bindHoverScale(node, scale, 1.035)' },
+      { text: '' },
+      { text: "const dispose = fkh.withToolTip(button, 'Save');", color: 'accent' },
+      { text: "fkh.withToolTip(button, 'Inspect', { followCursor: true });" },
+      { text: 'fkh.withToolTip(button, detachedFrame, { followCursor: true });' },
+      { text: '// Options: placement, followCursor, delay, gap, style' },
+      { text: 'dispose(); // Target destruction also releases the binding.' },
     ],
     5434,
-    154,
+    262,
   );
+  appendArticleSection(
+    shell.article,
+    theme,
+    'Try tooltips',
+    'Hover or focus a button. Cursor tooltips fade on exit; focused tooltips stay anchored. Escape dismisses them.',
+    5730,
+  );
+  appendToolTipExamples(shell.article, layout, theme);
   const coreItems = [
     { label: 'Factories', target: factories, active: true },
     { label: 'Instances', target: instances },
@@ -269,6 +283,62 @@ export const createApiPage = (
   appendSidebarGroup(shell.sidebar, theme, 'OPTIONAL MODULES', optionalItems, 350, scrollTo);
   appendOutline(shell.outline, theme, [...coreItems, ...behaviorItems, ...optionalItems], scrollTo);
   return shell.page;
+};
+
+const appendToolTipExamples = (
+  article: fk.Frame,
+  layout: fk.Value<PlaygroundLayout>,
+  theme: ThemeValue,
+): void => {
+  const buttons = ['Anchored text', 'Follow cursor', 'Custom Frame'].map((label, index) => {
+    const button = createButton(theme, {
+      label,
+      name: `ToolTipExample${index + 1}`,
+      size: fk.udim2FromOffset(216, 44),
+      position: fk.udim2FromOffset(index * 232, 5912),
+    });
+    bindLayoutProperties(button, layout, button, {
+      desktop: {
+        Size: fk.udim2FromOffset(216, 44),
+        Position: fk.udim2FromOffset(index * 232, 5912),
+      },
+      mobile: {
+        Size: fk.udim2FromOffset(358, 44),
+        Position: fk.udim2FromOffset(0, 5912 + index * 56),
+      },
+    });
+    button.Parent = article;
+    return button;
+  });
+  fkh.withToolTip(buttons[0]!, 'I stay above this button. You can hover over me.');
+  fkh.withToolTip(buttons[1]!, 'I follow the pointer and fade when you leave.', {
+    followCursor: true,
+  });
+  const custom = createSurface(theme, {
+    name: 'CustomToolTip',
+    size: fk.udim2FromOffset(260, 100),
+    background: 'surfaceRaised',
+    radius: 12,
+  });
+  createText(theme, {
+    text: 'Your own Frame',
+    size: fk.udim2FromOffset(232, 26),
+    position: fk.udim2FromOffset(14, 10),
+    color: 'accent',
+    weight: 800,
+  }).Parent = custom;
+  createText(theme, {
+    text: 'Custom layout and theme colors.\nFades as soon as you leave.',
+    size: fk.udim2FromOffset(232, 48),
+    position: fk.udim2FromOffset(14, 40),
+    color: 'textMuted',
+    textSize: typeScale.small,
+    wrapped: true,
+  }).Parent = custom;
+  const customButton = buttons[2]!;
+  fkh.withToolTip(customButton, custom, { followCursor: true });
+  // Supplied content remains caller-owned after the binding is released.
+  customButton.onDestroy(() => custom.destroy());
 };
 
 const appendReferenceCards = (

@@ -8,6 +8,20 @@ function verifyPublicTypeContracts(): void {
   scale.Parent = button;
   const dispose: fk.Unsubscribe = fkh.bindHoverScale(button, scale);
   void dispose;
+  const disposeToolTip: fk.Unsubscribe = fkh.withToolTip(button, 'Save', {
+    followCursor: true,
+    style: { TextColor3: fk.color3FromRGB(255, 255, 255) },
+  });
+  void disposeToolTip;
+  fkh.withToolTip(frame, fk.createTextLabel(), { placement: 'right' });
+  // @ts-expect-error Tooltips need a DOM-backed target.
+  fkh.withToolTip(scale, 'Scale');
+  // @ts-expect-error Tooltip content is text or a rectangular GUI instance.
+  fkh.withToolTip(button, fk.createScreenGui());
+  // @ts-expect-error Placement accepts only supported sides.
+  fkh.withToolTip(button, 'Save', { placement: 'cursor' });
+  // @ts-expect-error Generated tooltip styles do not own positioning.
+  fkh.withToolTip(button, 'Save', { style: { Position: fk.udim2FromOffset(0, 0) } });
 
   // @ts-expect-error Unknown constructor properties are not accepted.
   fk.createFrame({ Typo: true });

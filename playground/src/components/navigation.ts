@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { fk, fkh } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
@@ -90,6 +90,7 @@ export const createNavigation = (
   });
   themeToggle.onClick(() => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
   themeToggle.Parent = navigation;
+  fkh.withToolTip(themeToggle, 'Switch between light and dark themes', { placement: 'bottom' });
 
   const track = fk.createFrame({
     Name: 'ScrollProgressTrack',
