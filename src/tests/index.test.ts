@@ -28,6 +28,7 @@ describe('package API', () => {
     expect(typeof fkh.bindHoverScale).toBe('function');
     expect(typeof fkh.bindResponsiveLayout).toBe('function');
     expect(typeof fkh.withToolTip).toBe('function');
+    expect(typeof fkh.withPopover).toBe('function');
     expect(fkh).not.toHaveProperty('createAutoYScrollingFrame');
     expect(fkh).not.toHaveProperty('setModifierAttached');
     expect(fkh).not.toHaveProperty('createSpringModifierToggle');

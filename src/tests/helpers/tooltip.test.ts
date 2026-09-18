@@ -162,13 +162,15 @@ describe('tooltips', () => {
 
   it.each(['frame', 'text'])(
     'fades cursor-following %s content on exit without moving or accepting tooltip hover',
-    (content) => {
+    async (content) => {
       const { target, tooltip, moveTarget } = fixture();
       fkh.withToolTip(target, content === 'frame' ? tooltip : 'Pointer help', {
         followCursor: true,
         delay: 0,
       });
       pointer(target.unsafeElement, 'pointerenter');
+      clock.advance(150);
+      await Promise.resolve();
       const bubble = document.getElementById(
         target.unsafeElement.getAttribute('aria-describedby')!,
       )!;
@@ -184,23 +186,28 @@ describe('tooltips', () => {
       expect([bubble.style.left, bubble.style.top]).toEqual(position);
       expect(layer.style.display).not.toBe('none');
       clock.advance(60);
+      await Promise.resolve();
       expect(layer.style.display).toBe('none');
       expect(tooltip.isDestroyed()).toBe(false);
     },
   );
 
-  it('cancels a cursor fade on re-entry and preserves focus until blur or Escape', () => {
+  it('cancels a cursor fade on re-entry and preserves focus until blur or Escape', async () => {
     const { target, tooltip } = fixture();
     fkh.withToolTip(target, tooltip, { followCursor: true, delay: 300 });
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     vi.advanceTimersByTime(300);
+    clock.advance(150);
+    await Promise.resolve();
     pointer(target.unsafeElement, 'pointerleave');
     clock.advance(60);
     expect(layer.unsafeElement.style.opacity).toBe('0.5');
     pointer(target.unsafeElement, 'pointerenter', 310, 260);
-    expect(layer.unsafeElement.style.opacity).toBe('1');
+    expect(layer.unsafeElement.style.opacity).toBe('0.5');
     clock.advance(120);
+    await Promise.resolve();
+    expect(layer.unsafeElement.style.opacity).toBe('1');
     expect(layer.Enabled).toBe(true);
     target.unsafeElement.focus();
     pointer(target.unsafeElement, 'pointerleave');
@@ -211,8 +218,10 @@ describe('tooltips', () => {
     clock.advance(60);
     expect(layer.unsafeElement.style.opacity).toBe('0.5');
     target.unsafeElement.focus();
-    expect(layer.unsafeElement.style.opacity).toBe('1');
+    expect(layer.unsafeElement.style.opacity).toBe('0.5');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    clock.advance(120);
+    await Promise.resolve();
     expect(layer.Enabled).toBe(false);
   });
 

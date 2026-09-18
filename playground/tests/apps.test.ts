@@ -16,7 +16,7 @@ describe('playground application', () => {
     const app = createPlaygroundApp('desktop', 'dark');
     app.mount(document.body);
     const siteRoots = Array.from(document.querySelectorAll('[data-framekit="ScreenGui"]')).filter(
-      (element) => !element.querySelector('[role="tooltip"]'),
+      (element) => !element.querySelector('[role="tooltip"], [role="group"]'),
     );
     expect(siteRoots).toEqual([app.unsafeElement]);
     for (const name of [
@@ -29,6 +29,12 @@ describe('playground application', () => {
       const id = button.unsafeElement.getAttribute('aria-describedby');
       expect(id).toBeTruthy();
       expect(document.getElementById(id!)?.getAttribute('role')).toBe('tooltip');
+    }
+    for (const name of ['PopoverExample1', 'PopoverExample2']) {
+      const button = app.findFirstChild(name, true) as fk.TextButton;
+      const id = button.unsafeElement.getAttribute('aria-controls');
+      expect(document.getElementById(id!)?.querySelectorAll('button')).toHaveLength(3);
+      expect(button.unsafeElement.getAttribute('aria-expanded')).toBe('false');
     }
     expect((app.findFirstChild('HomePage', true) as fk.Frame).Visible).toBe(true);
     expect((app.findFirstChild('GuidePage', true) as fk.Frame).Visible).toBe(false);

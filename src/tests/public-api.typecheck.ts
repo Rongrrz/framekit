@@ -14,6 +14,27 @@ function verifyPublicTypeContracts(): void {
   });
   void disposeToolTip;
   fkh.withToolTip(frame, fk.createTextLabel(), { placement: 'right' });
+  const animatePanel: fkh.FloatingPanelHook = ({ content, signal }) => {
+    content.BackgroundTransparency = 0;
+    signal.addEventListener('abort', () => undefined);
+    return Promise.resolve();
+  };
+  fkh.withToolTip(button, 'Save', { onShow: animatePanel, onHide: animatePanel });
+  const disposePopover: fk.Unsubscribe = fkh.withPopover(button, frame, {
+    openOn: 'hover',
+    placement: 'bottom',
+    onShow: animatePanel,
+    onHide: animatePanel,
+  });
+  void disposePopover;
+  // @ts-expect-error Popovers require caller-owned GUI content.
+  fkh.withPopover(button, 'Actions');
+  // @ts-expect-error Unsupported triggers are not accepted.
+  fkh.withPopover(button, frame, { openOn: 'focus' });
+  // @ts-expect-error Interactive popovers remain anchored.
+  fkh.withPopover(button, frame, { followCursor: true });
+  // @ts-expect-error Hooks settle without returning a value.
+  fkh.withToolTip(button, 'Save', { onHide: () => Promise.resolve(42) });
   // @ts-expect-error Tooltips need a DOM-backed target.
   fkh.withToolTip(scale, 'Scale');
   // @ts-expect-error Tooltip content is text or a rectangular GUI instance.

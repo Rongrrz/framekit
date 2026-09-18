@@ -13,6 +13,7 @@ import {
   appendSidebarGroup,
   createDocsShell,
 } from './docs-shell';
+import { appendPopoverExamples } from './popover-examples';
 
 export const createApiPage = (
   layout: fk.Value<PlaygroundLayout>,
@@ -250,6 +251,7 @@ export const createApiPage = (
       { text: "fkh.withToolTip(button, 'Inspect', { followCursor: true });" },
       { text: 'fkh.withToolTip(button, detachedFrame, { followCursor: true });' },
       { text: '// Options: placement, followCursor, delay, gap, style' },
+      { text: '// Animation hooks: onShow, onHide' },
       { text: 'dispose(); // Target destruction also releases the binding.' },
     ],
     5434,
@@ -263,6 +265,7 @@ export const createApiPage = (
     5730,
   );
   appendToolTipExamples(shell.article, layout, theme);
+  const popovers = appendPopoverExamples(shell.article, layout, theme);
   const coreItems = [
     { label: 'Factories', target: factories, active: true },
     { label: 'Instances', target: instances },
@@ -277,6 +280,7 @@ export const createApiPage = (
     { label: 'Modifiers', target: modifiersSection },
     { label: 'Animation', target: animation },
     { label: 'Helpers', target: helpers },
+    { label: 'Popovers', target: popovers },
   ];
   appendSidebarGroup(shell.sidebar, theme, 'CORE API', coreItems, 0, scrollTo);
   appendSidebarGroup(shell.sidebar, theme, 'STATE AND INPUT', behaviorItems, 220, scrollTo);
