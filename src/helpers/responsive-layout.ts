@@ -1,6 +1,6 @@
-import type { GuiElement, Unsubscribe } from '../core';
-import { createRealmAbortController } from '../core/dom/environment';
-import { assertNonNegativeFinite } from '../core/internal/validation';
+import { createRealmAbortController } from '../core/dom/environment.js';
+import type { GuiElement, Unsubscribe } from '../core/index.js';
+import { assertNonNegativeFinite } from '../core/internal/validation.js';
 
 export type ResponsiveLayoutOptions = Readonly<{
   breakpoint: number;

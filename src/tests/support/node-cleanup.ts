@@ -1,6 +1,6 @@
 import { afterEach } from 'vitest';
 
-import type { Instance } from '../../core';
+import type { Instance } from '../../core/index.js';
 
 /** Tracks test-owned nodes so every test exercises normal lifecycle cleanup. */
 export function destroyNodesAfterEach(): <Node extends Instance>(node: Node) => Node {

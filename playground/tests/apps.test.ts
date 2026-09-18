@@ -56,7 +56,7 @@ describe('playground application', () => {
   });
 
   it('resizes the same hierarchy at the responsive breakpoint', () => {
-    vi.stubGlobal('innerWidth', 900);
+    vi.stubGlobal('innerWidth', 1440);
     const app = createPlaygroundApp(undefined, 'dark');
     const visual = app.findFirstChild('HomeCodeVisual', true) as fk.Frame;
     vi.stubGlobal('innerWidth', 640);

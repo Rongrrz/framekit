@@ -1,8 +1,13 @@
-import type { Instance, InstanceProperties } from '../core/node/instance';
-import { getActiveNodeState } from '../core/node/state';
-import { createSignal, emitSignalSafely, readonlySignal, type Signal } from '../core/state/signal';
-import { prepareAnimationGoal } from './goal';
-import { createAnimationRunner } from './runner';
+import type { Instance, InstanceProperties } from '../core/node/instance.js';
+import { getActiveNodeState } from '../core/node/state.js';
+import {
+  createSignal,
+  emitSignalSafely,
+  readonlySignal,
+  type Signal,
+} from '../core/state/signal.js';
+import { prepareAnimationGoal } from './goal.js';
+import { createAnimationRunner } from './runner.js';
 import {
   defaultSpringOptions,
   resolveSpringOptions,
@@ -10,11 +15,11 @@ import {
   type ResolvedSpringOptions,
   type SpringSolution,
   type SpringOptions,
-} from './spring-physics';
-import type { AnimatableProperty, AnimationGoal } from './types';
-import { composeAnimationValue, type AnimationValueKind } from './value';
+} from './spring-physics.js';
+import type { AnimatableProperty, AnimationGoal } from './types.js';
+import { composeAnimationValue, type AnimationValueKind } from './value.js';
 
-export type { SpringOptions } from './spring-physics';
+export type { SpringOptions } from './spring-physics.js';
 
 /** Playback controls for the spring retained by one node. */
 export type SpringController<Properties extends InstanceProperties = InstanceProperties> = {

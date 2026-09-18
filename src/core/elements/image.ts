@@ -4,16 +4,16 @@ import {
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from '../dom/button';
-import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
+} from '../dom/button.js';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment.js';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
-} from '../gui-object';
-import { assertAllowedValue, assertString, assertUnitInterval } from '../internal/validation';
-import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events';
-import type { GuiElement, PropertyRenderer } from '../node/gui-node';
+} from '../gui-object.js';
+import { assertAllowedValue, assertString, assertUnitInterval } from '../internal/validation.js';
+import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events.js';
+import type { GuiElement, PropertyRenderer } from '../node/gui-node.js';
 
 /** How an image is fitted within its node bounds. */
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';

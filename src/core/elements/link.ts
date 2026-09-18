@@ -2,13 +2,13 @@ import {
   createRealmAbortController,
   resolveOwnerDocument,
   type DomOptions,
-} from '../dom/environment';
-import { assertAllowedValue, assertString } from '../internal/validation';
-import * as lifecycle from '../lifecycle';
-import { emitNodeEvent } from '../node/events';
-import { guiEventKeys, linkEventMethods, type ClickEventMethods } from '../node/gui-events';
-import type { GuiElement } from '../node/gui-node';
-import { createDefaultTextProperties, createTextNode, type TextLabelProperties } from './text';
+} from '../dom/environment.js';
+import { assertAllowedValue, assertString } from '../internal/validation.js';
+import * as lifecycle from '../lifecycle.js';
+import { emitNodeEvent } from '../node/events.js';
+import { guiEventKeys, linkEventMethods, type ClickEventMethods } from '../node/gui-events.js';
+import type { GuiElement } from '../node/gui-node.js';
+import { createDefaultTextProperties, createTextNode, type TextLabelProperties } from './text.js';
 
 /** Browser browsing contexts supported by Link. */
 export type LinkTarget = (typeof linkTargets)[number];

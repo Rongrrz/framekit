@@ -1,4 +1,4 @@
-import { assertFiniteNumber } from '../internal/validation';
+import { assertFiniteNumber } from '../internal/validation.js';
 
 /** An immutable scale and pixel-offset pair for one axis. */
 export type UDim = Readonly<{

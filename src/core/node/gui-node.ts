@@ -1,20 +1,20 @@
-import * as rendering from '../render';
-import { vector2, type Vector2 } from '../values/vector2';
-import { guiEventMethods, type GuiMethodTable, type GuiEventMethods } from './gui-events';
+import * as rendering from '../render.js';
+import { vector2, type Vector2 } from '../values/vector2.js';
+import { guiEventMethods, type GuiMethodTable, type GuiEventMethods } from './gui-events.js';
 import {
   createNodeHandle,
   extendMethodTable,
   nodeMethods,
   type Instance,
   type InstanceProperties,
-} from './instance';
+} from './instance.js';
 import {
   createBaseState,
   getActiveNodeState,
   registerNode,
   type GuiCapabilities,
   type PropertyValidator,
-} from './state';
+} from './state.js';
 
 /** Browser-computed geometry available on every GUI element. */
 export type GuiGeometry = {

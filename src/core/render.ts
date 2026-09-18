@@ -1,9 +1,9 @@
-import { setStyleLayer } from './dom/styles';
-import type { GuiElement } from './node/gui-node';
-import type { Instance, InstanceProperties } from './node/instance';
-import { getModifierTarget, type LayoutChild, type LayoutNodeState } from './node/modifier';
-import { getNodeState, isGuiNode, isModifierState } from './node/state';
-import { composeStyles, type Styles } from './node/style-output';
+import { setStyleLayer } from './dom/styles.js';
+import type { GuiElement } from './node/gui-node.js';
+import type { Instance, InstanceProperties } from './node/instance.js';
+import { getModifierTarget, type LayoutChild, type LayoutNodeState } from './node/modifier.js';
+import { getNodeState, isGuiNode, isModifierState } from './node/state.js';
+import { composeStyles, type Styles } from './node/style-output.js';
 
 export function hasLayoutModifier(node: Instance): boolean {
   const state = getNodeState(node);

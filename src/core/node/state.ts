@@ -1,6 +1,6 @@
-import type { GuiElement, PropertyRenderer } from './gui-node';
-import type { Instance, InstanceProperties } from './instance';
-import type { LayoutNodeState, Modifier, StyleModifierState } from './modifier';
+import type { GuiElement, PropertyRenderer } from './gui-node.js';
+import type { Instance, InstanceProperties } from './instance.js';
+import type { LayoutNodeState, Modifier, StyleModifierState } from './modifier.js';
 
 export type PropertyValidator<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,

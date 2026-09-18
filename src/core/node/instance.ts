@@ -1,8 +1,8 @@
-import * as hierarchy from '../hierarchy';
-import * as lifecycle from '../lifecycle';
-import type { Unsubscribe } from '../state/signal';
-import type { InstanceClassName, InstanceOf } from './classes';
-import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties';
+import * as hierarchy from '../hierarchy.js';
+import * as lifecycle from '../lifecycle.js';
+import type { Unsubscribe } from '../state/signal.js';
+import type { InstanceClassName, InstanceOf } from './classes.js';
+import { getNodeProperty, setNodeProperties, subscribeToPropertyChange } from './properties.js';
 
 /** Properties shared by every FrameKit instance. */
 export type InstanceProperties = {

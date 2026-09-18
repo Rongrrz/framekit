@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../../index';
+import { fk } from '../../../index.js';
 
 describe('colors', () => {
   it('parses and validates hexadecimal colors', () => {

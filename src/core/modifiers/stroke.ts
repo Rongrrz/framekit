@@ -3,11 +3,11 @@ import {
   assertBoolean,
   assertNonNegativeFinite,
   assertUnitInterval,
-} from '../internal/validation';
-import type { InstanceProperties } from '../node/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
-import { mergeProperties } from '../node/properties';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
+} from '../internal/validation.js';
+import type { InstanceProperties } from '../node/instance.js';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier.js';
+import { mergeProperties } from '../node/properties.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
 
 /** Where a stroke is drawn relative to its GUI parent's edge. */
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';

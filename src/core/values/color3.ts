@@ -1,4 +1,4 @@
-import { assertFiniteNumber } from '../internal/validation';
+import { assertFiniteNumber } from '../internal/validation.js';
 
 /** An immutable RGB color whose components are integers from 0 to 255. */
 export type Color3 = Readonly<{

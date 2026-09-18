@@ -49,3 +49,6 @@ jobs:
 
       - name: Build playground
         run: npm run build:playground
+
+      - name: Verify packaged consumers
+        run: npm run test:package

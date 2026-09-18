@@ -1,4 +1,4 @@
-import { assertFiniteNumber } from '../internal/validation';
+import { assertFiniteNumber } from '../internal/validation.js';
 
 /** An immutable two-dimensional numeric vector. */
 export type Vector2 = Readonly<{

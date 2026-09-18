@@ -1,11 +1,11 @@
-import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
-import { assertAllowedValue } from '../internal/validation';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment.js';
+import { assertAllowedValue } from '../internal/validation.js';
 import {
   createDefaultTextControlProperties,
   createTextControl,
   type TextControl,
   type TextControlProperties,
-} from './text-control';
+} from './text-control.js';
 
 /** Native input types supported by TextInput. */
 export type TextInputType = (typeof textInputTypes)[number];

@@ -1,7 +1,7 @@
-import { assertBoolean, assertNonNegativeFinite } from '../internal/validation';
-import type { InstanceProperties } from '../node/instance';
-import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier';
-import { mergeProperties } from '../node/properties';
+import { assertBoolean, assertNonNegativeFinite } from '../internal/validation.js';
+import type { InstanceProperties } from '../node/instance.js';
+import { createStyleModifier, type StyleModifier, type Styles } from '../node/modifier.js';
+import { mergeProperties } from '../node/properties.js';
 
 /** Properties for rounding a GUI parent's corners. */
 export type UICornerProperties = InstanceProperties & {

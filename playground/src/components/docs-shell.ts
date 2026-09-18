@@ -21,7 +21,7 @@ export type DocsShell = Readonly<{
 
 export type NavigationItem = Readonly<{
   label: string;
-  offset: number;
+  target: fk.GuiElement;
   active?: boolean;
 }>;
 
@@ -134,7 +134,7 @@ export const appendSidebarGroup = (
   title: string,
   items: readonly NavigationItem[],
   startY: number,
-  onNavigate: (offset: number) => void,
+  onNavigate: (target: fk.GuiElement) => void,
 ): void => {
   createText(theme, {
     text: title,
@@ -154,7 +154,7 @@ export const appendSidebarGroup = (
       textSize: typeScale.small,
     });
     link.TextXAlignment = 'Left';
-    link.onClick(() => onNavigate(item.offset));
+    link.onClick(() => onNavigate(item.target));
     link.Parent = parent;
   }
 };
@@ -163,7 +163,7 @@ export const appendOutline = (
   parent: fk.Frame,
   theme: ThemeValue,
   items: readonly NavigationItem[],
-  onNavigate: (offset: number) => void,
+  onNavigate: (target: fk.GuiElement) => void,
 ): void => {
   createText(theme, {
     text: 'On this page',
@@ -183,7 +183,7 @@ export const appendOutline = (
       textSize: typeScale.caption,
     });
     link.TextXAlignment = 'Left';
-    link.onClick(() => onNavigate(item.offset));
+    link.onClick(() => onNavigate(item.target));
     link.Parent = parent;
   }
 };
@@ -194,7 +194,7 @@ export const appendArticleTitle = (
   eyebrow: string,
   title: string,
   body: string,
-): void => {
+): fk.TextLabel => {
   createText(theme, {
     text: eyebrow,
     size: fk.udim2(1, 0, 0, 24),
@@ -203,7 +203,7 @@ export const appendArticleTitle = (
     font: fonts.mono,
     weight: 800,
   }).Parent = parent;
-  createText(theme, {
+  const heading = createText(theme, {
     text: title,
     size: fk.udim2(1, 0, 0, 74),
     position: fk.udim2FromOffset(0, 34),
@@ -211,7 +211,8 @@ export const appendArticleTitle = (
     scaled: true,
     wrapped: true,
     weight: 900,
-  }).Parent = parent;
+  });
+  heading.Parent = parent;
   createText(theme, {
     text: body,
     size: fk.udim2(1, 0, 0, 104),
@@ -221,6 +222,7 @@ export const appendArticleTitle = (
     wrapped: true,
     yAlignment: 'Top',
   }).Parent = parent;
+  return heading;
 };
 
 export const appendArticleSection = (
@@ -229,15 +231,16 @@ export const appendArticleSection = (
   title: string,
   body: string,
   y: number,
-): void => {
-  createText(theme, {
+): fk.TextLabel => {
+  const heading = createText(theme, {
     text: title,
     size: fk.udim2(1, 0, 0, 48),
     position: fk.udim2FromOffset(0, y),
     textSize: typeScale.section,
     scaled: true,
     weight: 850,
-  }).Parent = parent;
+  });
+  heading.Parent = parent;
   createText(theme, {
     text: body,
     size: fk.udim2(1, 0, 0, 104),
@@ -247,6 +250,7 @@ export const appendArticleSection = (
     wrapped: true,
     yAlignment: 'Top',
   }).Parent = parent;
+  return heading;
 };
 
 export const appendCodeBlock = (
@@ -264,7 +268,22 @@ export const appendCodeBlock = (
     background: 'surface',
     radius: 12,
   });
-  appendCodeLines(block, theme, lines, 20, 27);
+  const scroll = fk.createScrollingFrame({
+    Name: `${name}Scroll`,
+    Size: fk.udim2FromScale(1, 1),
+    BackgroundTransparency: 1,
+    ScrollingDirection: 'X',
+    ScrollBarThickness: 8,
+    ScrollBarImageColor3: themeColor(theme, 'textFaint'),
+  });
+  scroll.unsafeElement.setAttribute('aria-label', `${name} code example`);
+  bindThemeColors(scroll, theme, (palette) => ({ ScrollBarImageColor3: palette.textFaint }));
+  const labels = appendCodeLines(scroll, theme, lines, 16, 27);
+  scroll.CanvasSize = fk.udim2FromOffset(
+    Math.max(0, ...labels.map((label) => label.Size.X.Offset)) + 40,
+    0,
+  );
+  scroll.Parent = block;
   block.Parent = parent;
 };
 
@@ -276,7 +295,7 @@ export const appendCallout = (
 ): void => {
   const callout = createSurface(theme, {
     name: 'Callout',
-    size: fk.udim2(1, 0, 0, 62),
+    size: fk.udim2(1, 0, 0, 78),
     position: fk.udim2FromOffset(0, y),
     background: 'accentMuted',
     border: 'accentMuted',

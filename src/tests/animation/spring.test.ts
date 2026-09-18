@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../../index';
-import { setupAnimationClock } from '../support/animation-clock';
-import { destroyNodesAfterEach } from '../support/node-cleanup';
+import { fk, fka } from '../../index.js';
+import { setupAnimationClock } from '../support/animation-clock.js';
+import { destroyNodesAfterEach } from '../support/node-cleanup.js';
 
 const { advance, settle } = setupAnimationClock();
 const trackNode = destroyNodesAfterEach();

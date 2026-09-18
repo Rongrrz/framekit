@@ -14,35 +14,13 @@ import {
   createDocsShell,
 } from './docs-shell';
 
-const coreItems = [
-  { label: 'Factories', offset: 0, active: true },
-  { label: 'Instances', offset: 660 },
-  { label: 'Elements', offset: 1080 },
-  { label: 'Properties', offset: 1760 },
-] as const;
-const behaviorItems = [
-  { label: 'Events', offset: 2240 },
-  { label: 'Values', offset: 2660 },
-] as const;
-const optionalItems = [
-  { label: 'Modifiers', offset: 3040 },
-  { label: 'Animation', offset: 3860 },
-  { label: 'Helpers', offset: 4400 },
-] as const;
-const outlineItems = [...coreItems, ...behaviorItems, ...optionalItems] as const;
-
 export const createApiPage = (
   layout: fk.Value<PlaygroundLayout>,
   theme: ThemeValue,
   route: fk.Value<SitePage>,
-  scrollTo: (offset: number) => void,
+  scrollTo: (target: fk.GuiElement) => void,
 ): fk.Frame => {
   const shell = createDocsShell('ApiPage', 'api', layout, theme, route);
-  appendSidebarGroup(shell.sidebar, theme, 'CORE API', coreItems, 0, scrollTo);
-  appendSidebarGroup(shell.sidebar, theme, 'STATE AND INPUT', behaviorItems, 220, scrollTo);
-  appendSidebarGroup(shell.sidebar, theme, 'OPTIONAL MODULES', optionalItems, 350, scrollTo);
-  appendOutline(shell.outline, theme, outlineItems, scrollTo);
-
   appendArticleTitle(
     shell.article,
     theme,
@@ -57,7 +35,7 @@ export const createApiPage = (
     220,
   );
 
-  appendArticleSection(
+  const factories = appendArticleSection(
     shell.article,
     theme,
     'Factories',
@@ -80,16 +58,16 @@ export const createApiPage = (
       { text: 'fk.createImageButton(properties?)' },
       { text: 'fk.createScrollingFrame(properties?, { tagName? })' },
     ],
-    430,
+    492,
     300,
   );
 
-  appendArticleSection(
+  const instances = appendArticleSection(
     shell.article,
     theme,
     'Instance methods',
     'Every instance shares hierarchy, inspection, property observation, and lifecycle methods. Use onDestroy to register subscription cleanup.',
-    748,
+    810,
   );
   appendCodeBlock(
     shell.article,
@@ -105,16 +83,16 @@ export const createApiPage = (
       { text: "child.isA('TextButton')", color: 'blue' },
       { text: 'node.destroy() / isDestroyed()', color: 'orange' },
     ],
-    870,
+    992,
     260,
   );
 
-  appendArticleSection(
+  const elementsSection = appendArticleSection(
     shell.article,
     theme,
     'Elements',
     'Choose the smallest concrete element that owns the behavior you need. All visible elements also inherit the shared GUI properties.',
-    1188,
+    1310,
   );
   const elements = [
     ['ScreenGui', 'Mountable hierarchy root with mount and unmount.', 'accent'],
@@ -125,14 +103,14 @@ export const createApiPage = (
     ['ImageLabel / ImageButton', 'Images with Stretch, Fit, or Crop scaling.', 'accent'],
     ['ScrollingFrame', 'Native scrolling with synchronized canvas position.', 'purple'],
   ] as const satisfies readonly (readonly [string, string, ThemeToken])[];
-  appendReferenceCards(shell.article, layout, theme, elements, 1320);
+  appendReferenceCards(shell.article, layout, theme, elements, 1492);
 
-  appendArticleSection(
+  const properties = appendArticleSection(
     shell.article,
     theme,
     'Shared GUI properties',
     'Every rectangular GUI element uses the same geometry, visibility, background, layout, and clipping properties.',
-    1954,
+    2126,
   );
   appendCodeBlock(
     shell.article,
@@ -149,16 +127,16 @@ export const createApiPage = (
       { text: "AutomaticSize: 'None' | 'X' | 'Y' | 'XY'" },
       { text: 'ClipsDescendants: boolean' },
     ],
-    2078,
+    2308,
     286,
   );
 
-  appendArticleSection(
+  const events = appendArticleSection(
     shell.article,
     theme,
     'Events',
     'All GUI elements support pointer entry and exit. Buttons add mouse-button events, while native text controls add user-edit events.',
-    2422,
+    2652,
   );
   appendCodeBlock(
     shell.article,
@@ -173,16 +151,16 @@ export const createApiPage = (
       { text: 'button.onSecondaryClick(listener)' },
       { text: 'textControl.onTextChanged(listener)', color: 'blue' },
     ],
-    2546,
+    2834,
     234,
   );
 
-  appendArticleSection(
+  const values = appendArticleSection(
     shell.article,
     theme,
     'Values and signals',
     'Values model mutable state. Signals model typed events. Register the unsubscribe function with owner.onDestroy to release a subscription when its owner is destroyed.',
-    2838,
+    3126,
   );
   appendCodeBlock(
     shell.article,
@@ -198,16 +176,16 @@ export const createApiPage = (
       { text: 'event.subscribe(listener)' },
       { text: 'event.emit(42)' },
     ],
-    2968,
+    3308,
     260,
   );
 
-  appendArticleSection(
+  const modifiersSection = appendArticleSection(
     shell.article,
     theme,
     'Modifiers',
     'Attach focused layout or appearance behavior as children. A modifier belongs to the same hierarchy and cleanup model as every other instance.',
-    3286,
+    3626,
   );
   const modifiers = [
     ['UICorner', 'Rounded corners using CornerRadius.', 'accent'],
@@ -220,14 +198,14 @@ export const createApiPage = (
     ['UIShadow', 'Configurable shadow color, blur, and offset.', 'purple'],
     ['UIAspectRatioConstraint', 'Keeps a stable width-to-height ratio.', 'orange'],
   ] as const satisfies readonly (readonly [string, string, ThemeToken])[];
-  appendReferenceCards(shell.article, layout, theme, modifiers, 3420);
+  appendReferenceCards(shell.article, layout, theme, modifiers, 3808);
 
-  appendArticleSection(
+  const animation = appendArticleSection(
     shell.article,
     theme,
     'Animation',
     'Tween provides timed playback controls. Spring retains one controller per instance so retargeting shares velocity and avoids overlapping writers.',
-    4256,
+    4644,
   );
   appendCodeBlock(
     shell.article,
@@ -243,22 +221,22 @@ export const createApiPage = (
       { text: 'fka.spring(card, { Rotation: 0 });', color: 'purple' },
       { text: "fka.spring(card).stop('Rotation');" },
     ],
-    4390,
+    4826,
     260,
   );
   appendCallout(
     shell.article,
     theme,
     '🎯 Assigning card.Rotation directly stops the current Rotation animation, even when the assigned value is unchanged.',
-    4696,
+    5132,
   );
 
-  appendArticleSection(
+  const helpers = appendArticleSection(
     shell.article,
     theme,
     'Helpers',
     'The fkh namespace contains optional behavior built on core instances. It does not add extra support code to fk.',
-    4816,
+    5252,
   );
   appendCodeBlock(
     shell.article,
@@ -268,9 +246,28 @@ export const createApiPage = (
       { text: 'fkh.bindResponsiveLayout(owner, options)' },
       { text: 'fkh.bindHoverScale(node, scale, 1.035)' },
     ],
-    4942,
+    5434,
     154,
   );
+  const coreItems = [
+    { label: 'Factories', target: factories, active: true },
+    { label: 'Instances', target: instances },
+    { label: 'Elements', target: elementsSection },
+    { label: 'Properties', target: properties },
+  ];
+  const behaviorItems = [
+    { label: 'Events', target: events },
+    { label: 'Values', target: values },
+  ];
+  const optionalItems = [
+    { label: 'Modifiers', target: modifiersSection },
+    { label: 'Animation', target: animation },
+    { label: 'Helpers', target: helpers },
+  ];
+  appendSidebarGroup(shell.sidebar, theme, 'CORE API', coreItems, 0, scrollTo);
+  appendSidebarGroup(shell.sidebar, theme, 'STATE AND INPUT', behaviorItems, 220, scrollTo);
+  appendSidebarGroup(shell.sidebar, theme, 'OPTIONAL MODULES', optionalItems, 350, scrollTo);
+  appendOutline(shell.outline, theme, [...coreItems, ...behaviorItems, ...optionalItems], scrollTo);
   return shell.page;
 };
 
@@ -304,7 +301,7 @@ const createReferenceCard = (
   });
   const title = createText(theme, {
     text: name,
-    size: fk.udim2FromOffset(184, 40),
+    size: fk.udim2FromOffset(220, 40),
     position: fk.udim2FromOffset(18, 14),
     color,
     textSize: typeScale.small,
@@ -313,19 +310,27 @@ const createReferenceCard = (
   });
   const body = createText(theme, {
     text: description,
-    size: fk.udim2(1, -226, 1, -20),
-    position: fk.udim2FromOffset(208, 10),
+    size: fk.udim2(1, -274, 1, -20),
+    position: fk.udim2FromOffset(256, 10),
     color: 'textMuted',
     textSize: typeScale.small,
     wrapped: true,
   });
   bindLayoutProperties(card, layout, title, {
-    desktop: { Size: fk.udim2FromOffset(184, 40), Position: fk.udim2FromOffset(18, 14) },
-    mobile: { Size: fk.udim2FromOffset(140, 40), Position: fk.udim2FromOffset(14, 14) },
+    desktop: { Size: fk.udim2FromOffset(220, 40), Position: fk.udim2FromOffset(18, 14) },
+    mobile: { Size: fk.udim2(1, -28, 0, 20), Position: fk.udim2FromOffset(14, 8) },
   });
   bindLayoutProperties(card, layout, body, {
-    desktop: { Size: fk.udim2(1, -226, 1, -20), Position: fk.udim2FromOffset(208, 10) },
-    mobile: { Size: fk.udim2(1, -174, 1, -16), Position: fk.udim2FromOffset(164, 8) },
+    desktop: {
+      Size: fk.udim2(1, -274, 1, -20),
+      Position: fk.udim2FromOffset(256, 10),
+      TextSize: typeScale.small,
+    },
+    mobile: {
+      Size: fk.udim2(1, -28, 0, 34),
+      Position: fk.udim2FromOffset(14, 30),
+      TextSize: typeScale.caption,
+    },
   });
   title.Parent = card;
   body.Parent = card;

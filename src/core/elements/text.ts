@@ -4,15 +4,15 @@ import {
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from '../dom/button';
-import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
-import { initializeTextGradient, resetTextGradientHost } from '../dom/text-gradient';
-import { bindTextScaleResize } from '../dom/text-size';
+} from '../dom/button.js';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment.js';
+import { initializeTextGradient, resetTextGradientHost } from '../dom/text-gradient.js';
+import { bindTextScaleResize } from '../dom/text-size.js';
 import {
   initializeTextStrokeHost,
   resetTextStrokeHost,
   syncTextStrokeHost,
-} from '../dom/text-stroke';
+} from '../dom/text-stroke.js';
 import {
   createDefaultTextStyleProperties,
   hasTextStyleChange,
@@ -21,19 +21,19 @@ import {
   validateTextStyleProperties,
   verticalFlexAlignment,
   type TextStyleProperties,
-} from '../dom/text-style';
+} from '../dom/text-style.js';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
-} from '../gui-object';
-import { assertAllowedValue } from '../internal/validation';
-import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events';
-import type { GuiElement, PropertyRenderer } from '../node/gui-node';
-import { getNodeProperties } from '../node/properties';
-import type { PropertyValidator } from '../node/state';
+} from '../gui-object.js';
+import { assertAllowedValue } from '../internal/validation.js';
+import { buttonEventMethods, type GuiMethodTable } from '../node/gui-events.js';
+import type { GuiElement, PropertyRenderer } from '../node/gui-node.js';
+import { getNodeProperties } from '../node/properties.js';
+import type { PropertyValidator } from '../node/state.js';
 
-export type { TextXAlignment, TextYAlignment } from '../dom/text-style';
+export type { TextXAlignment, TextYAlignment } from '../dom/text-style.js';
 
 /** Properties shared by text labels and text buttons. */
 export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;

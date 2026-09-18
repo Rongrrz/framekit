@@ -150,11 +150,22 @@ export const appendCodeLines = (
   lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
   startY: number,
   lineHeight = 28,
-): readonly fk.TextLabel[] =>
-  lines.map((line, index) => {
+): readonly fk.TextLabel[] => {
+  const context = parent.unsafeElement.ownerDocument.createElement('canvas').getContext('2d');
+  if (context) context.font = `500 ${typeScale.code}px ${fonts.mono}`;
+  // Intrinsic line widths let a scrolling parent expose the entire example.
+  const width = Math.ceil(
+    Math.max(
+      0,
+      ...lines.map(
+        (line) => context?.measureText(line.text).width ?? line.text.length * typeScale.code,
+      ),
+    ),
+  );
+  return lines.map((line, index) => {
     const label = createText(theme, {
       text: line.text,
-      size: fk.udim2(1, -40, 0, lineHeight),
+      size: fk.udim2FromOffset(width, lineHeight),
       position: fk.udim2FromOffset(20, startY + index * lineHeight),
       color: line.color ?? 'textMuted',
       textSize: typeScale.code,
@@ -164,3 +175,4 @@ export const appendCodeLines = (
     label.Parent = parent;
     return label;
   });
+};

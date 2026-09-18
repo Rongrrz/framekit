@@ -1,9 +1,9 @@
-import { installStyles } from './stylesheet';
+import { installStyles } from './stylesheet.js';
 import {
   horizontalFlexAlignment,
   verticalFlexAlignment,
   type TextStyleProperties,
-} from './text-style';
+} from './text-style.js';
 
 export const textStrokeColorProperty = '--framekit-text-stroke-color';
 export const textStrokeContentProperty = '--framekit-text-stroke-content';

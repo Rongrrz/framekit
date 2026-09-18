@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk, fka, fkh } from '../../index';
-import { setupAnimationClock } from '../support/animation-clock';
+import { fk, fka, fkh } from '../../index.js';
+import { setupAnimationClock } from '../support/animation-clock.js';
 
 setupAnimationClock();
 

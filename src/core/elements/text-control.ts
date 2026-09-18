@@ -1,29 +1,29 @@
-import { createRealmAbortController } from '../dom/environment';
-import { installStyles } from '../dom/stylesheet';
-import { bindTextScaleResize, renderTextSize } from '../dom/text-size';
+import { createRealmAbortController } from '../dom/environment.js';
+import { installStyles } from '../dom/stylesheet.js';
+import { bindTextScaleResize, renderTextSize } from '../dom/text-size.js';
 import {
   createDefaultTextStyleProperties,
   renderTextStyle,
   type TextStyleProperties,
   validateTextStyleProperties,
-} from '../dom/text-style';
+} from '../dom/text-style.js';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
-} from '../gui-object';
-import { assertBoolean, assertString, assertUnitInterval } from '../internal/validation';
-import * as lifecycle from '../lifecycle';
-import { emitNodeEvent } from '../node/events';
+} from '../gui-object.js';
+import { assertBoolean, assertString, assertUnitInterval } from '../internal/validation.js';
+import * as lifecycle from '../lifecycle.js';
+import { emitNodeEvent } from '../node/events.js';
 import {
   guiEventKeys,
   textChangedEventMethods,
   type TextChangedEventMethods,
-} from '../node/gui-events';
-import type { GuiElement, PropertyRenderer } from '../node/gui-node';
-import { getNodeProperties, getNodeProperty, setNodeProperties } from '../node/properties';
-import type { PropertyValidator } from '../node/state';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
+} from '../node/gui-events.js';
+import type { GuiElement, PropertyRenderer } from '../node/gui-node.js';
+import { getNodeProperties, getNodeProperty, setNodeProperties } from '../node/properties.js';
+import type { PropertyValidator } from '../node/state.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
 
 /** Properties shared by native single-line and multiline text controls. */
 export type TextControlProperties = GuiObjectProperties &

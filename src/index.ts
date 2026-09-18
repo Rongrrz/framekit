@@ -6,10 +6,10 @@
  * ownership boundaries.
  */
 /** Core nodes, values, hierarchy, state, and events. */
-export * as fk from './core';
+export * as fk from './core/index.js';
 
 /** Springs, tweens, easing, and animation controllers. */
-export * as fka from './animation';
+export * as fka from './animation/index.js';
 
 /** Optional helpers that compose opinionated UI behavior. */
-export * as fkh from './helpers';
+export * as fkh from './helpers/index.js';

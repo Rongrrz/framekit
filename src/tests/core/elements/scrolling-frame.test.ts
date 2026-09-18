@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../../../index';
-import { resetDocumentAfterEach } from '../../support/reset-document';
+import { fk, fka } from '../../../index.js';
+import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 

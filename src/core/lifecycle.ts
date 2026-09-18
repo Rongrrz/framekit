@@ -1,9 +1,9 @@
-import * as hierarchy from './hierarchy';
-import { throwCollectedErrors } from './internal/errors';
-import type { GuiElement } from './node/gui-node';
-import type { Instance } from './node/instance';
-import { getActiveNodeState, getChildren, getNodeState, isModifierState } from './node/state';
-import * as rendering from './render';
+import * as hierarchy from './hierarchy.js';
+import { throwCollectedErrors } from './internal/errors.js';
+import type { GuiElement } from './node/gui-node.js';
+import type { Instance } from './node/instance.js';
+import { getActiveNodeState, getChildren, getNodeState, isModifierState } from './node/state.js';
+import * as rendering from './render.js';
 
 /** Recursively destroys a node, its descendants, DOM, and owned resources. */
 export function destroy(node: Instance): void {

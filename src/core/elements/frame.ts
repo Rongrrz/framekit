@@ -1,11 +1,11 @@
-import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment.js';
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
-} from '../gui-object';
-import { assertAllowedValue } from '../internal/validation';
-import type { GuiElement } from '../node/gui-node';
+} from '../gui-object.js';
+import { assertAllowedValue } from '../internal/validation.js';
+import type { GuiElement } from '../node/gui-node.js';
 
 /** Properties for a rectangular GUI container. */
 export type FrameProperties = GuiObjectProperties;

@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "check": "npm run format:check && npm run typecheck && npm run lint && npm run test:all && npm run build:all",
+    "check": "npm run format:check && npm run typecheck && npm run lint && npm run test:all && npm run build:all && npm run test:package",
     "dev": "vite --config playground/vite.config.ts",
     "build": "npm run build:library",
     "build:all": "npm run build:library && npm run build:playground",
@@ -34,6 +34,7 @@
     "typecheck": "tsc -b tsconfig.json tsconfig.node.json playground/tsconfig.json",
     "test": "vitest run",
     "test:all": "npm test && npm run test:playground",
+    "test:package": "vitest run --config vitest.package.config.ts",
     "test:playground": "vitest run --config playground/vite.config.ts",
     "preview": "vite preview --config playground/vite.config.ts",
     "prepare": "husky"

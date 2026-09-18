@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-import { fk, fkh } from '../../index';
+import { fk, fkh } from '../../index.js';
 
 afterEach(() => vi.unstubAllGlobals());
 

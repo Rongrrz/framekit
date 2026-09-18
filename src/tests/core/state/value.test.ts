@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index';
+import { fk } from '../../../index.js';
 
 describe('values', () => {
   it('provides the current value and publishes distinct changes', () => {

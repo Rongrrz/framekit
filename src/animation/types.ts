@@ -1,7 +1,7 @@
-import type { InstanceProperties } from '../core/node/instance';
-import type { Color3 } from '../core/values/color3';
-import type { UDim, UDim2 } from '../core/values/udim';
-import type { Vector2 } from '../core/values/vector2';
+import type { InstanceProperties } from '../core/node/instance.js';
+import type { Color3 } from '../core/values/color3.js';
+import type { UDim, UDim2 } from '../core/values/udim.js';
+import type { Vector2 } from '../core/values/vector2.js';
 
 type AnimatableValue = number | Color3 | Vector2 | UDim | UDim2;
 const discreteProperties = ['LayoutOrder', 'ZIndex'] as const;

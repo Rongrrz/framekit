@@ -1,6 +1,6 @@
-import type { GuiElement } from './node/gui-node';
-import type { Instance } from './node/instance';
-import { getModifierTarget, type Modifier } from './node/modifier';
+import type { GuiElement } from './node/gui-node.js';
+import type { Instance } from './node/instance.js';
+import { getModifierTarget, type Modifier } from './node/modifier.js';
 import {
   getActiveNodeState,
   getChildren,
@@ -8,8 +8,8 @@ import {
   isModifierState,
   isGuiNode,
   type NodeState,
-} from './node/state';
-import * as rendering from './render';
+} from './node/state.js';
+import * as rendering from './render.js';
 
 /** Adds a node to a parent, moving it from its previous parent when necessary. */
 function append(parent: Instance, child: Instance): void {

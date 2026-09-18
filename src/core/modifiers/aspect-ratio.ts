@@ -1,14 +1,14 @@
-import type { GuiObjectProperties } from '../gui-object';
-import { assertAllowedValue, assertPositiveFinite } from '../internal/validation';
-import type { InstanceProperties } from '../node/instance';
+import type { GuiObjectProperties } from '../gui-object.js';
+import { assertAllowedValue, assertPositiveFinite } from '../internal/validation.js';
+import type { InstanceProperties } from '../node/instance.js';
 import {
   createStyleModifier,
   type ModifierTarget,
   type StyleModifier,
   type Styles,
-} from '../node/modifier';
-import { mergeProperties } from '../node/properties';
-import { udimToCss } from '../values/udim';
+} from '../node/modifier.js';
+import { mergeProperties } from '../node/properties.js';
+import { udimToCss } from '../values/udim.js';
 
 /** How an aspect-ratio constraint uses its parent's available size. */
 export type AspectType = 'FitWithinMaxSize' | 'ScaleWithParentSize';

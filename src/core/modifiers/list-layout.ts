@@ -1,14 +1,14 @@
-import { assertAllowedValue, assertBoolean } from '../internal/validation';
-import type { InstanceProperties } from '../node/instance';
+import { assertAllowedValue, assertBoolean } from '../internal/validation.js';
+import type { InstanceProperties } from '../node/instance.js';
 import {
   createLayoutModifier,
   type LayoutChild,
   type LayoutModifier,
   type LayoutStyles,
   type Styles,
-} from '../node/modifier';
-import { mergeProperties } from '../node/properties';
-import { assertUDim, udim, udimToCss, type UDim } from '../values/udim';
+} from '../node/modifier.js';
+import { mergeProperties } from '../node/properties.js';
+import { assertUDim, udim, udimToCss, type UDim } from '../values/udim.js';
 
 /** Primary axis used to arrange children. */
 export type FillDirection = 'Horizontal' | 'Vertical';

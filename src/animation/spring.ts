@@ -1,11 +1,11 @@
-import type { Instance, InstanceProperties } from '../core/node/instance';
+import type { Instance, InstanceProperties } from '../core/node/instance.js';
 import {
   createSpringBinding,
   type SpringBinding,
   type SpringController,
   type SpringOptions,
-} from './spring-controller';
-import type { AnimationGoal } from './types';
+} from './spring-controller.js';
+import type { AnimationGoal } from './types.js';
 
 const springsByNode = new WeakMap<Instance, SpringBinding<InstanceProperties>>();
 

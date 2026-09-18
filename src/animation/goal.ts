@@ -1,12 +1,12 @@
-import { snapshotPropertyValue } from '../core/internal/snapshot';
-import type { Instance, InstanceProperties } from '../core/node/instance';
-import { getPropertiesSnapshot, validateNodeProperties } from '../core/node/properties';
-import { isDiscreteAnimationProperty, type AnimationGoal } from './types';
+import { snapshotPropertyValue } from '../core/internal/snapshot.js';
+import type { Instance, InstanceProperties } from '../core/node/instance.js';
+import { getPropertiesSnapshot, validateNodeProperties } from '../core/node/properties.js';
+import { isDiscreteAnimationProperty, type AnimationGoal } from './types.js';
 import {
   assertCompatibleAnimationValues,
   decomposeAnimationValue,
   type DecomposedAnimationValue,
-} from './value';
+} from './value.js';
 
 type AnimationKind = 'spring' | 'tween';
 

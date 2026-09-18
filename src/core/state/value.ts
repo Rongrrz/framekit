@@ -1,4 +1,4 @@
-import { createSignal, emitSignalSafely, type Unsubscribe } from './signal';
+import { createSignal, emitSignalSafely, type Unsubscribe } from './signal.js';
 
 type ValueListener<T> = (value: T) => void;
 type ValueUpdater<T> = (currentValue: T) => T;

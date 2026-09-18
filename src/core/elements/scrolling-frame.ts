@@ -2,29 +2,29 @@ import {
   createRealmAbortController,
   resolveOwnerDocument,
   type DomOptions,
-} from '../dom/environment';
-import { setStyle } from '../dom/styles';
-import { installStyles } from '../dom/stylesheet';
+} from '../dom/environment.js';
+import { setStyle } from '../dom/styles.js';
+import { installStyles } from '../dom/stylesheet.js';
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,
   createGuiObjectNode,
   type GuiObjectProperties,
-} from '../gui-object';
+} from '../gui-object.js';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
   assertUnitInterval,
-} from '../internal/validation';
-import * as lifecycle from '../lifecycle';
-import { guiEventMethods } from '../node/gui-events';
-import type { GuiElement } from '../node/gui-node';
-import { setNodeProperties, getNodeProperty } from '../node/properties';
-import { getActiveNodeState } from '../node/state';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
-import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '../values/udim';
-import { assertVector2, vector2, type Vector2 } from '../values/vector2';
+} from '../internal/validation.js';
+import * as lifecycle from '../lifecycle.js';
+import { guiEventMethods } from '../node/gui-events.js';
+import type { GuiElement } from '../node/gui-node.js';
+import { setNodeProperties, getNodeProperty } from '../node/properties.js';
+import { getActiveNodeState } from '../node/state.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
+import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '../values/udim.js';
+import { assertVector2, vector2, type Vector2 } from '../values/vector2.js';
 
 /** Axes on which a scrolling frame accepts native scrolling. */
 export type ScrollingDirection = 'X' | 'Y' | 'XY';

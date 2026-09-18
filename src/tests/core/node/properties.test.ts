@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createStyleModifier } from '../../../core/node/modifier';
-import { fk } from '../../../index';
+import { createStyleModifier } from '../../../core/node/modifier.js';
+import { fk } from '../../../index.js';
 
 describe('node properties', () => {
   it('commits and renders an entire patch before notifying property observers', () => {

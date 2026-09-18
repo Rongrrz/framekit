@@ -1,12 +1,12 @@
-export { createFrame } from './elements/frame';
-export type { Frame, FrameOptions, FrameProperties, FrameTagName } from './elements/frame';
-export type { DomOptions } from './dom/environment';
-export { installStyles } from './dom/stylesheet';
-export type { StyleOptions } from './dom/stylesheet';
-export type { InstanceClassName, InstanceOf } from './node/classes';
-export type { AutomaticSize, GuiObject, GuiObjectProperties } from './gui-object';
+export { createFrame } from './elements/frame.js';
+export type { Frame, FrameOptions, FrameProperties, FrameTagName } from './elements/frame.js';
+export type { DomOptions } from './dom/environment.js';
+export { installStyles } from './dom/stylesheet.js';
+export type { StyleOptions } from './dom/stylesheet.js';
+export type { InstanceClassName, InstanceOf } from './node/classes.js';
+export type { AutomaticSize, GuiObject, GuiObjectProperties } from './gui-object.js';
 
-export { createImageButton, createImageLabel } from './elements/image';
+export { createImageButton, createImageLabel } from './elements/image.js';
 export type {
   ImageButton,
   ImageButtonProperties,
@@ -15,15 +15,15 @@ export type {
   ImageLabelProperties,
   ImageLabelTagName,
   ScaleType,
-} from './elements/image';
+} from './elements/image.js';
 
-export { createLink } from './elements/link';
-export type { Link, LinkProperties, LinkTarget } from './elements/link';
+export { createLink } from './elements/link.js';
+export type { Link, LinkProperties, LinkTarget } from './elements/link.js';
 
-export { createScreenGui } from './elements/screen-gui';
-export type { ScreenGui, ScreenGuiProperties } from './elements/screen-gui';
+export { createScreenGui } from './elements/screen-gui.js';
+export type { ScreenGui, ScreenGuiProperties } from './elements/screen-gui.js';
 
-export { createScrollingFrame } from './elements/scrolling-frame';
+export { createScrollingFrame } from './elements/scrolling-frame.js';
 export type {
   ScrollingDirection,
   ScrollingFrameMethods,
@@ -31,9 +31,9 @@ export type {
   ScrollingFrame,
   ScrollingFrameProperties,
   ScrollingFrameTagName,
-} from './elements/scrolling-frame';
+} from './elements/scrolling-frame.js';
 
-export { createTextButton, createTextLabel } from './elements/text';
+export { createTextButton, createTextLabel } from './elements/text.js';
 export type {
   TextButton,
   TextButtonProperties,
@@ -43,26 +43,30 @@ export type {
   TextTagName,
   TextXAlignment,
   TextYAlignment,
-} from './elements/text';
+} from './elements/text.js';
 
-export { createTextInput } from './elements/text-input';
-export type { TextInput, TextInputProperties, TextInputType } from './elements/text-input';
+export { createTextInput } from './elements/text-input.js';
+export type { TextInput, TextInputProperties, TextInputType } from './elements/text-input.js';
 
-export { createTextArea } from './elements/text-area';
-export type { TextArea, TextAreaProperties, TextAreaResizeDirection } from './elements/text-area';
+export { createTextArea } from './elements/text-area.js';
+export type {
+  TextArea,
+  TextAreaProperties,
+  TextAreaResizeDirection,
+} from './elements/text-area.js';
 
-export { createUIAspectRatioConstraint } from './modifiers/aspect-ratio';
+export { createUIAspectRatioConstraint } from './modifiers/aspect-ratio.js';
 export type {
   AspectType,
   DominantAxis,
   UIAspectRatioConstraintProperties,
   UIAspectRatioConstraint,
-} from './modifiers/aspect-ratio';
-export { createUICorner } from './modifiers/corner';
-export type { UICornerProperties, UICorner } from './modifiers/corner';
-export { createUIGradient } from './modifiers/gradient';
-export type { GradientTarget, UIGradientProperties, UIGradient } from './modifiers/gradient';
-export { createUIListLayout } from './modifiers/list-layout';
+} from './modifiers/aspect-ratio.js';
+export { createUICorner } from './modifiers/corner.js';
+export type { UICornerProperties, UICorner } from './modifiers/corner.js';
+export { createUIGradient } from './modifiers/gradient.js';
+export type { GradientTarget, UIGradientProperties, UIGradient } from './modifiers/gradient.js';
+export { createUIListLayout } from './modifiers/list-layout.js';
 export type {
   FillDirection,
   HorizontalAlignment,
@@ -70,36 +74,36 @@ export type {
   SortOrder,
   UIListLayoutProperties,
   UIListLayout,
-} from './modifiers/list-layout';
-export { createUIPadding } from './modifiers/padding';
-export type { UIPaddingProperties, UIPadding } from './modifiers/padding';
-export { createUIScale } from './modifiers/scale';
-export type { UIScaleProperties, UIScale } from './modifiers/scale';
-export { createUIShadow } from './modifiers/shadow';
-export type { UIShadowProperties, UIShadow } from './modifiers/shadow';
-export { createUIStroke } from './modifiers/stroke';
-export type { BorderStrokePosition, UIStrokeProperties, UIStroke } from './modifiers/stroke';
-export { createUITextStroke } from './modifiers/text-stroke';
-export type { UITextStrokeProperties, UITextStroke } from './modifiers/text-stroke';
+} from './modifiers/list-layout.js';
+export { createUIPadding } from './modifiers/padding.js';
+export type { UIPaddingProperties, UIPadding } from './modifiers/padding.js';
+export { createUIScale } from './modifiers/scale.js';
+export type { UIScaleProperties, UIScale } from './modifiers/scale.js';
+export { createUIShadow } from './modifiers/shadow.js';
+export type { UIShadowProperties, UIShadow } from './modifiers/shadow.js';
+export { createUIStroke } from './modifiers/stroke.js';
+export type { BorderStrokePosition, UIStrokeProperties, UIStroke } from './modifiers/stroke.js';
+export { createUITextStroke } from './modifiers/text-stroke.js';
+export type { UITextStrokeProperties, UITextStroke } from './modifiers/text-stroke.js';
 
-export { createSignal } from './state/signal';
-export type { Signal, SignalEmitter, Unsubscribe } from './state/signal';
-export { createValue } from './state/value';
-export type { Value } from './state/value';
+export { createSignal } from './state/signal.js';
+export type { Signal, SignalEmitter, Unsubscribe } from './state/signal.js';
+export { createValue } from './state/value.js';
+export type { Value } from './state/value.js';
 
-export { color3FromHex, color3FromRGB } from './values/color3';
-export type { Color3 } from './values/color3';
-export { udim, udim2, udim2FromOffset, udim2FromScale } from './values/udim';
-export type { UDim, UDim2 } from './values/udim';
-export { vector2 } from './values/vector2';
-export type { Vector2 } from './values/vector2';
-export { colorSequence, numberSequence } from './values/sequence';
+export { color3FromHex, color3FromRGB } from './values/color3.js';
+export type { Color3 } from './values/color3.js';
+export { udim, udim2, udim2FromOffset, udim2FromScale } from './values/udim.js';
+export type { UDim, UDim2 } from './values/udim.js';
+export { vector2 } from './values/vector2.js';
+export type { Vector2 } from './values/vector2.js';
+export { colorSequence, numberSequence } from './values/sequence.js';
 export type {
   ColorSequence,
   ColorSequenceKeypoint,
   NumberSequence,
   NumberSequenceKeypoint,
-} from './values/sequence';
+} from './values/sequence.js';
 
 export type {
   GuiElement,
@@ -108,4 +112,4 @@ export type {
   InstanceProperties,
   LayoutModifier,
   StyleModifier,
-} from './node';
+} from './node/index.js';

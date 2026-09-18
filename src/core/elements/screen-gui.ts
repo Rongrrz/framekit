@@ -1,13 +1,13 @@
-import { resolveOwnerDocument, type DomOptions } from '../dom/environment';
-import { connectHoverEvents } from '../dom/hover-events';
-import { setStyle } from '../dom/styles';
-import { assertBoolean, assertInteger } from '../internal/validation';
-import * as lifecycle from '../lifecycle';
-import { guiEventMethods } from '../node/gui-events';
-import { createGuiNode, type GuiElement } from '../node/gui-node';
-import type { InstanceProperties } from '../node/instance';
-import { mergeProperties } from '../node/properties';
-import { getActiveNodeState } from '../node/state';
+import { resolveOwnerDocument, type DomOptions } from '../dom/environment.js';
+import { connectHoverEvents } from '../dom/hover-events.js';
+import { setStyle } from '../dom/styles.js';
+import { assertBoolean, assertInteger } from '../internal/validation.js';
+import * as lifecycle from '../lifecycle.js';
+import { guiEventMethods } from '../node/gui-events.js';
+import { createGuiNode, type GuiElement } from '../node/gui-node.js';
+import type { InstanceProperties } from '../node/instance.js';
+import { mergeProperties } from '../node/properties.js';
+import { getActiveNodeState } from '../node/state.js';
 
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = InstanceProperties & {

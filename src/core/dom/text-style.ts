@@ -4,10 +4,10 @@ import {
   assertNonNegativeFinite,
   assertString,
   assertUnitInterval,
-} from '../internal/validation';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3';
-import { setStyle } from './styles';
-import { renderTextSize } from './text-size';
+} from '../internal/validation.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
+import { setStyle } from './styles.js';
+import { renderTextSize } from './text-size.js';
 
 /** Horizontal alignment of text within its node. */
 export type TextXAlignment = 'Left' | 'Center' | 'Right';

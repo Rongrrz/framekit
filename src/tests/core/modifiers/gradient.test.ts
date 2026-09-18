@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultGuiObjectProperties, createGuiObjectNode } from '../../../core/gui-object';
-import { fk } from '../../../index';
-import { resetDocumentAfterEach } from '../../support/reset-document';
+import { createDefaultGuiObjectProperties, createGuiObjectNode } from '../../../core/gui-object.js';
+import { fk } from '../../../index.js';
+import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 

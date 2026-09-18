@@ -1,11 +1,11 @@
-import { snapshotPropertyValue } from '../internal/snapshot';
-import { assertString } from '../internal/validation';
-import * as rendering from '../render';
-import type { Unsubscribe } from '../state/signal';
-import { emitNodeEvent, subscribeToNodeEvent } from './events';
-import type { Instance, InstanceProperties } from './instance';
-import { getModifierTarget } from './modifier';
-import { getActiveNodeState, getNodeState, type NodeState } from './state';
+import { snapshotPropertyValue } from '../internal/snapshot.js';
+import { assertString } from '../internal/validation.js';
+import * as rendering from '../render.js';
+import type { Unsubscribe } from '../state/signal.js';
+import { emitNodeEvent, subscribeToNodeEvent } from './events.js';
+import type { Instance, InstanceProperties } from './instance.js';
+import { getModifierTarget } from './modifier.js';
+import { getActiveNodeState, getNodeState, type NodeState } from './state.js';
 
 const propertyWriteEventKeys = new Map<PropertyKey, symbol>();
 

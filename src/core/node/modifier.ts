@@ -1,4 +1,4 @@
-import { createNodeHandle, type Instance, type InstanceProperties } from './instance';
+import { createNodeHandle, type Instance, type InstanceProperties } from './instance.js';
 import {
   createBaseState,
   registerNode,
@@ -6,10 +6,10 @@ import {
   type GuiCapabilities,
   type GuiNodeState,
   type PropertyValidator,
-} from './state';
-import type { Styles } from './style-output';
+} from './state.js';
+import type { Styles } from './style-output.js';
 
-export type { StyleProperty, Styles } from './style-output';
+export type { StyleProperty, Styles } from './style-output.js';
 
 declare const styleModifierBrand: unique symbol;
 declare const layoutBrand: unique symbol;

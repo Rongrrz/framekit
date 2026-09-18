@@ -273,16 +273,18 @@ const createFeatureCard = (
   }).Parent = card;
   createText(theme, {
     text: title,
-    size: fk.udim2(1, -40, 0, 38),
+    size: fk.udim2(1, -40, 0, 60),
     position: fk.udim2FromOffset(20, 78),
     color: accent,
     textSize: typeScale.subsection,
+    wrapped: true,
+    yAlignment: 'Top',
     weight: 800,
   }).Parent = card;
   createText(theme, {
     text: body,
     size: fk.udim2(1, -40, 0, 92),
-    position: fk.udim2FromOffset(20, 120),
+    position: fk.udim2FromOffset(20, 148),
     color: 'textMuted',
     textSize: typeScale.small,
     wrapped: true,

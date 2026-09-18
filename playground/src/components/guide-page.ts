@@ -14,32 +14,15 @@ import {
   createDocsShell,
 } from './docs-shell';
 
-const introductionItems = [
-  { label: 'Getting started', offset: 0, active: true },
-  { label: 'First interface', offset: 520 },
-] as const;
-const essentialItems = [
-  { label: 'Direct properties', offset: 980 },
-  { label: 'Events', offset: 1360 },
-  { label: 'Reactive values', offset: 1740 },
-  { label: 'Responsive layout', offset: 2140 },
-  { label: 'Cleanup', offset: 2540 },
-] as const;
-const outlineItems = [...introductionItems, ...essentialItems] as const;
-
 export const createGuidePage = (
   layout: fk.Value<PlaygroundLayout>,
   theme: ThemeValue,
   route: fk.Value<SitePage>,
-  scrollTo: (offset: number) => void,
+  scrollTo: (target: fk.GuiElement) => void,
   navigate: (page: SitePage) => void,
 ): fk.Frame => {
   const shell = createDocsShell('GuidePage', 'guide', layout, theme, route);
-  appendSidebarGroup(shell.sidebar, theme, 'INTRODUCTION', introductionItems, 0, scrollTo);
-  appendSidebarGroup(shell.sidebar, theme, 'ESSENTIALS', essentialItems, 150, scrollTo);
-  appendOutline(shell.outline, theme, outlineItems, scrollTo);
-
-  appendArticleTitle(
+  const introduction = appendArticleTitle(
     shell.article,
     theme,
     'GUIDE',
@@ -64,16 +47,16 @@ export const createGuidePage = (
     theme,
     'InstallCode',
     [{ text: 'npm install framekit', color: 'accent' }],
-    440,
+    498,
     74,
   );
 
-  appendArticleSection(
+  const firstInterface = appendArticleSection(
     shell.article,
     theme,
     'Create your first interface',
     'Create the root, make a child, and connect them. Parent is the only step that attaches the child to the rendered hierarchy.',
-    572,
+    630,
   );
   appendCodeBlock(
     shell.article,
@@ -89,16 +72,16 @@ export const createGuidePage = (
       { text: '});' },
       { text: 'message.Parent = app;', color: 'accent' },
     ],
-    700,
+    812,
     260,
   );
 
-  appendArticleSection(
+  const properties = appendArticleSection(
     shell.article,
     theme,
     'Change direct properties',
     'Instances stay alive after creation. Read a property normally, assign it normally, or validate several changes together with setProperties.',
-    1018,
+    1130,
   );
   appendCodeBlock(
     shell.article,
@@ -111,16 +94,16 @@ export const createGuidePage = (
       { text: "  TextColor3: fk.color3FromHex('#76edad')," },
       { text: '});' },
     ],
-    1142,
+    1312,
     178,
   );
 
-  appendArticleSection(
+  const events = appendArticleSection(
     shell.article,
     theme,
     'Listen to events',
     'Buttons expose typed browser interactions. Every subscription returns an unsubscribe function, and owned listeners are removed when their instance is destroyed.',
-    1378,
+    1548,
   );
   appendCodeBlock(
     shell.article,
@@ -134,16 +117,16 @@ export const createGuidePage = (
       { text: 'button.onClick(() => save());', color: 'blue' },
       { text: "button.onMouseEnter(() => (button.Text = 'Save now'));" },
     ],
-    1508,
+    1730,
     206,
   );
 
-  appendArticleSection(
+  const values = appendArticleSection(
     shell.article,
     theme,
     'Bind reactive values',
     'A Value stores small pieces of state. Subscribe with onChange and register its unsubscribe with the node that owns the binding.',
-    1772,
+    1994,
   );
   appendCodeBlock(
     shell.article,
@@ -158,16 +141,16 @@ export const createGuidePage = (
       { text: '' },
       { text: 'count.set(count.get() + 1);' },
     ],
-    1900,
+    2176,
     234,
   );
 
-  appendArticleSection(
+  const responsive = appendArticleSection(
     shell.article,
     theme,
     'Respond to the viewport',
     'Use the optional helper namespace when geometry needs a breakpoint. The owner controls the resize listener lifetime.',
-    2192,
+    2468,
   );
   appendCodeBlock(
     shell.article,
@@ -184,16 +167,16 @@ export const createGuidePage = (
       { text: '  },' },
       { text: '});' },
     ],
-    2320,
+    2650,
     286,
   );
 
-  appendArticleSection(
+  const cleanup = appendArticleSection(
     shell.article,
     theme,
     'Clean up one owner',
     'Destroy is recursive. Descendants, watchers, event listeners, modifiers, and active animations are all released with the owner.',
-    2664,
+    2994,
   );
   appendCodeBlock(
     shell.article,
@@ -204,25 +187,39 @@ export const createGuidePage = (
       { text: 'card.destroy();', color: 'orange' },
       { text: 'card.isDestroyed(); // true', color: 'textFaint' },
     ],
-    2790,
+    3176,
     124,
   );
   appendCallout(
     shell.article,
     theme,
     '🧹 Prefer one clear owner for each feature. Cleanup then becomes one operation.',
-    2960,
+    3346,
   );
 
   const next = createButton(theme, {
     label: 'Explore the full API  🔎',
     name: 'GuideNextButton',
     size: fk.udim2(1, 0, 0, 54),
-    position: fk.udim2FromOffset(0, 3060),
+    position: fk.udim2FromOffset(0, 3446),
     background: 'surface',
     foreground: 'accent',
   });
   next.onClick(() => navigate('api'));
   next.Parent = shell.article;
+  const introductionItems = [
+    { label: 'Getting started', target: introduction, active: true },
+    { label: 'First interface', target: firstInterface },
+  ];
+  const essentialItems = [
+    { label: 'Direct properties', target: properties },
+    { label: 'Events', target: events },
+    { label: 'Reactive values', target: values },
+    { label: 'Responsive layout', target: responsive },
+    { label: 'Cleanup', target: cleanup },
+  ];
+  appendSidebarGroup(shell.sidebar, theme, 'INTRODUCTION', introductionItems, 0, scrollTo);
+  appendSidebarGroup(shell.sidebar, theme, 'ESSENTIALS', essentialItems, 150, scrollTo);
+  appendOutline(shell.outline, theme, [...introductionItems, ...essentialItems], scrollTo);
   return shell.page;
 };

@@ -1,12 +1,12 @@
-import * as lifecycle from '../core/lifecycle';
-import type { Instance, InstanceProperties } from '../core/node/instance';
+import * as lifecycle from '../core/lifecycle.js';
+import type { Instance, InstanceProperties } from '../core/node/instance.js';
 import {
   applyAnimationProperties,
   claimAnimationProperties,
   releaseAnimationProperties,
   type AnimationOwner,
-} from './ownership';
-import { cancelAnimationTask, scheduleAnimationTask } from './scheduler';
+} from './ownership.js';
+import { cancelAnimationTask, scheduleAnimationTask } from './scheduler.js';
 
 export type AnimationRunner<Properties extends InstanceProperties> = {
   claim(properties: readonly (keyof Properties)[]): void;

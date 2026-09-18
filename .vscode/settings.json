@@ -1,4 +1,5 @@
 {
   "oxc.fmt.configPath": ".oxfmtrc.json",
-  "editor.defaultFormatter": "oxc.oxc-vscode"
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "js/ts.preferences.importModuleSpecifierEnding": "js"
 }

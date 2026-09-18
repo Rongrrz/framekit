@@ -3,9 +3,9 @@ import {
   emitSignalSafely,
   type SignalEmitter,
   type Unsubscribe,
-} from '../state/signal';
-import type { Instance } from './instance';
-import { getActiveNodeState, getNodeState } from './state';
+} from '../state/signal.js';
+import type { Instance } from './instance.js';
+import { getActiveNodeState, getNodeState } from './state.js';
 
 const eventSignalsByNode = new WeakMap<Instance, Map<PropertyKey, SignalEmitter<unknown[]>>>();
 

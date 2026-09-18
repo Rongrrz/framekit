@@ -1,21 +1,26 @@
-import { assertNonNegativeFinite } from '../core/internal/validation';
-import type { Instance, InstanceProperties } from '../core/node/instance';
-import { getPropertiesSnapshot } from '../core/node/properties';
-import { getActiveNodeState } from '../core/node/state';
-import { createSignal, emitSignalSafely, readonlySignal, type Signal } from '../core/state/signal';
+import { assertNonNegativeFinite } from '../core/internal/validation.js';
+import type { Instance, InstanceProperties } from '../core/node/instance.js';
+import { getPropertiesSnapshot } from '../core/node/properties.js';
+import { getActiveNodeState } from '../core/node/state.js';
+import {
+  createSignal,
+  emitSignalSafely,
+  readonlySignal,
+  type Signal,
+} from '../core/state/signal.js';
 import {
   assertEasingDirection,
   assertEasingStyle,
   ease,
   type EasingDirection,
   type EasingStyle,
-} from './easing';
-import { prepareAnimationGoal } from './goal';
-import { createAnimationRunner } from './runner';
-import type { AnimationGoal } from './types';
-import { interpolateAnimationValue } from './value';
+} from './easing.js';
+import { prepareAnimationGoal } from './goal.js';
+import { createAnimationRunner } from './runner.js';
+import type { AnimationGoal } from './types.js';
+import { interpolateAnimationValue } from './value.js';
 
-export type { EasingDirection, EasingStyle } from './easing';
+export type { EasingDirection, EasingStyle } from './easing.js';
 
 /** Timing and playback settings for a tween. */
 export type TweenOptions = Readonly<{

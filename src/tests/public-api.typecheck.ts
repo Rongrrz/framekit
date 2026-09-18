@@ -1,4 +1,4 @@
-import { fk, fka, fkh } from '../index';
+import { fk, fka, fkh } from '../index.js';
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {

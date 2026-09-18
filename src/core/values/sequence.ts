@@ -1,5 +1,5 @@
-import { assertFiniteNumber } from '../internal/validation';
-import { assertColor3, type Color3 } from './color3';
+import { assertFiniteNumber } from '../internal/validation.js';
+import { assertColor3, type Color3 } from './color3.js';
 
 /** A color at a normalized point in a ColorSequence. */
 export type ColorSequenceKeypoint = Readonly<{

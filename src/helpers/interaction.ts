@@ -1,6 +1,6 @@
-import { spring } from '../animation/spring';
-import type { GuiElement, UIScale, Unsubscribe } from '../core';
-import { assertNonNegativeFinite } from '../core/internal/validation';
+import { spring } from '../animation/spring.js';
+import type { GuiElement, UIScale, Unsubscribe } from '../core/index.js';
+import { assertNonNegativeFinite } from '../core/internal/validation.js';
 
 /** Controls an attached scale until disposed or the node is destroyed. The caller owns the scale. */
 export function bindHoverScale(

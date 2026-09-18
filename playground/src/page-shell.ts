@@ -9,7 +9,7 @@ type PageShell = Readonly<{
   app: fk.ScreenGui;
   page: fk.ScrollingFrame;
   content: fk.Frame;
-  scrollTo: (offset: number) => void;
+  scrollTo: (target: fk.GuiElement) => void;
 }>;
 
 const appName = 'FrameKitPlayground';
@@ -27,7 +27,6 @@ export const createPageShell = (
   theme: ThemeValue,
   route: fk.Value<SitePage>,
 ): PageShell => {
-  let currentScale = calculateScale(layout.get());
   const app = fk.createScreenGui({ Name: appName, DisplayOrder: 10 });
   const page = fk.createScrollingFrame({
     Name: `${appName}Page`,
@@ -46,7 +45,7 @@ export const createPageShell = (
     AnchorPoint: fk.vector2(0.5, 0),
     BackgroundTransparency: 1,
   });
-  const contentScale = fk.createUIScale({ Scale: currentScale });
+  const contentScale = fk.createUIScale();
 
   bindThemeColors(page, theme, (palette) => ({
     BackgroundColor3: palette.canvas,
@@ -65,20 +64,15 @@ export const createPageShell = (
   const updateCanvas = (): void => {
     const currentLayout = layout.get();
     const height = pageHeight[currentLayout][route.get()];
-    currentScale = calculateScale(currentLayout);
+    const scale = calculateScale(currentLayout);
     const availableWidth = Math.max(1, window.innerWidth - scrollbarThickness);
-    const width = Math.max(pageWidth[currentLayout], availableWidth / currentScale);
+    const width = Math.max(pageWidth[currentLayout], availableWidth / scale);
 
-    contentScale.Scale = currentScale;
-    scrollSizer.Size = fk.udim2(1, 0, 0, height * currentScale);
+    contentScale.Scale = scale;
+    scrollSizer.Size = fk.udim2(1, 0, 0, height * scale);
     content.setProperties({
       Size: fk.udim2FromOffset(width, height),
-      Position: fk.udim2(
-        0.5,
-        -((1 - currentScale) * width) / 2,
-        0,
-        -((1 - currentScale) * height) / 2,
-      ),
+      Position: fk.udim2(0.5, -((1 - scale) * width) / 2, 0, -((1 - scale) * height) / 2),
     });
   };
 
@@ -95,8 +89,14 @@ export const createPageShell = (
     app,
     page,
     content,
-    scrollTo: (offset: number) => {
-      const goal = fk.vector2(0, offset * currentScale);
+    scrollTo: (target: fk.GuiElement) => {
+      const goal = fk.vector2(
+        0,
+        Math.max(
+          0,
+          page.CanvasPosition.Y + target.AbsolutePosition.Y - page.AbsolutePosition.Y - 16,
+        ),
+      );
       if (prefersReducedMotion()) {
         page.scrollTo(goal);
         return;

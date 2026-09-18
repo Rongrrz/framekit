@@ -1,11 +1,11 @@
-import type { GuiObjectProperties } from '../gui-object';
-import { assertBoolean, assertString } from '../internal/validation';
-import * as lifecycle from '../lifecycle';
-import { emitNodeEvent } from '../node/events';
-import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events';
-import type { GuiElement } from '../node/gui-node';
-import { createRealmAbortController } from './environment';
-import { installStyles } from './stylesheet';
+import type { GuiObjectProperties } from '../gui-object.js';
+import { assertBoolean, assertString } from '../internal/validation.js';
+import * as lifecycle from '../lifecycle.js';
+import { emitNodeEvent } from '../node/events.js';
+import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events.js';
+import type { GuiElement } from '../node/gui-node.js';
+import { createRealmAbortController } from './environment.js';
+import { installStyles } from './stylesheet.js';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */

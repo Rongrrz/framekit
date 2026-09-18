@@ -1,5 +1,5 @@
 import { fk } from 'framekit';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createApiPage } from '../src/components/api-page';
 import { createGuidePage } from '../src/components/guide-page';
@@ -58,7 +58,24 @@ describe('playground pages', () => {
     state.layout.set('mobile');
     const cornerCard = api.findFirstChild('UICornerReferenceCard', true) as fk.Frame;
     const cornerTitle = cornerCard.findFirstChild('Text') as fk.TextLabel;
-    expect(cornerTitle.Size).toEqual(fk.udim2FromOffset(140, 40));
+    expect(cornerTitle.Size).toEqual(fk.udim2(1, -28, 0, 20));
+    api.destroy();
+  });
+
+  it('navigates to the actual API heading after its layout changes', () => {
+    const state = createState('api');
+    const scrollTo = vi.fn();
+    const api = createApiPage(state.layout, state.theme, state.route, scrollTo);
+    const animation = api
+      .getDescendants()
+      .find((node) => node.isA('TextLabel') && node.Text === 'Animation');
+    expect(animation?.isA('TextLabel')).toBe(true);
+    if (!animation?.isA('TextLabel')) throw new Error('Missing Animation heading.');
+    animation.Position = fk.udim2FromOffset(0, 4400);
+    const outline = api.findFirstChild('AnimationOutlineButton', true);
+    if (!outline?.isA('TextButton')) throw new Error('Missing Animation outline link.');
+    outline.unsafeElement.click();
+    expect(scrollTo).toHaveBeenCalledWith(animation);
     api.destroy();
   });
 });

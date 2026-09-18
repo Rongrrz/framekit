@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../index';
+import { fk } from '../../index.js';
 
 describe('hierarchy', () => {
   it('tracks, reparents, finds, and destroys children', () => {

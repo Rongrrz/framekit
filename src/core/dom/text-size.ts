@@ -1,6 +1,6 @@
-import type { Instance, InstanceProperties } from '../node/instance';
-import { setStyle } from './styles';
-import type { TextStyleProperties } from './text-style';
+import type { Instance, InstanceProperties } from '../node/instance.js';
+import { setStyle } from './styles.js';
+import type { TextStyleProperties } from './text-style.js';
 
 type ObserverState = {
   observer: ResizeObserver;

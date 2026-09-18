@@ -3,17 +3,17 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
     "target": "es2023",
     "lib": ["ES2023", "DOM"],
-    "module": "esnext",
+    "module": "NodeNext",
     "types": ["vite/client"],
     "skipLibCheck": true,
     "strict": true,
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
+    /* Node-compatible library imports */
+    "moduleResolution": "NodeNext",
     "paths": { "framekit": ["./src/index.ts"] },
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,

@@ -1,8 +1,8 @@
-import * as lifecycle from '../lifecycle';
-import { emitNodeEvent } from '../node/events';
-import { guiEventKeys } from '../node/gui-events';
-import type { GuiElement } from '../node/gui-node';
-import { createRealmAbortController } from './environment';
+import * as lifecycle from '../lifecycle.js';
+import { emitNodeEvent } from '../node/events.js';
+import { guiEventKeys } from '../node/gui-events.js';
+import type { GuiElement } from '../node/gui-node.js';
+import { createRealmAbortController } from './environment.js';
 
 /** Connects the hover events shared by every DOM-backed GUI node. */
 export function connectHoverEvents(node: GuiElement, element: HTMLElement): void {

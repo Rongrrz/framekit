@@ -1,4 +1,4 @@
-import { assertAllowedValue } from '../core/internal/validation';
+import { assertAllowedValue } from '../core/internal/validation.js';
 
 /** Curve used to transform tween progress. */
 export type EasingStyle =

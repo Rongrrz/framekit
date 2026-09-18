@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index';
-import { resetDocumentAfterEach } from '../../support/reset-document';
+import { fk } from '../../../index.js';
+import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 afterEach(() => vi.unstubAllGlobals());
