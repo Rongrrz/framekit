@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { color3FromRGB, createTextLabel } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
@@ -8,22 +8,22 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('text labels', () => {
   it('uses a creation-only semantic text tag', () => {
-    const defaultLabel = fk.createTextLabel({ Text: 'Plain' });
-    const heading = fk.createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
+    const defaultLabel = createTextLabel({ Text: 'Plain' });
+    const heading = createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
 
     expect(defaultLabel.unsafeElement.querySelector('[data-framekit-text]')?.tagName).toBe('SPAN');
     expect(heading.unsafeElement.querySelector('[data-framekit-text]')?.tagName).toBe('H1');
-    expect(() => fk.createTextLabel({}, { textTagName: 'script' } as never)).toThrow(/textTagName/);
+    expect(() => createTextLabel({}, { textTagName: 'script' } as never)).toThrow(/textTagName/);
   });
 
   it('synchronizes text properties without replacing node children', () => {
-    const label = fk.createTextLabel();
-    const child = fk.createTextLabel();
+    const label = createTextLabel();
+    const child = createTextLabel();
 
     child.Parent = label;
     label.setProperties({
       Text: 'Inventory',
-      TextColor3: fk.color3FromRGB(10, 20, 30),
+      TextColor3: color3FromRGB(10, 20, 30),
       TextSize: 24,
       TextWrapped: true,
       TextXAlignment: 'Left',
@@ -53,7 +53,7 @@ describe('text labels', () => {
         public unobserve(): void {}
       },
     );
-    const label = fk.createTextLabel({ Text: 'Scale me', TextSize: 24 });
+    const label = createTextLabel({ Text: 'Scale me', TextSize: 24 });
     const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
     Object.defineProperties(text, {
       clientWidth: { configurable: true, get: () => availableWidth },
@@ -87,7 +87,7 @@ describe('text labels', () => {
   });
 
   it('rejects invalid TextScaled values without changing the rendered size', () => {
-    const label = fk.createTextLabel({ Text: 'Inventory', TextSize: 18 });
+    const label = createTextLabel({ Text: 'Inventory', TextSize: 18 });
     const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
 
     expect(() => label.setProperties({ TextScaled: 'yes' } as never)).toThrow(

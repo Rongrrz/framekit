@@ -1,13 +1,13 @@
-import { fk } from 'framekit';
+import { type TextButton } from 'framekit';
 
 const feedbackTimers = new WeakMap<
-  fk.TextButton,
+  TextButton,
   Readonly<{ timer: number; unregisterCleanup: () => void }>
 >();
 
 /** Copies text and reports the result without taking ownership of the button's theme colors. */
 export const copyCommand = async (
-  button: fk.TextButton,
+  button: TextButton,
   command: string,
   idleLabel: string,
 ): Promise<void> => {

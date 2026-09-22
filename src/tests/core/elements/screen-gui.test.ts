@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createFrame, createScreenGui } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
@@ -9,7 +9,7 @@ describe('screen GUIs', () => {
   it('preserves its previous mount when new DOM placement fails', () => {
     const previous = document.body.appendChild(document.createElement('main'));
     const rejected = document.body.appendChild(document.createElement('aside'));
-    const gui = fk.createScreenGui();
+    const gui = createScreenGui();
     gui.mount(previous);
     vi.spyOn(rejected, 'append').mockImplementation(() => {
       throw new Error('mount rejected');
@@ -23,9 +23,9 @@ describe('screen GUIs', () => {
 
   it('mounts, reparents, unmounts, and synchronizes the DOM tree', () => {
     const target = document.body.appendChild(document.createElement('main'));
-    const gui = fk.createScreenGui();
-    const container = fk.createFrame();
-    const child = fk.createFrame();
+    const gui = createScreenGui();
+    const container = createFrame();
+    const child = createFrame();
 
     gui.mount(target);
     container.Parent = gui;
@@ -51,7 +51,7 @@ describe('screen GUIs', () => {
 
   it('repairs stale mount bookkeeping after low-level DOM changes', () => {
     const target = document.body.appendChild(document.createElement('main'));
-    const gui = fk.createScreenGui();
+    const gui = createScreenGui();
 
     gui.mount(target);
     gui.unsafeElement.remove();
@@ -66,8 +66,8 @@ describe('screen GUIs', () => {
 
   it('keeps ScreenGui instances at the hierarchy root', () => {
     const target = document.body.appendChild(document.createElement('main'));
-    const gui = fk.createScreenGui();
-    const frame = fk.createFrame();
+    const gui = createScreenGui();
+    const frame = createFrame();
 
     gui.mount(target);
 
@@ -84,7 +84,7 @@ describe('screen GUIs', () => {
   });
 
   it('always covers the viewport regardless of its mount target', () => {
-    const gui = fk.createScreenGui();
+    const gui = createScreenGui();
 
     expect(gui.unsafeElement.style.position).toBe('fixed');
     expect(gui.unsafeElement.style.inset).toBe('0');
@@ -100,7 +100,7 @@ describe('screen GUIs', () => {
   });
 
   it('reports missing mount targets and rejects lifecycle calls after destruction', () => {
-    const gui = fk.createScreenGui();
+    const gui = createScreenGui();
 
     expect(() => gui.mount('#missing-target')).toThrow(/not found/);
     expect(() => gui.mount('[')).toThrow(/not a valid selector/);
@@ -114,8 +114,8 @@ describe('screen GUIs', () => {
   });
 
   it('controls the whole tree and cleans up when destroyed', () => {
-    const gui = fk.createScreenGui({ Enabled: false, DisplayOrder: 4 });
-    const frame = fk.createFrame();
+    const gui = createScreenGui({ Enabled: false, DisplayOrder: 4 });
+    const frame = createFrame();
 
     gui.mount(document.body);
     frame.Parent = gui;

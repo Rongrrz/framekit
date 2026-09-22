@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createStyleModifier } from '../../../core/node/modifier.js';
-import { fk } from '../../../index.js';
+import { createFrame, udim, udim2FromOffset, vector2 } from '../../../index.js';
 
 describe('node properties', () => {
   it('commits and renders an entire patch before notifying property observers', () => {
-    const frame = fk.createFrame({ Rotation: 0, Visible: true });
+    const frame = createFrame({ Rotation: 0, Visible: true });
     const observedStates: unknown[] = [];
 
     frame.onPropertyChanged('Rotation', (value, previousValue) => {
@@ -26,7 +26,7 @@ describe('node properties', () => {
   });
 
   it('rejects the entire patch before notifying observers when one property is invalid', () => {
-    const frame = fk.createFrame({ Rotation: 0, ZIndex: 1 });
+    const frame = createFrame({ Rotation: 0, ZIndex: 1 });
     const changed = vi.fn();
 
     frame.onPropertyChanged('Rotation', changed);
@@ -39,7 +39,7 @@ describe('node properties', () => {
   });
 
   it('restores committed state and rendering when a derived renderer rejects an update', () => {
-    const frame = fk.createFrame({ Name: 'Ready' });
+    const frame = createFrame({ Name: 'Ready' });
     const changed = vi.fn();
     const modifier = createStyleModifier('Fragile', { Name: 'Fragile' }, (_, target) => {
       if (target.properties.Name === 'Rejected') throw new Error('render failed');
@@ -56,37 +56,37 @@ describe('node properties', () => {
   });
 
   it('reports typed property changes after successful updates', () => {
-    const frame = fk.createFrame();
+    const frame = createFrame();
     const listener = vi.fn();
     const unsubscribe = frame.onPropertyChanged('Position', listener);
-    const firstPosition = fk.udim2FromOffset(20, 30);
-    const secondPosition = fk.udim2FromOffset(40, 50);
+    const firstPosition = udim2FromOffset(20, 30);
+    const secondPosition = udim2FromOffset(40, 50);
 
     frame.Position = firstPosition;
     frame.setProperties({ Position: secondPosition });
     frame.Position = secondPosition;
 
-    expect(listener).toHaveBeenNthCalledWith(1, firstPosition, fk.udim2FromOffset(0, 0));
+    expect(listener).toHaveBeenNthCalledWith(1, firstPosition, udim2FromOffset(0, 0));
     expect(listener).toHaveBeenNthCalledWith(2, secondPosition, firstPosition);
 
     unsubscribe();
-    frame.Position = fk.udim2FromOffset(60, 70);
+    frame.Position = udim2FromOffset(60, 70);
 
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it('rejects unknown properties in constructors and updates', () => {
-    expect(() => fk.createFrame({ Typo: true } as never)).toThrow(/Unknown property "Typo"/);
+    expect(() => createFrame({ Typo: true } as never)).toThrow(/Unknown property "Typo"/);
 
-    const frame = fk.createFrame();
+    const frame = createFrame();
 
     expect(() => frame.setProperties({ Typo: true } as never)).toThrow(/Unknown property "Typo"/);
   });
 
   it('rejects invalid primitive values and enum members without changing state', () => {
-    expect(() => fk.createFrame({ Rotation: Number.NaN })).toThrow(/Rotation.*finite/);
+    expect(() => createFrame({ Rotation: Number.NaN })).toThrow(/Rotation.*finite/);
 
-    const frame = fk.createFrame({ Rotation: -15 });
+    const frame = createFrame({ Rotation: -15 });
 
     expect(() => frame.setProperties({ ZIndex: 1.5 })).toThrow(/ZIndex.*integer/);
     expect(() => (frame.Rotation = Number.POSITIVE_INFINITY)).toThrow(/Rotation.*finite/);
@@ -98,7 +98,7 @@ describe('node properties', () => {
   });
 
   it('rejects malformed JavaScript values at the rendering boundary', () => {
-    const frame = fk.createFrame();
+    const frame = createFrame();
 
     expect(() => frame.setProperties({ Visible: 'yes' } as never)).toThrow(
       /Visible must be a boolean/,
@@ -113,7 +113,7 @@ describe('node properties', () => {
     expect(frame).toMatchObject({
       Name: 'Frame',
       Visible: true,
-      AnchorPoint: fk.vector2(0, 0),
+      AnchorPoint: vector2(0, 0),
     });
   });
 
@@ -122,11 +122,11 @@ describe('node properties', () => {
       X: { Scale: 0, Offset: 10 },
       Y: { Scale: 0, Offset: 20 },
     };
-    const frame = fk.createFrame({ Position: position });
+    const frame = createFrame({ Position: position });
 
     position.X.Offset = 999;
 
-    expect(frame.Position).toEqual(fk.udim2FromOffset(10, 20));
+    expect(frame.Position).toEqual(udim2FromOffset(10, 20));
     expect(Object.isFrozen(frame.Position)).toBe(true);
     expect(Object.isFrozen(frame.Position.X)).toBe(true);
     expect(frame.unsafeElement.style.left).toBe('10px');
@@ -141,13 +141,13 @@ describe('node properties', () => {
           return offset;
         },
       }),
-      Y: fk.udim(0, 20),
+      Y: udim(0, 20),
     });
-    const frame = fk.createFrame({ Position: position });
+    const frame = createFrame({ Position: position });
 
     offset = 999;
 
-    expect(frame.Position).toEqual(fk.udim2FromOffset(10, 20));
+    expect(frame.Position).toEqual(udim2FromOffset(10, 20));
     expect(frame.unsafeElement.style.left).toBe('10px');
   });
 });

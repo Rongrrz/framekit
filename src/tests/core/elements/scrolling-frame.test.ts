@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../../../index.js';
+import {
+  color3FromRGB,
+  createFrame,
+  createScrollingFrame,
+  createTween,
+  spring,
+  udim2FromOffset,
+  vector2,
+} from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
@@ -9,14 +17,14 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('scrolling frames', () => {
   it('uses a creation-only semantic host tag', () => {
-    const main = fk.createScrollingFrame({}, { tagName: 'main' });
+    const main = createScrollingFrame({}, { tagName: 'main' });
 
     expect(main.unsafeElement.tagName).toBe('MAIN');
-    expect(() => fk.createScrollingFrame({}, { tagName: 'footer' } as never)).toThrow(/tagName/);
+    expect(() => createScrollingFrame({}, { tagName: 'footer' } as never)).toThrow(/tagName/);
   });
 
   it('maps scrolling direction to native overflow', () => {
-    const scrolling = fk.createScrollingFrame({ ScrollingDirection: 'Y' });
+    const scrolling = createScrollingFrame({ ScrollingDirection: 'Y' });
 
     expect(scrolling.unsafeElement.style.overflowX).toBe('hidden');
     expect(scrolling.unsafeElement.style.overflowY).toBe('auto');
@@ -37,9 +45,9 @@ describe('scrolling frames', () => {
   });
 
   it('hands unsupported keyboard scrolling to the nearest eligible ancestor', () => {
-    const page = fk.createScrollingFrame({ ScrollingDirection: 'Y' });
-    const section = fk.createFrame();
-    const code = fk.createScrollingFrame({ ScrollingDirection: 'X' });
+    const page = createScrollingFrame({ ScrollingDirection: 'Y' });
+    const section = createFrame();
+    const code = createScrollingFrame({ ScrollingDirection: 'X' });
     section.Parent = page;
     code.Parent = section;
     Object.defineProperty(page.unsafeElement, 'clientHeight', { configurable: true, value: 480 });
@@ -54,8 +62,8 @@ describe('scrolling frames', () => {
     code.unsafeElement.dispatchEvent(pageDown);
 
     expect(pageDown.defaultPrevented).toBe(true);
-    expect(page.CanvasPosition).toEqual(fk.vector2(0, 600));
-    expect(code.CanvasPosition).toEqual(fk.vector2(0, 0));
+    expect(page.CanvasPosition).toEqual(vector2(0, 600));
+    expect(code.CanvasPosition).toEqual(vector2(0, 0));
 
     const arrowRight = new KeyboardEvent('keydown', {
       key: 'ArrowRight',
@@ -65,7 +73,7 @@ describe('scrolling frames', () => {
     code.unsafeElement.dispatchEvent(arrowRight);
 
     expect(arrowRight.defaultPrevented).toBe(false);
-    expect(page.CanvasPosition).toEqual(fk.vector2(0, 600));
+    expect(page.CanvasPosition).toEqual(vector2(0, 600));
 
     const input = document.createElement('input');
     code.unsafeElement.append(input);
@@ -77,14 +85,14 @@ describe('scrolling frames', () => {
     input.dispatchEvent(inputPageDown);
 
     expect(inputPageDown.defaultPrevented).toBe(false);
-    expect(page.CanvasPosition).toEqual(fk.vector2(0, 600));
+    expect(page.CanvasPosition).toEqual(vector2(0, 600));
   });
 
   it('configures canvas sizing, native scrolling, and scrollbar appearance', () => {
-    const scrolling = fk.createScrollingFrame({
-      CanvasSize: fk.udim2FromOffset(600, 900),
+    const scrolling = createScrollingFrame({
+      CanvasSize: udim2FromOffset(600, 900),
       AutomaticCanvasSize: 'X',
-      ScrollBarImageColor3: fk.color3FromRGB(18, 153, 98),
+      ScrollBarImageColor3: color3FromRGB(18, 153, 98),
       ScrollBarImageTransparency: 0.25,
       ScrollBarThickness: 6,
     });
@@ -116,7 +124,7 @@ describe('scrolling frames', () => {
   });
 
   it('exposes canvas geometry and direct scroll helpers', () => {
-    const scrolling = fk.createScrollingFrame();
+    const scrolling = createScrollingFrame();
 
     Object.defineProperties(scrolling.unsafeElement, {
       scrollWidth: { configurable: true, value: 640 },
@@ -125,16 +133,16 @@ describe('scrolling frames', () => {
       clientHeight: { configurable: true, value: 180 },
     });
 
-    scrolling.scrollTo(fk.vector2(20, 30));
-    scrolling.scrollBy(fk.vector2(5, -10));
+    scrolling.scrollTo(vector2(20, 30));
+    scrolling.scrollBy(vector2(5, -10));
 
-    expect(scrolling.CanvasPosition).toEqual(fk.vector2(25, 20));
-    expect(scrolling.AbsoluteCanvasSize).toEqual(fk.vector2(640, 480));
-    expect(scrolling.MaxCanvasPosition).toEqual(fk.vector2(400, 300));
+    expect(scrolling.CanvasPosition).toEqual(vector2(25, 20));
+    expect(scrolling.AbsoluteCanvasSize).toEqual(vector2(640, 480));
+    expect(scrolling.MaxCanvasPosition).toEqual(vector2(400, 300));
   });
 
   it('reads and writes its canvas position as an ordinary property', () => {
-    const scrolling = fk.createScrollingFrame();
+    const scrolling = createScrollingFrame();
 
     scrolling.unsafeElement.scrollLeft = 12;
     scrolling.unsafeElement.scrollTop = 34;
@@ -149,10 +157,10 @@ describe('scrolling frames', () => {
     });
 
     scrolling.unsafeElement.scrollTo = nativeScrollTo as typeof scrolling.unsafeElement.scrollTo;
-    scrolling.CanvasPosition = fk.vector2(56, 78);
+    scrolling.CanvasPosition = vector2(56, 78);
 
     expect(nativeScrollTo).toHaveBeenCalledWith(56, 78);
-    expect(scrolling.CanvasPosition).toEqual(fk.vector2(56, 78));
+    expect(scrolling.CanvasPosition).toEqual(vector2(56, 78));
 
     scrolling.destroy();
 
@@ -170,10 +178,10 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const springTarget = fk.createScrollingFrame();
-    const controller = fka.spring(springTarget);
+    const springTarget = createScrollingFrame();
+    const controller = spring(springTarget);
 
-    fka.spring(springTarget, { CanvasPosition: fk.vector2(0, 200) });
+    spring(springTarget, { CanvasPosition: vector2(0, 200) });
     springTarget.unsafeElement.dispatchEvent(new Event('scroll'));
 
     expect(controller.isAnimating()).toBe(true);
@@ -186,14 +194,14 @@ describe('scrolling frames', () => {
     springTarget.unsafeElement.dispatchEvent(new Event('scroll'));
 
     expect(controller.isAnimating()).toBe(false);
-    expect(springTarget.CanvasPosition).toEqual(fk.vector2(0, 40));
+    expect(springTarget.CanvasPosition).toEqual(vector2(0, 40));
 
-    const tweenTarget = fk.createScrollingFrame();
-    const tween = fka.createTween(
+    const tweenTarget = createScrollingFrame();
+    const tween = createTween(
       tweenTarget,
       { Duration: 1 },
       {
-        CanvasPosition: fk.vector2(200, 0),
+        CanvasPosition: vector2(200, 0),
       },
     );
 
@@ -202,7 +210,7 @@ describe('scrolling frames', () => {
     tweenTarget.unsafeElement.dispatchEvent(new Event('scroll'));
 
     expect(tween.playbackState()).toBe('Cancelled');
-    expect(tweenTarget.CanvasPosition).toEqual(fk.vector2(30, 0));
+    expect(tweenTarget.CanvasPosition).toEqual(vector2(30, 0));
   });
 
   it('waits for keyboard scrolling to change CanvasPosition before interrupting animation', () => {
@@ -212,14 +220,14 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const scrolling = fk.createScrollingFrame();
+    const scrolling = createScrollingFrame();
     const child = document.createElement('button');
 
     scrolling.unsafeElement.append(child);
 
-    const controller = fka.spring(scrolling);
+    const controller = spring(scrolling);
 
-    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    spring(scrolling, { CanvasPosition: vector2(0, 200) });
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
 
     expect(scrolling.unsafeElement.tabIndex).toBe(0);
@@ -241,7 +249,7 @@ describe('scrolling frames', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const scrolling = fk.createScrollingFrame();
+    const scrolling = createScrollingFrame();
 
     scrolling.unsafeElement.scrollTo = vi.fn((left?: number | ScrollToOptions, top?: number) => {
       if (typeof left !== 'number' || top === undefined) return;
@@ -249,9 +257,9 @@ describe('scrolling frames', () => {
       scrolling.unsafeElement.scrollTop = Math.round(top);
     });
 
-    const controller = fka.spring(scrolling);
+    const controller = spring(scrolling);
 
-    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
+    spring(scrolling, { CanvasPosition: vector2(0, 200) });
     frame?.(1000 / 60);
 
     expect(scrolling.CanvasPosition.Y).toBe(scrolling.unsafeElement.scrollTop);
@@ -268,13 +276,13 @@ describe('scrolling frames', () => {
     );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
-    const scrolling = fk.createScrollingFrame();
-    const controller = fka.spring(scrolling);
+    const scrolling = createScrollingFrame();
+    const controller = spring(scrolling);
 
-    fka.spring(scrolling, { CanvasPosition: fk.vector2(0, 200) });
-    scrolling.CanvasPosition = fk.vector2(0, 80);
+    spring(scrolling, { CanvasPosition: vector2(0, 200) });
+    scrolling.CanvasPosition = vector2(0, 80);
 
     expect(controller.isAnimating()).toBe(false);
-    expect(scrolling.CanvasPosition).toEqual(fk.vector2(0, 80));
+    expect(scrolling.CanvasPosition).toEqual(vector2(0, 80));
   });
 });

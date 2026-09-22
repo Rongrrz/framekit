@@ -1,4 +1,4 @@
-import { fk, fkh } from 'framekit';
+import { bindResponsiveLayout, createValue, type ScreenGui } from 'framekit';
 
 import { createApiPage } from './components/api-page';
 import { createGuidePage } from './components/guide-page';
@@ -19,13 +19,13 @@ import {
 export const createPlaygroundApp = (
   forcedLayout?: PlaygroundLayout,
   initialTheme: ThemeMode = resolveInitialTheme(),
-): fk.ScreenGui => {
+): ScreenGui => {
   const initialLayout =
     forcedLayout ?? (window.innerWidth < mobileBreakpoint ? 'mobile' : 'desktop');
-  const layout = fk.createValue<PlaygroundLayout>(initialLayout);
-  const theme = fk.createValue<ThemeMode>(initialTheme);
-  const palette = fk.createValue(themes[initialTheme]);
-  const route = fk.createValue(resolveInitialPage());
+  const layout = createValue<PlaygroundLayout>(initialLayout);
+  const theme = createValue<ThemeMode>(initialTheme);
+  const palette = createValue(themes[initialTheme]);
+  const route = createValue(resolveInitialPage());
   const { app, page, addPage, scrollTo } = createPageShell(layout, palette, route);
   const navigate = (destination: Parameters<typeof navigateToPage>[1]): void =>
     navigateToPage(route, destination);
@@ -39,7 +39,7 @@ export const createPlaygroundApp = (
   createNavigation(page, route, navigate, layout, theme, palette).Parent = app;
 
   if (forcedLayout === undefined) {
-    fkh.bindResponsiveLayout(app, {
+    bindResponsiveLayout(app, {
       breakpoint: mobileBreakpoint,
       mobile: () => layout.set('mobile'),
       desktop: () => layout.set('desktop'),

@@ -1,13 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import {
+  color3FromRGB,
+  createFrame,
+  createTextArea,
+  createTextInput,
+  createUICorner,
+} from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('native text controls', () => {
   it('synchronizes a native input with Text and typed change events', () => {
-    const input = fk.createTextInput({
+    const input = createTextInput({
       PlaceholderText: 'Email address',
       InputType: 'Email',
       FieldName: 'email',
@@ -37,7 +43,7 @@ describe('native text controls', () => {
   });
 
   it('uses a native textarea for multiline text', () => {
-    const area = fk.createTextArea({
+    const area = createTextArea({
       Text: 'First\nSecond',
       PlaceholderText: 'Write something…',
       ResizeDirection: 'Vertical',
@@ -58,10 +64,10 @@ describe('native text controls', () => {
   });
 
   it('maps disabled, readonly, and placeholder presentation to native state', () => {
-    const input = fk.createTextInput({
+    const input = createTextInput({
       Disabled: true,
       ReadOnly: true,
-      PlaceholderColor3: fk.color3FromRGB(10, 20, 30),
+      PlaceholderColor3: color3FromRGB(10, 20, 30),
       PlaceholderTransparency: 0.25,
     });
 
@@ -80,8 +86,8 @@ describe('native text controls', () => {
   });
 
   it('rejects unsupported native modes without corrupting current state', () => {
-    const input = fk.createTextInput({ InputType: 'Search' });
-    const area = fk.createTextArea({ ResizeDirection: 'Both' });
+    const input = createTextInput({ InputType: 'Search' });
+    const area = createTextArea({ ResizeDirection: 'Both' });
 
     expect(() => input.setProperties({ InputType: 'Date' } as never)).toThrow(/InputType/);
     expect(() => area.setProperties({ ResizeDirection: 'Diagonal' } as never)).toThrow(
@@ -94,9 +100,9 @@ describe('native text controls', () => {
   });
 
   it('accepts modifiers but rejects GUI children that native controls cannot contain', () => {
-    const input = fk.createTextInput();
-    const corner = fk.createUICorner();
-    const child = fk.createFrame();
+    const input = createTextInput();
+    const corner = createUICorner();
+    const child = createFrame();
 
     corner.Parent = input;
 
@@ -107,8 +113,8 @@ describe('native text controls', () => {
   });
 
   it.each([
-    ['input', fk.createTextInput],
-    ['textarea', fk.createTextArea],
+    ['input', createTextInput],
+    ['textarea', createTextArea],
   ] as const)(
     'synchronizes %s before notifying edit observers and releases them on destruction',
     (_, createControl) => {

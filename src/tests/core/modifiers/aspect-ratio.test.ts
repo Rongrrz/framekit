@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createFrame, createUIAspectRatioConstraint, udim2FromOffset } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('UI aspect ratio constraints', () => {
   it('fits within the requested size using the dominant axis', () => {
-    const frame = fk.createFrame({ Size: fk.udim2FromOffset(200, 100) });
-    const constraint = fk.createUIAspectRatioConstraint();
+    const frame = createFrame({ Size: udim2FromOffset(200, 100) });
+    const constraint = createUIAspectRatioConstraint();
 
     constraint.Parent = frame;
 
@@ -39,8 +39,8 @@ describe('UI aspect ratio constraints', () => {
   });
 
   it('can scale from its parent while maintaining the ratio', () => {
-    const frame = fk.createFrame();
-    const constraint = fk.createUIAspectRatioConstraint({
+    const frame = createFrame();
+    const constraint = createUIAspectRatioConstraint({
       AspectRatio: 16 / 9,
       AspectType: 'ScaleWithParentSize',
       DominantAxis: 'Height',
@@ -56,6 +56,6 @@ describe('UI aspect ratio constraints', () => {
   });
 
   it('rejects non-positive ratios', () => {
-    expect(() => fk.createUIAspectRatioConstraint({ AspectRatio: 0 })).toThrow(/positive finite/);
+    expect(() => createUIAspectRatioConstraint({ AspectRatio: 0 })).toThrow(/positive finite/);
   });
 });

@@ -75,7 +75,7 @@ Springs and tweens do not mutate private animation-only copies of the UI. They r
 
 ### Tweens
 
-`fka.createTween(node, options, goal)` validates its goal at creation. `play()` snapshots current values, claims the goal properties, and schedules work.
+`createTween(node, options, goal)` validates its goal at creation. `play()` snapshots current values, claims the goal properties, and schedules work.
 
 - `Delay` enters `Delayed`; zero duration with no delay completes synchronously.
 - `pause()` keeps ownership and resumes from the paused time; `cancel()` releases claims and emits `Cancelled`.
@@ -83,7 +83,7 @@ Springs and tweens do not mutate private animation-only copies of the UI. They r
 
 ### Springs
 
-Each node retains one spring controller. Calling `fka.spring(node, goal)` again retargets per-property springs from current visual values while preserving velocity. Properties settle independently; `completed` emits when all active properties settle.
+Each node retains one spring controller. Calling `spring(node, goal)` again retargets per-property springs from current visual values while preserving velocity. Properties settle independently; `completed` emits when all active properties settle.
 
 ### Ownership rules
 

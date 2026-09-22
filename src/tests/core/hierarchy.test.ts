@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../index.js';
+import { createFrame, createTextButton } from '../../index.js';
 
 describe('hierarchy', () => {
   it('tracks, reparents, finds, and destroys children', () => {
-    const first = fk.createFrame({ Name: 'First' });
-    const second = fk.createFrame({ Name: 'Second' });
-    const child = fk.createFrame({ Name: 'Child' });
-    const grandchild = fk.createFrame({ Name: 'Grandchild' });
+    const first = createFrame({ Name: 'First' });
+    const second = createFrame({ Name: 'Second' });
+    const child = createFrame({ Name: 'Child' });
+    const grandchild = createFrame({ Name: 'Grandchild' });
 
     child.Parent = first;
     grandchild.Parent = child;
@@ -37,8 +37,8 @@ describe('hierarchy', () => {
   });
 
   it('rejects cycles and mutations after destruction', () => {
-    const root = fk.createFrame();
-    const child = fk.createFrame();
+    const root = createFrame();
+    const child = createFrame();
 
     child.Parent = root;
 
@@ -55,8 +55,8 @@ describe('hierarchy', () => {
   });
 
   it('narrows heterogeneous traversal results to their concrete APIs', () => {
-    const parent = fk.createFrame();
-    const button = fk.createTextButton({ Name: 'Action' });
+    const parent = createFrame();
+    const button = createTextButton({ Name: 'Action' });
     button.Parent = parent;
     const child = parent.findFirstChild('Action');
 
@@ -69,8 +69,8 @@ describe('hierarchy', () => {
   });
 
   it('rolls back hierarchy state when DOM placement fails', () => {
-    const parent = fk.createFrame();
-    const child = fk.createFrame();
+    const parent = createFrame();
+    const child = createFrame();
 
     vi.spyOn(parent.unsafeElement, 'insertBefore').mockImplementation(() => {
       throw new Error('DOM placement failed');
@@ -83,11 +83,11 @@ describe('hierarchy', () => {
   });
 
   it('restores the original sibling order when reparenting fails', () => {
-    const previous = fk.createFrame();
-    const rejected = fk.createFrame();
-    const first = fk.createFrame();
-    const middle = fk.createFrame();
-    const last = fk.createFrame();
+    const previous = createFrame();
+    const rejected = createFrame();
+    const first = createFrame();
+    const middle = createFrame();
+    const last = createFrame();
     for (const child of [first, middle, last]) child.Parent = previous;
     vi.spyOn(rejected.unsafeElement, 'insertBefore').mockImplementation(() => {
       throw new Error('placement failed');
@@ -107,9 +107,9 @@ describe('hierarchy', () => {
   });
 
   it('returns independent traversal snapshots and prefers direct name matches', () => {
-    const root = fk.createFrame();
-    const branch = fk.createFrame();
-    const nested = fk.createFrame({ Name: 'Match' });
+    const root = createFrame();
+    const branch = createFrame();
+    const nested = createFrame({ Name: 'Match' });
     branch.Parent = root;
     nested.Parent = branch;
     const children = root.getChildren();
@@ -117,7 +117,7 @@ describe('hierarchy', () => {
 
     expect(root.findFirstChild('Match')).toBeUndefined();
     expect(root.findFirstChild('Match', true)).toBe(nested);
-    const direct = fk.createFrame({ Name: 'Match' });
+    const direct = createFrame({ Name: 'Match' });
     direct.Parent = root;
 
     expect(root.findFirstChild('Match', true)).toBe(direct);
@@ -129,10 +129,10 @@ describe('hierarchy', () => {
   });
 
   it('formats a stable hierarchy snapshot', () => {
-    const root = fk.createFrame({ Name: 'Root' });
-    const first = fk.createFrame({ Name: 'First' });
-    const second = fk.createFrame({ Name: 'Second' });
-    const grandchild = fk.createFrame({ Name: 'Grandchild' });
+    const root = createFrame({ Name: 'Root' });
+    const first = createFrame({ Name: 'First' });
+    const second = createFrame({ Name: 'Second' });
+    const grandchild = createFrame({ Name: 'Grandchild' });
 
     first.Parent = root;
     second.Parent = root;

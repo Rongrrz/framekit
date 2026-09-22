@@ -2,15 +2,23 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createDefaultGuiObjectProperties, createGuiObjectNode } from '../../core/gui-object.js';
 import { createLayoutModifier, createStyleModifier } from '../../core/node/modifier.js';
-import { fk } from '../../index.js';
+import {
+  color3FromRGB,
+  createFrame,
+  createTextLabel,
+  createUICorner,
+  createUIShadow,
+  createUIStroke,
+  vector2,
+} from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('composing base and modifier styles', () => {
   it('recomputes parent layout only when layout inputs change', () => {
-    const parent = fk.createFrame();
-    const child = fk.createFrame();
+    const parent = createFrame();
+    const child = createFrame();
     const resolveLayout = vi.fn(() => ({ parent: {}, children: [{}] }));
     const layout = createLayoutModifier(
       'TrackedLayout',
@@ -45,7 +53,7 @@ describe('composing base and modifier styles', () => {
       initialProperties: {},
       renderProperties: applyProperties,
     });
-    const corner = fk.createUICorner({ CornerRadius: 8 });
+    const corner = createUICorner({ CornerRadius: 8 });
 
     expect(applyProperties).toHaveBeenCalledOnce();
 
@@ -57,10 +65,10 @@ describe('composing base and modifier styles', () => {
   });
 
   it('applies, updates, and removes corner and stroke styles through the tree', () => {
-    const frame = fk.createTextLabel();
-    const corner = fk.createUICorner({ CornerRadius: 12 });
-    const stroke = fk.createUIStroke({
-      Color: fk.color3FromRGB(10, 20, 30),
+    const frame = createTextLabel();
+    const corner = createUICorner({ CornerRadius: 12 });
+    const stroke = createUIStroke({
+      Color: color3FromRGB(10, 20, 30),
       Thickness: 2,
       BorderStrokePosition: 'Inner',
     });
@@ -95,11 +103,11 @@ describe('composing base and modifier styles', () => {
   });
 
   it('composes shadows and strokes without overwriting siblings', () => {
-    const frame = fk.createFrame();
-    const stroke = fk.createUIStroke({ Color: fk.color3FromRGB(255, 255, 255), Thickness: 2 });
-    const shadow = fk.createUIShadow({
-      Color: fk.color3FromRGB(10, 20, 30),
-      Offset: fk.vector2(4, 8),
+    const frame = createFrame();
+    const stroke = createUIStroke({ Color: color3FromRGB(255, 255, 255), Thickness: 2 });
+    const shadow = createUIShadow({
+      Color: color3FromRGB(10, 20, 30),
+      Offset: vector2(4, 8),
       BlurRadius: 12,
     });
 
@@ -109,14 +117,14 @@ describe('composing base and modifier styles', () => {
     expect(frame.unsafeElement.style.boxShadow).toContain('0px 0px 0px 2px');
     expect(frame.unsafeElement.style.boxShadow).toContain('4px 8px 12px 0px');
 
-    shadow.setProperties({ Offset: fk.vector2(-2, 6), BlurRadius: 18 });
+    shadow.setProperties({ Offset: vector2(-2, 6), BlurRadius: 18 });
 
     expect(frame.unsafeElement.style.boxShadow).toContain('-2px 6px 18px 0px');
     expect(frame.unsafeElement.style.boxShadow).toContain('0px 0px 0px 2px');
   });
 
   it('uses the declared composition policy for filter output', () => {
-    const frame = fk.createFrame();
+    const frame = createFrame();
     const blur = createStyleModifier('Blur', { Name: 'Blur' }, () => ({
       filter: 'blur(2px)',
     }));
@@ -131,9 +139,9 @@ describe('composing base and modifier styles', () => {
   });
 
   it('restores a base style when a property change removes a derived override', () => {
-    const frame = fk.createFrame({
+    const frame = createFrame({
       Name: 'Override',
-      BackgroundColor3: fk.color3FromRGB(20, 30, 40),
+      BackgroundColor3: color3FromRGB(20, 30, 40),
     });
     const conditional = createStyleModifier('Conditional', { Name: 'Conditional' }, (_, target) =>
       target.properties.Name === 'Override' ? { 'background-color': 'rgb(200 100 50)' } : {},
@@ -142,7 +150,7 @@ describe('composing base and modifier styles', () => {
     conditional.Parent = frame;
     expect(frame.unsafeElement.style.backgroundColor).toContain('200');
 
-    frame.BackgroundColor3 = fk.color3FromRGB(40, 50, 60);
+    frame.BackgroundColor3 = color3FromRGB(40, 50, 60);
 
     expect(frame.unsafeElement.style.backgroundColor).toContain('200');
 

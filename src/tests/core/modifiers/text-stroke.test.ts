@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { color3FromRGB, createFrame, createTextLabel, createUITextStroke } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('text strokes', () => {
   it('only attaches text strokes to text-capable GUI objects', () => {
-    const frame = fk.createFrame();
-    const stroke = fk.createUITextStroke();
+    const frame = createFrame();
+    const stroke = createUITextStroke();
 
     expect(() => (stroke.Parent = frame)).toThrow(/TextLabel or TextButton/);
     expect(stroke.Parent).toBeUndefined();
   });
 
   it('applies, updates, disables, and removes text strokes', () => {
-    const label = fk.createTextLabel({ Text: 'FrameKit' });
-    const stroke = fk.createUITextStroke({
-      Color: fk.color3FromRGB(10, 20, 30),
+    const label = createTextLabel({ Text: 'FrameKit' });
+    const stroke = createUITextStroke({
+      Color: color3FromRGB(10, 20, 30),
       Transparency: 0.25,
       Thickness: 2,
     });

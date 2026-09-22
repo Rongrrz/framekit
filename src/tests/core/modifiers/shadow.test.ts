@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createFrame, createUIShadow } from '../../../index.js';
 
 describe('shadows', () => {
   it('validates shadow geometry', () => {
-    const frame = fk.createFrame();
-    const shadow = fk.createUIShadow();
+    const frame = createFrame();
+    const shadow = createUIShadow();
 
     shadow.Parent = frame;
 

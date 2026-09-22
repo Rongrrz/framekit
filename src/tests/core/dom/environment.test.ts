@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../../index.js';
+import {
+  createFrame,
+  createImageButton,
+  createImageLabel,
+  createLink,
+  createScreenGui,
+  createScrollingFrame,
+  createTextArea,
+  createTextButton,
+  createTextInput,
+  createTextLabel,
+} from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
@@ -11,15 +22,15 @@ describe('DOM ownership', () => {
     const ownerDocument = iframe.contentDocument!;
     const options = { ownerDocument };
     const nodes = [
-      fk.createFrame({}, options),
-      fk.createTextLabel({}, options),
-      fk.createTextButton({}, options),
-      fk.createImageLabel({}, options),
-      fk.createImageButton({}, options),
-      fk.createLink({}, options),
-      fk.createScrollingFrame({}, options),
-      fk.createTextInput({}, options),
-      fk.createTextArea({}, options),
+      createFrame({}, options),
+      createTextLabel({}, options),
+      createTextButton({}, options),
+      createImageLabel({}, options),
+      createImageButton({}, options),
+      createLink({}, options),
+      createScrollingFrame({}, options),
+      createTextInput({}, options),
+      createTextArea({}, options),
     ];
 
     for (const node of nodes) {
@@ -37,15 +48,15 @@ describe('DOM ownership', () => {
     const ownerDocument = document.implementation.createHTMLDocument();
     const target = ownerDocument.body.appendChild(ownerDocument.createElement('main'));
     target.id = 'app';
-    const gui = fk.createScreenGui({}, { ownerDocument });
-    const frame = fk.createFrame({}, { ownerDocument });
+    const gui = createScreenGui({}, { ownerDocument });
+    const frame = createFrame({}, { ownerDocument });
 
     gui.mount('#app');
     frame.Parent = gui;
 
     expect(target.firstElementChild).toBe(gui.unsafeElement);
     expect(() => gui.mount(document.body)).toThrow(/different document/);
-    expect(() => (fk.createFrame().Parent = frame)).toThrow(/same document/);
+    expect(() => (createFrame().Parent = frame)).toThrow(/same document/);
     expect(gui.isMounted()).toBe(true);
 
     gui.destroy();

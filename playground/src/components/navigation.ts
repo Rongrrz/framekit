@@ -1,4 +1,13 @@
-import { fk, fkh } from 'framekit';
+import {
+  createFrame,
+  type Frame,
+  type ScrollingFrame,
+  udim2,
+  udim2FromOffset,
+  udim2FromScale,
+  type Value,
+  withToolTip,
+} from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
@@ -8,16 +17,16 @@ import { bindThemeColors, fonts, typeScale, type ThemeMode, type ThemeValue } fr
 import { createButton, createText } from '../ui';
 
 export const createNavigation = (
-  page: fk.ScrollingFrame,
-  route: fk.Value<SitePage>,
+  page: ScrollingFrame,
+  route: Value<SitePage>,
   navigate: (page: SitePage) => void,
-  layout: fk.Value<PlaygroundLayout>,
-  mode: fk.Value<ThemeMode>,
+  layout: Value<PlaygroundLayout>,
+  mode: Value<ThemeMode>,
   theme: ThemeValue,
-): fk.Frame => {
-  const navigation = fk.createFrame({
+): Frame => {
+  const navigation = createFrame({
     Name: 'Navigation',
-    Size: fk.udim2(1, 0, 0, 64),
+    Size: udim2(1, 0, 0, 64),
     BackgroundTransparency: 0.05,
     ZIndex: 100,
   });
@@ -26,8 +35,8 @@ export const createNavigation = (
   const mark = createButton(theme, {
     label: 'F',
     name: 'HomeButton',
-    size: fk.udim2FromOffset(36, 36),
-    position: fk.udim2FromOffset(18, 14),
+    size: udim2FromOffset(36, 36),
+    position: udim2FromOffset(18, 14),
     background: 'accent',
     foreground: 'onAccent',
     textSize: 17,
@@ -35,8 +44,8 @@ export const createNavigation = (
   const brand = createText(theme, {
     text: 'FrameKit',
     name: 'BrandName',
-    size: fk.udim2FromOffset(110, 36),
-    position: fk.udim2FromOffset(66, 14),
+    size: udim2FromOffset(110, 36),
+    position: udim2FromOffset(66, 14),
     textSize: typeScale.body,
     weight: 850,
   });
@@ -47,8 +56,8 @@ export const createNavigation = (
   const guide = createButton(theme, {
     label: 'Guide',
     name: 'GuideNavButton',
-    size: fk.udim2FromOffset(74, 36),
-    position: fk.udim2(1, -360, 0, 14),
+    size: udim2FromOffset(74, 36),
+    position: udim2(1, -360, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
@@ -56,8 +65,8 @@ export const createNavigation = (
   const api = createButton(theme, {
     label: 'API',
     name: 'ApiNavButton',
-    size: fk.udim2FromOffset(66, 36),
-    position: fk.udim2(1, -280, 0, 14),
+    size: udim2FromOffset(66, 36),
+    position: udim2(1, -280, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
@@ -65,8 +74,8 @@ export const createNavigation = (
   const source = createButton(theme, {
     label: 'GitHub',
     name: 'SourceNavButton',
-    size: fk.udim2FromOffset(78, 36),
-    position: fk.udim2(1, -208, 0, 14),
+    size: udim2FromOffset(78, 36),
+    position: udim2(1, -208, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
@@ -81,8 +90,8 @@ export const createNavigation = (
   const themeToggle = createButton(theme, {
     label: '🌞  Light',
     name: 'ThemeToggleButton',
-    size: fk.udim2FromOffset(104, 36),
-    position: fk.udim2(1, -122, 0, 14),
+    size: udim2FromOffset(104, 36),
+    position: udim2(1, -122, 0, 14),
     background: 'surfaceRaised',
     foreground: 'text',
     font: fonts.mono,
@@ -90,15 +99,15 @@ export const createNavigation = (
   });
   themeToggle.onClick(() => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
   themeToggle.Parent = navigation;
-  fkh.withToolTip(themeToggle, 'Switch between light and dark themes', { placement: 'bottom' });
+  withToolTip(themeToggle, 'Switch between light and dark themes', { placement: 'bottom' });
 
-  const track = fk.createFrame({
+  const track = createFrame({
     Name: 'ScrollProgressTrack',
-    Size: fk.udim2(1, 0, 0, 2),
-    Position: fk.udim2FromOffset(0, 62),
+    Size: udim2(1, 0, 0, 2),
+    Position: udim2FromOffset(0, 62),
     ZIndex: 101,
   });
-  const progress = fk.createFrame({ Name: 'ScrollProgress', Size: fk.udim2FromScale(0, 1) });
+  const progress = createFrame({ Name: 'ScrollProgress', Size: udim2FromScale(0, 1) });
   bindThemeColors(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
   bindThemeColors(progress, theme, (palette) => ({ BackgroundColor3: palette.accent }));
   progress.Parent = track;
@@ -112,7 +121,7 @@ export const createNavigation = (
         1,
         page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight,
       );
-      progress.Size = fk.udim2FromScale(
+      progress.Size = udim2FromScale(
         Math.min(1, Math.max(0, page.unsafeElement.scrollTop / maximum)),
         1,
       );
@@ -137,20 +146,20 @@ export const createNavigation = (
     mobile: { Visible: false },
   });
   bindLayoutProperties(navigation, layout, guide, {
-    desktop: { Position: fk.udim2(1, -360, 0, 14), Size: fk.udim2FromOffset(74, 36) },
-    mobile: { Position: fk.udim2FromOffset(70, 14), Size: fk.udim2FromOffset(68, 36) },
+    desktop: { Position: udim2(1, -360, 0, 14), Size: udim2FromOffset(74, 36) },
+    mobile: { Position: udim2FromOffset(70, 14), Size: udim2FromOffset(68, 36) },
   });
   bindLayoutProperties(navigation, layout, api, {
-    desktop: { Position: fk.udim2(1, -280, 0, 14), Size: fk.udim2FromOffset(66, 36) },
-    mobile: { Position: fk.udim2FromOffset(142, 14), Size: fk.udim2FromOffset(58, 36) },
+    desktop: { Position: udim2(1, -280, 0, 14), Size: udim2FromOffset(66, 36) },
+    mobile: { Position: udim2FromOffset(142, 14), Size: udim2FromOffset(58, 36) },
   });
   bindLayoutProperties(navigation, layout, source, {
     desktop: { Visible: true },
     mobile: { Visible: false },
   });
   bindLayoutProperties(navigation, layout, themeToggle, {
-    desktop: { Position: fk.udim2(1, -122, 0, 14), Size: fk.udim2FromOffset(104, 36) },
-    mobile: { Position: fk.udim2(1, -116, 0, 14), Size: fk.udim2FromOffset(104, 36) },
+    desktop: { Position: udim2(1, -122, 0, 14), Size: udim2FromOffset(104, 36) },
+    mobile: { Position: udim2(1, -116, 0, 14), Size: udim2FromOffset(104, 36) },
   });
   return navigation;
 };

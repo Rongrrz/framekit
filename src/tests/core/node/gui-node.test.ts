@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createFrame, createScreenGui, vector2 } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('GUI handles', () => {
   it('exposes properties as ordinary own accessors', () => {
-    const frame = fk.createFrame();
+    const frame = createFrame();
     const descriptor = Object.getOwnPropertyDescriptor(frame, 'Name');
 
     expect(Object.isFrozen(frame)).toBe(false);
@@ -20,8 +20,8 @@ describe('GUI handles', () => {
   });
 
   it('exposes hover events on non-button GUI nodes', () => {
-    const frame = fk.createFrame();
-    const gui = fk.createScreenGui();
+    const frame = createFrame();
+    const gui = createScreenGui();
     const entered = vi.fn();
     const left = vi.fn();
 
@@ -39,13 +39,13 @@ describe('GUI handles', () => {
   });
 
   it('reads browser-computed absolute geometry', () => {
-    const frame = fk.createFrame();
+    const frame = createFrame();
 
     frame.unsafeElement.getBoundingClientRect = () =>
       ({ left: 12, top: 34, width: 320, height: 180 }) as DOMRect;
 
-    expect(frame.AbsolutePosition).toEqual(fk.vector2(12, 34));
-    expect(frame.AbsoluteSize).toEqual(fk.vector2(320, 180));
+    expect(frame.AbsolutePosition).toEqual(vector2(12, 34));
+    expect(frame.AbsoluteSize).toEqual(vector2(320, 180));
 
     frame.destroy();
 

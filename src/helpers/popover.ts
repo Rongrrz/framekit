@@ -28,7 +28,7 @@ export type PopoverOptions = Readonly<{
  * The disposer restores supplied content and trigger accessibility attributes without destroying it.
  *
  * @example
- * const dispose = fkh.withPopover(button, dropdownFrame, { openOn: 'hover' });
+ * const dispose = withPopover(button, dropdownFrame, { openOn: 'hover' });
  */
 export const withPopover = (
   target: GuiElement,

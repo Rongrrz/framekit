@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createFrame, createLink } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('links', () => {
   it('uses a native anchor with text styling and typed activation', () => {
-    const link = fk.createLink({
+    const link = createLink({
       Text: 'Read the guide',
       Href: '/guide',
       Target: '_blank',
@@ -31,7 +31,7 @@ describe('links', () => {
   });
 
   it('updates and clears native navigation attributes', () => {
-    const link = fk.createLink({ Href: '/download', Download: 'guide.pdf' });
+    const link = createLink({ Href: '/download', Download: 'guide.pdf' });
 
     expect(link.unsafeElement.download).toBe('guide.pdf');
 
@@ -45,7 +45,7 @@ describe('links', () => {
   it.each(['javascript:alert(1)', ' JaVaScRiPt:alert(1)', 'data:text/html,unsafe'])(
     'rejects unsafe destination %s without corrupting the current href',
     (href) => {
-      const link = fk.createLink({ Href: '/safe' });
+      const link = createLink({ Href: '/safe' });
 
       expect(() => link.setProperties({ Href: href })).toThrow(/Unsupported link URL protocol/);
       expect(link.Href).toBe('/safe');
@@ -56,15 +56,15 @@ describe('links', () => {
   it.each(['mailto:hello@example.com', 'tel:+15555550123', 'https://example.com/guide'])(
     'preserves supported destination %s',
     (Href) => {
-      const link = fk.createLink({ Href });
+      const link = createLink({ Href });
       expect(link.unsafeElement.getAttribute('href')).toBe(Href);
       link.destroy();
     },
   );
 
   it('rejects GUI children that would create invalid interactive nesting', () => {
-    const link = fk.createLink();
+    const link = createLink();
 
-    expect(() => (fk.createFrame().Parent = link)).toThrow(/cannot contain GUI children/);
+    expect(() => (createFrame().Parent = link)).toThrow(/cannot contain GUI children/);
   });
 });

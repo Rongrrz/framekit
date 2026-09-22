@@ -1,4 +1,4 @@
-import { fk } from 'framekit';
+import { createFrame, createValue } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -21,9 +21,9 @@ afterEach(() => {
 describe('animated theme palette', () => {
   it('springs every consumer through one intermediate palette', () => {
     const clock = installAnimationClock();
-    const owner = fk.createFrame();
-    const mode = fk.createValue<ThemeMode>('dark');
-    const palette = fk.createValue(themes.dark);
+    const owner = createFrame();
+    const mode = createValue<ThemeMode>('dark');
+    const palette = createValue(themes.dark);
     bindThemeTransition(owner, mode, palette);
 
     mode.set('light');
@@ -40,9 +40,9 @@ describe('animated theme palette', () => {
 
   it('retargets the retained spring when the mode changes rapidly', () => {
     const clock = installAnimationClock();
-    const owner = fk.createFrame();
-    const mode = fk.createValue<ThemeMode>('dark');
-    const palette = fk.createValue(themes.dark);
+    const owner = createFrame();
+    const mode = createValue<ThemeMode>('dark');
+    const palette = createValue(themes.dark);
     bindThemeTransition(owner, mode, palette);
 
     mode.set('light');
@@ -58,9 +58,9 @@ describe('animated theme palette', () => {
   it('switches immediately under reduced motion', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
-    const owner = fk.createFrame();
-    const mode = fk.createValue<ThemeMode>('dark');
-    const palette = fk.createValue(themes.dark);
+    const owner = createFrame();
+    const mode = createValue<ThemeMode>('dark');
+    const palette = createValue(themes.dark);
     bindThemeTransition(owner, mode, palette);
     mode.set('light');
     expect(palette.get()).toEqual(themes.light);
@@ -73,9 +73,9 @@ describe('animated theme palette', () => {
     const clock = installAnimationClock();
     const reportError = vi.fn();
     vi.stubGlobal('reportError', reportError);
-    const owner = fk.createFrame();
-    const mode = fk.createValue<ThemeMode>('dark');
-    const palette = fk.createValue(themes.dark);
+    const owner = createFrame();
+    const mode = createValue<ThemeMode>('dark');
+    const palette = createValue(themes.dark);
     bindThemeTransition(owner, mode, palette);
     mode.set('light');
     clock.advance();
@@ -123,8 +123,8 @@ describe('document theme', () => {
       meta.name = 'theme-color';
       meta.content = '#123456';
       document.head.append(meta);
-      const owner = fk.createFrame();
-      const mode = fk.createValue<ThemeMode>('dark');
+      const owner = createFrame();
+      const mode = createValue<ThemeMode>('dark');
       bindDocumentTheme(owner, mode);
       expect(meta.content).toBe('#0a0d12');
       mode.set('light');
@@ -143,8 +143,8 @@ describe('document theme', () => {
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new Error('denied');
     });
-    const owner = fk.createFrame();
-    const mode = fk.createValue<ThemeMode>('dark');
+    const owner = createFrame();
+    const mode = createValue<ThemeMode>('dark');
     expect(() => bindDocumentTheme(owner, mode)).not.toThrow();
     mode.set('light');
     expect(document.documentElement.getAttribute('data-framekit-theme')).toBe('light');

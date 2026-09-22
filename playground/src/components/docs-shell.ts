@@ -1,4 +1,17 @@
-import { fk } from 'framekit';
+import {
+  createFrame,
+  createScrollingFrame,
+  createUIListLayout,
+  type Frame,
+  type GuiElement,
+  type TextLabel,
+  udim,
+  udim2,
+  udim2FromOffset,
+  udim2FromScale,
+  type Value,
+  vector2,
+} from 'framekit';
 
 import { bindLayoutProperties, contentWidth, pageHeight, type PlaygroundLayout } from '../layout';
 import { createRoutedPage, type SitePage } from '../router';
@@ -13,96 +26,96 @@ import {
 import { appendCodeLines, createButton, createSurface, createText } from '../ui';
 
 export type DocsShell = Readonly<{
-  page: fk.Frame;
-  sidebar: fk.Frame;
-  article: fk.Frame;
-  outline: fk.Frame;
+  page: Frame;
+  sidebar: Frame;
+  article: Frame;
+  outline: Frame;
 }>;
 
 export type NavigationItem = Readonly<{
   label: string;
-  target: fk.GuiElement;
+  target: GuiElement;
   active?: boolean;
 }>;
 
 export const createDocsShell = (
   name: string,
   pageName: Exclude<SitePage, 'home'>,
-  layout: fk.Value<PlaygroundLayout>,
+  layout: Value<PlaygroundLayout>,
   theme: ThemeValue,
-  route: fk.Value<SitePage>,
+  route: Value<SitePage>,
 ): DocsShell => {
   const page = createRoutedPage(name, pageName, layout, route);
-  const content = fk.createFrame({
+  const content = createFrame({
     Name: `${name}Content`,
-    AnchorPoint: fk.vector2(0.5, 0),
+    AnchorPoint: vector2(0.5, 0),
     BackgroundTransparency: 1,
   });
   bindLayoutProperties(page, layout, content, {
     desktop: {
-      Size: fk.udim2FromOffset(contentWidth.desktop, pageHeight.desktop[pageName]),
-      Position: fk.udim2FromScale(0.5, 0),
+      Size: udim2FromOffset(contentWidth.desktop, pageHeight.desktop[pageName]),
+      Position: udim2FromScale(0.5, 0),
     },
     mobile: {
-      Size: fk.udim2FromOffset(contentWidth.mobile, pageHeight.mobile[pageName]),
-      Position: fk.udim2FromScale(0.5, 0),
+      Size: udim2FromOffset(contentWidth.mobile, pageHeight.mobile[pageName]),
+      Position: udim2FromScale(0.5, 0),
     },
   });
 
-  const sidebarRail = fk.createFrame({
+  const sidebarRail = createFrame({
     Name: `${name}SidebarRail`,
-    Size: fk.udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
+    Size: udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
     BackgroundTransparency: 1,
   });
   createRailDivider(theme, 'Right').Parent = sidebarRail;
-  const sidebar = fk.createFrame({
+  const sidebar = createFrame({
     Name: `${name}Sidebar`,
-    Size: fk.udim2FromOffset(243, 600),
-    Position: fk.udim2FromOffset(0, 42),
+    Size: udim2FromOffset(243, 600),
+    Position: udim2FromOffset(0, 42),
     BackgroundTransparency: 1,
   });
-  const article = fk.createFrame({
+  const article = createFrame({
     Name: `${name}Article`,
-    Size: fk.udim2FromOffset(680, 0),
-    Position: fk.udim2FromOffset(292, 44),
+    Size: udim2FromOffset(680, 0),
+    Position: udim2FromOffset(292, 44),
     BackgroundTransparency: 1,
     AutomaticSize: 'Y',
   });
-  fk.createUIListLayout({ Padding: fk.udim(0, 12) }).Parent = article;
-  const outlineRail = fk.createFrame({
+  createUIListLayout({ Padding: udim(0, 12) }).Parent = article;
+  const outlineRail = createFrame({
     Name: `${name}OutlineRail`,
-    Size: fk.udim2FromOffset(196, pageHeight.desktop[pageName] - 80),
-    Position: fk.udim2FromOffset(1020, 0),
+    Size: udim2FromOffset(196, pageHeight.desktop[pageName] - 80),
+    Position: udim2FromOffset(1020, 0),
     BackgroundTransparency: 1,
   });
   createRailDivider(theme, 'Left').Parent = outlineRail;
-  const outline = fk.createFrame({
+  const outline = createFrame({
     Name: `${name}Outline`,
-    Size: fk.udim2FromOffset(196, 520),
-    Position: fk.udim2FromOffset(0, 52),
+    Size: udim2FromOffset(196, 520),
+    Position: udim2FromOffset(0, 52),
     BackgroundTransparency: 1,
   });
 
   bindLayoutProperties(page, layout, outlineRail, {
     desktop: {
-      Size: fk.udim2FromOffset(196, pageHeight.desktop[pageName] - 80),
+      Size: udim2FromOffset(196, pageHeight.desktop[pageName] - 80),
       Visible: true,
     },
     mobile: { Visible: false },
   });
   bindLayoutProperties(page, layout, article, {
     desktop: {
-      Size: fk.udim2FromOffset(680, 0),
-      Position: fk.udim2FromOffset(292, 44),
+      Size: udim2FromOffset(680, 0),
+      Position: udim2FromOffset(292, 44),
     },
     mobile: {
-      Size: fk.udim2FromOffset(358, 0),
-      Position: fk.udim2FromOffset(0, 42),
+      Size: udim2FromOffset(358, 0),
+      Position: udim2FromOffset(0, 42),
     },
   });
   bindLayoutProperties(page, layout, sidebarRail, {
     desktop: {
-      Size: fk.udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
+      Size: udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
       Visible: true,
     },
     mobile: { Visible: false },
@@ -120,10 +133,10 @@ export const createDocsShell = (
     const articleHeight = article.unsafeElement.offsetHeight;
     if (articleHeight === 0) return;
     const height = article.Position.Y.Offset + articleHeight + 64;
-    content.Size = fk.udim2FromOffset(content.Size.X.Offset, height);
-    page.Size = fk.udim2(1, 0, 0, height);
-    sidebarRail.Size = fk.udim2FromOffset(244, height - 80);
-    outlineRail.Size = fk.udim2FromOffset(196, height - 80);
+    content.Size = udim2FromOffset(content.Size.X.Offset, height);
+    page.Size = udim2(1, 0, 0, height);
+    sidebarRail.Size = udim2FromOffset(244, height - 80);
+    outlineRail.Size = udim2FromOffset(196, height - 80);
   });
   observer.observe(article.unsafeElement);
   page.onDestroy(() => observer.disconnect());
@@ -132,11 +145,11 @@ export const createDocsShell = (
 
 /** Lets wrapped documentation text contribute its actual height to the article flow. */
 const appendFlowText = (
-  parent: fk.Frame,
+  parent: Frame,
   theme: ThemeValue,
   options: Parameters<typeof createText>[1],
   lineHeight = 1.5,
-): fk.TextLabel => {
+): TextLabel => {
   const label = createText(theme, { ...options, wrapped: true, yAlignment: 'Top' });
   label.AutomaticSize = 'Y';
   const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
@@ -146,17 +159,14 @@ const appendFlowText = (
 };
 
 /** Keeps interactive examples in one row on desktop and a vertical stack on mobile. */
-export const createExampleRow = (
-  parent: fk.Frame,
-  layout: fk.Value<PlaygroundLayout>,
-): fk.Frame => {
-  const row = fk.createFrame({
+export const createExampleRow = (parent: Frame, layout: Value<PlaygroundLayout>): Frame => {
+  const row = createFrame({
     Name: 'ExampleRow',
-    Size: fk.udim2FromScale(1, 0),
+    Size: udim2FromScale(1, 0),
     AutomaticSize: 'Y',
     BackgroundTransparency: 1,
   });
-  const list = fk.createUIListLayout({ Padding: fk.udim(0, 16) });
+  const list = createUIListLayout({ Padding: udim(0, 16) });
   bindLayoutProperties(row, layout, list, {
     desktop: { FillDirection: 'Horizontal' },
     mobile: { FillDirection: 'Vertical' },
@@ -166,11 +176,11 @@ export const createExampleRow = (
   return row;
 };
 
-const createRailDivider = (theme: ThemeValue, edge: 'Left' | 'Right'): fk.Frame => {
-  const divider = fk.createFrame({
+const createRailDivider = (theme: ThemeValue, edge: 'Left' | 'Right'): Frame => {
+  const divider = createFrame({
     Name: `${edge}RailDivider`,
-    Size: fk.udim2(0, 1, 1, 0),
-    Position: edge === 'Right' ? fk.udim2(1, -1, 0, 0) : fk.udim2FromOffset(0, 0),
+    Size: udim2(0, 1, 1, 0),
+    Position: edge === 'Right' ? udim2(1, -1, 0, 0) : udim2FromOffset(0, 0),
     BackgroundColor3: themeColor(theme, 'border'),
   });
   bindThemeColors(divider, theme, (palette) => ({ BackgroundColor3: palette.border }));
@@ -178,17 +188,17 @@ const createRailDivider = (theme: ThemeValue, edge: 'Left' | 'Right'): fk.Frame 
 };
 
 export const appendSidebarGroup = (
-  parent: fk.Frame,
+  parent: Frame,
   theme: ThemeValue,
   title: string,
   items: readonly NavigationItem[],
   startY: number,
-  onNavigate: (target: fk.GuiElement) => void,
+  onNavigate: (target: GuiElement) => void,
 ): void => {
   createText(theme, {
     text: title,
-    size: fk.udim2(1, -28, 0, 28),
-    position: fk.udim2FromOffset(0, startY),
+    size: udim2(1, -28, 0, 28),
+    position: udim2FromOffset(0, startY),
     textSize: typeScale.caption,
     weight: 800,
   }).Parent = parent;
@@ -196,8 +206,8 @@ export const appendSidebarGroup = (
     const link = createButton(theme, {
       label: item.label,
       name: `${item.label.replaceAll(/\s+/g, '')}SidebarButton`,
-      size: fk.udim2(1, -28, 0, 32),
-      position: fk.udim2FromOffset(0, startY + 34 + index * 36),
+      size: udim2(1, -28, 0, 32),
+      position: udim2FromOffset(0, startY + 34 + index * 36),
       background: 'canvas',
       foreground: item.active === true ? 'accent' : 'textMuted',
       textSize: typeScale.small,
@@ -209,15 +219,15 @@ export const appendSidebarGroup = (
 };
 
 export const appendOutline = (
-  parent: fk.Frame,
+  parent: Frame,
   theme: ThemeValue,
   items: readonly NavigationItem[],
-  onNavigate: (target: fk.GuiElement) => void,
+  onNavigate: (target: GuiElement) => void,
 ): void => {
   createText(theme, {
     text: 'On this page',
-    size: fk.udim2(1, -28, 0, 28),
-    position: fk.udim2FromOffset(20, 0),
+    size: udim2(1, -28, 0, 28),
+    position: udim2FromOffset(20, 0),
     textSize: typeScale.caption,
     weight: 800,
   }).Parent = parent;
@@ -225,8 +235,8 @@ export const appendOutline = (
     const link = createButton(theme, {
       label: item.label,
       name: `${item.label.replaceAll(/\s+/g, '')}OutlineButton`,
-      size: fk.udim2(1, -28, 0, 30),
-      position: fk.udim2FromOffset(20, 38 + index * 34),
+      size: udim2(1, -28, 0, 30),
+      position: udim2FromOffset(20, 38 + index * 34),
       background: 'canvas',
       foreground: 'textMuted',
       textSize: typeScale.caption,
@@ -238,15 +248,15 @@ export const appendOutline = (
 };
 
 export const appendArticleTitle = (
-  parent: fk.Frame,
+  parent: Frame,
   theme: ThemeValue,
   eyebrow: string,
   title: string,
   body: string,
-): fk.TextLabel => {
+): TextLabel => {
   appendFlowText(parent, theme, {
     text: eyebrow,
-    size: fk.udim2FromScale(1, 0),
+    size: udim2FromScale(1, 0),
     color: 'accent',
     textSize: typeScale.caption,
     font: fonts.mono,
@@ -257,7 +267,7 @@ export const appendArticleTitle = (
     theme,
     {
       text: title,
-      size: fk.udim2FromScale(1, 0),
+      size: udim2FromScale(1, 0),
       textSize: typeScale.page,
       weight: 900,
     },
@@ -265,7 +275,7 @@ export const appendArticleTitle = (
   );
   appendFlowText(parent, theme, {
     text: body,
-    size: fk.udim2FromScale(1, 0),
+    size: udim2FromScale(1, 0),
     color: 'textMuted',
     textSize: typeScale.body,
   });
@@ -273,17 +283,17 @@ export const appendArticleTitle = (
 };
 
 export const appendArticleSection = (
-  parent: fk.Frame,
+  parent: Frame,
   theme: ThemeValue,
   title: string,
   body: string,
-): fk.TextLabel => {
+): TextLabel => {
   const heading = appendFlowText(
     parent,
     theme,
     {
       text: title,
-      size: fk.udim2FromScale(1, 0),
+      size: udim2FromScale(1, 0),
       textSize: typeScale.section,
       weight: 850,
     },
@@ -292,7 +302,7 @@ export const appendArticleSection = (
   heading.unsafeElement.style.marginTop = '32px';
   appendFlowText(parent, theme, {
     text: body,
-    size: fk.udim2FromScale(1, 0),
+    size: udim2FromScale(1, 0),
     color: 'textMuted',
     textSize: typeScale.body,
   });
@@ -300,20 +310,20 @@ export const appendArticleSection = (
 };
 
 export const appendCodeBlock = (
-  parent: fk.Frame,
+  parent: Frame,
   theme: ThemeValue,
   name: string,
   lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
 ): void => {
   const block = createSurface(theme, {
     name,
-    size: fk.udim2(1, 0, 0, 32 + lines.length * 22),
+    size: udim2(1, 0, 0, 32 + lines.length * 22),
     background: 'surface',
     radius: 12,
   });
-  const scroll = fk.createScrollingFrame({
+  const scroll = createScrollingFrame({
     Name: `${name}Scroll`,
-    Size: fk.udim2FromScale(1, 1),
+    Size: udim2FromScale(1, 1),
     BackgroundTransparency: 1,
     ScrollingDirection: 'X',
     ScrollBarThickness: 8,
@@ -322,7 +332,7 @@ export const appendCodeBlock = (
   scroll.unsafeElement.setAttribute('aria-label', `${name} code example`);
   bindThemeColors(scroll, theme, (palette) => ({ ScrollBarImageColor3: palette.textFaint }));
   const labels = appendCodeLines(scroll, theme, lines, 16, 22);
-  scroll.CanvasSize = fk.udim2FromOffset(
+  scroll.CanvasSize = udim2FromOffset(
     Math.max(0, ...labels.map((label) => label.Size.X.Offset)) + 40,
     0,
   );
@@ -331,10 +341,10 @@ export const appendCodeBlock = (
   block.Parent = parent;
 };
 
-export const appendCallout = (parent: fk.Frame, theme: ThemeValue, text: string): void => {
+export const appendCallout = (parent: Frame, theme: ThemeValue, text: string): void => {
   const callout = createSurface(theme, {
     name: 'Callout',
-    size: fk.udim2FromScale(1, 0),
+    size: udim2FromScale(1, 0),
     background: 'accentMuted',
     border: 'accentMuted',
     radius: 10,
@@ -342,10 +352,10 @@ export const appendCallout = (parent: fk.Frame, theme: ThemeValue, text: string)
   callout.AutomaticSize = 'Y';
   callout.unsafeElement.style.padding = '14px 16px';
   callout.unsafeElement.style.marginTop = '12px';
-  fk.createUIListLayout().Parent = callout;
+  createUIListLayout().Parent = callout;
   appendFlowText(callout, theme, {
     text,
-    size: fk.udim2FromScale(1, 0),
+    size: udim2FromScale(1, 0),
     color: 'text',
     textSize: typeScale.small,
   });

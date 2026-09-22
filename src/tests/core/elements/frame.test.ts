@@ -1,30 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { color3FromRGB, createFrame, udim2, udim2FromScale, vector2 } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('frames', () => {
   it('uses a creation-only semantic host tag', () => {
-    const defaultFrame = fk.createFrame();
-    const article = fk.createFrame({}, { tagName: 'article' });
+    const defaultFrame = createFrame();
+    const article = createFrame({}, { tagName: 'article' });
 
     expect(defaultFrame.unsafeElement.tagName).toBe('DIV');
     expect(article.unsafeElement.tagName).toBe('ARTICLE');
     expect(article.unsafeElement.style.margin).toBe('0px');
-    expect(() => fk.createFrame({}, { tagName: 'button' } as never)).toThrow(/tagName/);
+    expect(() => createFrame({}, { tagName: 'button' } as never)).toThrow(/tagName/);
   });
 
   it('updates native styles from a property patch', () => {
-    const frame = fk.createFrame();
+    const frame = createFrame();
 
     frame.setProperties({
-      Size: fk.udim2(0.5, -20, 1, -40),
-      Position: fk.udim2FromScale(0.5, 0.25),
-      AnchorPoint: fk.vector2(0.5, 1),
+      Size: udim2(0.5, -20, 1, -40),
+      Position: udim2FromScale(0.5, 0.25),
+      AnchorPoint: vector2(0.5, 1),
       Rotation: 30,
-      BackgroundColor3: fk.color3FromRGB(25, 50, 75),
+      BackgroundColor3: color3FromRGB(25, 50, 75),
       BackgroundTransparency: 0.25,
       Visible: false,
       ZIndex: 8,
@@ -42,7 +42,7 @@ describe('frames', () => {
   });
 
   it('writes only affected CSS and skips unchanged resolved output', () => {
-    const frame = fk.createFrame();
+    const frame = createFrame();
     const setProperty = vi.spyOn(frame.unsafeElement.style, 'setProperty');
 
     frame.Rotation = 15;
@@ -52,18 +52,18 @@ describe('frames', () => {
 
     setProperty.mockClear();
     frame.Name = 'Renamed';
-    frame.BackgroundColor3 = fk.color3FromRGB(200, 200, 200);
+    frame.BackgroundColor3 = color3FromRGB(200, 200, 200);
 
     expect(setProperty).not.toHaveBeenCalled();
   });
 
   it('rejects transparency outside its documented range', () => {
-    expect(() => fk.createFrame({ BackgroundTransparency: -0.1 })).toThrow(/between 0 and 1/);
-    expect(() => fk.createFrame({ BackgroundTransparency: 1.1 })).toThrow(/between 0 and 1/);
+    expect(() => createFrame({ BackgroundTransparency: -0.1 })).toThrow(/between 0 and 1/);
+    expect(() => createFrame({ BackgroundTransparency: 1.1 })).toThrow(/between 0 and 1/);
   });
 
   it('renders automatic sizing and descendant clipping', () => {
-    const frame = fk.createFrame({ AutomaticSize: 'X', ClipsDescendants: true });
+    const frame = createFrame({ AutomaticSize: 'X', ClipsDescendants: true });
 
     expect(frame.unsafeElement.style.width).toBe('auto');
     expect(frame.unsafeElement.style.height).toBe('100px');

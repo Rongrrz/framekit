@@ -1,19 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
 import { createDefaultGuiObjectProperties, createGuiObjectNode } from '../../../core/gui-object.js';
-import { fk } from '../../../index.js';
+import {
+  color3FromRGB,
+  colorSequence,
+  createFrame,
+  createTextLabel,
+  createUIGradient,
+  numberSequence,
+  vector2,
+} from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('gradients', () => {
   it('applies color and transparency sequences through UIGradient', () => {
-    const frame = fk.createFrame({ BackgroundColor3: fk.color3FromRGB(255, 255, 255) });
-    const gradient = fk.createUIGradient({
-      Color: fk.colorSequence(fk.color3FromRGB(255, 0, 0), fk.color3FromRGB(0, 0, 255)),
-      Transparency: fk.numberSequence(0, 0.5),
+    const frame = createFrame({ BackgroundColor3: color3FromRGB(255, 255, 255) });
+    const gradient = createUIGradient({
+      Color: colorSequence(color3FromRGB(255, 0, 0), color3FromRGB(0, 0, 255)),
+      Transparency: numberSequence(0, 0.5),
       Rotation: 0,
-      Offset: fk.vector2(0.1, 0),
+      Offset: vector2(0.1, 0),
     });
 
     gradient.Parent = frame;
@@ -29,14 +37,14 @@ describe('gradients', () => {
   });
 
   it('applies a UIGradient to text without reaching into its rendered span', () => {
-    const label = fk.createTextLabel({
-      BackgroundColor3: fk.color3FromRGB(20, 30, 40),
+    const label = createTextLabel({
+      BackgroundColor3: color3FromRGB(20, 30, 40),
       Text: 'FrameKit',
-      TextColor3: fk.color3FromRGB(255, 255, 255),
+      TextColor3: color3FromRGB(255, 255, 255),
     });
-    const gradient = fk.createUIGradient({
+    const gradient = createUIGradient({
       ApplyTo: 'Text',
-      Color: fk.colorSequence(fk.color3FromRGB(255, 0, 0), fk.color3FromRGB(0, 0, 255)),
+      Color: colorSequence(color3FromRGB(255, 0, 0), color3FromRGB(0, 0, 255)),
     });
 
     gradient.Parent = label;
@@ -64,8 +72,8 @@ describe('gradients', () => {
   });
 
   it('rejects a text UIGradient on a non-text parent without changing either tree', () => {
-    const frame = fk.createFrame();
-    const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
+    const frame = createFrame();
+    const gradient = createUIGradient({ ApplyTo: 'Text' });
 
     expect(() => (gradient.Parent = frame)).toThrow(/TextLabel or TextButton/);
     expect(gradient.Parent).toBeUndefined();
@@ -79,14 +87,14 @@ describe('gradients', () => {
       defaultProperties: { ...createDefaultGuiObjectProperties(), Text: 'not a text renderer' },
       initialProperties: {},
     });
-    const gradient = fk.createUIGradient({ ApplyTo: 'Text' });
+    const gradient = createUIGradient({ ApplyTo: 'Text' });
 
     expect(() => (gradient.Parent = textLikeNode)).toThrow(/TextLabel or TextButton/);
     expect(gradient.Parent).toBeUndefined();
   });
 
   it('rejects transparency sequence values outside the normalized range', () => {
-    expect(() => fk.createUIGradient({ Transparency: fk.numberSequence(0, 1.1) })).toThrow(
+    expect(() => createUIGradient({ Transparency: numberSequence(0, 1.1) })).toThrow(
       /between 0 and 1/,
     );
   });

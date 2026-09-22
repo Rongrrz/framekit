@@ -1,17 +1,17 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-import { fk, fkh } from '../../index.js';
+import { bindResponsiveLayout, createFrame } from '../../index.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('responsive layouts', () => {
   it('switches responsive layouts only when the breakpoint is crossed', () => {
-    const owner = fk.createFrame();
+    const owner = createFrame();
     const mobile = vi.fn();
     const desktop = vi.fn();
 
     vi.stubGlobal('innerWidth', 640);
-    fkh.bindResponsiveLayout(owner, {
+    bindResponsiveLayout(owner, {
       breakpoint: 700,
       mobile,
       desktop,
@@ -45,12 +45,12 @@ describe('responsive layouts', () => {
     const iframe = document.body.appendChild(document.createElement('iframe'));
     const ownerDocument = iframe.contentDocument!;
     const ownerWindow = ownerDocument.defaultView!;
-    const owner = fk.createFrame({}, { ownerDocument });
+    const owner = createFrame({}, { ownerDocument });
     const mobile = vi.fn();
     const desktop = vi.fn();
     vi.stubGlobal('innerWidth', 1200);
     Object.defineProperty(ownerWindow, 'innerWidth', { configurable: true, value: 400 });
-    fkh.bindResponsiveLayout(owner, { breakpoint: 700, mobile, desktop });
+    bindResponsiveLayout(owner, { breakpoint: 700, mobile, desktop });
     expect(mobile).toHaveBeenCalledOnce();
     expect(desktop).not.toHaveBeenCalled();
     Object.defineProperty(ownerWindow, 'innerWidth', { configurable: true, value: 700 });
@@ -61,14 +61,14 @@ describe('responsive layouts', () => {
   });
 
   it('rejects destroyed responsive owners before applying a layout', () => {
-    const owner = fk.createFrame();
+    const owner = createFrame();
     const mobile = vi.fn();
     const desktop = vi.fn();
 
     owner.destroy();
 
     expect(() =>
-      fkh.bindResponsiveLayout(owner, {
+      bindResponsiveLayout(owner, {
         breakpoint: 700,
         mobile,
         desktop,
@@ -79,11 +79,11 @@ describe('responsive layouts', () => {
   });
 
   it('stops responding when explicitly disposed without destroying its owner', () => {
-    const owner = fk.createFrame();
+    const owner = createFrame();
     const mobile = vi.fn();
     const desktop = vi.fn();
     vi.stubGlobal('innerWidth', 640);
-    const dispose = fkh.bindResponsiveLayout(owner, { breakpoint: 700, mobile, desktop });
+    const dispose = bindResponsiveLayout(owner, { breakpoint: 700, mobile, desktop });
 
     dispose();
     dispose();
@@ -97,12 +97,12 @@ describe('responsive layouts', () => {
   });
 
   it('does not retain a resize listener when the initial layout destroys its owner', () => {
-    const owner = fk.createFrame();
+    const owner = createFrame();
     const mobile = vi.fn(() => owner.destroy());
     const desktop = vi.fn();
 
     vi.stubGlobal('innerWidth', 640);
-    fkh.bindResponsiveLayout(owner, {
+    bindResponsiveLayout(owner, {
       breakpoint: 700,
       mobile,
       desktop,

@@ -52,7 +52,7 @@ beforeAll(() => {
 afterAll(() => rmSync(consumer, { recursive: true, force: true }));
 
 describe('packed package consumers', () => {
-  it.each(['module', 'commonjs'] as const)('loads the public namespaces through %s', (format) => {
+  it.each(['module', 'commonjs'] as const)('loads named exports through %s', (format) => {
     const load =
       format === 'module'
         ? "const api = await import('framekit');"
@@ -64,20 +64,20 @@ describe('packed package consumers', () => {
         format,
         '-e',
         `${load}
-      const value = api.fk.createValue(1);
+      const value = api.createValue(1);
       value.set(2);
       console.log(JSON.stringify({
-        exports: Object.keys(api).sort(),
-        frame: typeof api.fk.createFrame,
-        spring: typeof api.fka.spring,
-        hover: typeof api.fkh.bindHoverScale,
+        namespaces: ['fk', 'fka', 'fkh'].filter((name) => name in api),
+        frame: typeof api.createFrame,
+        spring: typeof api.spring,
+        hover: typeof api.bindHoverScale,
         value: value.get(),
       }));`,
       ],
       { cwd: consumer, encoding: 'utf8' },
     );
     expect(JSON.parse(output)).toEqual({
-      exports: ['fk', 'fka', 'fkh'],
+      namespaces: [],
       frame: 'function',
       spring: 'function',
       hover: 'function',

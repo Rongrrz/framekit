@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createValue } from '../../../index.js';
 
 describe('values', () => {
   it('provides the current value and publishes distinct changes', () => {
-    const count = fk.createValue(1);
+    const count = createValue(1);
     const listener = vi.fn();
     const unsubscribe = count.onChange(listener);
 
@@ -24,7 +24,7 @@ describe('values', () => {
   it('stores function values without confusing them with updater functions', () => {
     const first = () => 1;
     const second = () => 2;
-    const value = fk.createValue(first);
+    const value = createValue(first);
 
     value.set(second);
 
@@ -32,7 +32,7 @@ describe('values', () => {
   });
 
   it('uses Object.is equality, including NaN and signed zero', () => {
-    const value = fk.createValue(Number.NaN);
+    const value = createValue(Number.NaN);
     const listener = vi.fn();
     value.onChange(listener);
     value.set(Number.NaN);
@@ -44,7 +44,7 @@ describe('values', () => {
   });
 
   it('reports observer failures without changing a successful update', () => {
-    const value = fk.createValue(1);
+    const value = createValue(1);
     const reportError = vi.fn();
 
     vi.stubGlobal('reportError', reportError);
@@ -62,7 +62,7 @@ describe('values', () => {
   });
 
   it('leaves state unchanged when an updater throws', () => {
-    const value = fk.createValue(1);
+    const value = createValue(1);
     const listener = vi.fn();
     value.onChange(listener);
     expect(() =>

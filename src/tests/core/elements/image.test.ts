@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createImageLabel } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('images', () => {
   it('uses a creation-only semantic wrapper tag', () => {
-    const figure = fk.createImageLabel({}, { tagName: 'figure' });
+    const figure = createImageLabel({}, { tagName: 'figure' });
 
     expect(figure.unsafeElement.tagName).toBe('FIGURE');
     expect(figure.unsafeElement.querySelector('img')).not.toBeNull();
-    expect(() => fk.createImageLabel({}, { tagName: 'picture' } as never)).toThrow(/tagName/);
+    expect(() => createImageLabel({}, { tagName: 'picture' } as never)).toThrow(/tagName/);
   });
 
   it('maps image properties to a native image element', () => {
-    const image = fk.createImageLabel({
+    const image = createImageLabel({
       Image: '/item.png',
       AltText: 'Item',
       ScaleType: 'Crop',
@@ -30,7 +30,7 @@ describe('images', () => {
   });
 
   it('removes the native URL when an image source is cleared', () => {
-    const image = fk.createImageLabel({ Image: '/item.png' });
+    const image = createImageLabel({ Image: '/item.png' });
 
     image.setProperties({ Image: '' });
 
@@ -42,9 +42,9 @@ describe('images', () => {
     ' JaVaScRiPt:alert(1)',
     'data:text/html,<script>alert(1)</script>',
   ])('rejects unsafe image source %s without corrupting the previous source', (source) => {
-    expect(() => fk.createImageLabel({ Image: source })).toThrow(/Unsupported image URL protocol/);
+    expect(() => createImageLabel({ Image: source })).toThrow(/Unsupported image URL protocol/);
 
-    const image = fk.createImageLabel({ Image: '/safe.png' });
+    const image = createImageLabel({ Image: '/safe.png' });
 
     expect(() => image.setProperties({ Image: source })).toThrow(/Unsupported image URL protocol/);
     expect(image.Image).toBe('/safe.png');
@@ -56,7 +56,7 @@ describe('images', () => {
     'blob:https://example.com/image',
     'data:image/png;base64,iVBORw0KGgo=',
   ])('accepts supported image source %s', (source) => {
-    const image = fk.createImageLabel({ Image: source });
+    const image = createImageLabel({ Image: source });
     expect(image.unsafeElement.querySelector('img')?.getAttribute('src')).toBe(source);
     image.destroy();
   });

@@ -1,10 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fk, fkh } from '../../index.js';
+import {
+  createFrame,
+  createScreenGui,
+  createTextButton,
+  type FloatingPanelContext,
+  type Instance,
+  type PopoverOptions,
+  type ScreenGui,
+  udim2FromOffset,
+  vector2,
+  withPopover,
+  withToolTip,
+} from '../../index.js';
 import { setupAnimationClock } from '../support/animation-clock.js';
 
 const clock = setupAnimationClock();
-const owners = new Set<fk.Instance>();
+const owners = new Set<Instance>();
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.stubGlobal('innerWidth', 800);
@@ -47,28 +59,28 @@ const deferred = (): Readonly<{
   return { promise, resolve, reject };
 };
 const fixture = () => {
-  const root = fk.createScreenGui();
+  const root = createScreenGui();
   root.mount(document.body);
   owners.add(root);
-  const target = fk.createTextButton({ Text: 'Actions' });
+  const target = createTextButton({ Text: 'Actions' });
   target.Parent = root;
   vi.spyOn(target.unsafeElement, 'getBoundingClientRect').mockReturnValue(
     new DOMRect(200, 200, 100, 40),
   );
-  const panel = fk.createFrame({ Size: fk.udim2FromOffset(160, 100), Visible: false });
+  const panel = createFrame({ Size: udim2FromOffset(160, 100), Visible: false });
   owners.add(panel);
   vi.spyOn(panel.unsafeElement, 'getBoundingClientRect').mockImplementation(
     () => new DOMRect(panel.Position.X.Offset, panel.Position.Y.Offset, 160, 100),
   );
-  const first = fk.createTextButton({ Text: 'Copy' });
+  const first = createTextButton({ Text: 'Copy' });
   first.Parent = panel;
-  const last = fk.createTextButton({ Text: 'Export' });
+  const last = createTextButton({ Text: 'Export' });
   last.Parent = panel;
-  const outside = fk.createTextButton({ Text: 'Outside' });
+  const outside = createTextButton({ Text: 'Outside' });
   outside.Parent = root;
-  const bind = (options: fkh.PopoverOptions = {}) => {
-    const dispose = fkh.withPopover(target, panel, options);
-    const layer = panel.Parent as fk.ScreenGui;
+  const bind = (options: PopoverOptions = {}) => {
+    const dispose = withPopover(target, panel, options);
+    const layer = panel.Parent as ScreenGui;
     return { dispose, layer };
   };
   return { root, target, panel, first, last, outside, bind };
@@ -85,7 +97,7 @@ describe('popovers', () => {
     expect(layer.Enabled).toBe(false);
     vi.advanceTimersByTime(1);
     expect(layer.Enabled).toBe(true);
-    expect(panel.Position).toEqual(fk.udim2FromOffset(170, 252));
+    expect(panel.Position).toEqual(udim2FromOffset(170, 252));
     expect(target.unsafeElement.getAttribute('aria-expanded')).toBe('true');
     expect(target.unsafeElement.getAttribute('aria-controls')).toBe(panel.unsafeElement.id);
     expect(panel.unsafeElement.getAttribute('role')).toBe('group');
@@ -200,7 +212,7 @@ describe('popovers', () => {
   it('restores caller-owned content and accessibility attributes on disposal', () => {
     const { target, panel, bind } = fixture();
     const position = panel.Position,
-      anchor = fk.vector2(0.5, 0.5);
+      anchor = vector2(0.5, 0.5);
     panel.AnchorPoint = anchor;
     panel.unsafeElement.id = 'actions-panel';
     panel.unsafeElement.setAttribute('role', 'region');
@@ -234,12 +246,12 @@ describe('popovers', () => {
 
   it('validates interactive content and options before changing caller-owned state', () => {
     const { target, panel } = fixture();
-    expect(() => fkh.withToolTip(target, panel)).toThrow(/non-interactive/);
-    expect(() => fkh.withPopover(target, panel, { delay: -1 })).toThrow(/delay/);
+    expect(() => withToolTip(target, panel)).toThrow(/non-interactive/);
+    expect(() => withPopover(target, panel, { delay: -1 })).toThrow(/delay/);
     const other = document.implementation.createHTMLDocument();
-    const foreign = fk.createFrame({}, { ownerDocument: other });
+    const foreign = createFrame({}, { ownerDocument: other });
     owners.add(foreign);
-    expect(() => fkh.withPopover(target, foreign)).toThrow(/target document/);
+    expect(() => withPopover(target, foreign)).toThrow(/target document/);
     expect(panel.Parent).toBeUndefined();
     expect(panel.Visible).toBe(false);
   });
@@ -292,24 +304,24 @@ describe('floating panel transitions', () => {
       const hide = deferred();
       let showSignal!: AbortSignal;
       let hideSignal!: AbortSignal;
-      const onShow = vi.fn(({ content, signal }: fkh.FloatingPanelContext) => {
+      const onShow = vi.fn(({ content, signal }: FloatingPanelContext) => {
         expect(content).toBe(panel);
-        expect((panel.Parent as fk.ScreenGui).Enabled).toBe(true);
+        expect((panel.Parent as ScreenGui).Enabled).toBe(true);
         showSignal = signal;
       });
-      const onHide = vi.fn(({ signal }: fkh.FloatingPanelContext) => {
+      const onHide = vi.fn(({ signal }: FloatingPanelContext) => {
         hideSignal = signal;
         return hide.promise;
       });
       if (kind === 'tooltip') {
         panel.getChildren().forEach((child) => child.destroy());
-        fkh.withToolTip(target, panel, { followCursor: true, delay: 0, onShow, onHide });
+        withToolTip(target, panel, { followCursor: true, delay: 0, onShow, onHide });
         pointer(target.unsafeElement, 'pointerenter');
       } else {
-        fkh.withPopover(target, panel, { onShow, onHide });
+        withPopover(target, panel, { onShow, onHide });
         target.unsafeElement.click();
       }
-      const layer = panel.Parent as fk.ScreenGui;
+      const layer = panel.Parent as ScreenGui;
       expect(onShow).toHaveBeenCalledOnce();
       if (kind === 'tooltip') pointer(target.unsafeElement, 'pointerleave');
       else target.unsafeElement.click();
@@ -329,7 +341,7 @@ describe('floating panel transitions', () => {
     const hidden = deferred();
     let signal!: AbortSignal;
     const onShow = vi.fn();
-    const onHide = vi.fn((context: fkh.FloatingPanelContext) => {
+    const onHide = vi.fn((context: FloatingPanelContext) => {
       signal = context.signal;
       return hidden.promise;
     });
@@ -373,7 +385,7 @@ describe('floating panel transitions', () => {
 
   it('restores visibility before reopening when a hide hook changed it', () => {
     const { target, panel, bind } = fixture();
-    const onShow = vi.fn(({ content }: fkh.FloatingPanelContext) => {
+    const onShow = vi.fn(({ content }: FloatingPanelContext) => {
       expect(content.Visible).toBe(true);
     });
     bind({

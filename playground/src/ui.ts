@@ -1,4 +1,19 @@
-import { fk } from 'framekit';
+import {
+  type Color3,
+  createFrame,
+  createTextButton,
+  createTextLabel,
+  createUICorner,
+  createUIStroke,
+  type Frame,
+  type GuiElement,
+  type TextButton,
+  type TextLabel,
+  type TextXAlignment,
+  type TextYAlignment,
+  type UDim2,
+  udim2FromOffset,
+} from 'framekit';
 
 import {
   bindThemeColors,
@@ -11,14 +26,14 @@ import {
 
 type TextOptions = Readonly<{
   text: string;
-  size: fk.UDim2;
-  position?: fk.UDim2;
-  color?: ThemeToken | fk.Color3;
+  size: UDim2;
+  position?: UDim2;
+  color?: ThemeToken | Color3;
   textSize?: number;
   scaled?: boolean;
   weight?: string | number;
-  xAlignment?: fk.TextXAlignment;
-  yAlignment?: fk.TextYAlignment;
+  xAlignment?: TextXAlignment;
+  yAlignment?: TextYAlignment;
   wrapped?: boolean;
   font?: string;
   name?: string;
@@ -26,8 +41,8 @@ type TextOptions = Readonly<{
 
 type ButtonOptions = Readonly<{
   label: string;
-  size: fk.UDim2;
-  position: fk.UDim2;
+  size: UDim2;
+  position: UDim2;
   background?: ThemeToken;
   foreground?: ThemeToken;
   name?: string;
@@ -38,21 +53,21 @@ type ButtonOptions = Readonly<{
 
 type SurfaceOptions = Readonly<{
   name: string;
-  size?: fk.UDim2;
-  position?: fk.UDim2;
+  size?: UDim2;
+  position?: UDim2;
   background?: ThemeToken;
   border?: ThemeToken;
   radius?: number;
   clipsDescendants?: boolean;
 }>;
 
-export const createText = (theme: ThemeValue, options: TextOptions): fk.TextLabel => {
+export const createText = (theme: ThemeValue, options: TextOptions): TextLabel => {
   const color = options.color ?? 'text';
   const usesThemeColor = typeof color === 'string';
-  const label = fk.createTextLabel({
+  const label = createTextLabel({
     Name: options.name ?? 'Text',
     Size: options.size,
-    Position: options.position ?? fk.udim2FromOffset(0, 0),
+    Position: options.position ?? udim2FromOffset(0, 0),
     BackgroundTransparency: 1,
     Text: options.text,
     TextColor3: usesThemeColor ? themeColor(theme, color) : color,
@@ -72,20 +87,20 @@ export const createText = (theme: ThemeValue, options: TextOptions): fk.TextLabe
 
 export const addRoundedBorder = (
   theme: ThemeValue,
-  instance: fk.GuiElement,
+  instance: GuiElement,
   radius: number,
   strokeColor: ThemeToken = 'border',
   thickness = 1,
 ): void => {
-  fk.createUICorner({ CornerRadius: radius }).Parent = instance;
-  const stroke = fk.createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
+  createUICorner({ CornerRadius: radius }).Parent = instance;
+  const stroke = createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
   bindThemeColors(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
   stroke.Parent = instance;
 };
 
-export const createSurface = (theme: ThemeValue, options: SurfaceOptions): fk.Frame => {
+export const createSurface = (theme: ThemeValue, options: SurfaceOptions): Frame => {
   const background = options.background ?? 'surface';
-  const frame = fk.createFrame({
+  const frame = createFrame({
     Name: options.name,
     ...(options.size ? { Size: options.size } : {}),
     ...(options.position ? { Position: options.position } : {}),
@@ -97,10 +112,10 @@ export const createSurface = (theme: ThemeValue, options: SurfaceOptions): fk.Fr
   return frame;
 };
 
-export const createButton = (theme: ThemeValue, options: ButtonOptions): fk.TextButton => {
+export const createButton = (theme: ThemeValue, options: ButtonOptions): TextButton => {
   const background = options.background ?? 'surfaceRaised';
   const foreground = options.foreground ?? 'text';
-  const button = fk.createTextButton({
+  const button = createTextButton({
     Name: options.name ?? `${options.label.replaceAll(/\s+/g, '')}Button`,
     Size: options.size,
     Position: options.position,
@@ -123,10 +138,10 @@ export const createButton = (theme: ThemeValue, options: ButtonOptions): fk.Text
 export const createPill = (
   theme: ThemeValue,
   label: string,
-  size: fk.UDim2,
-  position: fk.UDim2,
+  size: UDim2,
+  position: UDim2,
   color: ThemeToken = 'accent',
-): fk.TextLabel => {
+): TextLabel => {
   const pill = createText(theme, {
     text: label,
     size,
@@ -145,12 +160,12 @@ export const createPill = (
 };
 
 export const appendCodeLines = (
-  parent: fk.GuiElement,
+  parent: GuiElement,
   theme: ThemeValue,
   lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
   startY: number,
   lineHeight = 28,
-): readonly fk.TextLabel[] => {
+): readonly TextLabel[] => {
   const context = parent.unsafeElement.ownerDocument.createElement('canvas').getContext('2d');
   if (context) context.font = `500 ${typeScale.code}px ${fonts.mono}`;
   // Intrinsic line widths let a scrolling parent expose the entire example.
@@ -165,8 +180,8 @@ export const appendCodeLines = (
   return lines.map((line, index) => {
     const label = createText(theme, {
       text: line.text,
-      size: fk.udim2FromOffset(width, lineHeight),
-      position: fk.udim2FromOffset(20, startY + index * lineHeight),
+      size: udim2FromOffset(width, lineHeight),
+      position: udim2FromOffset(20, startY + index * lineHeight),
       color: line.color ?? 'textMuted',
       textSize: typeScale.code,
       font: fonts.mono,

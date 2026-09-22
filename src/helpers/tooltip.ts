@@ -57,7 +57,7 @@ export type ToolTipOptions = Readonly<{
  * Escape dismisses until hover/focus ends. Use withPopover for interactive content.
  *
  * @example
- * const dispose = fkh.withToolTip(button, 'Save', { followCursor: true });
+ * const dispose = withToolTip(button, 'Save', { followCursor: true });
  */
 export const withToolTip = (
   target: GuiElement,

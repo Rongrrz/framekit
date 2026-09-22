@@ -1,20 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
-import { fk } from '../../../index.js';
+import {
+  createFrame,
+  createTextButton,
+  createUIListLayout,
+  createUIScale,
+  udim,
+  udim2FromOffset,
+} from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('UI list layouts', () => {
   it('preserves independent parent and child layouts through updates and detachment', () => {
-    const article = fk.createFrame();
-    const row = fk.createFrame({ Position: fk.udim2FromOffset(20, 30) });
-    const outer = fk.createUIListLayout({ Padding: fk.udim(0, 12) });
-    const inner = fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(0, 16) });
+    const article = createFrame();
+    const row = createFrame({ Position: udim2FromOffset(20, 30) });
+    const outer = createUIListLayout({ Padding: udim(0, 12) });
+    const inner = createUIListLayout({ FillDirection: 'Horizontal', Padding: udim(0, 16) });
     outer.Parent = article;
     inner.Parent = row;
     row.Parent = article;
-    const button = fk.createTextButton();
+    const button = createTextButton();
     button.Parent = row;
 
     expect(row.unsafeElement.style.position).toBe('relative');
@@ -24,7 +31,7 @@ describe('UI list layouts', () => {
     inner.FillDirection = 'Vertical';
     expect(row.unsafeElement.style.position).toBe('relative');
     expect(row.unsafeElement.style.flexDirection).toBe('column');
-    outer.Padding = fk.udim(0, 24);
+    outer.Padding = udim(0, 24);
     expect(row.unsafeElement.style.display).toBe('flex');
     expect(row.unsafeElement.style.gap).toBe('16px');
 
@@ -42,14 +49,14 @@ describe('UI list layouts', () => {
   });
 
   it('lays out direct GUI children and restores their positioning when detached', () => {
-    const frame = fk.createFrame();
-    const first = fk.createFrame({
+    const frame = createFrame();
+    const first = createFrame({
       Name: 'First',
-      Position: fk.udim2FromOffset(10, 20),
+      Position: udim2FromOffset(10, 20),
       LayoutOrder: 2,
     });
-    const second = fk.createFrame({ Name: 'Second', LayoutOrder: 1 });
-    const layout = fk.createUIListLayout({ Padding: fk.udim(0, 8) });
+    const second = createFrame({ Name: 'Second', LayoutOrder: 1 });
+    const layout = createUIListLayout({ Padding: udim(0, 8) });
 
     first.Parent = frame;
     second.Parent = frame;
@@ -63,7 +70,7 @@ describe('UI list layouts', () => {
     expect(first.unsafeElement.style.order).toBe('1');
     expect(second.unsafeElement.style.order).toBe('0');
 
-    first.setProperties({ Position: fk.udim2FromOffset(25, 30), LayoutOrder: 0 });
+    first.setProperties({ Position: udim2FromOffset(25, 30), LayoutOrder: 0 });
 
     expect(first.unsafeElement.style.left).toBe('auto');
     expect(first.unsafeElement.style.order).toBe('0');
@@ -78,10 +85,10 @@ describe('UI list layouts', () => {
   });
 
   it('updates direction, alignment, wrapping, and name sorting', () => {
-    const frame = fk.createFrame({ Visible: false });
-    const zebra = fk.createFrame({ Name: 'Zebra' });
-    const alpha = fk.createFrame({ Name: 'Alpha' });
-    const layout = fk.createUIListLayout({ SortOrder: 'Name' });
+    const frame = createFrame({ Visible: false });
+    const zebra = createFrame({ Name: 'Zebra' });
+    const alpha = createFrame({ Name: 'Alpha' });
+    const layout = createUIListLayout({ SortOrder: 'Name' });
 
     zebra.Parent = frame;
     alpha.Parent = frame;
@@ -113,13 +120,13 @@ describe('UI list layouts', () => {
   });
 
   it('preserves layout positioning when a child modifier updates', () => {
-    const container = fk.createFrame();
-    const child = fk.createFrame({ Position: fk.udim2FromOffset(40, 50) });
-    const scale = fk.createUIScale();
+    const container = createFrame();
+    const child = createFrame({ Position: udim2FromOffset(40, 50) });
+    const scale = createUIScale();
 
     scale.Parent = child;
     child.Parent = container;
-    fk.createUIListLayout().Parent = container;
+    createUIListLayout().Parent = container;
 
     expect(child.unsafeElement.style.position).toBe('relative');
     expect(child.unsafeElement.style.left).toBe('auto');

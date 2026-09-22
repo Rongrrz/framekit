@@ -1,25 +1,33 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createStyleModifier } from '../../../core/node/modifier.js';
-import { fk } from '../../../index.js';
+import {
+  createFrame,
+  createTextLabel,
+  createUICorner,
+  createUIScale,
+  createUIShadow,
+  createUIStroke,
+  createUITextStroke,
+} from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('modifier attachment and validation', () => {
   it('rejects invalid parent node roles', () => {
-    const parentModifier = fk.createUICorner();
-    const corner = fk.createUICorner({ CornerRadius: 8 });
+    const parentModifier = createUICorner();
+    const corner = createUICorner({ CornerRadius: 8 });
 
     expect(() => (corner.Parent = parentModifier)).toThrow(/cannot contain child nodes/);
     expect(corner.Parent).toBeUndefined();
-    expect(() => (fk.createFrame().Parent = corner)).toThrow(/cannot contain child nodes/);
+    expect(() => (createFrame().Parent = corner)).toThrow(/cannot contain child nodes/);
   });
 
   it('allows only one modifier of each kind per parent', () => {
-    const frame = fk.createTextLabel();
-    const firstCorner = fk.createUICorner({ CornerRadius: 4 });
-    const secondCorner = fk.createUICorner({ CornerRadius: 8 });
+    const frame = createTextLabel();
+    const firstCorner = createUICorner({ CornerRadius: 4 });
+    const secondCorner = createUICorner({ CornerRadius: 8 });
 
     firstCorner.Parent = frame;
 
@@ -32,7 +40,7 @@ describe('modifier attachment and validation', () => {
 
     expect(frame.unsafeElement.style.borderRadius).toBe('8px');
 
-    const otherFrame = fk.createTextLabel();
+    const otherFrame = createTextLabel();
 
     firstCorner.Parent = otherFrame;
 
@@ -48,9 +56,9 @@ describe('modifier attachment and validation', () => {
   });
 
   it('recomputes both parents when a modifier is moved', () => {
-    const first = fk.createTextLabel();
-    const second = fk.createTextLabel();
-    const corner = fk.createUICorner({ CornerRadius: 10 });
+    const first = createTextLabel();
+    const second = createTextLabel();
+    const corner = createUICorner({ CornerRadius: 10 });
 
     corner.Parent = first;
 
@@ -63,7 +71,7 @@ describe('modifier attachment and validation', () => {
   });
 
   it('rolls back a failed modifier append without corrupting its target', () => {
-    const frame = fk.createFrame({ Name: 'RejectedTarget' });
+    const frame = createFrame({ Name: 'RejectedTarget' });
     const render = vi.fn(() => ({}));
     const rejected = createStyleModifier(
       'Rejected',
@@ -79,7 +87,7 @@ describe('modifier attachment and validation', () => {
     expect(rejected.Parent).toBeUndefined();
     expect(render).not.toHaveBeenCalled();
 
-    const corner = fk.createUICorner({ CornerRadius: 6 });
+    const corner = createUICorner({ CornerRadius: 6 });
 
     corner.Parent = frame;
 
@@ -87,8 +95,8 @@ describe('modifier attachment and validation', () => {
   });
 
   it('restores an attachment when detached rendering fails', () => {
-    const frame = fk.createFrame();
-    const corner = fk.createUICorner({ CornerRadius: 6 });
+    const frame = createFrame();
+    const corner = createUICorner({ CornerRadius: 6 });
     let renderMustFail = false;
     const failing = createStyleModifier('Failing', { Name: 'Failing' }, () => {
       if (renderMustFail) throw new Error('derived render failed');
@@ -105,20 +113,20 @@ describe('modifier attachment and validation', () => {
   });
 
   it('rejects non-finite modifier properties at construction', () => {
-    expect(() => fk.createUIStroke({ Thickness: Number.NaN })).toThrow(/Thickness.*finite/);
-    expect(() => fk.createUICorner({ CornerRadius: Number.POSITIVE_INFINITY })).toThrow(
+    expect(() => createUIStroke({ Thickness: Number.NaN })).toThrow(/Thickness.*finite/);
+    expect(() => createUICorner({ CornerRadius: Number.POSITIVE_INFINITY })).toThrow(
       /CornerRadius.*finite/,
     );
   });
 
   it('validates domain-specific modifier values while detached', () => {
-    expect(() => fk.createUIScale({ Scale: -1 })).toThrow(/non-negative finite/);
-    expect(() => fk.createUICorner({ CornerRadius: -1 })).toThrow(/non-negative finite/);
-    expect(() => fk.createUIStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
-    expect(() => fk.createUIShadow({ Transparency: 1.1 })).toThrow(/between 0 and 1/);
-    expect(() => fk.createUITextStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
+    expect(() => createUIScale({ Scale: -1 })).toThrow(/non-negative finite/);
+    expect(() => createUICorner({ CornerRadius: -1 })).toThrow(/non-negative finite/);
+    expect(() => createUIStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
+    expect(() => createUIShadow({ Transparency: 1.1 })).toThrow(/between 0 and 1/);
+    expect(() => createUITextStroke({ Thickness: -1 })).toThrow(/non-negative finite/);
 
-    const scale = fk.createUIScale();
+    const scale = createUIScale();
 
     expect(() => scale.setProperties({ Scale: -1 })).toThrow(/non-negative finite/);
     expect(scale.Scale).toBe(1);

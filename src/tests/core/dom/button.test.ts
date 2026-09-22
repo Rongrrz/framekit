@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../../index.js';
+import { createFrame, createImageButton, createTextButton } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('buttons', () => {
   it('uses a semantic button, typed events, and lifecycle cleanup', () => {
-    const button = fk.createTextButton();
+    const button = createTextButton();
     const callback = vi.fn();
     const unsubscribe = button.onClick(callback);
 
@@ -42,7 +42,7 @@ describe('buttons', () => {
   });
 
   it('allows automatic hover and pressed feedback to be disabled', () => {
-    const button = fk.createTextButton({ AutoButtonColor: false });
+    const button = createTextButton({ AutoButtonColor: false });
 
     expect(button.unsafeElement.hasAttribute('data-framekit-auto-button-color')).toBe(false);
 
@@ -55,8 +55,8 @@ describe('buttons', () => {
   });
 
   it.each([
-    ['text', fk.createTextButton],
-    ['image', fk.createImageButton],
+    ['text', createTextButton],
+    ['image', createImageButton],
   ] as const)('suppresses all %s button press events while disabled', (_, createButton) => {
     const button = createButton({ Disabled: true });
     const callback = vi.fn();
@@ -97,7 +97,7 @@ describe('buttons', () => {
   });
 
   it('keeps its accessible label synchronized through a typed property', () => {
-    const button = fk.createTextButton({ AccessibleLabel: 'Open settings' });
+    const button = createTextButton({ AccessibleLabel: 'Open settings' });
 
     expect(button.unsafeElement.getAttribute('aria-label')).toBe('Open settings');
 
@@ -112,7 +112,7 @@ describe('buttons', () => {
   });
 
   it('exposes primary and secondary button events as discoverable methods', () => {
-    const button = fk.createTextButton();
+    const button = createTextButton();
     const primaryDown = vi.fn();
     const primaryUp = vi.fn();
     const secondaryDown = vi.fn();
@@ -137,19 +137,19 @@ describe('buttons', () => {
   });
 
   it('preserves native context menus and rejects nested GUI children', () => {
-    const textButton = fk.createTextButton();
-    const imageButton = fk.createImageButton();
+    const textButton = createTextButton();
+    const imageButton = createImageButton();
     const contextMenu = new MouseEvent('contextmenu', { cancelable: true });
 
     textButton.unsafeElement.dispatchEvent(contextMenu);
 
     expect(contextMenu.defaultPrevented).toBe(false);
-    expect(() => (fk.createFrame().Parent = textButton)).toThrow(/cannot contain GUI children/);
-    expect(() => (fk.createFrame().Parent = imageButton)).toThrow(/cannot contain GUI children/);
+    expect(() => (createFrame().Parent = textButton)).toThrow(/cannot contain GUI children/);
+    expect(() => (createFrame().Parent = imageButton)).toThrow(/cannot contain GUI children/);
   });
 
   it('only emits a secondary click for a press and release without leaving the button', () => {
-    const button = fk.createTextButton();
+    const button = createTextButton();
     const clicked = vi.fn();
     button.onSecondaryClick(clicked);
     button.unsafeElement.dispatchEvent(new MouseEvent('mouseup', { button: 2 }));

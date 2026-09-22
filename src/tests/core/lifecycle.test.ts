@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk } from '../../index.js';
+import { createFrame } from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('DOM cleanup', () => {
   it('removes an owned DOM subtree once while cleaning externally moved descendants', () => {
-    const root = fk.createFrame();
-    const nested = fk.createFrame();
-    const moved = fk.createFrame();
+    const root = createFrame();
+    const nested = createFrame();
+    const moved = createFrame();
     const nestedRemove = vi.spyOn(nested.unsafeElement, 'remove');
     const movedRemove = vi.spyOn(moved.unsafeElement, 'remove');
 
@@ -29,8 +29,8 @@ describe('DOM cleanup', () => {
 
 describe('resource cleanup', () => {
   it('reports every cleanup failure after destroying the complete subtree', () => {
-    const root = fk.createFrame();
-    const child = fk.createFrame();
+    const root = createFrame();
+    const child = createFrame();
     const childFailure = new Error('child cleanup failed');
     const rootFailure = new Error('root cleanup failed');
     const finalCleanup = vi.fn();
@@ -58,9 +58,9 @@ describe('resource cleanup', () => {
   });
 
   it('finishes destroying a subtree when one cleanup fails', () => {
-    const root = fk.createFrame({ Name: 'Root' });
-    const first = fk.createFrame({ Name: 'First' });
-    const second = fk.createFrame({ Name: 'Second' });
+    const root = createFrame({ Name: 'Root' });
+    const first = createFrame({ Name: 'First' });
+    const second = createFrame({ Name: 'Second' });
     const completedCleanup = vi.fn();
 
     first.Parent = root;
@@ -79,7 +79,7 @@ describe('resource cleanup', () => {
   });
 
   it('allows registered destruction work to be unregistered', () => {
-    const node = fk.createFrame();
+    const node = createFrame();
     const cleanup = vi.fn();
     const unregister = node.onDestroy(cleanup);
 
