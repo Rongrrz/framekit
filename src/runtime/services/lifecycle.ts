@@ -1,4 +1,5 @@
-import { throwCollectedErrors } from '../../internal/errors.js';
+import { throwCollectedErrors } from '#internal/errors.js';
+
 import type { GuiElement } from '../node/gui-node.js';
 import type { Instance } from '../node/instance.js';
 import {

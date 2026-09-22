@@ -1,23 +1,23 @@
-import type { GuiObjectProperties } from '../elements/gui-object.js';
+import type { GuiObjectProperties } from '#elements/gui-object.js';
 import {
   textGradientFillProperty,
   textGradientImageProperty,
-} from '../elements/services/text-gradient.js';
+} from '#elements/services/text-gradient.js';
 import {
   assertAllowedValue,
   assertBoolean,
   assertFiniteNumber,
   assertUnitInterval,
-} from '../internal/validation.js';
-import type { InstanceProperties } from '../runtime/node/instance.js';
+} from '#internal/validation.js';
+import type { InstanceProperties } from '#runtime/node/instance.js';
 import {
   createStyleModifier,
   type ModifierTarget,
   type StyleModifier,
   type Styles,
-} from '../runtime/node/modifier.js';
-import { mergeProperties } from '../runtime/services/properties.js';
-import { color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
+} from '#runtime/node/modifier.js';
+import { mergeProperties } from '#runtime/services/properties.js';
+import { color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
 import {
   assertColorSequence,
   assertNumberSequence,
@@ -25,8 +25,8 @@ import {
   numberSequence,
   type ColorSequence,
   type NumberSequence,
-} from '../values/sequence.js';
-import { assertVector2, vector2, type Vector2 } from '../values/vector2.js';
+} from '#values/sequence.js';
+import { assertVector2, vector2, type Vector2 } from '#values/vector2.js';
 
 /** The visual surface painted by a UIGradient. */
 export type GradientTarget = 'Background' | 'Text';

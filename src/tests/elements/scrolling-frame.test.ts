@@ -1,5 +1,3 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-
 import {
   color3FromRGB,
   createFrame,
@@ -8,7 +6,9 @@ import {
   spring,
   udim2FromOffset,
   vector2,
-} from '../../index.js';
+} from 'framekit';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

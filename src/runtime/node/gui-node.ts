@@ -1,4 +1,5 @@
-import { vector2, type Vector2 } from '../../values/vector2.js';
+import { vector2, type Vector2 } from '#values/vector2.js';
+
 import * as rendering from '../services/rendering.js';
 import { guiEventMethods, type GuiMethodTable, type GuiEventMethods } from './gui-events.js';
 import {

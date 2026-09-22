@@ -1,5 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
 import {
   createFrame,
   createImageButton,
@@ -11,7 +9,9 @@ import {
   createTextButton,
   createTextInput,
   createTextLabel,
-} from '../../index.js';
+} from 'framekit';
+import { describe, expect, it } from 'vitest';
+
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

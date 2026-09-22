@@ -1,6 +1,6 @@
+import { createFrame, createScreenGui, vector2 } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFrame, createScreenGui, vector2 } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();

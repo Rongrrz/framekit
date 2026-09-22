@@ -1,6 +1,6 @@
+import { createFrame, createImageButton, createTextButton } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFrame, createImageButton, createTextButton } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();

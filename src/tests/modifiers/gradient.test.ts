@@ -1,9 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
-import {
-  createDefaultGuiObjectProperties,
-  createGuiObjectNode,
-} from '../../elements/gui-object.js';
 import {
   color3FromRGB,
   colorSequence,
@@ -12,7 +6,11 @@ import {
   createUIGradient,
   numberSequence,
   vector2,
-} from '../../index.js';
+} from 'framekit';
+import { describe, expect, it } from 'vitest';
+
+import { createDefaultGuiObjectProperties, createGuiObjectNode } from '#elements/gui-object.js';
+
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

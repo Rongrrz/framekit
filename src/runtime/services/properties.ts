@@ -1,6 +1,7 @@
-import { snapshotPropertyValue } from '../../internal/snapshot.js';
-import { assertString } from '../../internal/validation.js';
-import type { Unsubscribe } from '../../state/signal.js';
+import { snapshotPropertyValue } from '#internal/snapshot.js';
+import { assertString } from '#internal/validation.js';
+import type { Unsubscribe } from '#state/signal.js';
+
 import { emitNodeEvent, subscribeToNodeEvent } from '../node/events.js';
 import type { Instance, InstanceProperties } from '../node/instance.js';
 import { getModifierTarget } from '../node/modifier-types.js';

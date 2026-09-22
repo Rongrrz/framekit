@@ -3,7 +3,8 @@ import {
   emitSignalSafely,
   type SignalEmitter,
   type Unsubscribe,
-} from '../../state/signal.js';
+} from '#state/signal.js';
+
 import type { Instance } from './instance.js';
 import { getActiveNodeState, getNodeState } from './registry.js';
 

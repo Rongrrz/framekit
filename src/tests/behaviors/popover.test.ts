@@ -1,5 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import {
   createFrame,
   createScreenGui,
@@ -12,7 +10,9 @@ import {
   vector2,
   bindPopover,
   bindTooltip,
-} from '../../index.js';
+} from 'framekit';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { setupAnimationClock } from '../support/animation-clock.js';
 
 const clock = setupAnimationClock();

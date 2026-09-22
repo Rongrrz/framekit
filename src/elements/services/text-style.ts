@@ -1,12 +1,13 @@
-import { setStyle } from '../../dom/styles.js';
+import { setStyle } from '#dom/styles.js';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
   assertString,
   assertUnitInterval,
-} from '../../internal/validation.js';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../../values/color3.js';
+} from '#internal/validation.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
+
 import { renderTextSize } from './text-size.js';
 
 /** Horizontal alignment of text within its node. */

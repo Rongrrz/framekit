@@ -1,6 +1,6 @@
+import { createImageLabel } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { createImageLabel } from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

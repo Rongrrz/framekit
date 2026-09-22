@@ -12,6 +12,17 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "imports": {
+    "#animation/*": "./dist/animation/*",
+    "#behaviors/*": "./dist/behaviors/*",
+    "#dom/*": "./dist/dom/*",
+    "#elements/*": "./dist/elements/*",
+    "#internal/*": "./dist/internal/*",
+    "#modifiers/*": "./dist/modifiers/*",
+    "#runtime/*": "./dist/runtime/*",
+    "#state/*": "./dist/state/*",
+    "#values/*": "./dist/values/*"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

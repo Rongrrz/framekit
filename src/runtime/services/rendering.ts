@@ -1,4 +1,5 @@
-import { setStyleLayer } from '../../dom/styles.js';
+import { setStyleLayer } from '#dom/styles.js';
+
 import type { GuiElement } from '../node/gui-node.js';
 import type { Instance, InstanceProperties } from '../node/instance.js';
 import {

@@ -12,7 +12,18 @@
 
     /* Node-compatible library imports */
     "moduleResolution": "NodeNext",
-    "paths": { "framekit": ["./src/index.ts"] },
+    "paths": {
+      "framekit": ["./src/index.ts"],
+      "#animation/*": ["./src/animation/*"],
+      "#behaviors/*": ["./src/behaviors/*"],
+      "#dom/*": ["./src/dom/*"],
+      "#elements/*": ["./src/elements/*"],
+      "#internal/*": ["./src/internal/*"],
+      "#modifiers/*": ["./src/modifiers/*"],
+      "#runtime/*": ["./src/runtime/*"],
+      "#state/*": ["./src/state/*"],
+      "#values/*": ["./src/values/*"]
+    },
     "allowImportingTsExtensions": false,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",

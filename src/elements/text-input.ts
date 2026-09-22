@@ -1,5 +1,6 @@
-import { resolveOwnerDocument, type DomOptions } from '../dom/environment.js';
-import { assertAllowedValue } from '../internal/validation.js';
+import { resolveOwnerDocument, type DomOptions } from '#dom/environment.js';
+import { assertAllowedValue } from '#internal/validation.js';
+
 import {
   createDefaultTextControlProperties,
   createTextControl,

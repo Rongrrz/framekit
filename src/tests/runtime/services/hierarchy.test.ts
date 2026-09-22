@@ -1,6 +1,5 @@
+import { createFrame, createTextButton } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
-
-import { createFrame, createTextButton } from '../../../index.js';
 
 describe('hierarchy', () => {
   it('tracks, reparents, finds, and destroys children', () => {

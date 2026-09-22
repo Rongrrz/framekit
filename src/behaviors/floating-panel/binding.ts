@@ -1,11 +1,12 @@
-import { createRealmAbortController } from '../../dom/environment.js';
-import { setStyle } from '../../dom/styles.js';
-import type { GuiObject } from '../../elements/gui-object.js';
-import { createScreenGui } from '../../elements/screen-gui.js';
-import type { GuiElement } from '../../runtime/node/gui-node.js';
-import type { Unsubscribe } from '../../state/signal.js';
-import { udim2FromOffset } from '../../values/udim.js';
-import { vector2, type Vector2 } from '../../values/vector2.js';
+import { createRealmAbortController } from '#dom/environment.js';
+import { setStyle } from '#dom/styles.js';
+import type { GuiObject } from '#elements/gui-object.js';
+import { createScreenGui } from '#elements/screen-gui.js';
+import type { GuiElement } from '#runtime/node/gui-node.js';
+import type { Unsubscribe } from '#state/signal.js';
+import { udim2FromOffset } from '#values/udim.js';
+import { vector2, type Vector2 } from '#values/vector2.js';
+
 import { panelPosition } from './placement.js';
 import { springPanel } from './transition.js';
 import type { PanelOptions } from './types.js';

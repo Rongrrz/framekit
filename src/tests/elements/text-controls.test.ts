@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
-
 import {
   color3FromRGB,
   createFrame,
   createTextArea,
   createTextInput,
   createUICorner,
-} from '../../index.js';
+} from 'framekit';
+import { describe, expect, it, vi } from 'vitest';
+
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

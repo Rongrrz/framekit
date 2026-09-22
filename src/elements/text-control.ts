@@ -1,21 +1,22 @@
-import { createRealmAbortController } from '../dom/environment.js';
-import { installFrameKitStyles } from '../dom/stylesheet.js';
-import { assertBoolean, assertString, assertUnitInterval } from '../internal/validation.js';
-import { emitNodeEvent } from '../runtime/node/events.js';
+import { createRealmAbortController } from '#dom/environment.js';
+import { installFrameKitStyles } from '#dom/stylesheet.js';
+import { assertBoolean, assertString, assertUnitInterval } from '#internal/validation.js';
+import { emitNodeEvent } from '#runtime/node/events.js';
 import {
   guiEventKeys,
   textChangedEventMethods,
   type TextChangedEventMethods,
-} from '../runtime/node/gui-events.js';
-import type { GuiElement, PropertyRenderer } from '../runtime/node/gui-node.js';
-import type { PropertyValidator } from '../runtime/node/registry.js';
-import * as lifecycle from '../runtime/services/lifecycle.js';
+} from '#runtime/node/gui-events.js';
+import type { GuiElement, PropertyRenderer } from '#runtime/node/gui-node.js';
+import type { PropertyValidator } from '#runtime/node/registry.js';
+import * as lifecycle from '#runtime/services/lifecycle.js';
 import {
   getNodeProperties,
   getNodeProperty,
   setNodeProperties,
-} from '../runtime/services/properties.js';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
+} from '#runtime/services/properties.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
+
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,

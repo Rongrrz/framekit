@@ -1,4 +1,5 @@
-import { installFrameKitStyles } from '../../dom/stylesheet.js';
+import { installFrameKitStyles } from '#dom/stylesheet.js';
+
 import {
   horizontalFlexAlignment,
   verticalFlexAlignment,

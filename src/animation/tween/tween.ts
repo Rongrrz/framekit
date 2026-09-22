@@ -1,13 +1,14 @@
-import { assertNonNegativeFinite } from '../../internal/validation.js';
-import type { Instance, InstanceProperties } from '../../runtime/node/instance.js';
-import { getActiveNodeState } from '../../runtime/node/registry.js';
-import { getPropertiesSnapshot } from '../../runtime/services/properties.js';
+import { assertNonNegativeFinite } from '#internal/validation.js';
+import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
+import { getActiveNodeState } from '#runtime/node/registry.js';
+import { getPropertiesSnapshot } from '#runtime/services/properties.js';
 import {
   createSignalEmitter,
   emitSignalSafely,
   readonlySignal,
   type Signal,
-} from '../../state/signal.js';
+} from '#state/signal.js';
+
 import { prepareAnimationGoal } from '../runtime/goal.js';
 import { createAnimationRunner } from '../runtime/runner.js';
 import type { AnimationGoal } from '../runtime/types.js';

@@ -1,9 +1,7 @@
-import { snapshotPropertyValue } from '../../internal/snapshot.js';
-import type { Instance, InstanceProperties } from '../../runtime/node/instance.js';
-import {
-  getPropertiesSnapshot,
-  validateNodeProperties,
-} from '../../runtime/services/properties.js';
+import { snapshotPropertyValue } from '#internal/snapshot.js';
+import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
+import { getPropertiesSnapshot, validateNodeProperties } from '#runtime/services/properties.js';
+
 import { isDiscreteAnimationProperty, type AnimationGoal } from './types.js';
 import {
   assertCompatibleAnimationValues,

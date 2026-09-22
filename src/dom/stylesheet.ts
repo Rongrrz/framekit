@@ -1,4 +1,5 @@
-import { assertString } from '../internal/validation.js';
+import { assertString } from '#internal/validation.js';
+
 import { resolveOwnerDocument, type DomOptions } from './environment.js';
 
 /** Installation options for FrameKit's shared pseudo-element and interaction styles. */

@@ -1,6 +1,6 @@
-import { color3FromRGB, type Color3 } from '../../values/color3.js';
-import { udim, udim2, type UDim, type UDim2 } from '../../values/udim.js';
-import { vector2, type Vector2 } from '../../values/vector2.js';
+import { color3FromRGB, type Color3 } from '#values/color3.js';
+import { udim, udim2, type UDim, type UDim2 } from '#values/udim.js';
+import { vector2, type Vector2 } from '#values/vector2.js';
 
 export type AnimationValueKind = 'number' | 'Color3' | 'Vector2' | 'UDim' | 'UDim2';
 

@@ -24,7 +24,7 @@ import {
   udim2FromOffset,
   type Unsubscribe,
   vector2,
-} from '../index.js';
+} from 'framekit';
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {

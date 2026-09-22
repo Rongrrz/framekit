@@ -1,7 +1,7 @@
+import { createFrame, udim, udim2FromOffset, vector2 } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFrame, udim, udim2FromOffset, vector2 } from '../../../index.js';
-import { createStyleModifier } from '../../../runtime/node/modifier.js';
+import { createStyleModifier } from '#runtime/node/modifier.js';
 
 describe('node properties', () => {
   it('commits and renders an entire patch before notifying property observers', () => {

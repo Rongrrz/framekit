@@ -1,6 +1,5 @@
+import { bindResponsiveLayout, createFrame } from 'framekit';
 import { describe, expect, it, vi, afterEach } from 'vitest';
-
-import { bindResponsiveLayout, createFrame } from '../../index.js';
 
 afterEach(() => vi.unstubAllGlobals());
 

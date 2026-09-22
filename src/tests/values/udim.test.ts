@@ -1,6 +1,5 @@
+import { udim, udim2, udim2FromOffset, udim2FromScale } from 'framekit';
 import { describe, expect, it } from 'vitest';
-
-import { udim, udim2, udim2FromOffset, udim2FromScale } from '../../index.js';
 
 describe('UDim values', () => {
   it('creates immutable dimensions and scale/offset conveniences', () => {

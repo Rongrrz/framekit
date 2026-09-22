@@ -2,23 +2,24 @@ import {
   createRealmAbortController,
   resolveOwnerDocument,
   type DomOptions,
-} from '../dom/environment.js';
-import { setStyle } from '../dom/styles.js';
-import { installFrameKitStyles } from '../dom/stylesheet.js';
+} from '#dom/environment.js';
+import { setStyle } from '#dom/styles.js';
+import { installFrameKitStyles } from '#dom/stylesheet.js';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
   assertUnitInterval,
-} from '../internal/validation.js';
-import { guiEventMethods } from '../runtime/node/gui-events.js';
-import type { GuiElement } from '../runtime/node/gui-node.js';
-import { getActiveNodeState } from '../runtime/node/registry.js';
-import * as lifecycle from '../runtime/services/lifecycle.js';
-import { setNodeProperties, getNodeProperty } from '../runtime/services/properties.js';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
-import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '../values/udim.js';
-import { assertVector2, vector2, type Vector2 } from '../values/vector2.js';
+} from '#internal/validation.js';
+import { guiEventMethods } from '#runtime/node/gui-events.js';
+import type { GuiElement } from '#runtime/node/gui-node.js';
+import { getActiveNodeState } from '#runtime/node/registry.js';
+import * as lifecycle from '#runtime/services/lifecycle.js';
+import { setNodeProperties, getNodeProperty } from '#runtime/services/properties.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
+import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '#values/udim.js';
+import { assertVector2, vector2, type Vector2 } from '#values/vector2.js';
+
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,

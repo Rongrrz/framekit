@@ -1,6 +1,5 @@
+import * as framekit from 'framekit';
 import { describe, expect, it } from 'vitest';
-
-import * as framekit from '../index.js';
 
 describe('package API', () => {
   it('exposes the named public functions', () => {

@@ -1,6 +1,6 @@
+import { bindHoverScale, createFrame, createUIScale, spring } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { bindHoverScale, createFrame, createUIScale, spring } from '../../index.js';
 import { setupAnimationClock } from '../support/animation-clock.js';
 
 const { settle } = setupAnimationClock();

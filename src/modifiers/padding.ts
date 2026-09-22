@@ -1,7 +1,7 @@
-import type { InstanceProperties } from '../runtime/node/instance.js';
-import { createStyleModifier, type StyleModifier, type Styles } from '../runtime/node/modifier.js';
-import { mergeProperties } from '../runtime/services/properties.js';
-import { assertUDim, udim, udimToCss, type UDim } from '../values/udim.js';
+import type { InstanceProperties } from '#runtime/node/instance.js';
+import { createStyleModifier, type StyleModifier, type Styles } from '#runtime/node/modifier.js';
+import { mergeProperties } from '#runtime/services/properties.js';
+import { assertUDim, udim, udimToCss, type UDim } from '#values/udim.js';
 
 /** Inner padding applied independently on each edge. */
 export type UIPaddingProperties = InstanceProperties & {

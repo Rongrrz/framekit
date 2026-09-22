@@ -1,6 +1,6 @@
+import { createFrame } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createFrame } from '../../../index.js';
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();

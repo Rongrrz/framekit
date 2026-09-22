@@ -1,6 +1,6 @@
+import { color3FromRGB, createFrame, udim2, udim2FromScale, vector2 } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { color3FromRGB, createFrame, udim2, udim2FromScale, vector2 } from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

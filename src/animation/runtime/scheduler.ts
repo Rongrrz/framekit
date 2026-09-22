@@ -1,4 +1,4 @@
-import { throwCollectedErrors } from '../../internal/errors.js';
+import { throwCollectedErrors } from '#internal/errors.js';
 
 export type AnimationFrameTask = (timestamp: number) => void;
 

@@ -1,4 +1,5 @@
-import { vector2, type Vector2 } from '../../values/vector2.js';
+import { vector2, type Vector2 } from '#values/vector2.js';
+
 import type { FloatingPanelPlacement } from './types.js';
 
 type AnchorBounds = Readonly<{ left: number; right: number; top: number; bottom: number }>;

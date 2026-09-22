@@ -1,4 +1,5 @@
-import type { Unsubscribe } from '../../state/signal.js';
+import type { Unsubscribe } from '#state/signal.js';
+
 import * as hierarchy from '../services/hierarchy.js';
 import * as lifecycle from '../services/lifecycle.js';
 import {

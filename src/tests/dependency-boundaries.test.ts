@@ -50,11 +50,22 @@ function runtimeDependencies(file: string): string[] {
       return [];
     }
     const specifier = statement.moduleSpecifier;
-    if (!specifier || !ts.isStringLiteral(specifier) || !specifier.text.startsWith('.')) {
+    if (!specifier || !ts.isStringLiteral(specifier)) {
       return [];
     }
-    return [resolve(dirname(file), specifier.text.replace(/\.js$/, '.ts'))];
+    const dependency = resolveSourceImport(file, specifier.text);
+    return dependency ? [dependency] : [];
   });
+}
+
+function resolveSourceImport(file: string, specifier: string): string | undefined {
+  if (specifier.startsWith('#')) {
+    return resolve(sourceRoot, specifier.slice(1).replace(/\.js$/, '.ts'));
+  }
+  if (specifier.startsWith('.')) {
+    return resolve(dirname(file), specifier.replace(/\.js$/, '.ts'));
+  }
+  return undefined;
 }
 
 describe('source dependency direction', () => {
@@ -74,7 +85,16 @@ describe('source dependency direction', () => {
           if (!specifier || !ts.isStringLiteral(specifier)) {
             continue;
           }
-          const target = resolve(dirname(file), specifier.text);
+          const target = resolveSourceImport(file, specifier.text);
+          if (!target) {
+            continue;
+          }
+          const targetDomain = relative(sourceRoot, target).split(sep)[0];
+          const expectedPrefix = targetDomain === domain ? '.' : `#${targetDomain}/`;
+          expect(
+            specifier.text.startsWith(expectedPrefix),
+            `${file} should import ${specifier.text} through ${expectedPrefix}`,
+          ).toBe(true);
           const allowedByDomain = allowedDomains.some((allowedDomain) => {
             const root = resolve(sourceRoot, allowedDomain);
             return target === root || target.startsWith(`${root}${sep}`);

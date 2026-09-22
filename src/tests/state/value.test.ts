@@ -1,6 +1,5 @@
+import { createObservableValue } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
-
-import { createObservableValue } from '../../index.js';
 
 describe('values', () => {
   it('provides the current value and publishes distinct changes', () => {

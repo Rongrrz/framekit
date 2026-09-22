@@ -1,4 +1,4 @@
-import type { GuiObject } from '../../elements/gui-object.js';
+import type { GuiObject } from '#elements/gui-object.js';
 
 /** Preferred side of a floating panel; flips to the opposite side when it offers more room. */
 export type FloatingPanelPlacement = 'top' | 'bottom' | 'left' | 'right';

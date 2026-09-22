@@ -1,9 +1,3 @@
-import { describe, expect, it, vi } from 'vitest';
-
-import {
-  createDefaultGuiObjectProperties,
-  createGuiObjectNode,
-} from '../../../elements/gui-object.js';
 import {
   color3FromRGB,
   createFrame,
@@ -12,8 +6,12 @@ import {
   createUIShadow,
   createUIStroke,
   vector2,
-} from '../../../index.js';
-import { createLayoutModifier, createStyleModifier } from '../../../runtime/node/modifier.js';
+} from 'framekit';
+import { describe, expect, it, vi } from 'vitest';
+
+import { createDefaultGuiObjectProperties, createGuiObjectNode } from '#elements/gui-object.js';
+import { createLayoutModifier, createStyleModifier } from '#runtime/node/modifier.js';
+
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();

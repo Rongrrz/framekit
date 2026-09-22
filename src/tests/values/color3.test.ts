@@ -1,6 +1,5 @@
+import { color3FromHex, color3FromRGB } from 'framekit';
 import { describe, expect, it } from 'vitest';
-
-import { color3FromHex, color3FromRGB } from '../../index.js';
 
 describe('colors', () => {
   it('parses case-insensitive six-digit hexadecimal colors', () => {

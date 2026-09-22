@@ -1,10 +1,11 @@
-import { createRealmAbortController } from '../../dom/environment.js';
-import { installFrameKitStyles } from '../../dom/stylesheet.js';
-import { assertBoolean, assertString } from '../../internal/validation.js';
-import { emitNodeEvent } from '../../runtime/node/events.js';
-import { guiEventKeys, type ButtonEventMethods } from '../../runtime/node/gui-events.js';
-import type { GuiElement } from '../../runtime/node/gui-node.js';
-import * as lifecycle from '../../runtime/services/lifecycle.js';
+import { createRealmAbortController } from '#dom/environment.js';
+import { installFrameKitStyles } from '#dom/stylesheet.js';
+import { assertBoolean, assertString } from '#internal/validation.js';
+import { emitNodeEvent } from '#runtime/node/events.js';
+import { guiEventKeys, type ButtonEventMethods } from '#runtime/node/gui-events.js';
+import type { GuiElement } from '#runtime/node/gui-node.js';
+import * as lifecycle from '#runtime/services/lifecycle.js';
+
 import type { GuiObjectProperties } from '../gui-object.js';
 
 export type ButtonProperties = {

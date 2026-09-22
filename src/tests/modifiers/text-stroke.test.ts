@@ -1,6 +1,6 @@
+import { color3FromRGB, createFrame, createTextLabel, createUITextStroke } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { color3FromRGB, createFrame, createTextLabel, createUITextStroke } from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

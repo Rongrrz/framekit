@@ -1,7 +1,8 @@
-import { resolveOwnerDocument, type DomOptions } from '../dom/environment.js';
-import { assertAllowedValue, assertString, assertUnitInterval } from '../internal/validation.js';
-import { buttonEventMethods, type GuiMethodTable } from '../runtime/node/gui-events.js';
-import type { GuiElement, PropertyRenderer } from '../runtime/node/gui-node.js';
+import { resolveOwnerDocument, type DomOptions } from '#dom/environment.js';
+import { assertAllowedValue, assertString, assertUnitInterval } from '#internal/validation.js';
+import { buttonEventMethods, type GuiMethodTable } from '#runtime/node/gui-events.js';
+import type { GuiElement, PropertyRenderer } from '#runtime/node/gui-node.js';
+
 import {
   createDefaultGuiObjectProperties,
   createGuiObjectNode,

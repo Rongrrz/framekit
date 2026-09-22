@@ -1,6 +1,5 @@
+import { createSignalEmitter } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
-
-import { createSignalEmitter } from '../../index.js';
 
 describe('signals', () => {
   it('subscribes with an idempotent unsubscribe function', () => {

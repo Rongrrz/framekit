@@ -1,10 +1,11 @@
-import { setStyle } from '../dom/styles.js';
-import type { GuiObject } from '../elements/gui-object.js';
-import { createTextLabel, type TextLabelProperties } from '../elements/text.js';
-import { createUICorner } from '../modifiers/corner.js';
-import type { GuiElement } from '../runtime/node/gui-node.js';
-import type { Unsubscribe } from '../state/signal.js';
-import { color3FromRGB } from '../values/color3.js';
+import { setStyle } from '#dom/styles.js';
+import type { GuiObject } from '#elements/gui-object.js';
+import { createTextLabel, type TextLabelProperties } from '#elements/text.js';
+import { createUICorner } from '#modifiers/corner.js';
+import type { GuiElement } from '#runtime/node/gui-node.js';
+import type { Unsubscribe } from '#state/signal.js';
+import { color3FromRGB } from '#values/color3.js';
+
 import {
   bindFloatingPanel,
   validatePanelOptions,

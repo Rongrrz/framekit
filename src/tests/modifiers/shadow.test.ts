@@ -1,6 +1,5 @@
+import { createFrame, createUIShadow } from 'framekit';
 import { describe, expect, it } from 'vitest';
-
-import { createFrame, createUIShadow } from '../../index.js';
 
 describe('shadows', () => {
   it('validates shadow geometry', () => {

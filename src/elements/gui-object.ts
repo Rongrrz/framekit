@@ -1,19 +1,20 @@
-import { setStyle } from '../dom/styles.js';
+import { setStyle } from '#dom/styles.js';
 import {
   assertAllowedValue,
   assertBoolean,
   assertFiniteNumber,
   assertInteger,
   assertUnitInterval,
-} from '../internal/validation.js';
-import type { GuiMethodTable } from '../runtime/node/gui-events.js';
-import { createGuiNode, type GuiElement, type PropertyRenderer } from '../runtime/node/gui-node.js';
-import type { InstanceProperties } from '../runtime/node/instance.js';
-import type { GuiCapabilities, PropertyValidator } from '../runtime/node/registry.js';
-import { mergeProperties } from '../runtime/services/properties.js';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
-import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '../values/udim.js';
-import { assertVector2, vector2, type Vector2 } from '../values/vector2.js';
+} from '#internal/validation.js';
+import type { GuiMethodTable } from '#runtime/node/gui-events.js';
+import { createGuiNode, type GuiElement, type PropertyRenderer } from '#runtime/node/gui-node.js';
+import type { InstanceProperties } from '#runtime/node/instance.js';
+import type { GuiCapabilities, PropertyValidator } from '#runtime/node/registry.js';
+import { mergeProperties } from '#runtime/services/properties.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
+import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '#values/udim.js';
+import { assertVector2, vector2, type Vector2 } from '#values/vector2.js';
+
 import { connectHoverEvents } from './services/hover-events.js';
 
 /** Axes whose size should follow the rendered content. */

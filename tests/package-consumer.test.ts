@@ -8,10 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const repository = fileURLToPath(new URL('../', import.meta.url));
 const consumer = mkdtempSync(join(tmpdir(), 'framekit-consumer-'));
-const fixture = readFileSync(join(repository, 'src/tests/public-api.typecheck.ts'), 'utf8').replace(
-  "from '../index.js'",
-  "from 'framekit'",
-);
+const fixture = readFileSync(join(repository, 'src/tests/public-api.typecheck.ts'), 'utf8');
 
 beforeAll(() => {
   execFileSync(

@@ -1,6 +1,6 @@
+import { createFrame, createUIAspectRatioConstraint, udim2FromOffset } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { createFrame, createUIAspectRatioConstraint, udim2FromOffset } from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

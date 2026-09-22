@@ -3,12 +3,12 @@ import {
   assertFiniteNumber,
   assertNonNegativeFinite,
   assertUnitInterval,
-} from '../internal/validation.js';
-import type { InstanceProperties } from '../runtime/node/instance.js';
-import { createStyleModifier, type StyleModifier, type Styles } from '../runtime/node/modifier.js';
-import { mergeProperties } from '../runtime/services/properties.js';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
-import { assertVector2, vector2, type Vector2 } from '../values/vector2.js';
+} from '#internal/validation.js';
+import type { InstanceProperties } from '#runtime/node/instance.js';
+import { createStyleModifier, type StyleModifier, type Styles } from '#runtime/node/modifier.js';
+import { mergeProperties } from '#runtime/services/properties.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
+import { assertVector2, vector2, type Vector2 } from '#values/vector2.js';
 
 /** Properties for an outer or inset surface shadow. */
 export type UIShadowProperties = InstanceProperties & {

@@ -2,8 +2,8 @@ import {
   solveSpring,
   type ResolvedSpringOptions,
   type SpringSolution,
-} from '../../animation/spring/physics.js';
-import { setStyle } from '../../dom/styles.js';
+} from '#animation/spring/physics.js';
+import { setStyle } from '#dom/styles.js';
 
 // Critical damping makes opacity settle quickly without bouncing beyond its visible range.
 const panelSpringOptions = {

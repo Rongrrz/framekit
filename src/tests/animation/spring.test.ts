@@ -1,5 +1,3 @@
-import { describe, expect, it, vi } from 'vitest';
-
 import {
   color3FromRGB,
   createFrame,
@@ -10,7 +8,9 @@ import {
   udim2,
   udim2FromOffset,
   vector2,
-} from '../../index.js';
+} from 'framekit';
+import { describe, expect, it, vi } from 'vitest';
+
 import { setupAnimationClock } from '../support/animation-clock.js';
 import { destroyNodesAfterEach } from '../support/node-cleanup.js';
 

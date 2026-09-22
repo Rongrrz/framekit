@@ -1,6 +1,5 @@
+import { vector2 } from 'framekit';
 import { describe, expect, it } from 'vitest';
-
-import { vector2 } from '../../index.js';
 
 describe('Vector2 values', () => {
   it('preserves signed fractional components in an immutable vector', () => {

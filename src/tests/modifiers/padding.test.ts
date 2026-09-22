@@ -1,6 +1,6 @@
+import { createFrame, createUIListLayout, createUIPadding, udim } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { createFrame, createUIListLayout, createUIPadding, udim } from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();

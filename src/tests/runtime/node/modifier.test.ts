@@ -1,5 +1,3 @@
-import { describe, expect, it, vi } from 'vitest';
-
 import {
   createFrame,
   createTextLabel,
@@ -8,8 +6,11 @@ import {
   createUIShadow,
   createUIStroke,
   createUITextStroke,
-} from '../../../index.js';
-import { createStyleModifier } from '../../../runtime/node/modifier.js';
+} from 'framekit';
+import { describe, expect, it, vi } from 'vitest';
+
+import { createStyleModifier } from '#runtime/node/modifier.js';
+
 import { resetDocumentAfterEach } from '../../support/reset-document.js';
 
 resetDocumentAfterEach();

@@ -1,6 +1,5 @@
+import { createTextButton, installFrameKitStyles } from 'framekit';
 import { describe, expect, it } from 'vitest';
-
-import { createTextButton, installFrameKitStyles } from '../../index.js';
 
 describe('shared stylesheet installation', () => {
   it('installs one nonce-authorized stylesheet before factories run', () => {

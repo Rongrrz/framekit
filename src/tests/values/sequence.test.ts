@@ -1,6 +1,5 @@
+import { color3FromRGB, colorSequence, numberSequence } from 'framekit';
 import { describe, expect, it } from 'vitest';
-
-import { color3FromRGB, colorSequence, numberSequence } from '../../index.js';
 
 describe('sequences', () => {
   it('creates immutable uniform and explicit sequences', () => {

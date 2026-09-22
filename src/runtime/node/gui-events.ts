@@ -1,4 +1,5 @@
-import type { Unsubscribe } from '../../state/signal.js';
+import type { Unsubscribe } from '#state/signal.js';
+
 import { subscribeToNodeEvent } from './events.js';
 import type { Instance } from './instance.js';
 

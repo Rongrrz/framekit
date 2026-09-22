@@ -1,5 +1,6 @@
-import { setStyle } from '../../dom/styles.js';
-import type { Instance, InstanceProperties } from '../../runtime/node/instance.js';
+import { setStyle } from '#dom/styles.js';
+import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
+
 import type { TextStyleProperties } from './text-style.js';
 
 type ObserverState = {

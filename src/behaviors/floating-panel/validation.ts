@@ -2,8 +2,9 @@ import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
-} from '../../internal/validation.js';
-import type { GuiElement } from '../../runtime/node/gui-node.js';
+} from '#internal/validation.js';
+import type { GuiElement } from '#runtime/node/gui-node.js';
+
 import type { PanelOptions } from './types.js';
 
 /** Validates before generated content is allocated or caller-owned content is changed. */

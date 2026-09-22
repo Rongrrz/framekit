@@ -1,4 +1,4 @@
-import { reportObserverError, throwCollectedErrors } from '../internal/errors.js';
+import { reportObserverError, throwCollectedErrors } from '#internal/errors.js';
 
 /** Stops a subscription or unregisters cleanup work. Safe to call repeatedly. */
 export type Unsubscribe = () => void;

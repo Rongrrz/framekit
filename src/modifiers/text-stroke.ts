@@ -2,21 +2,21 @@ import {
   textStrokeColorProperty,
   textStrokeContentProperty,
   textStrokeWidthProperty,
-} from '../elements/services/text-stroke.js';
+} from '#elements/services/text-stroke.js';
 import {
   assertBoolean,
   assertNonNegativeFinite,
   assertUnitInterval,
-} from '../internal/validation.js';
-import type { InstanceProperties } from '../runtime/node/instance.js';
+} from '#internal/validation.js';
+import type { InstanceProperties } from '#runtime/node/instance.js';
 import {
   createStyleModifier,
   type ModifierTarget,
   type StyleModifier,
   type Styles,
-} from '../runtime/node/modifier.js';
-import { mergeProperties } from '../runtime/services/properties.js';
-import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '../values/color3.js';
+} from '#runtime/node/modifier.js';
+import { mergeProperties } from '#runtime/services/properties.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
 
 /** Properties for an outline drawn around a GUI parent's text. */
 export type UITextStrokeProperties = InstanceProperties & {

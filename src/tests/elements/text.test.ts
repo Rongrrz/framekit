@@ -1,6 +1,6 @@
+import { color3FromRGB, createTextLabel } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { color3FromRGB, createTextLabel } from '../../index.js';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();
