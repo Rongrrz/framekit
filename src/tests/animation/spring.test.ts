@@ -1,6 +1,16 @@
+import {
+  color3FromRGB,
+  createFrame,
+  createTween,
+  createUIScale,
+  createUIShadow,
+  spring,
+  udim2,
+  udim2FromOffset,
+  vector2,
+} from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { fk, fka } from '../../index.js';
 import { setupAnimationClock } from '../support/animation-clock.js';
 import { destroyNodesAfterEach } from '../support/node-cleanup.js';
 
@@ -9,12 +19,12 @@ const trackNode = destroyNodesAfterEach();
 
 describe('spring animations', () => {
   it('retains one spring controller per node', () => {
-    const frame = trackNode(fk.createFrame());
-    const controller = fka.spring(frame);
+    const frame = trackNode(createFrame());
+    const controller = spring(frame);
 
-    expect(fka.spring(frame)).toBe(controller);
-    expect(fka.spring(frame, { Rotation: 90 })).toBe(controller);
-    expect(fka.spring(trackNode(fk.createFrame()))).not.toBe(controller);
+    expect(spring(frame)).toBe(controller);
+    expect(spring(frame, { Rotation: 90 })).toBe(controller);
+    expect(spring(trackNode(createFrame()))).not.toBe(controller);
 
     settle();
 
@@ -23,14 +33,14 @@ describe('spring animations', () => {
   });
 
   it('applies call settings only to properties in that goal', () => {
-    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0, Rotation: 0 }));
-    const control = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
+    const frame = trackNode(createFrame({ BackgroundTransparency: 0, Rotation: 0 }));
+    const control = trackNode(createFrame({ BackgroundTransparency: 0 }));
     const slow = { tension: 40, friction: 12 } as const;
 
-    fka.spring(frame, { BackgroundTransparency: 1 }, slow);
-    fka.spring(control, { BackgroundTransparency: 1 }, slow);
+    spring(frame, { BackgroundTransparency: 1 }, slow);
+    spring(control, { BackgroundTransparency: 1 }, slow);
     advance();
-    fka.spring(frame, { Rotation: 90 }, { tension: 400, friction: 40, mass: 2 });
+    spring(frame, { Rotation: 90 }, { tension: 400, friction: 40, mass: 2 });
     advance();
 
     expect(frame.BackgroundTransparency).toBe(control.BackgroundTransparency);
@@ -43,23 +53,23 @@ describe('spring animations', () => {
 
   it('springs numbers and structured values exactly to their goals', () => {
     const frame = trackNode(
-      fk.createFrame({
-        Position: fk.udim2FromOffset(0, 0),
-        Size: fk.udim2FromOffset(100, 100),
-        BackgroundColor3: fk.color3FromRGB(0, 0, 0),
+      createFrame({
+        Position: udim2FromOffset(0, 0),
+        Size: udim2FromOffset(100, 100),
+        BackgroundColor3: color3FromRGB(0, 0, 0),
       }),
     );
-    const controller = fka.spring(frame);
+    const controller = spring(frame);
     const completed = vi.fn();
 
     expect(controller.completed).not.toHaveProperty('emit');
     expect(controller.completed).not.toHaveProperty('clear');
 
     controller.completed.subscribe(completed);
-    fka.spring(frame, {
-      Position: fk.udim2(0.5, 20, 0.25, -10),
-      Size: fk.udim2FromOffset(240, 160),
-      BackgroundColor3: fk.color3FromRGB(120, 80, 200),
+    spring(frame, {
+      Position: udim2(0.5, 20, 0.25, -10),
+      Size: udim2FromOffset(240, 160),
+      BackgroundColor3: color3FromRGB(120, 80, 200),
       BackgroundTransparency: 0.6,
     });
 
@@ -68,9 +78,9 @@ describe('spring animations', () => {
     settle();
 
     expect(frame).toMatchObject({
-      Position: fk.udim2(0.5, 20, 0.25, -10),
-      Size: fk.udim2FromOffset(240, 160),
-      BackgroundColor3: fk.color3FromRGB(120, 80, 200),
+      Position: udim2(0.5, 20, 0.25, -10),
+      Size: udim2FromOffset(240, 160),
+      BackgroundColor3: color3FromRGB(120, 80, 200),
       BackgroundTransparency: 0.6,
     });
     expect(controller.isAnimating()).toBe(false);
@@ -78,15 +88,17 @@ describe('spring animations', () => {
   });
 
   it('preserves velocity when retargeted', () => {
-    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
+    const frame = trackNode(createFrame({ BackgroundTransparency: 0 }));
     const settings = { tension: 170, friction: 5 } as const;
 
-    fka.spring(frame, { BackgroundTransparency: 1 }, settings);
-    for (let index = 0; index < 5; index += 1) advance();
+    spring(frame, { BackgroundTransparency: 1 }, settings);
+    for (let index = 0; index < 5; index += 1) {
+      advance();
+    }
 
     const beforeRetarget = frame.BackgroundTransparency;
 
-    fka.spring(frame, { BackgroundTransparency: 0 }, settings);
+    spring(frame, { BackgroundTransparency: 0 }, settings);
     advance();
 
     expect(frame.BackgroundTransparency).toBeGreaterThan(beforeRetarget);
@@ -101,8 +113,8 @@ describe('spring animations', () => {
     ['critically damped', 20],
     ['overdamped', 40],
   ] as const)('settles a %s spring exactly at its goal', (_, friction) => {
-    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
-    const controller = fka.spring(frame, { Rotation: 90 }, { tension: 100, friction });
+    const frame = trackNode(createFrame({ Rotation: 0 }));
+    const controller = spring(frame, { Rotation: 90 }, { tension: 100, friction });
     advance();
     expect(frame.Rotation).toBeGreaterThan(0);
     expect(frame.Rotation).toBeLessThan(90);
@@ -112,19 +124,19 @@ describe('spring animations', () => {
   });
 
   it('arbitrates property ownership with tweens in both directions', () => {
-    const frame = trackNode(fk.createFrame({ BackgroundTransparency: 0 }));
-    const controller = fka.spring(frame);
+    const frame = trackNode(createFrame({ BackgroundTransparency: 0 }));
+    const controller = spring(frame);
 
-    fka.spring(frame, { BackgroundTransparency: 1 });
+    spring(frame, { BackgroundTransparency: 1 });
     advance();
 
-    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
+    const tween = createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
 
     tween.play();
 
     expect(controller.isAnimating()).toBe(false);
 
-    fka.spring(frame, { BackgroundTransparency: 0.25 });
+    spring(frame, { BackgroundTransparency: 0.25 });
 
     expect(tween.playbackState()).toBe('Cancelled');
 
@@ -134,10 +146,10 @@ describe('spring animations', () => {
   });
 
   it('lets direct property changes take control from active animations', () => {
-    const frame = trackNode(fk.createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
-    const controller = fka.spring(frame);
+    const frame = trackNode(createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
+    const controller = spring(frame);
 
-    fka.spring(frame, { Rotation: 90 });
+    spring(frame, { Rotation: 90 });
     advance();
 
     frame.Rotation = 12;
@@ -148,7 +160,7 @@ describe('spring animations', () => {
 
     expect(frame.Rotation).toBe(12);
 
-    const tween = fka.createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+    const tween = createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
 
     tween.play();
     advance();
@@ -159,10 +171,10 @@ describe('spring animations', () => {
   });
 
   it('stops when a direct assignment keeps the current value', () => {
-    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
-    const controller = fka.spring(frame);
+    const frame = trackNode(createFrame({ Rotation: 0 }));
+    const controller = spring(frame);
 
-    fka.spring(frame, { Rotation: 90 });
+    spring(frame, { Rotation: 90 });
     frame.Rotation = 0;
 
     expect(controller.isAnimating()).toBe(false);
@@ -170,10 +182,10 @@ describe('spring animations', () => {
   });
 
   it('keeps an animation when a rejected assignment never takes effect', () => {
-    const scale = trackNode(fk.createUIScale());
-    const controller = fka.spring(scale);
+    const scale = trackNode(createUIScale());
+    const controller = spring(scale);
 
-    fka.spring(scale, { Scale: 2 });
+    spring(scale, { Scale: 2 });
 
     expect(() => (scale.Scale = -1)).toThrow(/non-negative finite/);
     expect(controller.isAnimating()).toBe(true);
@@ -184,12 +196,12 @@ describe('spring animations', () => {
   });
 
   it('stops individual properties and releases everything on destruction', () => {
-    const frame = trackNode(fk.createFrame());
-    const controller = fka.spring(frame);
+    const frame = trackNode(createFrame());
+    const controller = spring(frame);
 
-    fka.spring(frame, {
+    spring(frame, {
       BackgroundTransparency: 1,
-      Position: fk.udim2FromOffset(100, 100),
+      Position: udim2FromOffset(100, 100),
     });
     advance();
     const stoppedPosition = frame.Position;
@@ -199,17 +211,17 @@ describe('spring animations', () => {
     settle();
     expect(frame.Position).toEqual(stoppedPosition);
     expect(frame.BackgroundTransparency).toBe(1);
-    fka.spring(frame, { BackgroundTransparency: 0 });
+    spring(frame, { BackgroundTransparency: 0 });
 
     frame.destroy();
 
     expect(controller.isAnimating()).toBe(false);
-    expect(() => fka.spring(frame, { BackgroundTransparency: 0 })).toThrow(/destroyed/);
+    expect(() => spring(frame, { BackgroundTransparency: 0 })).toThrow(/destroyed/);
   });
 
   it('stops all properties without completing and can animate again', () => {
-    const frame = trackNode(fk.createFrame({ Rotation: 0 }));
-    const controller = fka.spring(frame, { Rotation: 90, BackgroundTransparency: 1 });
+    const frame = trackNode(createFrame({ Rotation: 0 }));
+    const controller = spring(frame, { Rotation: 90, BackgroundTransparency: 1 });
     const completed = vi.fn();
     controller.completed.subscribe(completed);
     advance();
@@ -220,41 +232,41 @@ describe('spring animations', () => {
     expect(controller.isAnimating()).toBe(false);
     expect(frame.Rotation).toBe(rotation);
     expect(completed).not.toHaveBeenCalled();
-    fka.spring(frame, { Rotation: 45 });
+    spring(frame, { Rotation: 45 });
     settle();
     expect(frame.Rotation).toBe(45);
     expect(completed).toHaveBeenCalledOnce();
   });
 
   it('validates options and spring goals', () => {
-    const frame = trackNode(fk.createFrame());
+    const frame = trackNode(createFrame());
 
-    expect(() => fka.spring(frame, { Rotation: 1 }, { tension: 0 })).toThrow(/tension/);
-    expect(() => fka.spring(frame, { Rotation: 1 }, { friction: Number.NaN })).toThrow(/friction/);
-    expect(() => fka.spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
-    expect(() => fka.spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
+    expect(() => spring(frame, { Rotation: 1 }, { tension: 0 })).toThrow(/tension/);
+    expect(() => spring(frame, { Rotation: 1 }, { friction: Number.NaN })).toThrow(/friction/);
+    expect(() => spring(frame, { Rotation: 1 }, { mass: 0 })).toThrow(/mass/);
+    expect(() => spring(frame, { Rotation: 1 }, { restVelocity: -1 })).toThrow(/rest velocity/);
 
-    expect(() => fka.spring(frame, {})).toThrow(/goal property/);
-    expect(() => fka.spring(frame, { Missing: 1 } as never)).toThrow(
+    expect(() => spring(frame, {})).toThrow(/goal property/);
+    expect(() => spring(frame, { Missing: 1 } as never)).toThrow(
       /Unknown spring property "Missing"/,
     );
-    expect(() => fka.spring(frame, { BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
+    expect(() => spring(frame, { BackgroundTransparency: Number.NaN })).toThrow(/animatable/);
   });
 
   it('rejects a goal that violates the property contract before scheduling it', () => {
-    const frame = trackNode(fk.createFrame());
-    const scale = trackNode(fk.createUIScale());
+    const frame = trackNode(createFrame());
+    const scale = trackNode(createUIScale());
 
     scale.Parent = frame;
 
-    const controller = fka.spring(scale);
+    const controller = spring(scale);
 
-    expect(() => fka.spring(scale, { Scale: -1 }, { tension: 170, friction: 5 })).toThrow(
+    expect(() => spring(scale, { Scale: -1 }, { tension: 170, friction: 5 })).toThrow(
       /invalid property values/,
     );
     expect(controller.isAnimating()).toBe(false);
 
-    const replacement = fka.createTween(scale, { Duration: 0 }, { Scale: 0.5 });
+    const replacement = createTween(scale, { Duration: 0 }, { Scale: 0.5 });
 
     replacement.play();
 
@@ -262,19 +274,19 @@ describe('spring animations', () => {
   });
 
   it('springs shadow properties through the same API', () => {
-    const frame = trackNode(fk.createFrame());
-    const shadow = trackNode(fk.createUIShadow());
+    const frame = trackNode(createFrame());
+    const shadow = trackNode(createUIShadow());
 
     shadow.Parent = frame;
-    fka.spring(shadow, {
-      Offset: fk.vector2(12, 20),
+    spring(shadow, {
+      Offset: vector2(12, 20),
       BlurRadius: 28,
       Transparency: 0.25,
     });
     settle();
 
     expect(shadow).toMatchObject({
-      Offset: fk.vector2(12, 20),
+      Offset: vector2(12, 20),
       BlurRadius: 28,
       Transparency: 0.25,
     });

@@ -1,4 +1,11 @@
-import { fk } from 'framekit';
+import {
+  createObservableValue,
+  type Frame,
+  type TextButton,
+  type TextLabel,
+  udim2,
+  udim2FromOffset,
+} from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiPage } from '../src/components/api-page';
@@ -9,9 +16,9 @@ import type { SitePage } from '../src/router';
 import { themes } from '../src/theme';
 
 const createState = (page: SitePage) => ({
-  layout: fk.createValue<PlaygroundLayout>('desktop'),
-  theme: fk.createValue(themes.dark),
-  route: fk.createValue<SitePage>(page),
+  layout: createObservableValue<PlaygroundLayout>('desktop'),
+  theme: createObservableValue(themes.dark),
+  route: createObservableValue<SitePage>(page),
 });
 
 describe('playground pages', () => {
@@ -19,10 +26,10 @@ describe('playground pages', () => {
     const state = createState('home');
     const home = createHomePage(state.layout, state.theme, state.route, () => undefined);
     const names = ['GetStartedButton', 'ApiReferenceButton', 'HomeInstallButton'];
-    const buttons = names.map((name) => home.findFirstChild(name, true) as fk.TextButton);
-    const visual = home.findFirstChild('HomeCodeVisual', true) as fk.Frame;
-    const lastLine = visual.findFirstChild('CodeLine8') as fk.TextLabel;
-    const result = visual.findFirstChild('HomeResult') as fk.Frame;
+    const buttons = names.map((name) => home.findFirstChild(name, true) as TextButton);
+    const visual = home.findFirstChild('HomeCodeVisual', true) as Frame;
+    const lastLine = visual.findFirstChild('CodeLine8') as TextLabel;
+    const result = visual.findFirstChild('HomeResult') as Frame;
     for (const currentLayout of ['desktop', 'mobile', 'desktop'] as const) {
       state.layout.set(currentLayout);
       expect(lastLine.Position.Y.Offset + lastLine.Size.Y.Offset).toBeLessThan(
@@ -48,23 +55,29 @@ describe('playground pages', () => {
     const scrollTo = vi.fn();
     const navigate = vi.fn();
     const guide = createGuidePage(state.layout, state.theme, state.route, scrollTo, navigate);
-    const sidebar = guide.findFirstChild('GuidePageSidebar', true) as fk.Frame;
+    const sidebar = guide.findFirstChild('GuidePageSidebar', true) as Frame;
     expect(sidebar.unsafeElement.style.position).toBe('sticky');
     const next = guide.findFirstChild('GuideNextButton', true);
-    if (!next?.isA('TextButton')) throw new Error('Missing guide next button.');
+    if (!next?.isA('TextButton')) {
+      throw new Error('Missing guide next button.');
+    }
     next.unsafeElement.click();
     expect(navigate).toHaveBeenCalledWith('api');
     const outline = guide.findFirstChild('CleanupOutlineButton', true);
-    if (!outline?.isA('TextButton')) throw new Error('Missing cleanup outline button.');
+    if (!outline?.isA('TextButton')) {
+      throw new Error('Missing cleanup outline button.');
+    }
     const heading = guide
       .getDescendants()
       .find((node) => node.isA('TextLabel') && node.Text === 'Clean up one owner');
-    if (!heading?.isA('TextLabel')) throw new Error('Missing cleanup heading.');
+    if (!heading?.isA('TextLabel')) {
+      throw new Error('Missing cleanup heading.');
+    }
     outline.unsafeElement.click();
     expect(scrollTo).toHaveBeenCalledWith(heading);
     state.layout.set('mobile');
-    expect((guide.findFirstChild('GuidePageSidebarRail', true) as fk.Frame).Visible).toBe(false);
-    expect((guide.findFirstChild('GuidePageOutlineRail', true) as fk.Frame).Visible).toBe(false);
+    expect((guide.findFirstChild('GuidePageSidebarRail', true) as Frame).Visible).toBe(false);
+    expect((guide.findFirstChild('GuidePageOutlineRail', true) as Frame).Visible).toBe(false);
     guide.destroy();
   });
 
@@ -72,9 +85,9 @@ describe('playground pages', () => {
     const state = createState('api');
     const api = createApiPage(state.layout, state.theme, state.route, () => undefined);
     state.layout.set('mobile');
-    const cornerCard = api.findFirstChild('UICornerReferenceCard', true) as fk.Frame;
-    const cornerTitle = cornerCard.findFirstChild('Text') as fk.TextLabel;
-    expect(cornerTitle.Size).toEqual(fk.udim2(1, -28, 0, 20));
+    const cornerCard = api.findFirstChild('UICornerReferenceCard', true) as Frame;
+    const cornerTitle = cornerCard.findFirstChild('Text') as TextLabel;
+    expect(cornerTitle.Size).toEqual(udim2(1, -28, 0, 20));
     api.destroy();
   });
 
@@ -86,10 +99,14 @@ describe('playground pages', () => {
       .getDescendants()
       .find((node) => node.isA('TextLabel') && node.Text === 'Animation');
     expect(animation?.isA('TextLabel')).toBe(true);
-    if (!animation?.isA('TextLabel')) throw new Error('Missing Animation heading.');
-    animation.Position = fk.udim2FromOffset(0, 4400);
+    if (!animation?.isA('TextLabel')) {
+      throw new Error('Missing Animation heading.');
+    }
+    animation.Position = udim2FromOffset(0, 4400);
     const outline = api.findFirstChild('AnimationOutlineButton', true);
-    if (!outline?.isA('TextButton')) throw new Error('Missing Animation outline link.');
+    if (!outline?.isA('TextButton')) {
+      throw new Error('Missing Animation outline link.');
+    }
     outline.unsafeElement.click();
     expect(scrollTo).toHaveBeenCalledWith(animation);
     api.destroy();

@@ -8,10 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const repository = fileURLToPath(new URL('../', import.meta.url));
 const consumer = mkdtempSync(join(tmpdir(), 'framekit-consumer-'));
-const fixture = readFileSync(join(repository, 'src/tests/public-api.typecheck.ts'), 'utf8').replace(
-  "from '../index.js'",
-  "from 'framekit'",
-);
+const fixture = readFileSync(join(repository, 'src/tests/public-api.typecheck.ts'), 'utf8');
 
 beforeAll(() => {
   execFileSync(
@@ -32,7 +29,9 @@ beforeAll(() => {
   const packageDirectory = join(consumer, 'node_modules/framekit');
   mkdirSync(packageDirectory, { recursive: true });
   const archive = readdirSync(consumer).find((file) => file.endsWith('.tgz'));
-  if (!archive) throw new Error('npm pack did not produce an archive.');
+  if (!archive) {
+    throw new Error('npm pack did not produce an archive.');
+  }
   execFileSync('tar', [
     '-xzf',
     join(consumer, archive),
@@ -52,7 +51,7 @@ beforeAll(() => {
 afterAll(() => rmSync(consumer, { recursive: true, force: true }));
 
 describe('packed package consumers', () => {
-  it.each(['module', 'commonjs'] as const)('loads the public namespaces through %s', (format) => {
+  it.each(['module', 'commonjs'] as const)('loads named exports through %s', (format) => {
     const load =
       format === 'module'
         ? "const api = await import('framekit');"
@@ -64,20 +63,26 @@ describe('packed package consumers', () => {
         format,
         '-e',
         `${load}
-      const value = api.fk.createValue(1);
+      const value = api.createObservableValue(1);
       value.set(2);
       console.log(JSON.stringify({
-        exports: Object.keys(api).sort(),
-        frame: typeof api.fk.createFrame,
-        spring: typeof api.fka.spring,
-        hover: typeof api.fkh.bindHoverScale,
+        bindPopover: typeof api.bindPopover,
+        bindTooltip: typeof api.bindTooltip,
+        createSignalEmitter: typeof api.createSignalEmitter,
+        installFrameKitStyles: typeof api.installFrameKitStyles,
+        frame: typeof api.createFrame,
+        spring: typeof api.spring,
+        hover: typeof api.bindHoverScale,
         value: value.get(),
       }));`,
       ],
       { cwd: consumer, encoding: 'utf8' },
     );
     expect(JSON.parse(output)).toEqual({
-      exports: ['fk', 'fka', 'fkh'],
+      bindPopover: 'function',
+      bindTooltip: 'function',
+      createSignalEmitter: 'function',
+      installFrameKitStyles: 'function',
       frame: 'function',
       spring: 'function',
       hover: 'function',

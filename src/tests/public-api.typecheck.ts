@@ -1,33 +1,65 @@
-import { fk, fka, fkh } from '../index.js';
+import {
+  bindHoverScale,
+  bindPopover,
+  bindTooltip,
+  color3FromRGB,
+  createFrame,
+  createObservableValue,
+  createScreenGui,
+  createSignalEmitter,
+  createTextButton,
+  createTextLabel,
+  createTween,
+  createUIScale,
+  type FloatingPanelHook,
+  type Frame,
+  type GuiElement,
+  type GuiObject,
+  type Instance,
+  installFrameKitStyles,
+  type ObservableValue,
+  type SignalEmitter,
+  spring,
+  type TooltipOptions,
+  udim2FromOffset,
+  type Unsubscribe,
+  vector2,
+} from 'framekit';
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
-  const frame = fk.createFrame();
-  const frameViews: readonly [fk.Frame, fk.Instance, fk.GuiElement, fk.GuiObject] = [
+  const frame = createFrame();
+  const frameViews: readonly [Frame, Instance, GuiElement, GuiObject] = [
     frame,
     frame,
     frame,
     frame,
   ];
   void frameViews;
-  const button = fk.createTextButton();
-  const scale = fk.createUIScale();
+  const button = createTextButton();
+  const scale = createUIScale();
+  const observableValue: ObservableValue<number> = createObservableValue(1);
+  observableValue.set(2);
+  const signalEmitter: SignalEmitter<[number]> = createSignalEmitter<[number]>();
+  signalEmitter.emit(observableValue.get());
+  installFrameKitStyles();
   scale.Parent = button;
-  const dispose: fk.Unsubscribe = fkh.bindHoverScale(button, scale);
+  const dispose: Unsubscribe = bindHoverScale(button, scale);
   void dispose;
-  const disposeToolTip: fk.Unsubscribe = fkh.withToolTip(button, 'Save', {
+  const tooltipOptions: TooltipOptions = {
     followCursor: true,
-    style: { TextColor3: fk.color3FromRGB(255, 255, 255) },
-  });
-  void disposeToolTip;
-  fkh.withToolTip(frame, fk.createTextLabel(), { placement: 'right' });
-  const animatePanel: fkh.FloatingPanelHook = ({ content, signal }) => {
+    style: { TextColor3: color3FromRGB(255, 255, 255) },
+  };
+  const disposeTooltip: Unsubscribe = bindTooltip(button, 'Save', tooltipOptions);
+  void disposeTooltip;
+  bindTooltip(frame, createTextLabel(), { placement: 'right' });
+  const animatePanel: FloatingPanelHook = ({ content, signal }) => {
     content.BackgroundTransparency = 0;
     signal.addEventListener('abort', () => undefined);
     return Promise.resolve();
   };
-  fkh.withToolTip(button, 'Save', { onShow: animatePanel, onHide: animatePanel });
-  const disposePopover: fk.Unsubscribe = fkh.withPopover(button, frame, {
+  bindTooltip(button, 'Save', { onShow: animatePanel, onHide: animatePanel });
+  const disposePopover: Unsubscribe = bindPopover(button, frame, {
     openOn: 'hover',
     placement: 'bottom',
     onShow: animatePanel,
@@ -35,30 +67,30 @@ function verifyPublicTypeContracts(): void {
   });
   void disposePopover;
   // @ts-expect-error Popovers require caller-owned GUI content.
-  fkh.withPopover(button, 'Actions');
+  bindPopover(button, 'Actions');
   // @ts-expect-error Unsupported triggers are not accepted.
-  fkh.withPopover(button, frame, { openOn: 'focus' });
+  bindPopover(button, frame, { openOn: 'focus' });
   // @ts-expect-error Interactive popovers remain anchored.
-  fkh.withPopover(button, frame, { followCursor: true });
+  bindPopover(button, frame, { followCursor: true });
   // @ts-expect-error Hooks settle without returning a value.
-  fkh.withToolTip(button, 'Save', { onHide: () => Promise.resolve(42) });
+  bindTooltip(button, 'Save', { onHide: () => Promise.resolve(42) });
   // @ts-expect-error Tooltips need a DOM-backed target.
-  fkh.withToolTip(scale, 'Scale');
+  bindTooltip(scale, 'Scale');
   // @ts-expect-error Tooltip content is text or a rectangular GUI instance.
-  fkh.withToolTip(button, fk.createScreenGui());
+  bindTooltip(button, createScreenGui());
   // @ts-expect-error Placement accepts only supported sides.
-  fkh.withToolTip(button, 'Save', { placement: 'cursor' });
+  bindTooltip(button, 'Save', { placement: 'cursor' });
   // @ts-expect-error Generated tooltip styles do not own positioning.
-  fkh.withToolTip(button, 'Save', { style: { Position: fk.udim2FromOffset(0, 0) } });
+  bindTooltip(button, 'Save', { style: { Position: udim2FromOffset(0, 0) } });
 
   // @ts-expect-error Unknown constructor properties are not accepted.
-  fk.createFrame({ Typo: true });
+  createFrame({ Typo: true });
   // @ts-expect-error Invalid enum members are not accepted.
   frame.AutomaticSize = 'EveryAxis';
   // @ts-expect-error GUI parentage is not raw DOM parentage.
   frame.Parent = document.body;
   // @ts-expect-error Browser geometry is readonly.
-  frame.AbsoluteSize = fk.vector2(100, 100);
+  frame.AbsoluteSize = vector2(100, 100);
   // @ts-expect-error Structured property values are readonly snapshots.
   frame.Position.X.Offset = 40;
   // @ts-expect-error The escape hatch reference is readonly.
@@ -82,28 +114,24 @@ function verifyPublicTypeContracts(): void {
     child.onClick((event: MouseEvent) => event.preventDefault());
   }
 
-  fka.spring(frame, { Position: fk.udim2FromOffset(20, 40) });
-  fka.createTween(frame, { Duration: 1 }, { Rotation: 20 });
+  spring(frame, { Position: udim2FromOffset(20, 40) });
+  createTween(frame, { Duration: 1 }, { Rotation: 20 });
   // @ts-expect-error ZIndex is discrete, not interpolated.
-  fka.spring(frame, { ZIndex: 2 });
+  spring(frame, { ZIndex: 2 });
   // @ts-expect-error LayoutOrder is discrete, not interpolated.
-  fka.createTween(frame, { Duration: 1 }, { LayoutOrder: 2 });
+  createTween(frame, { Duration: 1 }, { LayoutOrder: 2 });
   // @ts-expect-error Booleans cannot be interpolated.
-  fka.spring(frame, { Visible: false });
+  spring(frame, { Visible: false });
   // @ts-expect-error Strings cannot be interpolated.
-  fka.createTween(button, { Duration: 1 }, { Text: 'Next' });
+  createTween(button, { Duration: 1 }, { Text: 'Next' });
   // @ts-expect-error Frame does not expose text properties.
-  fka.spring(frame, { TextSize: 20 });
+  spring(frame, { TextSize: 20 });
   // @ts-expect-error Controllers cannot stop unsupported animation properties.
-  fka.spring(frame).stop('ZIndex');
-  // @ts-expect-error Animation belongs only to fka.
-  fk.spring(frame, { Rotation: 20 });
-  // @ts-expect-error Core factories do not belong to fka.
-  fka.createFrame();
+  spring(frame).stop('ZIndex');
   // @ts-expect-error Hover binding requires an explicit owned scale.
-  fkh.bindHoverScale(button);
+  bindHoverScale(button);
   // @ts-expect-error Document options accept actual documents.
-  fk.createFrame({}, { ownerDocument: window });
+  createFrame({}, { ownerDocument: window });
 }
 
 void verifyPublicTypeContracts;

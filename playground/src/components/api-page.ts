@@ -1,4 +1,15 @@
-import { fk, fkh } from 'framekit';
+import {
+  createFrame,
+  createUIListLayout,
+  type Frame,
+  type GuiElement,
+  udim,
+  udim2,
+  udim2FromOffset,
+  udim2FromScale,
+  type ObservableValue,
+  bindTooltip,
+} from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
@@ -17,11 +28,11 @@ import {
 import { appendPopoverExamples } from './popover-examples';
 
 export const createApiPage = (
-  layout: fk.Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-  route: fk.Value<SitePage>,
-  scrollTo: (target: fk.GuiElement) => void,
-): fk.Frame => {
+  route: ObservableValue<SitePage>,
+  scrollTo: (target: GuiElement) => void,
+): Frame => {
   const shell = createDocsShell('ApiPage', 'api', layout, theme, route);
   appendArticleTitle(
     shell.article,
@@ -43,16 +54,16 @@ export const createApiPage = (
     'Factories create persistent instances. Initial properties are optional and typed. Every DOM factory accepts { ownerDocument } as a second argument, alongside any tag option.',
   );
   appendCodeBlock(shell.article, theme, 'FactoryCode', [
-    { text: 'fk.createScreenGui(properties?)', color: 'accent' },
-    { text: 'fk.createFrame(properties?, { tagName? })', color: 'blue' },
-    { text: 'fk.createTextLabel(properties?, { textTagName? })', color: 'purple' },
-    { text: 'fk.createTextButton(properties?)', color: 'orange' },
-    { text: 'fk.createLink(properties?)', color: 'blue' },
-    { text: 'fk.createTextInput(properties?)' },
-    { text: 'fk.createTextArea(properties?)' },
-    { text: 'fk.createImageLabel(properties?, { tagName? })' },
-    { text: 'fk.createImageButton(properties?)' },
-    { text: 'fk.createScrollingFrame(properties?, { tagName? })' },
+    { text: 'createScreenGui(properties?)', color: 'accent' },
+    { text: 'createFrame(properties?, { tagName? })', color: 'blue' },
+    { text: 'createTextLabel(properties?, { textTagName? })', color: 'purple' },
+    { text: 'createTextButton(properties?)', color: 'orange' },
+    { text: 'createLink(properties?)', color: 'blue' },
+    { text: 'createTextInput(properties?)' },
+    { text: 'createTextArea(properties?)' },
+    { text: 'createImageLabel(properties?, { tagName? })' },
+    { text: 'createImageButton(properties?)' },
+    { text: 'createScrollingFrame(properties?, { tagName? })' },
   ]);
 
   const instances = appendArticleSection(
@@ -130,12 +141,12 @@ export const createApiPage = (
     'Values model mutable state. Signals model typed events. Register the unsubscribe function with owner.onDestroy to release a subscription when its owner is destroyed.',
   );
   appendCodeBlock(shell.article, theme, 'ValuesApiCode', [
-    { text: 'const value = fk.createValue(initial);', color: 'purple' },
+    { text: 'const value = createObservableValue(initial);', color: 'purple' },
     { text: 'value.get()' },
     { text: 'value.set(next)' },
     { text: 'owner.onDestroy(value.onChange(listener))', color: 'accent' },
     { text: '' },
-    { text: 'const event = fk.createSignal<[number]>();' },
+    { text: 'const event = createSignalEmitter<[number]>();' },
     { text: 'event.subscribe(listener)' },
     { text: 'event.emit(42)' },
   ]);
@@ -166,14 +177,14 @@ export const createApiPage = (
     'Tween provides timed playback controls. Spring retains one controller per instance so retargeting shares velocity and avoids overlapping writers.',
   );
   appendCodeBlock(shell.article, theme, 'AnimationApiCode', [
-    { text: 'const tween = fka.createTween(card, {' },
+    { text: 'const tween = createTween(card, {' },
     { text: '  Duration: 0.3,' },
     { text: "  EasingStyle: 'Quad'," },
     { text: '}, { Rotation: 12 });' },
     { text: 'tween.play();', color: 'blue' },
     { text: '' },
-    { text: 'fka.spring(card, { Rotation: 0 });', color: 'purple' },
-    { text: "fka.spring(card).stop('Rotation');" },
+    { text: 'spring(card, { Rotation: 0 });', color: 'purple' },
+    { text: "spring(card).stop('Rotation');" },
   ]);
   appendCallout(
     shell.article,
@@ -185,15 +196,15 @@ export const createApiPage = (
     shell.article,
     theme,
     'Helpers',
-    'The fkh namespace contains optional behavior built on core instances. It does not add extra support code to fk.',
+    'Helpers are named exports that compose optional behavior from the same core instances.',
   );
   appendCodeBlock(shell.article, theme, 'HelpersApiCode', [
-    { text: 'fkh.bindResponsiveLayout(owner, options)' },
-    { text: 'fkh.bindHoverScale(node, scale, 1.035)' },
+    { text: 'bindResponsiveLayout(owner, options)' },
+    { text: 'bindHoverScale(node, scale, 1.035)' },
     { text: '' },
-    { text: "const dispose = fkh.withToolTip(button, 'Save');", color: 'accent' },
-    { text: "fkh.withToolTip(button, 'Inspect', { followCursor: true });" },
-    { text: 'fkh.withToolTip(button, detachedFrame, { followCursor: true });' },
+    { text: "const dispose = bindTooltip(button, 'Save');", color: 'accent' },
+    { text: "bindTooltip(button, 'Inspect', { followCursor: true });" },
+    { text: 'bindTooltip(button, detachedFrame, { followCursor: true });' },
     { text: '// Options: placement, followCursor, delay, gap, style' },
     { text: '// Animation hooks: onShow, onHide' },
     { text: 'dispose(); // Target destruction also releases the binding.' },
@@ -204,7 +215,7 @@ export const createApiPage = (
     'Try tooltips',
     'Hover or focus a button. Cursor tooltips fade on exit; focused tooltips stay anchored. Escape dismisses them.',
   );
-  appendToolTipExamples(shell.article, layout, theme);
+  appendTooltipExamples(shell.article, layout, theme);
   const popovers = appendPopoverExamples(shell.article, layout, theme);
   const coreItems = [
     { label: 'Factories', target: factories, active: true },
@@ -229,74 +240,74 @@ export const createApiPage = (
   return shell.page;
 };
 
-const appendToolTipExamples = (
-  article: fk.Frame,
-  layout: fk.Value<PlaygroundLayout>,
+const appendTooltipExamples = (
+  article: Frame,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
 ): void => {
   const row = createExampleRow(article, layout);
   const buttons = ['Anchored text', 'Follow cursor', 'Custom Frame'].map((label, index) => {
     const button = createButton(theme, {
       label,
-      name: `ToolTipExample${index + 1}`,
-      position: fk.udim2FromOffset(0, 0),
-      size: fk.udim2FromOffset(216, 44),
+      name: `TooltipExample${index + 1}`,
+      position: udim2FromOffset(0, 0),
+      size: udim2FromOffset(216, 44),
     });
     bindLayoutProperties(button, layout, button, {
       desktop: {
-        Size: fk.udim2FromOffset(216, 44),
+        Size: udim2FromOffset(216, 44),
       },
       mobile: {
-        Size: fk.udim2FromOffset(358, 44),
+        Size: udim2FromOffset(358, 44),
       },
     });
     button.Parent = row;
     return button;
   });
-  fkh.withToolTip(buttons[0]!, 'I stay above this button. You can hover over me.');
-  fkh.withToolTip(buttons[1]!, 'I follow the pointer and fade when you leave.', {
+  bindTooltip(buttons[0]!, 'I stay above this button. You can hover over me.');
+  bindTooltip(buttons[1]!, 'I follow the pointer and fade when you leave.', {
     followCursor: true,
   });
   const custom = createSurface(theme, {
-    name: 'CustomToolTip',
-    size: fk.udim2FromOffset(260, 100),
+    name: 'CustomTooltip',
+    size: udim2FromOffset(260, 100),
     background: 'surfaceRaised',
     radius: 12,
   });
   createText(theme, {
     text: 'Your own Frame',
-    size: fk.udim2FromOffset(232, 26),
-    position: fk.udim2FromOffset(14, 10),
+    size: udim2FromOffset(232, 26),
+    position: udim2FromOffset(14, 10),
     color: 'accent',
     weight: 800,
   }).Parent = custom;
   createText(theme, {
     text: 'Custom layout and theme colors.\nFades as soon as you leave.',
-    size: fk.udim2FromOffset(232, 48),
-    position: fk.udim2FromOffset(14, 40),
+    size: udim2FromOffset(232, 48),
+    position: udim2FromOffset(14, 40),
     color: 'textMuted',
     textSize: typeScale.small,
     wrapped: true,
   }).Parent = custom;
   const customButton = buttons[2]!;
-  fkh.withToolTip(customButton, custom, { followCursor: true });
+  bindTooltip(customButton, custom, { followCursor: true });
   // Supplied content remains caller-owned after the binding is released.
   customButton.onDestroy(() => custom.destroy());
 };
 
 const appendReferenceCards = (
-  parent: fk.Frame,
-  layout: fk.Value<PlaygroundLayout>,
+  parent: Frame,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
   items: readonly (readonly [string, string, ThemeToken])[],
 ): void => {
-  const cards = fk.createFrame({
+  const cards = createFrame({
     Name: 'ReferenceCards',
-    Size: fk.udim2FromScale(1, 0),
+    Size: udim2FromScale(1, 0),
     AutomaticSize: 'Y',
     BackgroundTransparency: 1,
   });
-  fk.createUIListLayout({ Padding: fk.udim(0, 12) }).Parent = cards;
+  createUIListLayout({ Padding: udim(0, 12) }).Parent = cards;
   for (const [name, description, color] of items) {
     createReferenceCard(layout, theme, name, description, color).Parent = cards;
   }
@@ -304,22 +315,22 @@ const appendReferenceCards = (
 };
 
 const createReferenceCard = (
-  layout: fk.Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
   name: string,
   description: string,
   color: ThemeToken,
-): fk.Frame => {
+): Frame => {
   const card = createSurface(theme, {
     name: `${name.replaceAll(/\W+/g, '')}ReferenceCard`,
-    size: fk.udim2(1, 0, 0, 68),
+    size: udim2(1, 0, 0, 68),
     background: 'surface',
     radius: 10,
   });
   const title = createText(theme, {
     text: name,
-    size: fk.udim2FromOffset(220, 40),
-    position: fk.udim2FromOffset(18, 14),
+    size: udim2FromOffset(220, 40),
+    position: udim2FromOffset(18, 14),
     color,
     textSize: typeScale.small,
     font: fonts.mono,
@@ -327,25 +338,25 @@ const createReferenceCard = (
   });
   const body = createText(theme, {
     text: description,
-    size: fk.udim2(1, -274, 1, -20),
-    position: fk.udim2FromOffset(256, 10),
+    size: udim2(1, -274, 1, -20),
+    position: udim2FromOffset(256, 10),
     color: 'textMuted',
     textSize: typeScale.small,
     wrapped: true,
   });
   bindLayoutProperties(card, layout, title, {
-    desktop: { Size: fk.udim2FromOffset(220, 40), Position: fk.udim2FromOffset(18, 14) },
-    mobile: { Size: fk.udim2(1, -28, 0, 20), Position: fk.udim2FromOffset(14, 8) },
+    desktop: { Size: udim2FromOffset(220, 40), Position: udim2FromOffset(18, 14) },
+    mobile: { Size: udim2(1, -28, 0, 20), Position: udim2FromOffset(14, 8) },
   });
   bindLayoutProperties(card, layout, body, {
     desktop: {
-      Size: fk.udim2(1, -274, 1, -20),
-      Position: fk.udim2FromOffset(256, 10),
+      Size: udim2(1, -274, 1, -20),
+      Position: udim2FromOffset(256, 10),
       TextSize: typeScale.small,
     },
     mobile: {
-      Size: fk.udim2(1, -28, 0, 34),
-      Position: fk.udim2FromOffset(14, 30),
+      Size: udim2(1, -28, 0, 34),
+      Position: udim2FromOffset(14, 30),
       TextSize: typeScale.caption,
     },
   });

@@ -1,4 +1,10 @@
-import { fk } from 'framekit';
+import {
+  type Frame,
+  type GuiElement,
+  udim2,
+  udim2FromOffset,
+  type ObservableValue,
+} from 'framekit';
 
 import type { PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
@@ -15,12 +21,12 @@ import {
 } from './docs-shell';
 
 export const createGuidePage = (
-  layout: fk.Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-  route: fk.Value<SitePage>,
-  scrollTo: (target: fk.GuiElement) => void,
+  route: ObservableValue<SitePage>,
+  scrollTo: (target: GuiElement) => void,
   navigate: (page: SitePage) => void,
-): fk.Frame => {
+): Frame => {
   const shell = createDocsShell('GuidePage', 'guide', layout, theme, route);
   const introduction = appendArticleTitle(
     shell.article,
@@ -51,10 +57,10 @@ export const createGuidePage = (
     'Create the root, make a child, and connect them. Parent is the only step that attaches the child to the rendered hierarchy.',
   );
   appendCodeBlock(shell.article, theme, 'FirstInterfaceCode', [
-    { text: "import { fk } from 'framekit';", color: 'purple' },
+    { text: "import { createScreenGui, createTextLabel } from 'framekit';", color: 'purple' },
     { text: '' },
-    { text: 'const app = fk.createScreenGui();', color: 'blue' },
-    { text: 'const message = fk.createTextLabel({' },
+    { text: 'const app = createScreenGui();', color: 'blue' },
+    { text: 'const message = createTextLabel({' },
     { text: "  Text: 'Hello, FrameKit!'," },
     { text: '  TextScaled: true,' },
     { text: '});' },
@@ -70,8 +76,8 @@ export const createGuidePage = (
   appendCodeBlock(shell.article, theme, 'PropertyGuideCode', [
     { text: "message.Text = 'Ready';", color: 'accent' },
     { text: 'message.setProperties({' },
-    { text: '  Position: fk.udim2FromOffset(24, 32),' },
-    { text: "  TextColor3: fk.color3FromHex('#76edad')," },
+    { text: '  Position: udim2FromOffset(24, 32),' },
+    { text: "  TextColor3: color3FromHex('#76edad')," },
     { text: '});' },
   ]);
 
@@ -82,7 +88,7 @@ export const createGuidePage = (
     'Buttons expose typed browser interactions. Every subscription returns an unsubscribe function, and owned listeners are removed when their instance is destroyed.',
   );
   appendCodeBlock(shell.article, theme, 'EventsGuideCode', [
-    { text: 'const button = fk.createTextButton({' },
+    { text: 'const button = createTextButton({' },
     { text: "  Text: 'Save'," },
     { text: '});' },
     { text: '' },
@@ -94,10 +100,10 @@ export const createGuidePage = (
     shell.article,
     theme,
     'Bind reactive values',
-    'A Value stores small pieces of state. Subscribe with onChange and register its unsubscribe with the node that owns the binding.',
+    'An observable value stores small pieces of state. Subscribe with onChange and register its unsubscribe with the node that owns the binding.',
   );
   appendCodeBlock(shell.article, theme, 'ValueGuideCode', [
-    { text: 'const count = fk.createValue(0);', color: 'purple' },
+    { text: 'const count = createObservableValue(0);', color: 'purple' },
     { text: '' },
     { text: 'message.onDestroy(count.onChange((value) => {' },
     { text: '  message.Text = `Count: ${value}`;', color: 'accent' },
@@ -110,16 +116,16 @@ export const createGuidePage = (
     shell.article,
     theme,
     'Respond to the viewport',
-    'Use the optional helper namespace when geometry needs a breakpoint. The owner controls the resize listener lifetime.',
+    'Use the responsive layout helper when geometry needs a breakpoint. The owner controls the resize listener lifetime.',
   );
   appendCodeBlock(shell.article, theme, 'ResponsiveGuideCode', [
-    { text: 'fkh.bindResponsiveLayout(app, {' },
+    { text: 'bindResponsiveLayout(app, {' },
     { text: '  breakpoint: 720,' },
     { text: '  mobile: () => {' },
-    { text: '    card.Size = fk.udim2(1, -32, 0, 240);' },
+    { text: '    card.Size = udim2(1, -32, 0, 240);' },
     { text: '  },' },
     { text: '  desktop: () => {' },
-    { text: '    card.Size = fk.udim2FromOffset(520, 280);' },
+    { text: '    card.Size = udim2FromOffset(520, 280);' },
     { text: '  },' },
     { text: '});' },
   ]);
@@ -144,8 +150,8 @@ export const createGuidePage = (
   const next = createButton(theme, {
     label: 'Explore the full API  🔎',
     name: 'GuideNextButton',
-    position: fk.udim2FromOffset(0, 0),
-    size: fk.udim2(1, 0, 0, 54),
+    position: udim2FromOffset(0, 0),
+    size: udim2(1, 0, 0, 54),
     background: 'surface',
     foreground: 'accent',
   });

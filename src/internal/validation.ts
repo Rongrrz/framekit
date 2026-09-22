@@ -1,0 +1,59 @@
+/** Rejects a runtime value that is not one of a property's supported string values. */
+export function assertAllowedValue<Value extends string>(
+  value: unknown,
+  allowedValues: readonly Value[],
+  propertyName: string,
+): asserts value is Value {
+  if (!allowedValues.some((allowedValue) => allowedValue === value)) {
+    throw new TypeError(`Unknown ${propertyName}.`);
+  }
+}
+
+export function assertBoolean(value: unknown, propertyName: string): asserts value is boolean {
+  if (typeof value !== 'boolean') {
+    throw new TypeError(`${propertyName} must be a boolean.`);
+  }
+}
+
+export function assertString(value: unknown, propertyName: string): asserts value is string {
+  if (typeof value !== 'string') {
+    throw new TypeError(`${propertyName} must be a string.`);
+  }
+}
+
+export function assertFiniteNumber(value: unknown, propertyName: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new TypeError(`${propertyName} must be a finite number.`);
+  }
+}
+
+export function assertInteger(value: unknown, propertyName: string): asserts value is number {
+  if (!Number.isInteger(value)) {
+    throw new TypeError(`${propertyName} must be an integer.`);
+  }
+}
+
+export function assertNonNegativeFinite(
+  value: unknown,
+  propertyName: string,
+): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new TypeError(`${propertyName} must be a non-negative finite number.`);
+  }
+}
+
+export function assertPositiveFinite(
+  value: unknown,
+  propertyName: string,
+): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    throw new TypeError(`${propertyName} must be a positive finite number.`);
+  }
+}
+
+/** Rejects values outside the inclusive normalized range used by transparency properties. */
+export function assertUnitInterval(value: unknown, propertyName: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new RangeError(`${propertyName} must be between 0 and 1.`);
+  }
+}

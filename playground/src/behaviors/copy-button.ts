@@ -1,13 +1,13 @@
-import { fk } from 'framekit';
+import { type TextButton } from 'framekit';
 
 const feedbackTimers = new WeakMap<
-  fk.TextButton,
+  TextButton,
   Readonly<{ timer: number; unregisterCleanup: () => void }>
 >();
 
 /** Copies text and reports the result without taking ownership of the button's theme colors. */
 export const copyCommand = async (
-  button: fk.TextButton,
+  button: TextButton,
   command: string,
   idleLabel: string,
 ): Promise<void> => {
@@ -17,7 +17,9 @@ export const copyCommand = async (
   } catch {
     copied = false;
   }
-  if (button.isDestroyed()) return;
+  if (button.isDestroyed()) {
+    return;
+  }
 
   button.Text = copied ? 'COPIED  ✅' : command;
   const previousFeedback = feedbackTimers.get(button);
@@ -30,7 +32,9 @@ export const copyCommand = async (
   const timer = window.setTimeout(() => {
     feedbackTimers.delete(button);
     unregisterCleanup();
-    if (!button.isDestroyed()) button.Text = idleLabel;
+    if (!button.isDestroyed()) {
+      button.Text = idleLabel;
+    }
   }, 1600);
   unregisterCleanup = button.onDestroy(() => {
     window.clearTimeout(timer);

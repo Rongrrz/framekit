@@ -1,0 +1,82 @@
+import {
+  assertAllowedValue,
+  assertBoolean,
+  assertNonNegativeFinite,
+  assertUnitInterval,
+} from '#internal/validation.js';
+import type { InstanceProperties } from '#runtime/node/instance.js';
+import { createStyleModifier, type StyleModifier, type Styles } from '#runtime/node/modifier.js';
+import { mergeProperties } from '#runtime/services/properties.js';
+import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
+
+/** Where a stroke is drawn relative to its GUI parent's edge. */
+export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
+
+/** Properties for a border stroke around a GUI parent. */
+export type UIStrokeProperties = InstanceProperties & {
+  /** Whether the modifier currently affects its parent. */
+  Enabled: boolean;
+  /** Stroke color before transparency is applied. */
+  Color: Color3;
+  /** Stroke transparency from 0 (opaque) to 1 (invisible). */
+  Transparency: number;
+  /** Stroke thickness in pixels. */
+  Thickness: number;
+  /** Placement relative to the parent's edge. */
+  BorderStrokePosition: BorderStrokePosition;
+};
+
+/** An element-less border-stroke modifier. */
+export type UIStroke = StyleModifier<UIStrokeProperties>;
+
+const borderStrokePositions: readonly BorderStrokePosition[] = ['Inner', 'Center', 'Outer'];
+
+/** Creates a stroke modifier that applies a border effect to its GUI parent. */
+export function createUIStroke(initialProperties: Partial<UIStrokeProperties> = {}): UIStroke {
+  return createStyleModifier(
+    'UIStroke',
+    mergeProperties(
+      {
+        Name: 'UIStroke',
+        Enabled: true,
+        Color: color3FromRGB(0, 0, 0),
+        Transparency: 0,
+        Thickness: 1,
+        BorderStrokePosition: 'Outer',
+      },
+      initialProperties,
+    ),
+    resolveStrokeStyles,
+    validateStrokeProperties,
+  );
+}
+
+function resolveStrokeStyles(properties: Readonly<UIStrokeProperties>): Styles {
+  return properties.Enabled ? { 'box-shadow': resolveStrokeShadow(properties) } : {};
+}
+
+function resolveStrokeShadow(properties: Readonly<UIStrokeProperties>): string {
+  const thickness = properties.Thickness;
+  const color = color3ToCss(properties.Color, properties.Transparency);
+  if (properties.BorderStrokePosition === 'Inner') {
+    return `inset 0px 0px 0px ${thickness}px ${color}`;
+  }
+  if (properties.BorderStrokePosition === 'Outer') {
+    return `0px 0px 0px ${thickness}px ${color}`;
+  }
+
+  const halfThickness = thickness / 2;
+  return `inset 0px 0px 0px ${halfThickness}px ${color}, 0px 0px 0px ${halfThickness}px ${color}`;
+}
+
+function validateStrokeProperties(properties: Readonly<UIStrokeProperties>): void {
+  assertBoolean(properties.Enabled, 'Enabled');
+  assertAllowedValue(
+    properties.BorderStrokePosition,
+    borderStrokePositions,
+    'BorderStrokePosition',
+  );
+  assertNonNegativeFinite(properties.Thickness, 'Thickness');
+  assertColor3(properties.Color, 'Color');
+  assertUnitInterval(properties.Transparency, 'Transparency');
+}

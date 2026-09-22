@@ -1,4 +1,13 @@
-import { fk, fkh } from 'framekit';
+import {
+  type FloatingPanelContext,
+  type Frame,
+  type PopoverOptions,
+  type TextLabel,
+  udim2,
+  udim2FromOffset,
+  type ObservableValue,
+  bindPopover,
+} from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { typeScale, type ThemeValue } from '../theme';
@@ -7,10 +16,10 @@ import { appendArticleSection, appendCodeBlock, createExampleRow } from './docs-
 
 /** Owns the interactive dropdown examples and their caller-owned content. */
 export const appendPopoverExamples = (
-  article: fk.Frame,
-  layout: fk.Value<PlaygroundLayout>,
+  article: Frame,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-): fk.TextLabel => {
+): TextLabel => {
   const heading = appendArticleSection(
     article,
     theme,
@@ -20,7 +29,7 @@ export const appendPopoverExamples = (
   const status = createText(theme, {
     text: 'Choose an action in either dropdown.',
     name: 'PopoverExampleStatus',
-    size: fk.udim2(1, 0, 0, 40),
+    size: udim2(1, 0, 0, 40),
     textSize: typeScale.small,
     color: 'textMuted',
     wrapped: true,
@@ -32,21 +41,21 @@ export const appendPopoverExamples = (
     const trigger = createButton(theme, {
       label,
       name: `PopoverExample${index + 1}`,
-      position: fk.udim2FromOffset(0, 0),
-      size: fk.udim2FromOffset(332, 44),
+      position: udim2FromOffset(0, 0),
+      size: udim2FromOffset(332, 44),
     });
     bindLayoutProperties(trigger, layout, trigger, {
       desktop: {
-        Size: fk.udim2FromOffset(332, 44),
+        Size: udim2FromOffset(332, 44),
       },
       mobile: {
-        Size: fk.udim2FromOffset(358, 44),
+        Size: udim2FromOffset(358, 44),
       },
     });
     trigger.Parent = row;
     const panel = createSurface(theme, {
       name: `PopoverExamplePanel${index + 1}`,
-      size: fk.udim2FromOffset(250, 172),
+      size: udim2FromOffset(250, 172),
       background: 'surfaceRaised',
       radius: 12,
     });
@@ -75,14 +84,14 @@ export const appendPopoverExamples = (
     for (const [actionIndex, [text, action]] of actions.entries()) {
       const button = createButton(theme, {
         label: text,
-        size: fk.udim2FromOffset(226, 40),
-        position: fk.udim2FromOffset(12, 12 + actionIndex * 52),
+        size: udim2FromOffset(226, 40),
+        position: udim2FromOffset(12, 12 + actionIndex * 52),
         background: 'surface',
       });
       button.onClick(action);
       button.Parent = panel;
     }
-    fkh.withPopover(trigger, panel, {
+    bindPopover(trigger, panel, {
       openOn: 'hover',
       gap: 8,
       ...(index === 1 ? createPopoverAnimation() : {}),
@@ -91,7 +100,7 @@ export const appendPopoverExamples = (
   }
   status.Parent = article;
   appendCodeBlock(article, theme, 'PopoverHooksCode', [
-    { text: 'const dispose = fkh.withPopover(button, dropdown, {', color: 'accent' },
+    { text: 'const dispose = bindPopover(button, dropdown, {', color: 'accent' },
     { text: "  openOn: 'hover', placement: 'bottom'," },
     { text: '  onShow: ({ content, signal }) =>' },
     { text: '    animateIn(content, signal),' },
@@ -100,17 +109,17 @@ export const appendPopoverExamples = (
     { text: '});' },
     { text: '// Return a promise to finish hiding after your animation.' },
     { text: '// Honor signal to cancel on re-entry or disposal.' },
-    { text: '// The same hooks work with fkh.withToolTip().' },
+    { text: '// The same hooks work with bindTooltip().' },
     { text: '// Omit hooks for the built-in spring and reduced-motion support.' },
   ]);
   return heading;
 };
 
 /** A caller-defined opacity/blur animation; its signal cancels native animation work. */
-const createPopoverAnimation = (): Pick<fkh.PopoverOptions, 'onShow' | 'onHide'> => {
+const createPopoverAnimation = (): Pick<PopoverOptions, 'onShow' | 'onHide'> => {
   let opacity = 0;
   const animate = async (
-    { content, signal }: fkh.FloatingPanelContext,
+    { content, signal }: FloatingPanelContext,
     showing: boolean,
   ): Promise<void> => {
     const element = content.unsafeElement;
@@ -136,7 +145,9 @@ const createPopoverAnimation = (): Pick<fkh.PopoverOptions, 'onShow' | 'onHide'>
       await animation.finished;
       opacity = destination;
     } catch (error) {
-      if (!signal.aborted) throw error;
+      if (!signal.aborted) {
+        throw error;
+      }
     } finally {
       signal.removeEventListener('abort', cancel);
       animation.cancel();

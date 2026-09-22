@@ -1,58 +1,67 @@
-import { fk, fka } from 'framekit';
+import {
+  type Color3,
+  color3FromRGB,
+  createFrame,
+  type Instance,
+  type InstanceProperties,
+  spring,
+  type SpringOptions,
+  type ObservableValue,
+} from 'framekit';
 
 import { watchOwnedValue } from './owned-value';
 
 export type ThemeMode = 'dark' | 'light';
 
 export type ThemePalette = Readonly<{
-  canvas: fk.Color3;
-  surface: fk.Color3;
-  surfaceRaised: fk.Color3;
-  border: fk.Color3;
-  text: fk.Color3;
-  textMuted: fk.Color3;
-  textFaint: fk.Color3;
-  accent: fk.Color3;
-  accentMuted: fk.Color3;
-  onAccent: fk.Color3;
-  blue: fk.Color3;
-  purple: fk.Color3;
-  orange: fk.Color3;
+  canvas: Color3;
+  surface: Color3;
+  surfaceRaised: Color3;
+  border: Color3;
+  text: Color3;
+  textMuted: Color3;
+  textFaint: Color3;
+  accent: Color3;
+  accentMuted: Color3;
+  onAccent: Color3;
+  blue: Color3;
+  purple: Color3;
+  orange: Color3;
 }>;
 
 export type ThemeToken = keyof ThemePalette;
-export type ThemeValue = fk.Value<ThemePalette>;
+export type ThemeValue = ObservableValue<ThemePalette>;
 
 export const themes = {
   dark: {
-    canvas: fk.color3FromRGB(10, 13, 18),
-    surface: fk.color3FromRGB(17, 22, 29),
-    surfaceRaised: fk.color3FromRGB(23, 30, 39),
-    border: fk.color3FromRGB(48, 61, 76),
-    text: fk.color3FromRGB(244, 247, 250),
-    textMuted: fk.color3FromRGB(165, 177, 190),
-    textFaint: fk.color3FromRGB(105, 120, 137),
-    accent: fk.color3FromRGB(118, 237, 173),
-    accentMuted: fk.color3FromRGB(36, 87, 62),
-    onAccent: fk.color3FromRGB(7, 22, 14),
-    blue: fk.color3FromRGB(112, 178, 255),
-    purple: fk.color3FromRGB(175, 142, 255),
-    orange: fk.color3FromRGB(255, 183, 94),
+    canvas: color3FromRGB(10, 13, 18),
+    surface: color3FromRGB(17, 22, 29),
+    surfaceRaised: color3FromRGB(23, 30, 39),
+    border: color3FromRGB(48, 61, 76),
+    text: color3FromRGB(244, 247, 250),
+    textMuted: color3FromRGB(165, 177, 190),
+    textFaint: color3FromRGB(105, 120, 137),
+    accent: color3FromRGB(118, 237, 173),
+    accentMuted: color3FromRGB(36, 87, 62),
+    onAccent: color3FromRGB(7, 22, 14),
+    blue: color3FromRGB(112, 178, 255),
+    purple: color3FromRGB(175, 142, 255),
+    orange: color3FromRGB(255, 183, 94),
   },
   light: {
-    canvas: fk.color3FromRGB(245, 247, 250),
-    surface: fk.color3FromRGB(255, 255, 255),
-    surfaceRaised: fk.color3FromRGB(249, 251, 253),
-    border: fk.color3FromRGB(207, 216, 226),
-    text: fk.color3FromRGB(20, 27, 35),
-    textMuted: fk.color3FromRGB(76, 91, 107),
-    textFaint: fk.color3FromRGB(121, 136, 151),
-    accent: fk.color3FromRGB(18, 153, 98),
-    accentMuted: fk.color3FromRGB(210, 241, 225),
-    onAccent: fk.color3FromRGB(255, 255, 255),
-    blue: fk.color3FromRGB(33, 111, 203),
-    purple: fk.color3FromRGB(111, 72, 191),
-    orange: fk.color3FromRGB(183, 101, 8),
+    canvas: color3FromRGB(245, 247, 250),
+    surface: color3FromRGB(255, 255, 255),
+    surfaceRaised: color3FromRGB(249, 251, 253),
+    border: color3FromRGB(207, 216, 226),
+    text: color3FromRGB(20, 27, 35),
+    textMuted: color3FromRGB(76, 91, 107),
+    textFaint: color3FromRGB(121, 136, 151),
+    accent: color3FromRGB(18, 153, 98),
+    accentMuted: color3FromRGB(210, 241, 225),
+    onAccent: color3FromRGB(255, 255, 255),
+    blue: color3FromRGB(33, 111, 203),
+    purple: color3FromRGB(111, 72, 191),
+    orange: color3FromRGB(183, 101, 8),
   },
 } satisfies Readonly<Record<ThemeMode, ThemePalette>>;
 
@@ -90,7 +99,7 @@ const themeSpringOptions = {
   friction: 18,
   precision: 0.002,
   restVelocity: 0.03,
-} satisfies fka.SpringOptions;
+} satisfies SpringOptions;
 
 const documentPaletteProperties = [
   '--pg-canvas',
@@ -100,23 +109,23 @@ const documentPaletteProperties = [
 ] as const;
 
 /** Applies colors from the shared animated palette for the lifetime of the instance. */
-export const bindThemeColors = <Properties extends fk.InstanceProperties>(
-  instance: fk.Instance<Properties>,
+export const bindThemeColors = <Properties extends InstanceProperties>(
+  instance: Instance<Properties>,
   theme: ThemeValue,
   derive: (palette: ThemePalette) => Partial<Properties>,
 ): void => {
   watchOwnedValue(instance, theme, (palette) => instance.setProperties(derive(palette)));
 };
 
-export const themeColor = (theme: ThemeValue, token: ThemeToken): fk.Color3 => theme.get()[token];
+export const themeColor = (theme: ThemeValue, token: ThemeToken): Color3 => theme.get()[token];
 
 /** Drives every theme consumer from one retained spring so colors stay synchronized. */
 export const bindThemeTransition = (
-  owner: fk.Instance,
-  mode: fk.Value<ThemeMode>,
+  owner: Instance,
+  mode: ObservableValue<ThemeMode>,
   palette: ThemeValue,
 ): void => {
-  const transition = fk.createFrame({
+  const transition = createFrame({
     Name: 'ThemeTransition',
     Rotation: mode.get() === 'light' ? 1 : 0,
     Visible: false,
@@ -134,7 +143,7 @@ export const bindThemeTransition = (
       palette.set(themes[nextMode]);
       return;
     }
-    fka.spring(transition, { Rotation: goal }, themeSpringOptions);
+    spring(transition, { Rotation: goal }, themeSpringOptions);
   });
   watchOwnedValue(owner, palette, applyDocumentPalette);
   owner.onDestroy(() => {
@@ -148,7 +157,9 @@ export const bindThemeTransition = (
 export const resolveInitialTheme = (): ThemeMode => {
   try {
     const stored = window.localStorage.getItem(themeStorageKey);
-    if (stored === 'dark' || stored === 'light') return stored;
+    if (stored === 'dark' || stored === 'light') {
+      return stored;
+    }
   } catch {
     // Storage can be unavailable in embedded previews. The system preference is still useful.
   }
@@ -160,7 +171,7 @@ export const resolveInitialTheme = (): ThemeMode => {
 };
 
 /** Keeps DOM-only styling and persistence synchronized with the FrameKit theme value. */
-export const bindDocumentTheme = (owner: fk.Instance, theme: fk.Value<ThemeMode>): void => {
+export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeMode>): void => {
   const root = document.documentElement;
   const themeColorMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   const previousTheme = root.getAttribute('data-framekit-theme');
@@ -168,7 +179,9 @@ export const bindDocumentTheme = (owner: fk.Instance, theme: fk.Value<ThemeMode>
 
   watchOwnedValue(owner, theme, (mode) => {
     root.setAttribute('data-framekit-theme', mode);
-    if (themeColorMeta) themeColorMeta.content = documentThemeColors[mode];
+    if (themeColorMeta) {
+      themeColorMeta.content = documentThemeColors[mode];
+    }
     try {
       window.localStorage.setItem(themeStorageKey, mode);
     } catch {
@@ -176,8 +189,11 @@ export const bindDocumentTheme = (owner: fk.Instance, theme: fk.Value<ThemeMode>
     }
   });
   owner.onDestroy(() => {
-    if (previousTheme === null) root.removeAttribute('data-framekit-theme');
-    else root.setAttribute('data-framekit-theme', previousTheme);
+    if (previousTheme === null) {
+      root.removeAttribute('data-framekit-theme');
+    } else {
+      root.setAttribute('data-framekit-theme', previousTheme);
+    }
     if (themeColorMeta && previousThemeColor !== undefined) {
       themeColorMeta.content = previousThemeColor;
     }
@@ -190,7 +206,7 @@ const prefersReducedMotion = (): boolean =>
 
 const interpolatePalette = (progress: number): ThemePalette => {
   const alpha = Math.min(1, Math.max(0, progress));
-  const color = (token: ThemeToken): fk.Color3 =>
+  const color = (token: ThemeToken): Color3 =>
     interpolateColor(themes.dark[token], themes.light[token], alpha);
   return Object.freeze({
     canvas: color('canvas'),
@@ -209,8 +225,8 @@ const interpolatePalette = (progress: number): ThemePalette => {
   });
 };
 
-const interpolateColor = (from: fk.Color3, to: fk.Color3, progress: number): fk.Color3 =>
-  fk.color3FromRGB(
+const interpolateColor = (from: Color3, to: Color3, progress: number): Color3 =>
+  color3FromRGB(
     from.R + (to.R - from.R) * progress,
     from.G + (to.G - from.G) * progress,
     from.B + (to.B - from.B) * progress,
@@ -224,12 +240,14 @@ const applyDocumentPalette = (palette: ThemePalette): void => {
   root.setProperty('--pg-selection-text', colorToCss(palette.onAccent));
 };
 
-const colorToCss = (color: fk.Color3, alpha = 1): string =>
+const colorToCss = (color: Color3, alpha = 1): string =>
   `rgb(${color.R} ${color.G} ${color.B} / ${alpha})`;
 
 /** Installs the DOM styling needed for fonts, scrollbars, and focus states. */
 export const installPlaygroundStyles = (): void => {
-  if (document.querySelector('[data-framekit-playground-styles]')) return;
+  if (document.querySelector('[data-framekit-playground-styles]')) {
+    return;
+  }
   const style = document.createElement('style');
   style.dataset.framekitPlaygroundStyles = '';
   style.textContent = `

@@ -1,18 +1,20 @@
-import { fk } from 'framekit';
+import { color3FromRGB, createTextButton, type TextButton } from 'framekit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { copyCommand } from '../src/behaviors/copy-button';
 
-const buttons = new Set<fk.TextButton>();
-const createButton = (): fk.TextButton => {
-  const button = fk.createTextButton({ Text: 'Copy', BackgroundColor3: fk.color3FromRGB(1, 2, 3) });
+const buttons = new Set<TextButton>();
+const createButton = (): TextButton => {
+  const button = createTextButton({ Text: 'Copy', BackgroundColor3: color3FromRGB(1, 2, 3) });
   buttons.add(button);
   return button;
 };
 
 beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
 afterEach(() => {
-  for (const button of buttons) button.destroy();
+  for (const button of buttons) {
+    button.destroy();
+  }
   buttons.clear();
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -23,16 +25,20 @@ describe('copy command feedback', () => {
     'reports %s clipboard writes and restores the idle label without changing colors',
     async (result) => {
       const writeText = vi.fn(async () => {
-        if (result === 'rejected') throw new Error('Clipboard denied');
+        if (result === 'rejected') {
+          throw new Error('Clipboard denied');
+        }
       });
       vi.stubGlobal('navigator', result === 'unavailable' ? {} : { clipboard: { writeText } });
       const button = createButton();
 
       await copyCommand(button, 'npm install framekit', 'Copy');
 
-      if (result !== 'unavailable') expect(writeText).toHaveBeenCalledWith('npm install framekit');
+      if (result !== 'unavailable') {
+        expect(writeText).toHaveBeenCalledWith('npm install framekit');
+      }
       expect(button.Text).toBe(result === 'success' ? 'COPIED  ✅' : 'npm install framekit');
-      expect(button.BackgroundColor3).toEqual(fk.color3FromRGB(1, 2, 3));
+      expect(button.BackgroundColor3).toEqual(color3FromRGB(1, 2, 3));
       vi.advanceTimersByTime(1599);
       expect(button.Text).not.toBe('Copy');
       vi.advanceTimersByTime(1);

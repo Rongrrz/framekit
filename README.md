@@ -3,12 +3,12 @@
 FrameKit brings an engine-style UI object model to the browser. Create typed instances, arrange them in an explicit tree, change their properties, and connect events. If you have used Roblox Instances—or scene trees in other engines—the ownership model should feel familiar.
 
 ```ts
-import { fk } from 'framekit';
+import { color3FromRGB, createFrame, createScreenGui, udim2FromOffset } from 'framekit';
 
-const gui = fk.createScreenGui();
-const card = fk.createFrame({
-  Size: fk.udim2FromOffset(320, 180),
-  BackgroundColor3: fk.color3FromRGB(238, 113, 99),
+const gui = createScreenGui();
+const card = createFrame({
+  Size: udim2FromOffset(320, 180),
+  BackgroundColor3: color3FromRGB(238, 113, 99),
   Rotation: 2,
 });
 
@@ -16,17 +16,14 @@ card.Parent = gui;
 gui.mount('#app');
 ```
 
-FrameKit exposes three focused namespaces:
+FrameKit exposes one tree-shakeable set of named exports:
 
 ```ts
-import { fk, fka, fkh } from 'framekit';
+import { createFrame, createTween, spring, bindPopover } from 'framekit';
 ```
 
-- `fk` contains core nodes, values, state, events, and hierarchy APIs.
-- `fka` contains springs, tweens, easing, and animation controllers.
-- `fkh` contains optional helpers that compose an opinionated interaction pattern.
-
-Each API has one canonical location; FrameKit does not expose parallel root-level function aliases.
+Core nodes, values, animation, and optional helpers share this single public entry point. Internal
+modules retain their dependency boundaries without requiring callers to import namespace objects.
 
 ## The model
 
@@ -43,9 +40,9 @@ The common vocabulary is deliberately small:
 | Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry      |
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                     |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
-| Shared values | `createValue`, `onChange`; optional when a plain variable is enough                       |
-| Motion        | `fka.spring`, `fka.createTween`                                                           |
-| Helpers       | `fkh.bindHoverScale`, `fkh.bindResponsiveLayout`                                          |
+| Shared values | `createObservableValue`, `onChange`; optional when a plain variable is enough             |
+| Motion        | `spring`, `createTween`                                                                   |
+| Helpers       | `bindHoverScale`, `bindResponsiveLayout`                                                  |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
 
 Factories accept initial properties. After creation, properties behave like engine object properties:
@@ -55,7 +52,7 @@ card.Name = 'Inventory';
 card.Visible = false;
 
 card.setProperties({
-  Position: fk.udim2FromOffset(40, 80),
+  Position: udim2FromOffset(40, 80),
   Rotation: 4,
 });
 ```
@@ -71,10 +68,10 @@ Elements are DOM-backed nodes. Modifiers are element-less nodes that affect thei
 Container and display factories accept creation-only semantic HTML options. The default tags preserve the existing generic structure; choose a semantic tag when the node's content has that role:
 
 ```ts
-const article = fk.createFrame({}, { tagName: 'article' });
-const title = fk.createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
-const galleryItem = fk.createImageLabel({ AltText: 'Steel sword' }, { tagName: 'figure' });
-const content = fk.createScrollingFrame({}, { tagName: 'main' });
+const article = createFrame({}, { tagName: 'article' });
+const title = createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
+const galleryItem = createImageLabel({ AltText: 'Steel sword' }, { tagName: 'figure' });
+const content = createScrollingFrame({}, { tagName: 'main' });
 ```
 
 `Frame` supports `div`, `main`, `section`, `article`, `aside`, `header`, `footer`, `nav`, and `figure`. `ScrollingFrame` supports scrolling-region equivalents. `TextLabel` renders text as `span` by default and also supports paragraphs, headings, emphasis, code, preformatted text, and block quotes. `ImageLabel` supports `div` or `figure`. Interactive instances remain native `button` elements.
@@ -82,7 +79,7 @@ const content = fk.createScrollingFrame({}, { tagName: 'main' });
 Use `Link` for navigation instead of attaching a click handler to a frame. It renders a real anchor, preserving browser navigation and accessibility behavior:
 
 ```ts
-const guide = fk.createLink({
+const guide = createLink({
   Text: 'Read the guide',
   Href: '/guide',
   Rel: 'help',
@@ -90,44 +87,44 @@ const guide = fk.createLink({
 ```
 
 ```ts
-const panel = fk.createFrame({
+const panel = createFrame({
   Name: 'Inventory',
-  Position: fk.udim2(0.5, -180, 0.5, -120),
-  Size: fk.udim2FromOffset(360, 240),
-  BackgroundColor3: fk.color3FromHex('#171820'),
+  Position: udim2(0.5, -180, 0.5, -120),
+  Size: udim2FromOffset(360, 240),
+  BackgroundColor3: color3FromHex('#171820'),
 });
 
-fk.createUICorner({ CornerRadius: 18 }).Parent = panel;
-fk.createUIGradient({
-  Color: fk.colorSequence(fk.color3FromHex('#9e83ee'), fk.color3FromHex('#5f9cf5')),
+createUICorner({ CornerRadius: 18 }).Parent = panel;
+createUIGradient({
+  Color: colorSequence(color3FromHex('#9e83ee'), color3FromHex('#5f9cf5')),
   Rotation: 90,
 }).Parent = panel;
-fk.createUIStroke({
-  Color: fk.color3FromHex('#9e83ee'),
+createUIStroke({
+  Color: color3FromHex('#9e83ee'),
   Thickness: 2,
   BorderStrokePosition: 'Outer',
 }).Parent = panel;
-fk.createUIPadding({
-  PaddingTop: fk.udim(0, 16),
-  PaddingRight: fk.udim(0, 16),
-  PaddingBottom: fk.udim(0, 16),
-  PaddingLeft: fk.udim(0, 16),
+createUIPadding({
+  PaddingTop: udim(0, 16),
+  PaddingRight: udim(0, 16),
+  PaddingBottom: udim(0, 16),
+  PaddingLeft: udim(0, 16),
 }).Parent = panel;
 ```
 
 A parent accepts one modifier of each kind. Duplicate modifiers throw without disturbing either tree. `UIListLayout` controls the positions of its parent's direct GUI children while attached; detaching it restores their own `Position` and `AnchorPoint` rendering.
 
-Use `fkh` when its optional interaction conventions fit your UI. `bindHoverScale(node, scale)` controls a caller-owned, attached `UIScale` and returns a disposer. Disposing disconnects events and stops its scale motion without destroying either node.
+Use optional helpers when their interaction conventions fit your UI. `bindHoverScale(node, scale)` controls a caller-owned, attached `UIScale` and returns a disposer. Disposing disconnects events and stops its scale motion without destroying either node.
 
 Compose scrolling lists explicitly, keeping the layout reference when its configuration needs to change. Set row widths through their own `Size` properties:
 
 ```ts
-const list = fk.createScrollingFrame({
-  Size: fk.udim2(1, 0, 1, -64),
+const list = createScrollingFrame({
+  Size: udim2(1, 0, 1, -64),
   ScrollingDirection: 'Y',
   AutomaticCanvasSize: 'Y',
 });
-const layout = fk.createUIListLayout({ Padding: fk.udim(0, 12) });
+const layout = createUIListLayout({ Padding: udim(0, 12) });
 layout.Parent = list;
 
 firstRow.Parent = list;
@@ -137,7 +134,7 @@ secondRow.Parent = list;
 `bindResponsiveLayout()` applies one layout immediately, then switches only when the viewport crosses its breakpoint. It returns a disposer; its resize listener is also removed when the owner is destroyed.
 
 ```ts
-fkh.bindResponsiveLayout(panel, {
+bindResponsiveLayout(panel, {
   breakpoint: 700,
   mobile: applyMobileLayout,
   desktop: applyDesktopLayout,
@@ -151,8 +148,8 @@ Nodes are persistent objects with explicit ownership. Setting `Parent = undefine
 `Name` is editable application data. `ClassName` identifies the node's concrete FrameKit type. `Parent` is the single hierarchy mutation API: assign another node to reparent, or `undefined` to detach.
 
 ```ts
-const menu = fk.createFrame({ Name: 'InventoryMenu' });
-const equip = fk.createTextButton({ Name: 'EquipButton', Text: 'Equip' });
+const menu = createFrame({ Name: 'InventoryMenu' });
+const equip = createTextButton({ Name: 'EquipButton', Text: 'Equip' });
 
 equip.Parent = menu;
 
@@ -182,7 +179,7 @@ ScreenGui [ScreenGui]
 Use `toTreeString()` when you want the same output without writing to the console—for example in a custom inspector or a test assertion.
 
 ```ts
-const button = fk.createTextButton({ Text: 'Equip' });
+const button = createTextButton({ Text: 'Equip' });
 
 button.onMouseEnter(() => {
   button.Rotation = 2;
@@ -198,7 +195,7 @@ Event connections belong to the node and are released when it is destroyed. Each
 Text labels, text buttons, and text boxes support `TextScaled`. When enabled, FrameKit chooses the largest whole-pixel font size that fits the object's current bounds and recalculates it when those bounds change. `TextSize` remains the fallback while an object has no measurable browser size.
 
 ```ts
-const title = fk.createTextLabel({
+const title = createTextLabel({
   Text: 'Inventory',
   TextScaled: true,
   TextWrapped: true,
@@ -215,10 +212,10 @@ panel.onPropertyChanged('Position', (position, previousPosition) => {
 
 The event fires for direct assignments, `setProperties()`, animations, and browser-driven synchronization. Assigning the current value again does not fire it.
 
-Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createValue()` provides explicit `get()`, `set()`, and `update()` methods. Subscribe with `onChange()` and register its unsubscribe with the node that owns the binding:
+Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createObservableValue()` provides explicit `get()`, `set()`, and `update()` methods. Subscribe with `onChange()` and register its unsubscribe with the node that owns the binding:
 
 ```ts
-const selectedItem = fk.createValue('Sword');
+const selectedItem = createObservableValue('Sword');
 const renderItem = (item: string) => {
   label.Text = item;
 };
@@ -226,21 +223,21 @@ renderItem(selectedItem.get());
 label.onDestroy(selectedItem.onChange(renderItem));
 ```
 
-There is no dependency tracking or render cycle. Value listeners run synchronously when the value changes.
+There is no dependency tracking or render cycle. Observable value listeners run synchronously when the value changes.
 
 All GUI nodes expose `onMouseEnter()` and `onMouseLeave()`. Button nodes add `onClick()`, primary-button, and secondary-button methods.
 
 `TextInput` and `TextArea` use native form controls. Both keep their current string in `Text`, and `onTextChanged()` emits that same string as the user edits. Use `TextInput` for a single line and `TextArea` for multiline content:
 
 ```ts
-const email = fk.createTextInput({
+const email = createTextInput({
   InputType: 'Email',
   PlaceholderText: 'you@example.com',
   FieldName: 'email',
   AutoComplete: 'email',
 });
 
-const bio = fk.createTextArea({
+const bio = createTextArea({
   Text: 'Hello FrameKit',
   PlaceholderText: 'Write something…',
   ResizeDirection: 'Vertical',
@@ -265,15 +262,15 @@ panel.AbsoluteSize;
 Scrolling frames use the same direct property model. `CanvasSize` sets explicit bounds, `AutomaticCanvasSize` grows selected axes around descendants, and `CanvasPosition` stays synchronized with native scrolling:
 
 ```ts
-const list = fk.createScrollingFrame({
+const list = createScrollingFrame({
   ScrollingDirection: 'Y',
-  CanvasSize: fk.udim2FromOffset(0, 1200),
+  CanvasSize: udim2FromOffset(0, 1200),
   AutomaticCanvasSize: 'X',
   ScrollBarThickness: 8,
 });
 
-list.scrollTo(fk.vector2(0, 240));
-list.scrollBy(fk.vector2(0, 80));
+list.scrollTo(vector2(0, 240));
+list.scrollBy(vector2(0, 80));
 list.AbsoluteCanvasSize;
 list.MaxCanvasPosition;
 ```
@@ -283,23 +280,23 @@ Nested scrolling frames pass gestures and keyboard commands for unsupported axes
 
 ## Spring motion
 
-Call `fka.spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
+Call `spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
 
 ```ts
-const scale = fk.createUIScale();
+const scale = createUIScale();
 scale.Parent = button;
 
-button.onMouseEnter(() => fka.spring(scale, { Scale: 1.04 }));
-button.onMouseLeave(() => fka.spring(scale, { Scale: 1 }));
+button.onMouseEnter(() => spring(scale, { Scale: 1.04 }));
+button.onMouseLeave(() => spring(scale, { Scale: 1 }));
 ```
 
 The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mass: 1, precision: 0.001, restVelocity: 0.0625 }`. Most interactions should leave it alone. When a particular motion needs a different feel, pass a separate settings object:
 
 ```ts
-fka.spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
+spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
 ```
 
-`fka.spring()` animates numeric properties plus `fk.Color3`, `fk.Vector2`, `fk.UDim`, and `fk.UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
+`spring()` animates numeric properties plus `Color3`, `Vector2`, `UDim`, and `UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
 
 Assigning a property directly or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue, and the write takes control even when it assigns the property's current value.
 
@@ -312,11 +309,11 @@ Scaling with `UIScale` is useful for hover effects because it changes visual siz
 Tweens are the explicit, timed alternative to springs:
 
 ```ts
-const tween = fka.createTween(
+const tween = createTween(
   panel,
   { Duration: 0.3, EasingStyle: 'Quad' },
   {
-    Position: fk.udim2FromOffset(240, 40),
+    Position: udim2FromOffset(240, 40),
     BackgroundTransparency: 0.1,
   },
 );
@@ -329,23 +326,27 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 ## Package organization
 
-The package entry point exposes only `fk`, `fka`, and `fkh`. The source tree follows those same boundaries:
+The package entry point assembles named exports from domain-owned modules. The source tree keeps implementation ownership explicit:
 
-- `core/` — the `fk` surface; hierarchy, rendering, and lifecycle each have a direct owning module
-- `core/node/` — private node handles, state, properties, and event implementation
-- `animation/` — the `fka` surface with spring and tween mechanics
-- `helpers/` — optional composed behavior exposed through `fkh`
-- `tests/` — source tests mirror the implementation domains, with reusable test infrastructure under `tests/support`
+- `runtime/` — node handles and the hierarchy, lifecycle, property, and rendering services
+- `elements/` and `modifiers/` — public UI factories plus their focused DOM behavior services
+- `values/` and `state/` — immutable value objects, signals, and observable values
+- `animation/` — shared animation runtime with separate spring and tween mechanics
+- `behaviors/` — optional composed interactions such as responsive layouts and floating panels
+- `dom/` and `internal/` — low-level browser infrastructure, validation, snapshots, and error plumbing
+- `tests/` — tests mirror the implementation domains, with reusable infrastructure under `tests/support`
 
-Core types are available through `fk`, while animation types are available through `fka`:
+Values and types come from the same entry point:
 
 ```ts
-function show(panel: fk.Frame): void {
-  fka.spring(panel, { BackgroundTransparency: 0 });
+import { type Frame, spring } from 'framekit';
+
+function show(panel: Frame): void {
+  spring(panel, { BackgroundTransparency: 0 });
 }
 ```
 
-Internal validation and error plumbing live under `core/internal`; they are implementation details rather than a secondary public entry point. Package consumers should import only from `framekit`. Source dependency tests enforce core's independence from animation and helpers; package exports keep those implementation paths out of the consumer API.
+Internal modules are implementation details rather than secondary public entry points. Package consumers should import only from `framekit`. Source dependency tests enforce the domain direction, while package exports keep implementation paths out of the consumer API.
 
 ## Reusable UI factories
 
@@ -353,8 +354,8 @@ Compose built-in nodes in ordinary functions. Return the parts that callers need
 
 ```ts
 function createBadge(text: string) {
-  const frame = fk.createFrame({ Name: 'Badge' });
-  const label = fk.createTextLabel({ Text: text, Size: fk.udim2FromScale(1, 1) });
+  const frame = createFrame({ Name: 'Badge' });
+  const label = createTextLabel({ Text: text, Size: udim2FromScale(1, 1) });
   label.Parent = frame;
   return { frame, label };
 }
@@ -375,7 +376,7 @@ DOM factories accept `{ ownerDocument }` as a creation-only second argument, alo
 FrameKit automatically installs one shared stylesheet per document. Under a nonce-based Content Security Policy, authorize it before creating nodes:
 
 ```ts
-fk.installStyles({ nonce: serverGeneratedNonce });
+installFrameKitStyles({ nonce: serverGeneratedNonce });
 ```
 
 Pass `ownerDocument` as well for another document. FrameKit sets individual CSSOM properties rather than `style` attributes or `cssText`; this preserves compatibility with `style-src-attr 'none'`. The stylesheet nonce must match the page's `style-src` policy. See [MDN's CSP styling guidance](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).

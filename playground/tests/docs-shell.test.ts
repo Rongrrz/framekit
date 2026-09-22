@@ -1,4 +1,12 @@
-import { fk } from 'framekit';
+import {
+  createFrame,
+  createTextButton,
+  createUIListLayout,
+  createObservableValue,
+  type Frame,
+  type ScrollingFrame,
+  type TextLabel,
+} from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -17,11 +25,11 @@ afterEach(() => {
 
 describe('documentation spacing', () => {
   it('uses the shared axis-aware scrolling behavior for code examples', () => {
-    const parent = fk.createFrame();
-    appendCodeBlock(parent, fk.createValue(themes.dark), 'Example', [
+    const parent = createFrame();
+    appendCodeBlock(parent, createObservableValue(themes.dark), 'Example', [
       { text: 'message.Text = "Ready";' },
     ]);
-    const scroll = parent.findFirstChild('ExampleScroll', true) as fk.ScrollingFrame;
+    const scroll = parent.findFirstChild('ExampleScroll', true) as ScrollingFrame;
 
     expect(scroll.unsafeElement.style.overscrollBehaviorX).toBe('none');
     expect(scroll.unsafeElement.style.overscrollBehaviorY).toBe('auto');
@@ -32,16 +40,16 @@ describe('documentation spacing', () => {
   });
 
   it.each([1, 8])('sizes a %s-line code example with balanced vertical padding', (lineCount) => {
-    const parent = fk.createFrame();
+    const parent = createFrame();
     appendCodeBlock(
       parent,
-      fk.createValue(themes.dark),
+      createObservableValue(themes.dark),
       'Example',
       Array.from({ length: lineCount }, () => ({ text: 'const example = true;' })),
     );
-    const block = parent.findFirstChild('Example') as fk.Frame;
-    const first = block.findFirstChild('CodeLine1', true) as fk.TextLabel;
-    const last = block.findFirstChild(`CodeLine${lineCount}`, true) as fk.TextLabel;
+    const block = parent.findFirstChild('Example') as Frame;
+    const first = block.findFirstChild('CodeLine1', true) as TextLabel;
+    const last = block.findFirstChild(`CodeLine${lineCount}`, true) as TextLabel;
     const bottomPadding = block.Size.Y.Offset - last.Position.Y.Offset - last.Size.Y.Offset;
     expect(bottomPadding).toBe(first.Position.Y.Offset);
     expect(block.Size.Y.Offset).toBe(32 + lineCount * 22);
@@ -49,8 +57,13 @@ describe('documentation spacing', () => {
   });
 
   it('uses natural paragraph height and fixed heading typography', () => {
-    const parent = fk.createFrame();
-    const heading = appendArticleSection(parent, fk.createValue(themes.dark), 'Heading', 'Body');
+    const parent = createFrame();
+    const heading = appendArticleSection(
+      parent,
+      createObservableValue(themes.dark),
+      'Heading',
+      'Body',
+    );
     const labels = parent.getChildren().filter((child) => child.isA('TextLabel'));
     expect(heading.TextScaled).toBe(false);
     expect(heading.TextSize).toBe(28);
@@ -65,11 +78,11 @@ describe('documentation spacing', () => {
   });
 
   it('keeps example rows in the article flow when the responsive direction changes', () => {
-    const parent = fk.createFrame();
-    fk.createUIListLayout().Parent = parent;
-    const layout = fk.createValue<PlaygroundLayout>('desktop');
+    const parent = createFrame();
+    createUIListLayout().Parent = parent;
+    const layout = createObservableValue<PlaygroundLayout>('desktop');
     const row = createExampleRow(parent, layout);
-    fk.createTextButton().Parent = row;
+    createTextButton().Parent = row;
     expect(row.unsafeElement.style.position).toBe('relative');
     expect(row.unsafeElement.style.flexDirection).toBe('row');
     layout.set('mobile');
@@ -92,13 +105,13 @@ describe('documentation spacing', () => {
         disconnect = disconnect;
       },
     );
-    const layout = fk.createValue<PlaygroundLayout>('desktop');
+    const layout = createObservableValue<PlaygroundLayout>('desktop');
     const shell = createDocsShell(
       'GuidePage',
       'guide',
       layout,
-      fk.createValue(themes.dark),
-      fk.createValue('guide'),
+      createObservableValue(themes.dark),
+      createObservableValue('guide'),
     );
     const height = vi
       .spyOn(shell.article.unsafeElement, 'offsetHeight', 'get')

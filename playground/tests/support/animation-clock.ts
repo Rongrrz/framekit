@@ -25,11 +25,17 @@ export const installAnimationClock = (): TestAnimationClock => {
     state.time += 1000 / 60;
     const frames = Array.from(state.frames.values());
     state.frames.clear();
-    for (const frame of frames) frame(state.time);
+    for (const frame of frames) {
+      frame(state.time);
+    }
   };
   const settle = (): void => {
-    for (let frame = 0; frame < 300 && state.frames.size > 0; frame += 1) advance();
-    if (state.frames.size > 0) throw new Error('Animations did not settle within 300 frames.');
+    for (let frame = 0; frame < 300 && state.frames.size > 0; frame += 1) {
+      advance();
+    }
+    if (state.frames.size > 0) {
+      throw new Error('Animations did not settle within 300 frames.');
+    }
   };
   return { advance, settle };
 };
