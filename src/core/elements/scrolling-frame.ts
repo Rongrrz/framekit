@@ -76,6 +76,12 @@ export type ScrollingFrame = GuiElement<ScrollingFrameProperties> &
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
 const scrollingFrameTagNames = ['div', 'main', 'section', 'article', 'aside', 'nav'] as const;
+type ScrollAxis = 'X' | 'Y';
+type KeyboardScrollIntent = Readonly<{
+  axis: ScrollAxis;
+  direction: -1 | 1;
+  distance: 'Line' | 'Page';
+}>;
 
 const scrollingFrameMethodTable = {
   ...guiEventMethods,
@@ -135,7 +141,6 @@ export function createScrollingFrame(
     visibility: 'hidden',
   });
   element.append(canvasBounds);
-  element.style.overscrollBehavior = 'none';
   element.tabIndex = 0;
   installStyles({ ownerDocument });
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
@@ -168,6 +173,16 @@ export function createScrollingFrame(
           properties.ScrollingDirection === 'Y' || properties.ScrollingDirection === 'XY';
         setStyle(element, 'overflow-x', properties.ScrollingEnabled && scrollX ? 'auto' : 'hidden');
         setStyle(element, 'overflow-y', properties.ScrollingEnabled && scrollY ? 'auto' : 'hidden');
+        setStyle(
+          element,
+          'overscroll-behavior-x',
+          properties.ScrollingEnabled && scrollX ? 'none' : 'auto',
+        );
+        setStyle(
+          element,
+          'overscroll-behavior-y',
+          properties.ScrollingEnabled && scrollY ? 'none' : 'auto',
+        );
       }
       if (changedProperties.has('ScrollBarThickness')) {
         setStyle(element, '--framekit-scrollbar-thickness', `${properties.ScrollBarThickness}px`);
@@ -231,7 +246,13 @@ export function createScrollingFrame(
 
   const listenerController = createRealmAbortController(element);
   const passiveListenerOptions = { passive: true, signal: listenerController.signal };
-  element.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
+  const listenerElement: HTMLElement = element;
+  listenerElement.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
+  listenerElement.addEventListener(
+    'keydown',
+    (event: KeyboardEvent) => forwardUnsupportedKeyboardScroll(node, event),
+    { signal: listenerController.signal },
+  );
 
   lifecycle.onDestroy(node, () => listenerController.abort());
   return node;
@@ -267,6 +288,71 @@ function writeCanvasPosition(element: HTMLElement, position: Vector2): void {
 
 function positionsMatch(first: Vector2, second: Vector2): boolean {
   return first.X === second.X && first.Y === second.Y;
+}
+
+function forwardUnsupportedKeyboardScroll(node: ScrollingFrame, event: KeyboardEvent): void {
+  if (
+    event.target !== node.unsafeElement ||
+    event.defaultPrevented ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey
+  ) {
+    return;
+  }
+  const intent = resolveKeyboardScrollIntent(event);
+  if (!intent || acceptsScrollAxis(node, intent.axis)) return;
+  const ancestor = findScrollingAncestor(node, intent.axis);
+  if (!ancestor) return;
+
+  const distance =
+    intent.distance === 'Line'
+      ? 40
+      : intent.axis === 'X'
+        ? ancestor.unsafeElement.clientWidth
+        : ancestor.unsafeElement.clientHeight;
+  const offset = intent.direction * distance;
+  event.preventDefault();
+  ancestor.scrollBy(intent.axis === 'X' ? vector2(offset, 0) : vector2(0, offset));
+}
+
+function resolveKeyboardScrollIntent(event: KeyboardEvent): KeyboardScrollIntent | undefined {
+  switch (event.key) {
+    case 'ArrowLeft':
+      return { axis: 'X', direction: -1, distance: 'Line' };
+    case 'ArrowRight':
+      return { axis: 'X', direction: 1, distance: 'Line' };
+    case 'ArrowUp':
+      return { axis: 'Y', direction: -1, distance: 'Line' };
+    case 'ArrowDown':
+      return { axis: 'Y', direction: 1, distance: 'Line' };
+    case 'PageUp':
+      return { axis: 'Y', direction: -1, distance: 'Page' };
+    case 'PageDown':
+      return { axis: 'Y', direction: 1, distance: 'Page' };
+    case ' ':
+      return { axis: 'Y', direction: event.shiftKey ? -1 : 1, distance: 'Page' };
+    default:
+      return undefined;
+  }
+}
+
+function findScrollingAncestor(node: ScrollingFrame, axis: ScrollAxis): ScrollingFrame | undefined {
+  return findScrollingAncestorFrom(node.Parent, axis);
+}
+
+function findScrollingAncestorFrom(
+  node: ScrollingFrame['Parent'],
+  axis: ScrollAxis,
+): ScrollingFrame | undefined {
+  if (!node) return undefined;
+  if (node.isA('ScrollingFrame') && acceptsScrollAxis(node, axis)) return node;
+  return findScrollingAncestorFrom(node.Parent, axis);
+}
+
+function acceptsScrollAxis(node: ScrollingFrame, axis: ScrollAxis): boolean {
+  if (!node.ScrollingEnabled) return false;
+  return node.ScrollingDirection === axis || node.ScrollingDirection === 'XY';
 }
 
 function resolveScrollbarWidth(thickness: number): string {

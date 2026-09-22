@@ -13,6 +13,26 @@ afterEach(() => {
 });
 
 describe('playground page shell', () => {
+  it('sizes the scroll canvas from the active page as its content changes', () => {
+    vi.stubGlobal('innerWidth', 1292);
+    const route = fk.createValue<SitePage>('guide');
+    const shell = createPageShell(fk.createValue('desktop'), fk.createValue(themes.dark), route);
+    const guide = fk.createFrame({ Size: fk.udim2(1, 0, 0, 1400) });
+    const api = fk.createFrame({ Size: fk.udim2(1, 0, 0, 2400) });
+    shell.addPage('guide', guide);
+    shell.addPage('api', api);
+    expect(shell.content.Size.Y.Offset).toBe(1400);
+    guide.Size = fk.udim2(1, 0, 0, 1600);
+    expect(shell.content.Size.Y.Offset).toBe(1600);
+    route.set('api');
+    expect(shell.content.Size.Y.Offset).toBe(2400);
+    guide.Size = fk.udim2(1, 0, 0, 1800);
+    expect(shell.content.Size.Y.Offset).toBe(2400);
+    expect(shell.content.Parent?.isA('Frame')).toBe(true);
+    expect((shell.content.Parent as fk.Frame).Size.Y.Offset).toBe(2400);
+    shell.app.destroy();
+  });
+
   it('retargets one retained scroll spring between documentation sections', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('innerWidth', 1292);

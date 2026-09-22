@@ -3,7 +3,7 @@ import { fk, fkh } from 'framekit';
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { typeScale, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
-import { appendArticleSection, appendCodeBlock } from './docs-shell';
+import { appendArticleSection, appendCodeBlock, createExampleRow } from './docs-shell';
 
 /** Owns the interactive dropdown examples and their caller-owned content. */
 export const appendPopoverExamples = (
@@ -16,42 +16,34 @@ export const appendPopoverExamples = (
     theme,
     'Interactive popovers',
     'Hover, focus, or click to open. Tab enters the buttons; Escape or clicking outside closes. Try the actions below.',
-    6140,
   );
   const status = createText(theme, {
     text: 'Choose an action in either dropdown.',
     name: 'PopoverExampleStatus',
-    size: fk.udim2(1, 0, 0, 60),
-    position: fk.udim2FromOffset(0, 6412),
+    size: fk.udim2(1, 0, 0, 40),
     textSize: typeScale.small,
     color: 'textMuted',
     wrapped: true,
   });
   status.unsafeElement.setAttribute('role', 'status');
-  bindLayoutProperties(status, layout, status, {
-    desktop: { Position: fk.udim2FromOffset(0, 6412) },
-    mobile: { Position: fk.udim2FromOffset(0, 6440) },
-  });
-  status.Parent = article;
+  const row = createExampleRow(article, layout);
   let count = 0;
   for (const [index, label] of ['Default spring', 'Custom fade + blur'].entries()) {
     const trigger = createButton(theme, {
       label,
       name: `PopoverExample${index + 1}`,
-      size: fk.udim2FromOffset(328, 44),
-      position: fk.udim2FromOffset(index * 352, 6322),
+      position: fk.udim2FromOffset(0, 0),
+      size: fk.udim2FromOffset(332, 44),
     });
     bindLayoutProperties(trigger, layout, trigger, {
       desktop: {
-        Size: fk.udim2FromOffset(328, 44),
-        Position: fk.udim2FromOffset(index * 352, 6322),
+        Size: fk.udim2FromOffset(332, 44),
       },
       mobile: {
         Size: fk.udim2FromOffset(358, 44),
-        Position: fk.udim2FromOffset(0, 6322 + index * 56),
       },
     });
-    trigger.Parent = article;
+    trigger.Parent = row;
     const panel = createSurface(theme, {
       name: `PopoverExamplePanel${index + 1}`,
       size: fk.udim2FromOffset(250, 172),
@@ -97,26 +89,20 @@ export const appendPopoverExamples = (
     });
     trigger.onDestroy(() => panel.destroy());
   }
-  appendCodeBlock(
-    article,
-    theme,
-    'PopoverHooksCode',
-    [
-      { text: 'const dispose = fkh.withPopover(button, dropdown, {', color: 'accent' },
-      { text: "  openOn: 'hover', placement: 'bottom'," },
-      { text: '  onShow: ({ content, signal }) =>' },
-      { text: '    animateIn(content, signal),' },
-      { text: '  onHide: ({ content, signal }) =>' },
-      { text: '    animateOut(content, signal),' },
-      { text: '});' },
-      { text: '// Return a promise to finish hiding after your animation.' },
-      { text: '// Honor signal to cancel on re-entry or disposal.' },
-      { text: '// The same hooks work with fkh.withToolTip().' },
-      { text: '// Omit hooks for the built-in spring and reduced-motion support.' },
-    ],
-    6570,
-    340,
-  );
+  status.Parent = article;
+  appendCodeBlock(article, theme, 'PopoverHooksCode', [
+    { text: 'const dispose = fkh.withPopover(button, dropdown, {', color: 'accent' },
+    { text: "  openOn: 'hover', placement: 'bottom'," },
+    { text: '  onShow: ({ content, signal }) =>' },
+    { text: '    animateIn(content, signal),' },
+    { text: '  onHide: ({ content, signal }) =>' },
+    { text: '    animateOut(content, signal),' },
+    { text: '});' },
+    { text: '// Return a promise to finish hiding after your animation.' },
+    { text: '// Honor signal to cancel on re-entry or disposal.' },
+    { text: '// The same hooks work with fkh.withToolTip().' },
+    { text: '// Omit hooks for the built-in spring and reduced-motion support.' },
+  ]);
   return heading;
 };
 

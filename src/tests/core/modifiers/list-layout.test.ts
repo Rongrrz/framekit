@@ -6,6 +6,41 @@ import { resetDocumentAfterEach } from '../../support/reset-document.js';
 resetDocumentAfterEach();
 
 describe('UI list layouts', () => {
+  it('preserves independent parent and child layouts through updates and detachment', () => {
+    const article = fk.createFrame();
+    const row = fk.createFrame({ Position: fk.udim2FromOffset(20, 30) });
+    const outer = fk.createUIListLayout({ Padding: fk.udim(0, 12) });
+    const inner = fk.createUIListLayout({ FillDirection: 'Horizontal', Padding: fk.udim(0, 16) });
+    outer.Parent = article;
+    inner.Parent = row;
+    row.Parent = article;
+    const button = fk.createTextButton();
+    button.Parent = row;
+
+    expect(row.unsafeElement.style.position).toBe('relative');
+    expect(row.unsafeElement.style.display).toBe('flex');
+    expect(row.unsafeElement.style.flexDirection).toBe('row');
+    expect(row.unsafeElement.style.gap).toBe('16px');
+    inner.FillDirection = 'Vertical';
+    expect(row.unsafeElement.style.position).toBe('relative');
+    expect(row.unsafeElement.style.flexDirection).toBe('column');
+    outer.Padding = fk.udim(0, 24);
+    expect(row.unsafeElement.style.display).toBe('flex');
+    expect(row.unsafeElement.style.gap).toBe('16px');
+
+    row.Parent = undefined;
+    expect(row.unsafeElement.style.position).toBe('absolute');
+    expect(row.unsafeElement.style.left).toBe('20px');
+    expect(row.unsafeElement.style.display).toBe('flex');
+    expect(button.unsafeElement.style.position).toBe('relative');
+    row.Parent = article;
+    inner.destroy();
+    expect(row.unsafeElement.style.position).toBe('relative');
+    expect(row.unsafeElement.style.display).toBe('');
+    expect(button.unsafeElement.style.position).toBe('absolute');
+    article.destroy();
+  });
+
   it('lays out direct GUI children and restores their positioning when detached', () => {
     const frame = fk.createFrame();
     const first = fk.createFrame({

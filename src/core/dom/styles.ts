@@ -1,10 +1,11 @@
-export type StyleLayer = 'modifier' | 'layout';
+export type StyleLayer = 'modifier' | 'layout' | 'parent-layout';
 export type StyleValues = Readonly<{ [property: string]: string | undefined }>;
 
 type ElementStyleState = {
   base: Record<string, string>;
   modifier: Record<string, string>;
   layout: Record<string, string>;
+  'parent-layout': Record<string, string>;
   fallback: Record<string, string>;
   rendered: Record<string, string>;
 };
@@ -25,7 +26,7 @@ export function removeStyle(element: HTMLElement, property: string): void {
   renderResolvedProperty(element, state, property);
 }
 
-/** Reconciles a complete derived layer without disturbing base styles or the other layer. */
+/** Reconciles a complete derived layer without disturbing other style owners. */
 export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: StyleValues): void {
   const state = getStyleState(element);
   const previousStyles = state[layer];
@@ -48,6 +49,7 @@ function getStyleState(element: HTMLElement): ElementStyleState {
     base: Object.create(null) as Record<string, string>,
     modifier: Object.create(null) as Record<string, string>,
     layout: Object.create(null) as Record<string, string>,
+    'parent-layout': Object.create(null) as Record<string, string>,
     fallback: Object.create(null) as Record<string, string>,
     rendered: Object.create(null) as Record<string, string>,
   };
@@ -81,6 +83,8 @@ function renderResolvedProperty(
 
 function resolveStyleValue(state: ElementStyleState, property: string): string | undefined {
   if (property === 'display' && state.base[property] === 'none') return 'none';
+  // A container's own layout must not replace its placement in its parent's layout.
+  if (hasValue(state['parent-layout'], property)) return state['parent-layout'][property];
   if (hasValue(state.layout, property)) return state.layout[property];
   if (hasValue(state.modifier, property)) return state.modifier[property];
   if (hasValue(state.base, property)) return state.base[property];
