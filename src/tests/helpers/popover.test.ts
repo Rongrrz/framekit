@@ -24,7 +24,9 @@ beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({ matches: true }));
 });
 afterEach(() => {
-  for (const owner of owners) owner.destroy();
+  for (const owner of owners) {
+    owner.destroy();
+  }
   owners.clear();
   document.body.replaceChildren();
   vi.useRealTimers();
@@ -200,8 +202,9 @@ describe('popovers', () => {
       item: () => rectangle,
       [Symbol.iterator]: () => [rectangle][Symbol.iterator](),
     };
-    for (const control of [target, outside])
+    for (const control of [target, outside]) {
       vi.spyOn(control.unsafeElement, 'getClientRects').mockReturnValue(rectangles);
+    }
     bind();
     target.unsafeElement.click();
     last.unsafeElement.focus();
@@ -241,7 +244,9 @@ describe('popovers', () => {
     (owner === 'target' ? target : panel).destroy();
     expect(layer.isDestroyed()).toBe(true);
     expect(target.unsafeElement.hasAttribute('aria-controls')).toBe(false);
-    if (owner === 'target') expect(panel.isDestroyed()).toBe(false);
+    if (owner === 'target') {
+      expect(panel.isDestroyed()).toBe(false);
+    }
   });
 
   it('validates interactive content and options before changing caller-owned state', () => {
@@ -323,8 +328,11 @@ describe('floating panel transitions', () => {
       }
       const layer = panel.Parent as ScreenGui;
       expect(onShow).toHaveBeenCalledOnce();
-      if (kind === 'tooltip') pointer(target.unsafeElement, 'pointerleave');
-      else target.unsafeElement.click();
+      if (kind === 'tooltip') {
+        pointer(target.unsafeElement, 'pointerleave');
+      } else {
+        target.unsafeElement.click();
+      }
       expect(onHide).toHaveBeenCalledOnce();
       expect(showSignal.aborted).toBe(true);
       expect(layer.Enabled).toBe(true);
@@ -440,7 +448,9 @@ describe('floating panel transitions', () => {
       const error = new Error('Animation failed');
       const { layer } = bind({
         onHide: () => {
-          if (failure === 'throw') throw error;
+          if (failure === 'throw') {
+            throw error;
+          }
           return Promise.reject(error);
         },
       });

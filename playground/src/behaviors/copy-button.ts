@@ -17,7 +17,9 @@ export const copyCommand = async (
   } catch {
     copied = false;
   }
-  if (button.isDestroyed()) return;
+  if (button.isDestroyed()) {
+    return;
+  }
 
   button.Text = copied ? 'COPIED  ✅' : command;
   const previousFeedback = feedbackTimers.get(button);
@@ -30,7 +32,9 @@ export const copyCommand = async (
   const timer = window.setTimeout(() => {
     feedbackTimers.delete(button);
     unregisterCleanup();
-    if (!button.isDestroyed()) button.Text = idleLabel;
+    if (!button.isDestroyed()) {
+      button.Text = idleLabel;
+    }
   }, 1600);
   unregisterCleanup = button.onDestroy(() => {
     window.clearTimeout(timer);

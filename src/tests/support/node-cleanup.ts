@@ -6,7 +6,9 @@ import type { Instance } from '../../core/index.js';
 export function destroyNodesAfterEach(): <Node extends Instance>(node: Node) => Node {
   const nodes = new Set<Instance>();
   afterEach(() => {
-    for (const node of nodes) node.destroy();
+    for (const node of nodes) {
+      node.destroy();
+    }
     nodes.clear();
   });
   return (node) => {

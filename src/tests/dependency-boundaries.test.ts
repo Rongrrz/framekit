@@ -31,9 +31,13 @@ describe('source dependency direction', () => {
           ts.ScriptTarget.Latest,
         );
         for (const statement of source.statements) {
-          if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) continue;
+          if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) {
+            continue;
+          }
           const specifier = statement.moduleSpecifier;
-          if (!specifier || !ts.isStringLiteral(specifier)) continue;
+          if (!specifier || !ts.isStringLiteral(specifier)) {
+            continue;
+          }
           const target = resolve(dirname(file), specifier.text);
           const allowed = allowedDomains.some((allowedDomain) => {
             const root = resolve(sourceRoot, allowedDomain);

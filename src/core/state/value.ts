@@ -21,7 +21,9 @@ export function createObservableValue<T>(initialValue: T): ObservableValue<T> {
   let currentValue = initialValue;
 
   function set(nextValue: T): void {
-    if (Object.is(currentValue, nextValue)) return;
+    if (Object.is(currentValue, nextValue)) {
+      return;
+    }
     currentValue = nextValue;
     emitSignalSafely(changedSignal, currentValue);
   }

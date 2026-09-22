@@ -46,7 +46,9 @@ describe('animated theme palette', () => {
     bindThemeTransition(owner, mode, palette);
 
     mode.set('light');
-    for (let frame = 0; frame < 8; frame += 1) clock.advance();
+    for (let frame = 0; frame < 8; frame += 1) {
+      clock.advance();
+    }
     mode.set('dark');
     clock.settle();
 
@@ -99,7 +101,9 @@ describe('document theme', () => {
   ] as const)(
     'resolves stored %s with light preference %s to %s',
     (stored, prefersLight, expected) => {
-      if (stored !== null) window.localStorage.setItem('framekit-playground-theme', stored);
+      if (stored !== null) {
+        window.localStorage.setItem('framekit-playground-theme', stored);
+      }
       vi.stubGlobal('matchMedia', () => ({ matches: prefersLight }));
       expect(resolveInitialTheme()).toBe(expected);
     },
@@ -118,7 +122,9 @@ describe('document theme', () => {
   it.each([null, 'previous'])(
     'restores the previous document theme (%s) and meta color on destruction',
     (previous) => {
-      if (previous !== null) document.documentElement.setAttribute('data-framekit-theme', previous);
+      if (previous !== null) {
+        document.documentElement.setAttribute('data-framekit-theme', previous);
+      }
       const meta = document.createElement('meta');
       meta.name = 'theme-color';
       meta.content = '#123456';

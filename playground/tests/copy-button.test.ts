@@ -12,7 +12,9 @@ const createButton = (): TextButton => {
 
 beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
 afterEach(() => {
-  for (const button of buttons) button.destroy();
+  for (const button of buttons) {
+    button.destroy();
+  }
   buttons.clear();
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -23,14 +25,18 @@ describe('copy command feedback', () => {
     'reports %s clipboard writes and restores the idle label without changing colors',
     async (result) => {
       const writeText = vi.fn(async () => {
-        if (result === 'rejected') throw new Error('Clipboard denied');
+        if (result === 'rejected') {
+          throw new Error('Clipboard denied');
+        }
       });
       vi.stubGlobal('navigator', result === 'unavailable' ? {} : { clipboard: { writeText } });
       const button = createButton();
 
       await copyCommand(button, 'npm install framekit', 'Copy');
 
-      if (result !== 'unavailable') expect(writeText).toHaveBeenCalledWith('npm install framekit');
+      if (result !== 'unavailable') {
+        expect(writeText).toHaveBeenCalledWith('npm install framekit');
+      }
       expect(button.Text).toBe(result === 'success' ? 'COPIED  ✅' : 'npm install framekit');
       expect(button.BackgroundColor3).toEqual(color3FromRGB(1, 2, 3));
       vi.advanceTimersByTime(1599);

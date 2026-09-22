@@ -40,12 +40,16 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
 
   function claim(properties: readonly (keyof Properties)[]): void {
     claimAnimationProperties(node, properties, owner);
-    for (const property of properties) claimedProperties.add(property);
+    for (const property of properties) {
+      claimedProperties.add(property);
+    }
   }
 
   function release(properties: readonly (keyof Properties)[]): void {
     releaseAnimationProperties(node, properties, owner);
-    for (const property of properties) claimedProperties.delete(property);
+    for (const property of properties) {
+      claimedProperties.delete(property);
+    }
   }
 
   function apply(patch: Partial<Properties>): void {
@@ -53,19 +57,25 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
   }
 
   function schedule(): void {
-    if (scheduled) return;
+    if (scheduled) {
+      return;
+    }
     scheduled = true;
     scheduleAnimationTask(options.frame);
   }
 
   function cancelFrame(): void {
-    if (!scheduled) return;
+    if (!scheduled) {
+      return;
+    }
     scheduled = false;
     cancelAnimationTask(options.frame);
   }
 
   function assertUsable(message: string): void {
-    if (lifecycle.isDestroyed(node)) throw new Error(message);
+    if (lifecycle.isDestroyed(node)) {
+      throw new Error(message);
+    }
   }
 
   lifecycle.onDestroy(node, () => {

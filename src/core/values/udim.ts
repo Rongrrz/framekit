@@ -41,8 +41,12 @@ export function udim2FromOffset(xOffset: number, yOffset: number): UDim2 {
 /** Converts a UDim to a safe CSS length. */
 export function udimToCss(value: UDim): string {
   const percent = value.Scale * 100;
-  if (value.Offset === 0) return `${percent}%`;
-  if (value.Scale === 0) return `${value.Offset}px`;
+  if (value.Offset === 0) {
+    return `${percent}%`;
+  }
+  if (value.Scale === 0) {
+    return `${value.Offset}px`;
+  }
   const operator = value.Offset < 0 ? '-' : '+';
   return `calc(${percent}% ${operator} ${Math.abs(value.Offset)}px)`;
 }

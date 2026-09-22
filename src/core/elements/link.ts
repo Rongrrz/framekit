@@ -57,9 +57,15 @@ export function createLink(
     initialProperties,
     'span',
     (properties, changedProperties) => {
-      if (changedProperties.has('Href')) setOptionalAttribute(element, 'href', properties.Href);
-      if (changedProperties.has('Target')) element.target = properties.Target;
-      if (changedProperties.has('Rel')) setOptionalAttribute(element, 'rel', properties.Rel);
+      if (changedProperties.has('Href')) {
+        setOptionalAttribute(element, 'href', properties.Href);
+      }
+      if (changedProperties.has('Target')) {
+        element.target = properties.Target;
+      }
+      if (changedProperties.has('Rel')) {
+        setOptionalAttribute(element, 'rel', properties.Rel);
+      }
       if (changedProperties.has('Download')) {
         setOptionalAttribute(element, 'download', properties.Download);
       }
@@ -93,7 +99,9 @@ function validateLinkProperties(
 }
 
 function validateLinkDestination(href: string, ownerDocument: Document): void {
-  if (!href) return;
+  if (!href) {
+    return;
+  }
   const url = new URL(href, ownerDocument.baseURI);
   if (!allowedLinkProtocols.has(url.protocol)) {
     throw new TypeError(`Unsupported link URL protocol "${url.protocol}".`);
@@ -101,6 +109,9 @@ function validateLinkDestination(href: string, ownerDocument: Document): void {
 }
 
 function setOptionalAttribute(element: HTMLElement, name: string, value: string): void {
-  if (value) element.setAttribute(name, value);
-  else element.removeAttribute(name);
+  if (value) {
+    element.setAttribute(name, value);
+  } else {
+    element.removeAttribute(name);
+  }
 }

@@ -5,6 +5,7 @@
   },
   "ignorePatterns": ["node_modules", "dist", "build"],
   "rules": {
+    "curly": ["error", "all"],
     "eqeqeq": "error",
     "no-array-constructor": "error",
     "no-control-regex": "error",

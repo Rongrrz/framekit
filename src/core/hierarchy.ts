@@ -66,7 +66,9 @@ function append(parent: Instance, child: Instance): void {
       rendering.renderDerivedStyles(parent);
     }
   } catch (error) {
-    if (childState.parent === parent) unlinkNodeFromParent(child, childState);
+    if (childState.parent === parent) {
+      unlinkNodeFromParent(child, childState);
+    }
     if (
       isGuiNode(child) &&
       isGuiNode(parent) &&
@@ -97,15 +99,21 @@ function append(parent: Instance, child: Instance): void {
 /** Detaches a node without destroying it or its descendants. */
 function detach(node: Instance): void {
   const state = getActiveNodeState(node);
-  if (!state.canHaveParent) return;
+  if (!state.canHaveParent) {
+    return;
+  }
   const previousParent = state.parent;
-  if (!previousParent) return;
+  if (!previousParent) {
+    return;
+  }
   const previousParentState = getNodeState(previousParent);
   const previousIndex = getChildren(previousParentState).indexOf(node);
 
   try {
     unlinkNodeFromParent(node, state);
-    if (isGuiNode(node)) node.unsafeElement.remove();
+    if (isGuiNode(node)) {
+      node.unsafeElement.remove();
+    }
     if (isModifierState(state) || rendering.hasLayoutModifier(previousParent)) {
       rendering.renderDerivedStyles(previousParent);
     }
@@ -139,8 +147,11 @@ export function getClassName(node: Instance): string {
 
 /** Reparents a node, or detaches it when `newParent` is undefined. */
 export function setParent(node: Instance, newParent: Instance | undefined): void {
-  if (newParent) append(newParent, node);
-  else detach(node);
+  if (newParent) {
+    append(newParent, node);
+  } else {
+    detach(node);
+  }
 }
 
 /** Returns a snapshot of the node's direct children. */
@@ -172,7 +183,9 @@ export function findFirstChild(
   const matchingChild = getChildren(getActiveNodeState(node)).find(
     (child) => getNodeState(child).properties.Name === name,
   );
-  if (matchingChild || !recursive) return matchingChild;
+  if (matchingChild || !recursive) {
+    return matchingChild;
+  }
   return descendants(node).find((child) => getNodeState(child).properties.Name === name);
 }
 
@@ -232,7 +245,9 @@ function placeChildElement(
   let nextGuiSibling: GuiElement | undefined;
   for (let index = childIndex + 1; index < siblings.length; index += 1) {
     const sibling = siblings[index]!;
-    if (!isGuiNode(sibling)) continue;
+    if (!isGuiNode(sibling)) {
+      continue;
+    }
     nextGuiSibling = sibling;
     break;
   }
@@ -247,7 +262,9 @@ function restoreRendering(
 ): never {
   try {
     rendering.renderDerivedStyles(parent);
-    if (previousParent) rendering.renderDerivedStyles(previousParent);
+    if (previousParent) {
+      rendering.renderDerivedStyles(previousParent);
+    }
   } catch (rollbackError) {
     throw new AggregateError([originalError, rollbackError], rollbackMessage);
   }
@@ -256,7 +273,9 @@ function restoreRendering(
 
 function isAncestor(candidate: Instance, node: Instance): boolean {
   for (let current = getNodeState(node).parent; current; current = getNodeState(current).parent) {
-    if (current === candidate) return true;
+    if (current === candidate) {
+      return true;
+    }
   }
   return false;
 }
@@ -272,8 +291,11 @@ function linkNodeToParent(
   childState.parent = parent;
   const siblings = getChildren(parentState);
   const insertionIndex = Math.max(0, Math.min(index, siblings.length));
-  if (insertionIndex === siblings.length) siblings.push(child);
-  else siblings.splice(insertionIndex, 0, child);
+  if (insertionIndex === siblings.length) {
+    siblings.push(child);
+  } else {
+    siblings.splice(insertionIndex, 0, child);
+  }
   if (isModifierState(childState) && parentState.kind === 'gui') {
     parentState.modifiers.set(childState.className, child as Modifier);
   }
@@ -283,12 +305,16 @@ function linkNodeToParent(
 /** Removes a node from the authoritative hierarchy state and returns its previous parent. */
 export function unlinkNodeFromParent(node: Instance, state: NodeState): Instance | undefined {
   const previousParent = state.parent;
-  if (!previousParent) return undefined;
+  if (!previousParent) {
+    return undefined;
+  }
 
   const parentState = getNodeState(previousParent);
   const siblings = getChildren(parentState);
   const index = siblings.indexOf(node);
-  if (index >= 0) siblings.splice(index, 1);
+  if (index >= 0) {
+    siblings.splice(index, 1);
+  }
   if (isModifierState(state) && parentState.kind === 'gui') {
     parentState.modifiers.delete(state.className);
   }

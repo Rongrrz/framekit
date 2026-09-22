@@ -50,7 +50,9 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
   element.addEventListener(
     'click',
     (event) => {
-      if (!element.disabled) emitNodeEvent(node, guiEventKeys.click, event);
+      if (!element.disabled) {
+        emitNodeEvent(node, guiEventKeys.click, event);
+      }
     },
     listenerOptions,
   );
@@ -58,8 +60,12 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
   element.addEventListener(
     'mousedown',
     (event) => {
-      if (element.disabled) return;
-      if (event.button === 0) emitNodeEvent(node, guiEventKeys.primaryButtonDown, event);
+      if (element.disabled) {
+        return;
+      }
+      if (event.button === 0) {
+        emitNodeEvent(node, guiEventKeys.primaryButtonDown, event);
+      }
       if (event.button === 2) {
         secondaryButtonIsDown = true;
         emitNodeEvent(node, guiEventKeys.secondaryButtonDown, event);
@@ -75,10 +81,14 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
         secondaryButtonIsDown = false;
         return;
       }
-      if (event.button === 0) emitNodeEvent(node, guiEventKeys.primaryButtonUp, event);
+      if (event.button === 0) {
+        emitNodeEvent(node, guiEventKeys.primaryButtonUp, event);
+      }
       if (event.button === 2) {
         emitNodeEvent(node, guiEventKeys.secondaryButtonUp, event);
-        if (secondaryButtonIsDown) emitNodeEvent(node, guiEventKeys.secondaryClick, event);
+        if (secondaryButtonIsDown) {
+          emitNodeEvent(node, guiEventKeys.secondaryClick, event);
+        }
         secondaryButtonIsDown = false;
       }
     },
@@ -104,8 +114,11 @@ export function renderButtonProperties(
   element.disabled = properties.Disabled;
   element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
   element.toggleAttribute('data-framekit-auto-button-color', properties.AutoButtonColor);
-  if (properties.AccessibleLabel === '') element.removeAttribute('aria-label');
-  else element.setAttribute('aria-label', properties.AccessibleLabel);
+  if (properties.AccessibleLabel === '') {
+    element.removeAttribute('aria-label');
+  } else {
+    element.setAttribute('aria-label', properties.AccessibleLabel);
+  }
 }
 
 /** Validates properties shared by every FrameKit button. */

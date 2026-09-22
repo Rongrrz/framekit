@@ -150,7 +150,9 @@ function renderGuiObject(
       `translate(${-properties.AnchorPoint.X * 100}%, ${-properties.AnchorPoint.Y * 100}%)`,
     );
   }
-  if (changedProperties.has('Rotation')) setStyle(element, 'rotate', `${properties.Rotation}deg`);
+  if (changedProperties.has('Rotation')) {
+    setStyle(element, 'rotate', `${properties.Rotation}deg`);
+  }
   if (changedProperties.has('Visible')) {
     setStyle(element, 'display', properties.Visible ? '' : 'none');
   }
@@ -164,7 +166,9 @@ function renderGuiObject(
       color3ToCss(properties.BackgroundColor3, properties.BackgroundTransparency),
     );
   }
-  if (changedProperties.has('ZIndex')) setStyle(element, 'z-index', String(properties.ZIndex));
+  if (changedProperties.has('ZIndex')) {
+    setStyle(element, 'z-index', String(properties.ZIndex));
+  }
   if (changedProperties.has('ClipsDescendants')) {
     setStyle(element, 'overflow', properties.ClipsDescendants ? 'hidden' : 'visible');
   }

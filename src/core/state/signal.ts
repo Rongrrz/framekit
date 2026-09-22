@@ -25,7 +25,9 @@ export function createSignalEmitter<Arguments extends unknown[] = []>(): SignalE
       listeners.add(listener);
       let active = true;
       return () => {
-        if (!active) return;
+        if (!active) {
+          return;
+        }
         active = false;
         listeners.delete(listener);
       };

@@ -99,7 +99,9 @@ function mountScreenGui(gui: ScreenGui, target: string | HTMLElement): void {
   if (element.ownerDocument !== gui.unsafeElement.ownerDocument) {
     throw new TypeError('ScreenGui cannot be mounted into a different document.');
   }
-  if (mountTargets.get(gui) === element && gui.unsafeElement.parentElement === element) return;
+  if (mountTargets.get(gui) === element && gui.unsafeElement.parentElement === element) {
+    return;
+  }
 
   element.append(gui.unsafeElement);
   mountTargets.set(gui, element);
@@ -122,7 +124,9 @@ function isScreenGuiMounted(gui: ScreenGui): boolean {
 }
 
 function resolveMountTarget(gui: ScreenGui, target: string | HTMLElement): HTMLElement {
-  if (typeof target !== 'string') return target;
+  if (typeof target !== 'string') {
+    return target;
+  }
   let element: HTMLElement | null;
   try {
     element = gui.unsafeElement.ownerDocument.querySelector<HTMLElement>(target);
@@ -130,6 +134,8 @@ function resolveMountTarget(gui: ScreenGui, target: string | HTMLElement): HTMLE
     throw new TypeError(`Unable to mount ScreenGui: "${target}" is not a valid selector.`);
   }
 
-  if (!element) throw new Error(`Unable to mount ScreenGui: target "${target}" was not found.`);
+  if (!element) {
+    throw new Error(`Unable to mount ScreenGui: target "${target}" was not found.`);
+  }
   return element;
 }

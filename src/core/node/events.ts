@@ -22,7 +22,9 @@ export function subscribeToNodeEvent<Arguments extends unknown[]>(
     eventSignalsByNode.set(node, signalsByEvent);
     const ownedSignals = signalsByEvent;
     state.cleanups.add(() => {
-      for (const signal of ownedSignals.values()) signal.clear();
+      for (const signal of ownedSignals.values()) {
+        signal.clear();
+      }
       eventSignalsByNode.delete(node);
     });
   }
@@ -40,7 +42,11 @@ export function emitNodeEvent<Arguments extends unknown[]>(
   eventKey: PropertyKey,
   ...args: Arguments
 ): void {
-  if (getNodeState(node).destroyed) return;
+  if (getNodeState(node).destroyed) {
+    return;
+  }
   const emitter = eventSignalsByNode.get(node)?.get(eventKey);
-  if (emitter) emitSignalSafely(emitter, ...args);
+  if (emitter) {
+    emitSignalSafely(emitter, ...args);
+  }
 }

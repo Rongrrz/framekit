@@ -175,7 +175,9 @@ function validateImageProperties(
   assertString(properties.AltText, 'AltText');
   assertUnitInterval(properties.ImageTransparency, 'ImageTransparency');
   assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
-  if ('Disabled' in properties) validateButtonProperties(properties);
+  if ('Disabled' in properties) {
+    validateButtonProperties(properties);
+  }
   validateImageSource(properties.Image, ownerDocument);
 }
 
@@ -188,7 +190,9 @@ function setImageSource(element: HTMLImageElement, source: string): void {
 }
 
 function validateImageSource(source: string, ownerDocument: Document): void {
-  if (!source) return;
+  if (!source) {
+    return;
+  }
   const url = new URL(source, ownerDocument.baseURI);
   const allowedDataImage = url.protocol === 'data:' && /^data:image\//i.test(source);
   if (!allowedImageProtocols.has(url.protocol) && !allowedDataImage) {

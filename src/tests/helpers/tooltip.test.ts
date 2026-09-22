@@ -24,7 +24,9 @@ beforeEach(() => {
   vi.stubGlobal('innerHeight', 600);
 });
 afterEach(() => {
-  for (const owner of owners) owner.destroy();
+  for (const owner of owners) {
+    owner.destroy();
+  }
   owners.clear();
   document.body.replaceChildren();
   vi.useRealTimers();
@@ -79,7 +81,9 @@ const fixture = (): Readonly<{
 
 const layerOf = (tooltip: GuiObject): ScreenGui => {
   const layer = tooltip.Parent;
-  if (!layer?.isA('ScreenGui')) throw new Error('Missing tooltip layer.');
+  if (!layer?.isA('ScreenGui')) {
+    throw new Error('Missing tooltip layer.');
+  }
   return layer;
 };
 
@@ -353,7 +357,9 @@ describe('tooltips', () => {
     const dispose = bindTooltip(target, tooltip);
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
-    if (open) vi.advanceTimersByTime(300);
+    if (open) {
+      vi.advanceTimersByTime(300);
+    }
     target.destroy();
     vi.advanceTimersByTime(1000);
     clock.advance();

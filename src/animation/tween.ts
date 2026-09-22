@@ -115,14 +115,18 @@ export function createTween<Properties extends InstanceProperties>(
 
   function play(): void {
     assertUsable();
-    if (playbackState === 'Playing' || playbackState === 'Delayed') return;
+    if (playbackState === 'Playing' || playbackState === 'Delayed') {
+      return;
+    }
 
     if (playbackState === 'Paused') {
       startedAtMs = performance.now() - elapsedBeforePauseMs;
     } else {
       startValues = {};
       const latest = getPropertiesSnapshot(node);
-      for (const property of goalKeys) startValues[property] = latest[property];
+      for (const property of goalKeys) {
+        startValues[property] = latest[property];
+      }
       elapsedBeforePauseMs = 0;
       startedAtMs = performance.now();
     }
@@ -138,7 +142,9 @@ export function createTween<Properties extends InstanceProperties>(
 
   function pause(): void {
     assertUsable();
-    if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
+    if (playbackState !== 'Playing' && playbackState !== 'Delayed') {
+      return;
+    }
     elapsedBeforePauseMs = Math.max(0, performance.now() - startedAtMs);
     runner.cancelFrame();
     playbackState = 'Paused';
@@ -157,7 +163,9 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function step(timestamp: number): void {
-    if (playbackState !== 'Playing' && playbackState !== 'Delayed') return;
+    if (playbackState !== 'Playing' && playbackState !== 'Delayed') {
+      return;
+    }
 
     const elapsedMs = Math.max(0, timestamp - startedAtMs);
     elapsedBeforePauseMs = elapsedMs;
@@ -193,7 +201,9 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function applyProgress(progress: number): void {
-    if (runner.isDestroyed()) return;
+    if (runner.isDestroyed()) {
+      return;
+    }
     const easedProgress = ease(
       progress,
       resolvedOptions.EasingStyle,
@@ -216,7 +226,9 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function finish(nextState: 'Completed' | 'Cancelled'): void {
-    if (playbackState === 'Completed' || playbackState === 'Cancelled') return;
+    if (playbackState === 'Completed' || playbackState === 'Cancelled') {
+      return;
+    }
     runner.cancelFrame();
     runner.release(goalKeys);
     playbackState = nextState;

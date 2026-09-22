@@ -145,7 +145,9 @@ const createPopoverAnimation = (): Pick<PopoverOptions, 'onShow' | 'onHide'> => 
       await animation.finished;
       opacity = destination;
     } catch (error) {
-      if (!signal.aborted) throw error;
+      if (!signal.aborted) {
+        throw error;
+      }
     } finally {
       signal.removeEventListener('abort', cancel);
       animation.cancel();

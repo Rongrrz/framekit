@@ -62,22 +62,34 @@ let nextPanelId = 0;
 
 /** Validates before generated content is allocated or caller-owned content is changed. */
 export const validatePanelOptions = (target: GuiElement, options: PanelOptions): void => {
-  if (target.isDestroyed()) throw new Error('Floating panel target has been destroyed.');
-  if (!target.unsafeElement.ownerDocument.defaultView)
+  if (target.isDestroyed()) {
+    throw new Error('Floating panel target has been destroyed.');
+  }
+  if (!target.unsafeElement.ownerDocument.defaultView) {
     throw new Error('Floating panel requires a document with a window.');
-  if (options.kind === 'tooltip') assertBoolean(options.followCursor, 'Tooltip followCursor');
-  else assertAllowedValue(options.openOn, ['hover', 'click'], 'Popover openOn');
-  if (options.placement !== undefined)
+  }
+  if (options.kind === 'tooltip') {
+    assertBoolean(options.followCursor, 'Tooltip followCursor');
+  } else {
+    assertAllowedValue(options.openOn, ['hover', 'click'], 'Popover openOn');
+  }
+  if (options.placement !== undefined) {
     assertAllowedValue(
       options.placement,
       ['top', 'bottom', 'left', 'right'],
       'Floating panel placement',
     );
-  if (options.gap !== undefined) assertNonNegativeFinite(options.gap, 'Floating panel gap');
-  if (options.delay !== undefined) assertNonNegativeFinite(options.delay, 'Floating panel delay');
+  }
+  if (options.gap !== undefined) {
+    assertNonNegativeFinite(options.gap, 'Floating panel gap');
+  }
+  if (options.delay !== undefined) {
+    assertNonNegativeFinite(options.delay, 'Floating panel delay');
+  }
   for (const hook of [options.onShow, options.onHide]) {
-    if (hook !== undefined && typeof hook !== 'function')
+    if (hook !== undefined && typeof hook !== 'function') {
       throw new TypeError('Floating panel hooks must be functions.');
+    }
   }
 };
 
@@ -98,15 +110,21 @@ export const bindFloatingPanel = (
   const placement = options.placement ?? (popover || followCursor ? 'bottom' : 'top');
   const gap = options.gap ?? 12;
   const delay = options.delay ?? (popover ? 150 : 300);
-  if (content.isDestroyed()) throw new Error('Floating panel content has been destroyed.');
-  if (content === target || content.Parent || panel.isConnected)
+  if (content.isDestroyed()) {
+    throw new Error('Floating panel content has been destroyed.');
+  }
+  if (content === target || content.Parent || panel.isConnected) {
     throw new Error('Floating panel content must be detached.');
-  if (panel.ownerDocument !== document)
+  }
+  if (panel.ownerDocument !== document) {
     throw new TypeError('Floating panel content must belong to the target document.');
-  if (!popover && (panel.matches(interactiveContent) || panel.querySelector(interactiveContent)))
+  }
+  if (!popover && (panel.matches(interactiveContent) || panel.querySelector(interactiveContent))) {
     throw new TypeError('Tooltip content must be non-interactive.');
-  if (panel.id && document.getElementById(panel.id))
+  }
+  if (panel.id && document.getElementById(panel.id)) {
     throw new Error('Floating panel content must have a unique id.');
+  }
   const original = {
     position: content.Position,
     anchor: content.AnchorPoint,
@@ -132,7 +150,9 @@ export const bindFloatingPanel = (
     background: 'transparent',
   });
   const supportsPopover = typeof layerElement.showPopover === 'function';
-  if (supportsPopover) layerElement.setAttribute('popover', 'manual');
+  if (supportsPopover) {
+    layerElement.setAttribute('popover', 'manual');
+  }
   content.setProperties({
     Position: udim2FromOffset(0, 0),
     AnchorPoint: vector2(0, 0),
@@ -144,9 +164,12 @@ export const bindFloatingPanel = (
   content.Parent = layer;
   // Modal dialogs make outside content inert even when it enters the top layer.
   layer.mount(element.closest('dialog') ?? document.body ?? document.documentElement);
-  if (!relationAlreadyPresent)
+  if (!relationAlreadyPresent) {
     element.setAttribute(relation, [element.getAttribute(relation), id].filter(Boolean).join(' '));
-  if (popover) element.setAttribute('aria-expanded', 'false');
+  }
+  if (popover) {
+    element.setAttribute('aria-expanded', 'false');
+  }
 
   const listeners = createRealmAbortController(element);
   const listenerOptions = { signal: listeners.signal };
@@ -171,15 +194,21 @@ export const bindFloatingPanel = (
   const hideImmediately = (): void => {
     window.clearTimeout(timer);
     timer = undefined;
-    if (frame !== undefined) window.cancelAnimationFrame(frame);
+    if (frame !== undefined) {
+      window.cancelAnimationFrame(frame);
+    }
     frame = undefined;
     stopTransition();
     if (!layer.isDestroyed() && layer.Enabled) {
-      if (supportsPopover) layerElement.hidePopover();
+      if (supportsPopover) {
+        layerElement.hidePopover();
+      }
       layer.Enabled = false;
     }
     panelHovered = false;
-    if (popover) element.setAttribute('aria-expanded', 'false');
+    if (popover) {
+      element.setAttribute('aria-expanded', 'false');
+    }
   };
   const position = (updatePlacement = true): boolean => {
     const bounds = element.getBoundingClientRect();
@@ -188,7 +217,9 @@ export const bindFloatingPanel = (
       hovered = focused = pinned = false;
       return false;
     }
-    if (!updatePlacement) return !disposed && layer.Enabled;
+    if (!updatePlacement) {
+      return !disposed && layer.Enabled;
+    }
     const panelBounds = panel.getBoundingClientRect();
     const anchor =
       followCursor && !focused && pointer
@@ -204,29 +235,42 @@ export const bindFloatingPanel = (
     );
     const x = content.Position.X.Offset + point.X - panelBounds.left;
     const y = content.Position.Y.Offset + point.Y - panelBounds.top;
-    if (x !== content.Position.X.Offset || y !== content.Position.Y.Offset)
+    if (x !== content.Position.X.Offset || y !== content.Position.Y.Offset) {
       content.Position = udim2FromOffset(x, y);
+    }
     return !disposed && layer.Enabled;
   };
   const track = (): void => {
     frame = undefined;
-    if (disposed || !layer.Enabled) return;
+    if (disposed || !layer.Enabled) {
+      return;
+    }
     // A closing cursor panel fades at its last position rather than jumping back to the trigger.
-    if (!position(transition?.showing !== false)) return;
+    if (!position(transition?.showing !== false)) {
+      return;
+    }
     frame = window.requestAnimationFrame(track);
   };
   const runTransition = (showing: boolean): void => {
-    if (transition?.showing === showing) return;
+    if (transition?.showing === showing) {
+      return;
+    }
     stopTransition();
     const current = { controller: createRealmAbortController(element), showing };
     transition = current;
     const hook = showing ? options.onShow : options.onHide;
     const finish = (): void => {
-      if (disposed || transition !== current || current.controller.signal.aborted) return;
-      if (!showing) hideImmediately();
+      if (disposed || transition !== current || current.controller.signal.aborted) {
+        return;
+      }
+      if (!showing) {
+        hideImmediately();
+      }
     };
     const fail = (error: unknown): void => {
-      if (current.controller.signal.aborted || transition !== current) return;
+      if (current.controller.signal.aborted || transition !== current) {
+        return;
+      }
       finish();
       window.console.error('Floating panel animation hook failed.', error);
     };
@@ -239,31 +283,48 @@ export const bindFloatingPanel = (
       const result = hook
         ? hook({ content, signal: current.controller.signal })
         : springPanel(layerElement, showing, current.controller.signal, window, springMotion);
-      if (!result) finish();
-      else void result.then(finish, fail);
+      if (!result) {
+        finish();
+      } else {
+        void result.then(finish, fail);
+      }
     } catch (error) {
       fail(error);
     }
   };
   const show = (): void => {
     timer = undefined;
-    if (disposed || dismissed || !active()) return;
+    if (disposed || dismissed || !active()) {
+      return;
+    }
     content.Visible = true;
     if (!layer.Enabled) {
       springMotion.velocity = 0;
       setStyle(layerElement, 'opacity', options.onShow ? '1' : '0');
       layer.Enabled = true;
-      if (supportsPopover) layerElement.showPopover();
+      if (supportsPopover) {
+        layerElement.showPopover();
+      }
     }
-    if (popover) element.setAttribute('aria-expanded', 'true');
-    if (!position()) return;
-    if (frame === undefined) frame = window.requestAnimationFrame(track);
+    if (popover) {
+      element.setAttribute('aria-expanded', 'true');
+    }
+    if (!position()) {
+      return;
+    }
+    if (frame === undefined) {
+      frame = window.requestAnimationFrame(track);
+    }
     runTransition(true);
   };
   const hide = (): void => {
     timer = undefined;
-    if (!layer.Enabled) return;
-    if (popover) element.setAttribute('aria-expanded', 'false');
+    if (!layer.Enabled) {
+      return;
+    }
+    if (popover) {
+      element.setAttribute('aria-expanded', 'false');
+    }
     runTransition(false);
   };
   const update = (): void => {
@@ -271,17 +332,31 @@ export const bindFloatingPanel = (
     timer = undefined;
     if (active() && !dismissed) {
       if (layer.Enabled) {
-        if (transition?.showing === false) show();
-        else position();
-      } else if (focused || pinned || delay === 0) show();
-      else timer = window.setTimeout(show, delay);
+        if (transition?.showing === false) {
+          show();
+        } else {
+          position();
+        }
+      } else if (focused || pinned || delay === 0) {
+        show();
+      } else {
+        timer = window.setTimeout(show, delay);
+      }
       return;
     }
-    if (!active()) dismissed = false;
-    if (!layer.Enabled) return;
-    if (followCursor) hide();
+    if (!active()) {
+      dismissed = false;
+    }
+    if (!layer.Enabled) {
+      return;
+    }
+    if (followCursor) {
+      hide();
+    }
     // Static content remains reachable across the small gap between it and the trigger.
-    else timer = window.setTimeout(hide, 80);
+    else {
+      timer = window.setTimeout(hide, 80);
+    }
   };
   const dismiss = (): void => {
     dismissed = true;
@@ -306,7 +381,9 @@ export const bindFloatingPanel = (
   element.addEventListener(
     'pointerenter',
     (event) => {
-      if (!hoverEnabled || event.pointerType === 'touch') return;
+      if (!hoverEnabled || event.pointerType === 'touch') {
+        return;
+      }
       hovered = true;
       pointer = vector2(event.clientX, event.clientY);
       update();
@@ -325,7 +402,9 @@ export const bindFloatingPanel = (
     'pointermove',
     (event) => {
       pointer = vector2(event.clientX, event.clientY);
-      if (followCursor && hovered && layer.Enabled && !dismissed) position();
+      if (followCursor && hovered && layer.Enabled && !dismissed) {
+        position();
+      }
     },
     listenerOptions,
   );
@@ -339,14 +418,18 @@ export const bindFloatingPanel = (
   );
   const leaveFocus = (event: FocusEvent): void => {
     focused = inside(event.relatedTarget);
-    if (popover && !focused) pinned = false;
+    if (popover && !focused) {
+      pinned = false;
+    }
     update();
   };
   element.addEventListener('focusout', leaveFocus, listenerOptions);
   panel.addEventListener(
     'pointerenter',
     () => {
-      if (followCursor) return;
+      if (followCursor) {
+        return;
+      }
       panelHovered = true;
       update();
     },
@@ -355,7 +438,9 @@ export const bindFloatingPanel = (
   panel.addEventListener(
     'pointerleave',
     () => {
-      if (followCursor) return;
+      if (followCursor) {
+        return;
+      }
       panelHovered = false;
       update();
     },
@@ -374,8 +459,9 @@ export const bindFloatingPanel = (
     element.addEventListener(
       'click',
       () => {
-        if (pinned && !dismissed) dismiss();
-        else {
+        if (pinned && !dismissed) {
+          dismiss();
+        } else {
           dismissed = false;
           pinned = true;
           show();
@@ -403,7 +489,9 @@ export const bindFloatingPanel = (
     panel.addEventListener(
       'keydown',
       (event) => {
-        if (event.key !== 'Tab') return;
+        if (event.key !== 'Tab') {
+          return;
+        }
         const panelControls = controls();
         if (event.shiftKey && document.activeElement === panelControls[0]) {
           event.preventDefault();
@@ -431,7 +519,9 @@ export const bindFloatingPanel = (
     document.addEventListener(
       'pointerdown',
       (event) => {
-        if (layer.Enabled && !inside(event.target)) dismiss();
+        if (layer.Enabled && !inside(event.target)) {
+          dismiss();
+        }
       },
       { ...listenerOptions, capture: true },
     );
@@ -439,17 +529,25 @@ export const bindFloatingPanel = (
   document.addEventListener(
     'keydown',
     (event) => {
-      if (event.key !== 'Escape' || !(active() || layer.Enabled || timer !== undefined)) return;
+      if (event.key !== 'Escape' || !(active() || layer.Enabled || timer !== undefined)) {
+        return;
+      }
       const restoreFocus = popover && panel.contains(document.activeElement);
-      if (popover) event.preventDefault();
+      if (popover) {
+        event.preventDefault();
+      }
       dismiss();
-      if (restoreFocus) element.focus();
+      if (restoreFocus) {
+        element.focus();
+      }
     },
     listenerOptions,
   );
 
   const dispose = (): void => {
-    if (disposed) return;
+    if (disposed) {
+      return;
+    }
     disposed = true;
     hideImmediately();
     listeners.abort();
@@ -459,14 +557,20 @@ export const bindFloatingPanel = (
       const remaining = (element.getAttribute(relation) ?? '')
         .split(/\s+/)
         .filter((token) => token && token !== id);
-      if (remaining.length) element.setAttribute(relation, remaining.join(' '));
-      else element.removeAttribute(relation);
+      if (remaining.length) {
+        element.setAttribute(relation, remaining.join(' '));
+      } else {
+        element.removeAttribute(relation);
+      }
     }
-    if (popover) restoreAttribute(element, 'aria-expanded', original.expanded);
+    if (popover) {
+      restoreAttribute(element, 'aria-expanded', original.expanded);
+    }
     if (!content.isDestroyed()) {
       content.Parent = undefined;
-      if (options.kind === 'tooltip' && options.destroyContent) content.destroy();
-      else {
+      if (options.kind === 'tooltip' && options.destroyContent) {
+        content.destroy();
+      } else {
         content.setProperties({
           Position: original.position,
           AnchorPoint: original.anchor,
@@ -481,7 +585,9 @@ export const bindFloatingPanel = (
   };
   const unregisterTargetDestroy = target.onDestroy(dispose);
   const unregisterContentDestroy = content.onDestroy(dispose);
-  if (focused && hoverEnabled) update();
+  if (focused && hoverEnabled) {
+    update();
+  }
   return dispose;
 };
 
@@ -490,8 +596,11 @@ const createPanelId = (document: Document, kind: 'tooltip' | 'popover'): string 
   return document.getElementById(id) ? createPanelId(document, kind) : id;
 };
 const restoreAttribute = (element: HTMLElement, name: string, value: string | null): void => {
-  if (value === null) element.removeAttribute(name);
-  else element.setAttribute(name, value);
+  if (value === null) {
+    element.removeAttribute(name);
+  } else {
+    element.setAttribute(name, value);
+  }
 };
 
 /** Springs the owned layer's opacity, retaining velocity when an in-flight transition reverses. */
@@ -522,7 +631,9 @@ const springPanel = (
       resolve();
     };
     const tick = (): void => {
-      if (signal.aborted) return;
+      if (signal.aborted) {
+        return;
+      }
       const now = window.performance.now();
       solveSpring(
         motion.value,
@@ -541,8 +652,11 @@ const springPanel = (
         motion.velocity = 0;
       }
       setStyle(element, 'opacity', String(Math.max(0, Math.min(1, motion.value))));
-      if (settled) complete();
-      else frame = window.requestAnimationFrame(tick);
+      if (settled) {
+        complete();
+      } else {
+        frame = window.requestAnimationFrame(tick);
+      }
     };
     signal.addEventListener('abort', complete, { once: true });
     frame = window.requestAnimationFrame(tick);

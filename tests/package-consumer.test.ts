@@ -32,7 +32,9 @@ beforeAll(() => {
   const packageDirectory = join(consumer, 'node_modules/framekit');
   mkdirSync(packageDirectory, { recursive: true });
   const archive = readdirSync(consumer).find((file) => file.endsWith('.tgz'));
-  if (!archive) throw new Error('npm pack did not produce an archive.');
+  if (!archive) {
+    throw new Error('npm pack did not produce an archive.');
+  }
   execFileSync('tar', [
     '-xzf',
     join(consumer, archive),

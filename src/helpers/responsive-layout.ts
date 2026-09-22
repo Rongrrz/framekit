@@ -15,7 +15,9 @@ export function bindResponsiveLayout(
   owner: GuiElement,
   options: ResponsiveLayoutOptions,
 ): Unsubscribe {
-  if (owner.isDestroyed()) throw new Error('Responsive layout owner has been destroyed.');
+  if (owner.isDestroyed()) {
+    throw new Error('Responsive layout owner has been destroyed.');
+  }
   assertNonNegativeFinite(options.breakpoint, 'Breakpoint');
 
   if (typeof options.mobile !== 'function') {
@@ -28,19 +30,25 @@ export function bindResponsiveLayout(
 
   let currentLayout: ResponsiveLayout | undefined;
   const ownerWindow = owner.unsafeElement.ownerDocument.defaultView;
-  if (!ownerWindow) throw new Error('Responsive layout requires a document with a window.');
+  if (!ownerWindow) {
+    throw new Error('Responsive layout requires a document with a window.');
+  }
 
   const updateLayout = (): void => {
     const nextLayout = ownerWindow.innerWidth < options.breakpoint ? 'mobile' : 'desktop';
 
-    if (nextLayout === currentLayout) return;
+    if (nextLayout === currentLayout) {
+      return;
+    }
 
     options[nextLayout]();
     currentLayout = nextLayout;
   };
 
   updateLayout();
-  if (owner.isDestroyed()) return () => undefined;
+  if (owner.isDestroyed()) {
+    return () => undefined;
+  }
 
   const listenerController = createRealmAbortController(owner.unsafeElement);
   ownerWindow.addEventListener('resize', updateLayout, {

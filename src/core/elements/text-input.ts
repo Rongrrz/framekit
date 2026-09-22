@@ -43,7 +43,9 @@ export function createTextInput(
     },
     initialProperties,
     renderProperties: (properties, changedProperties) => {
-      if (changedProperties.has('InputType')) element.type = nativeInputTypes[properties.InputType];
+      if (changedProperties.has('InputType')) {
+        element.type = nativeInputTypes[properties.InputType];
+      }
       element.style.overflow = 'hidden';
     },
     validateProperties: (properties) => {

@@ -12,8 +12,12 @@ const pageHashes = {
 } satisfies Readonly<Record<SitePage, string>>;
 
 export const resolveInitialPage = (): SitePage => {
-  if (window.location.hash === pageHashes.guide) return 'guide';
-  if (window.location.hash === pageHashes.api) return 'api';
+  if (window.location.hash === pageHashes.guide) {
+    return 'guide';
+  }
+  if (window.location.hash === pageHashes.api) {
+    return 'api';
+  }
   return 'home';
 };
 
@@ -28,7 +32,9 @@ export const bindHashRouter = (owner: Instance, route: ObservableValue<SitePage>
 export const navigateToPage = (route: ObservableValue<SitePage>, page: SitePage): void => {
   route.set(page);
   const hash = pageHashes[page];
-  if (window.location.hash !== hash) window.location.hash = hash;
+  if (window.location.hash !== hash) {
+    window.location.hash = hash;
+  }
 };
 
 export const createRoutedPage = (

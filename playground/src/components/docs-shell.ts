@@ -131,7 +131,9 @@ export const createDocsShell = (
   content.Parent = page;
   const observer = new ResizeObserver(() => {
     const articleHeight = article.unsafeElement.offsetHeight;
-    if (articleHeight === 0) return;
+    if (articleHeight === 0) {
+      return;
+    }
     const height = article.Position.Y.Offset + articleHeight + 64;
     content.Size = udim2FromOffset(content.Size.X.Offset, height);
     page.Size = udim2(1, 0, 0, height);

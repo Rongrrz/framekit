@@ -109,20 +109,28 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   function stopAllProperties(): void {
     const properties = Array.from(springsByProperty.keys());
     springsByProperty.clear();
-    for (const property of properties) delete animationPatch[property];
+    for (const property of properties) {
+      delete animationPatch[property];
+    }
     runner.release(properties);
     cancelFrame();
   }
 
   function stopProperty(property: keyof Properties): void {
-    if (!springsByProperty.delete(property)) return;
+    if (!springsByProperty.delete(property)) {
+      return;
+    }
     delete animationPatch[property];
     runner.release([property]);
-    if (springsByProperty.size === 0) cancelFrame();
+    if (springsByProperty.size === 0) {
+      cancelFrame();
+    }
   }
 
   function scheduleNextFrame(): void {
-    if (runner.isScheduled()) return;
+    if (runner.isScheduled()) {
+      return;
+    }
     previousTimestampMs = performance.now();
     runner.schedule();
   }

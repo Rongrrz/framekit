@@ -42,7 +42,9 @@ describe('node properties', () => {
     const frame = createFrame({ Name: 'Ready' });
     const changed = vi.fn();
     const modifier = createStyleModifier('Fragile', { Name: 'Fragile' }, (_, target) => {
-      if (target.properties.Name === 'Rejected') throw new Error('render failed');
+      if (target.properties.Name === 'Rejected') {
+        throw new Error('render failed');
+      }
       return { 'border-radius': '4px' };
     });
 

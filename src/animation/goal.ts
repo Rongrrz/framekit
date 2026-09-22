@@ -51,7 +51,9 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
   const goalProperties = Object.keys(propertyGoal) as (keyof Properties)[];
   const messages = messagesByKind[kind];
 
-  if (goalProperties.length === 0) throw new TypeError(messages.emptyGoal);
+  if (goalProperties.length === 0) {
+    throw new TypeError(messages.emptyGoal);
+  }
 
   const preparedProperties = goalProperties.map((property) => {
     if (!Object.hasOwn(currentProperties, property)) {
@@ -74,7 +76,9 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
       assertCompatibleAnimationValues(start, preparedGoal, propertyName);
       return { property, goalValue, start, goal: preparedGoal };
     } catch (error) {
-      if (!(error instanceof TypeError)) throw error;
+      if (!(error instanceof TypeError)) {
+        throw error;
+      }
       throw new TypeError(
         `Property "${propertyName}" does not contain ${messages.invalidValue} values.`,
         { cause: error },

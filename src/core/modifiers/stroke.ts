@@ -61,7 +61,9 @@ function resolveStrokeShadow(properties: Readonly<UIStrokeProperties>): string {
   if (properties.BorderStrokePosition === 'Inner') {
     return `inset 0px 0px 0px ${thickness}px ${color}`;
   }
-  if (properties.BorderStrokePosition === 'Outer') return `0px 0px 0px ${thickness}px ${color}`;
+  if (properties.BorderStrokePosition === 'Outer') {
+    return `0px 0px 0px ${thickness}px ${color}`;
+  }
 
   const halfThickness = thickness / 2;
   return `inset 0px 0px 0px ${halfThickness}px ${color}, 0px 0px 0px ${halfThickness}px ${color}`;

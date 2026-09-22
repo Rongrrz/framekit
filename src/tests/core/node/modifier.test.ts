@@ -79,7 +79,9 @@ describe('modifier attachment and validation', () => {
       render,
       undefined,
       (_, target) => {
-        if (target.properties.Name === 'RejectedTarget') throw new Error('target rejected');
+        if (target.properties.Name === 'RejectedTarget') {
+          throw new Error('target rejected');
+        }
       },
     );
 
@@ -99,7 +101,9 @@ describe('modifier attachment and validation', () => {
     const corner = createUICorner({ CornerRadius: 6 });
     let renderMustFail = false;
     const failing = createStyleModifier('Failing', { Name: 'Failing' }, () => {
-      if (renderMustFail) throw new Error('derived render failed');
+      if (renderMustFail) {
+        throw new Error('derived render failed');
+      }
       return {};
     });
 

@@ -68,7 +68,9 @@ function resolveAspectRatio(
     };
   }
 
-  if (!target.capabilities.guiObject) return styles;
+  if (!target.capabilities.guiObject) {
+    return styles;
+  }
   const targetProperties = target.properties as Readonly<GuiObjectProperties>;
   const width = udimToCss(targetProperties.Size.X);
   const height = udimToCss(targetProperties.Size.Y);

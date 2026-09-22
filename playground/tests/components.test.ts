@@ -58,15 +58,21 @@ describe('playground pages', () => {
     const sidebar = guide.findFirstChild('GuidePageSidebar', true) as Frame;
     expect(sidebar.unsafeElement.style.position).toBe('sticky');
     const next = guide.findFirstChild('GuideNextButton', true);
-    if (!next?.isA('TextButton')) throw new Error('Missing guide next button.');
+    if (!next?.isA('TextButton')) {
+      throw new Error('Missing guide next button.');
+    }
     next.unsafeElement.click();
     expect(navigate).toHaveBeenCalledWith('api');
     const outline = guide.findFirstChild('CleanupOutlineButton', true);
-    if (!outline?.isA('TextButton')) throw new Error('Missing cleanup outline button.');
+    if (!outline?.isA('TextButton')) {
+      throw new Error('Missing cleanup outline button.');
+    }
     const heading = guide
       .getDescendants()
       .find((node) => node.isA('TextLabel') && node.Text === 'Clean up one owner');
-    if (!heading?.isA('TextLabel')) throw new Error('Missing cleanup heading.');
+    if (!heading?.isA('TextLabel')) {
+      throw new Error('Missing cleanup heading.');
+    }
     outline.unsafeElement.click();
     expect(scrollTo).toHaveBeenCalledWith(heading);
     state.layout.set('mobile');
@@ -93,10 +99,14 @@ describe('playground pages', () => {
       .getDescendants()
       .find((node) => node.isA('TextLabel') && node.Text === 'Animation');
     expect(animation?.isA('TextLabel')).toBe(true);
-    if (!animation?.isA('TextLabel')) throw new Error('Missing Animation heading.');
+    if (!animation?.isA('TextLabel')) {
+      throw new Error('Missing Animation heading.');
+    }
     animation.Position = udim2FromOffset(0, 4400);
     const outline = api.findFirstChild('AnimationOutlineButton', true);
-    if (!outline?.isA('TextButton')) throw new Error('Missing Animation outline link.');
+    if (!outline?.isA('TextButton')) {
+      throw new Error('Missing Animation outline link.');
+    }
     outline.unsafeElement.click();
     expect(scrollTo).toHaveBeenCalledWith(animation);
     api.destroy();

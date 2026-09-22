@@ -34,6 +34,8 @@ export function spring<Properties extends InstanceProperties>(
     binding = createSpringBinding(node);
     springsByNode.set(node, binding as unknown as SpringBinding<InstanceProperties>);
   }
-  if (goal) binding.animate(goal, settings);
+  if (goal) {
+    binding.animate(goal, settings);
+  }
   return binding.controller;
 }

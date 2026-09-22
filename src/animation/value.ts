@@ -16,15 +16,21 @@ export function decomposeAnimationValue(
   if (typeof value === 'number' && Number.isFinite(value)) {
     return { kind: 'number', components: [value] };
   }
-  if (isColor3(value)) return { kind: 'Color3', components: [value.R, value.G, value.B] };
+  if (isColor3(value)) {
+    return { kind: 'Color3', components: [value.R, value.G, value.B] };
+  }
   if (isUDim2(value)) {
     return {
       kind: 'UDim2',
       components: [value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset],
     };
   }
-  if (isUDim(value)) return { kind: 'UDim', components: [value.Scale, value.Offset] };
-  if (isVector2(value)) return { kind: 'Vector2', components: [value.X, value.Y] };
+  if (isUDim(value)) {
+    return { kind: 'UDim', components: [value.Scale, value.Offset] };
+  }
+  if (isVector2(value)) {
+    return { kind: 'Vector2', components: [value.X, value.Y] };
+  }
   throw new TypeError(`Property "${property}" does not contain an animatable value.`);
 }
 
@@ -84,12 +90,16 @@ function isUDim(value: unknown): value is UDim {
 }
 
 function isUDim2(value: unknown): value is UDim2 {
-  if (!isRecord(value) || Object.keys(value).length !== 2) return false;
+  if (!isRecord(value) || Object.keys(value).length !== 2) {
+    return false;
+  }
   return isUDim(value.X) && isUDim(value.Y);
 }
 
 function hasOnlyNumericKeys(value: unknown, keys: readonly string[]): boolean {
-  if (!isRecord(value) || Object.keys(value).length !== keys.length) return false;
+  if (!isRecord(value) || Object.keys(value).length !== keys.length) {
+    return false;
+  }
   return keys.every((key) => typeof value[key] === 'number' && Number.isFinite(value[key]));
 }
 

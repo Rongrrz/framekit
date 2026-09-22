@@ -92,7 +92,9 @@ describe('spring animations', () => {
     const settings = { tension: 170, friction: 5 } as const;
 
     spring(frame, { BackgroundTransparency: 1 }, settings);
-    for (let index = 0; index < 5; index += 1) advance();
+    for (let index = 0; index < 5; index += 1) {
+      advance();
+    }
 
     const beforeRetarget = frame.BackgroundTransparency;
 

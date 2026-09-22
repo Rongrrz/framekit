@@ -167,7 +167,9 @@ export const appendCodeLines = (
   lineHeight = 28,
 ): readonly TextLabel[] => {
   const context = parent.unsafeElement.ownerDocument.createElement('canvas').getContext('2d');
-  if (context) context.font = `500 ${typeScale.code}px ${fonts.mono}`;
+  if (context) {
+    context.font = `500 ${typeScale.code}px ${fonts.mono}`;
+  }
   // Intrinsic line widths let a scrolling parent expose the entire example.
   const width = Math.ceil(
     Math.max(

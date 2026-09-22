@@ -41,7 +41,9 @@ export function setupAnimationClock(): AnimationClock {
 
     pendingFrames.clear();
 
-    for (const callback of framesToRun) callback(nowMs);
+    for (const callback of framesToRun) {
+      callback(nowMs);
+    }
   }
 
   function settle(maximumFrames = 300): void {

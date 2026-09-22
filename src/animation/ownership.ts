@@ -23,7 +23,9 @@ export function claimAnimationProperties<Properties extends InstanceProperties>(
   const newlyClaimedProperties: (keyof Properties)[] = [];
   try {
     for (const property of properties) {
-      if (claimsByNode.get(node)?.get(property)?.owner === owner) continue;
+      if (claimsByNode.get(node)?.get(property)?.owner === owner) {
+        continue;
+      }
 
       cancelConflictingPropertyOwners(node, property, owner);
       const claim = createPropertyClaim(node, property, owner);
@@ -42,15 +44,21 @@ export function releaseAnimationProperties<Properties extends InstanceProperties
   owner: AnimationOwner,
 ): void {
   const propertyClaims = claimsByNode.get(node);
-  if (!propertyClaims) return;
+  if (!propertyClaims) {
+    return;
+  }
 
   for (const property of properties) {
     const claim = propertyClaims.get(property);
-    if (claim?.owner !== owner) continue;
+    if (claim?.owner !== owner) {
+      continue;
+    }
     propertyClaims.delete(property);
     claim.unsubscribe();
   }
-  if (propertyClaims.size === 0) claimsByNode.delete(node);
+  if (propertyClaims.size === 0) {
+    claimsByNode.delete(node);
+  }
 }
 
 /** Applies values while allowing property observers to distinguish animation writes. */
@@ -77,15 +85,20 @@ export function applyAnimationProperties<Properties extends InstanceProperties>(
         value: writes.get(property),
       }))
     : undefined;
-  for (const property of properties) writes.set(property, constrainedPatch[property]);
+  for (const property of properties) {
+    writes.set(property, constrainedPatch[property]);
+  }
 
   try {
     node.setProperties(constrainedPatch);
   } finally {
     if (previousWrites) {
       for (const previous of previousWrites) {
-        if (previous.hadValue) writes.set(previous.property, previous.value);
-        else writes.delete(previous.property);
+        if (previous.hadValue) {
+          writes.set(previous.property, previous.value);
+        } else {
+          writes.delete(previous.property);
+        }
       }
     } else {
       writes.clear();
@@ -116,7 +129,9 @@ function constrainAnimationPatch<Properties extends InstanceProperties>(
   const constrained = { ...patch };
   for (const property of Object.keys(constrained) as (keyof Properties)[]) {
     const value = constrained[property];
-    if (typeof value !== 'number') continue;
+    if (typeof value !== 'number') {
+      continue;
+    }
 
     const constrainedValue = unitIntervalProperties.has(property)
       ? Math.min(1, Math.max(0, value))
@@ -136,7 +151,9 @@ function createPropertyClaim<Properties extends InstanceProperties>(
   owner: AnimationOwner,
 ): PropertyClaim {
   const unsubscribe = subscribeToPropertyWrite(node, property, (value) => {
-    if (isAnimationWrite(node, property, value)) return;
+    if (isAnimationWrite(node, property, value)) {
+      return;
+    }
     cancelConflictingPropertyOwners(node, property);
   });
   return { owner, unsubscribe };
@@ -170,7 +187,9 @@ function cancelConflictingPropertyOwners(
 
 function getOrCreateNodeClaims(node: Instance): Map<PropertyKey, PropertyClaim> {
   const existing = claimsByNode.get(node);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const created = new Map<PropertyKey, PropertyClaim>();
   claimsByNode.set(node, created);
   return created;
@@ -178,7 +197,9 @@ function getOrCreateNodeClaims(node: Instance): Map<PropertyKey, PropertyClaim> 
 
 function getOrCreateNodeWrites(node: Instance): Map<PropertyKey, unknown> {
   const existing = writesByNode.get(node);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const created = new Map<PropertyKey, unknown>();
   writesByNode.set(node, created);
   return created;

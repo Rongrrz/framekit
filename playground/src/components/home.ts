@@ -159,7 +159,9 @@ export const createHomePage = (
   start.onClick(() => navigate('guide'));
   api.onClick(() => navigate('api'));
   install.onClick(() => void copyCommand(install, 'npm i framekit', 'COPY  npm i framekit'));
-  for (const child of [product, title, body, start, api, install]) child.Parent = content;
+  for (const child of [product, title, body, start, api, install]) {
+    child.Parent = content;
+  }
   createHomeVisual(layout, theme).Parent = content;
 
   for (const [index, [icon, title, description, accent]] of features.entries()) {

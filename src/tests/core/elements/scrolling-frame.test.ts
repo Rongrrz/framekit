@@ -151,7 +151,9 @@ describe('scrolling frames', () => {
     expect(scrolling.CanvasPosition).toEqual({ X: 12, Y: 34 });
 
     const nativeScrollTo = vi.fn((left?: number | ScrollToOptions, top?: number) => {
-      if (typeof left !== 'number' || top === undefined) return;
+      if (typeof left !== 'number' || top === undefined) {
+        return;
+      }
       scrolling.unsafeElement.scrollLeft = left;
       scrolling.unsafeElement.scrollTop = top;
     });
@@ -252,7 +254,9 @@ describe('scrolling frames', () => {
     const scrolling = createScrollingFrame();
 
     scrolling.unsafeElement.scrollTo = vi.fn((left?: number | ScrollToOptions, top?: number) => {
-      if (typeof left !== 'number' || top === undefined) return;
+      if (typeof left !== 'number' || top === undefined) {
+        return;
+      }
       scrolling.unsafeElement.scrollLeft = Math.round(left);
       scrolling.unsafeElement.scrollTop = Math.round(top);
     });

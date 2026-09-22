@@ -166,9 +166,13 @@ export function createTextNode<Properties extends TextLabelProperties>(
         resetTextGradientHost(element);
         resetTextStrokeHost(element);
       }
-      if (changedProperties.has('Text')) text.textContent = properties.Text;
+      if (changedProperties.has('Text')) {
+        text.textContent = properties.Text;
+      }
       renderTextStyle(text, properties, changedProperties);
-      if (textChanged) syncTextStrokeHost(element, properties, text.style.fontSize);
+      if (textChanged) {
+        syncTextStrokeHost(element, properties, text.style.fontSize);
+      }
       if (changedProperties.has('TextXAlignment')) {
         text.style.justifyContent = horizontalFlexAlignment[properties.TextXAlignment];
       }
@@ -197,5 +201,7 @@ function validateTextProperties(
   properties: Readonly<TextLabelProperties | TextButtonProperties>,
 ): void {
   validateTextStyleProperties(properties);
-  if ('Disabled' in properties) validateButtonProperties(properties);
+  if ('Disabled' in properties) {
+    validateButtonProperties(properties);
+  }
 }

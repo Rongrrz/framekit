@@ -59,7 +59,9 @@ function resolveTextStrokeStyles(
   properties: Readonly<UITextStrokeProperties>,
   _target: ModifierTarget,
 ): Styles {
-  if (!properties.Enabled) return {};
+  if (!properties.Enabled) {
+    return {};
+  }
 
   return {
     [textStrokeColorProperty]: color3ToCss(properties.Color, properties.Transparency),

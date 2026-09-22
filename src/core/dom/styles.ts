@@ -34,17 +34,23 @@ export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: S
   const nextStyles: Record<string, string> = {};
 
   for (const [property, value] of Object.entries(styles)) {
-    if (value === undefined) continue;
+    if (value === undefined) {
+      continue;
+    }
     captureFallback(element, state, property);
     nextStyles[property] = value;
   }
   state[layer] = nextStyles;
-  for (const property of affectedProperties) renderResolvedProperty(element, state, property);
+  for (const property of affectedProperties) {
+    renderResolvedProperty(element, state, property);
+  }
 }
 
 function getStyleState(element: HTMLElement): ElementStyleState {
   const existing = stylesByElement.get(element);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const created: ElementStyleState = {
     base: Object.create(null) as Record<string, string>,
     modifier: Object.create(null) as Record<string, string>,
@@ -58,7 +64,9 @@ function getStyleState(element: HTMLElement): ElementStyleState {
 }
 
 function captureFallback(element: HTMLElement, state: ElementStyleState, property: string): void {
-  if (hasValue(state.base, property) || hasValue(state.fallback, property)) return;
+  if (hasValue(state.base, property) || hasValue(state.fallback, property)) {
+    return;
+  }
   const currentValue = element.style.getPropertyValue(property);
   state.fallback[property] = currentValue;
   state.rendered[property] = currentValue;
@@ -71,24 +79,40 @@ function renderResolvedProperty(
 ): void {
   const value = resolveStyleValue(state, property);
   if (value === undefined) {
-    if (!hasValue(state.rendered, property) && !element.style.getPropertyValue(property)) return;
+    if (!hasValue(state.rendered, property) && !element.style.getPropertyValue(property)) {
+      return;
+    }
     element.style.removeProperty(property);
     delete state.rendered[property];
     return;
   }
-  if (state.rendered[property] === value) return;
+  if (state.rendered[property] === value) {
+    return;
+  }
   element.style.setProperty(property, value);
   state.rendered[property] = value;
 }
 
 function resolveStyleValue(state: ElementStyleState, property: string): string | undefined {
-  if (property === 'display' && state.base[property] === 'none') return 'none';
+  if (property === 'display' && state.base[property] === 'none') {
+    return 'none';
+  }
   // A container's own layout must not replace its placement in its parent's layout.
-  if (hasValue(state['parent-layout'], property)) return state['parent-layout'][property];
-  if (hasValue(state.layout, property)) return state.layout[property];
-  if (hasValue(state.modifier, property)) return state.modifier[property];
-  if (hasValue(state.base, property)) return state.base[property];
-  if (hasValue(state.fallback, property)) return state.fallback[property];
+  if (hasValue(state['parent-layout'], property)) {
+    return state['parent-layout'][property];
+  }
+  if (hasValue(state.layout, property)) {
+    return state.layout[property];
+  }
+  if (hasValue(state.modifier, property)) {
+    return state.modifier[property];
+  }
+  if (hasValue(state.base, property)) {
+    return state.base[property];
+  }
+  if (hasValue(state.fallback, property)) {
+    return state.fallback[property];
+  }
   return undefined;
 }
 

@@ -60,7 +60,9 @@ describe('hierarchy', () => {
     button.Parent = parent;
     const child = parent.findFirstChild('Action');
 
-    if (!child?.isA('TextButton')) throw new Error('Expected a TextButton.');
+    if (!child?.isA('TextButton')) {
+      throw new Error('Expected a TextButton.');
+    }
     child.Text = 'Run';
     child.onClick(() => undefined);
 
@@ -88,7 +90,9 @@ describe('hierarchy', () => {
     const first = createFrame();
     const middle = createFrame();
     const last = createFrame();
-    for (const child of [first, middle, last]) child.Parent = previous;
+    for (const child of [first, middle, last]) {
+      child.Parent = previous;
+    }
     vi.spyOn(rejected.unsafeElement, 'insertBefore').mockImplementation(() => {
       throw new Error('placement failed');
     });

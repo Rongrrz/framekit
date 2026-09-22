@@ -59,7 +59,9 @@ describe('playground page shell', () => {
       () => new DOMRect(0, heading.Position.Y.Offset - shell.page.CanvasPosition.Y + 16, 100, 48),
     );
     shell.scrollTo(heading);
-    for (let frame = 0; frame < 8; frame += 1) clock.advance();
+    for (let frame = 0; frame < 8; frame += 1) {
+      clock.advance();
+    }
     expect(shell.page.CanvasPosition.Y).toBeGreaterThan(0);
     expect(shell.page.CanvasPosition.Y).toBeLessThan(600);
 
@@ -130,8 +132,9 @@ describe('playground page shell', () => {
     );
     const contentScale = shell.content.getChildren().find((node) => node.isA('UIScale'));
     const scrollSizer = shell.content.Parent;
-    if (!contentScale?.isA('UIScale') || !scrollSizer?.isA('Frame'))
+    if (!contentScale?.isA('UIScale') || !scrollSizer?.isA('Frame')) {
       throw new Error('Missing canvas sizing nodes.');
+    }
     expect(contentScale.Scale).toBe(scale);
     expect(scrollSizer.Size.Y.Offset).toBe(pageHeight[initialLayout].home * scale);
     vi.stubGlobal('innerWidth', 1600);

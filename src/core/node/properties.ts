@@ -31,7 +31,9 @@ export function setNodeProperties<Properties extends InstanceProperties>(
     emitNodeEvent(node, getPropertyWriteEventKey(property), propertySnapshot[property]);
   }
 
-  if (commit) emitPropertyChanges(node, commit);
+  if (commit) {
+    emitPropertyChanges(node, commit);
+  }
 }
 
 /** Observes every successful write, including writes that keep the current value. */
@@ -98,7 +100,9 @@ export function validateNodeProperties<Properties extends InstanceProperties>(
 
 function getPropertyWriteEventKey(property: PropertyKey): symbol {
   const existing = propertyWriteEventKeys.get(property);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const created = Symbol(`Property write: ${String(property)}`);
   propertyWriteEventKeys.set(property, created);
   return created;
@@ -130,7 +134,9 @@ function validatePropertyPatch<Properties extends InstanceProperties>(
     if (typeof received === 'number' && !Number.isFinite(received)) {
       throw new TypeError(`Property "${String(property)}" on ${current.Name} must be finite.`);
     }
-    if (property === 'Name') assertString(received, 'Name');
+    if (property === 'Name') {
+      assertString(received, 'Name');
+    }
   }
 }
 
@@ -148,7 +154,9 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
       (property) => !Object.is(previousProperties[property], patch[property]),
     ),
   );
-  if (changedProperties.size === 0) return;
+  if (changedProperties.size === 0) {
+    return;
+  }
 
   const nextProperties = { ...state.properties, ...patch };
   state.properties = nextProperties;
@@ -181,7 +189,9 @@ function validateModifierRelationships<Properties extends InstanceProperties>(
     }
     return;
   }
-  if (state.kind !== 'gui') return;
+  if (state.kind !== 'gui') {
+    return;
+  }
 
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);

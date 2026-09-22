@@ -157,7 +157,9 @@ export const bindThemeTransition = (
 export const resolveInitialTheme = (): ThemeMode => {
   try {
     const stored = window.localStorage.getItem(themeStorageKey);
-    if (stored === 'dark' || stored === 'light') return stored;
+    if (stored === 'dark' || stored === 'light') {
+      return stored;
+    }
   } catch {
     // Storage can be unavailable in embedded previews. The system preference is still useful.
   }
@@ -177,7 +179,9 @@ export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeM
 
   watchOwnedValue(owner, theme, (mode) => {
     root.setAttribute('data-framekit-theme', mode);
-    if (themeColorMeta) themeColorMeta.content = documentThemeColors[mode];
+    if (themeColorMeta) {
+      themeColorMeta.content = documentThemeColors[mode];
+    }
     try {
       window.localStorage.setItem(themeStorageKey, mode);
     } catch {
@@ -185,8 +189,11 @@ export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeM
     }
   });
   owner.onDestroy(() => {
-    if (previousTheme === null) root.removeAttribute('data-framekit-theme');
-    else root.setAttribute('data-framekit-theme', previousTheme);
+    if (previousTheme === null) {
+      root.removeAttribute('data-framekit-theme');
+    } else {
+      root.setAttribute('data-framekit-theme', previousTheme);
+    }
     if (themeColorMeta && previousThemeColor !== undefined) {
       themeColorMeta.content = previousThemeColor;
     }
@@ -238,7 +245,9 @@ const colorToCss = (color: Color3, alpha = 1): string =>
 
 /** Installs the DOM styling needed for fonts, scrollbars, and focus states. */
 export const installPlaygroundStyles = (): void => {
-  if (document.querySelector('[data-framekit-playground-styles]')) return;
+  if (document.querySelector('[data-framekit-playground-styles]')) {
+    return;
+  }
   const style = document.createElement('style');
   style.dataset.framekitPlaygroundStyles = '';
   style.textContent = `

@@ -159,8 +159,12 @@ function renderTextControlProperties<Properties extends TextControlProperties>(
   applyingNativeInput: boolean,
 ): void {
   renderTextStyle(element, properties, changedProperties);
-  if (changedProperties.has('Text') && !applyingNativeInput) element.value = properties.Text;
-  if (changedProperties.has('PlaceholderText')) element.placeholder = properties.PlaceholderText;
+  if (changedProperties.has('Text') && !applyingNativeInput) {
+    element.value = properties.Text;
+  }
+  if (changedProperties.has('PlaceholderText')) {
+    element.placeholder = properties.PlaceholderText;
+  }
   if (
     changedProperties.has('PlaceholderColor3') ||
     changedProperties.has('PlaceholderTransparency')
@@ -170,13 +174,18 @@ function renderTextControlProperties<Properties extends TextControlProperties>(
       color3ToCss(properties.PlaceholderColor3, properties.PlaceholderTransparency),
     );
   }
-  if (changedProperties.has('Disabled')) element.disabled = properties.Disabled;
-  if (changedProperties.has('ReadOnly')) element.readOnly = properties.ReadOnly;
+  if (changedProperties.has('Disabled')) {
+    element.disabled = properties.Disabled;
+  }
+  if (changedProperties.has('ReadOnly')) {
+    element.readOnly = properties.ReadOnly;
+  }
   if (changedProperties.has('AccessibleLabel')) {
     setOptionalAttribute(element, 'aria-label', properties.AccessibleLabel);
   }
-  if (changedProperties.has('FieldName'))
+  if (changedProperties.has('FieldName')) {
     setOptionalAttribute(element, 'name', properties.FieldName);
+  }
   if (changedProperties.has('AutoComplete')) {
     setOptionalAttribute(element, 'autocomplete', properties.AutoComplete);
   }
@@ -201,12 +210,19 @@ function validateTextControlProperties(properties: Readonly<TextControlPropertie
 }
 
 function textAlignment(alignment: TextStyleProperties['TextYAlignment']): string {
-  if (alignment === 'Center') return 'center';
-  if (alignment === 'Bottom') return 'end';
+  if (alignment === 'Center') {
+    return 'center';
+  }
+  if (alignment === 'Bottom') {
+    return 'end';
+  }
   return 'start';
 }
 
 function setOptionalAttribute(element: HTMLElement, name: string, value: string): void {
-  if (value) element.setAttribute(name, value);
-  else element.removeAttribute(name);
+  if (value) {
+    element.setAttribute(name, value);
+  } else {
+    element.removeAttribute(name);
+  }
 }

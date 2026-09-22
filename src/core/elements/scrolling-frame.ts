@@ -301,9 +301,13 @@ function forwardUnsupportedKeyboardScroll(node: ScrollingFrame, event: KeyboardE
     return;
   }
   const intent = resolveKeyboardScrollIntent(event);
-  if (!intent || acceptsScrollAxis(node, intent.axis)) return;
+  if (!intent || acceptsScrollAxis(node, intent.axis)) {
+    return;
+  }
   const ancestor = findScrollingAncestor(node, intent.axis);
-  if (!ancestor) return;
+  if (!ancestor) {
+    return;
+  }
 
   const distance =
     intent.distance === 'Line'
@@ -345,18 +349,28 @@ function findScrollingAncestorFrom(
   node: ScrollingFrame['Parent'],
   axis: ScrollAxis,
 ): ScrollingFrame | undefined {
-  if (!node) return undefined;
-  if (node.isA('ScrollingFrame') && acceptsScrollAxis(node, axis)) return node;
+  if (!node) {
+    return undefined;
+  }
+  if (node.isA('ScrollingFrame') && acceptsScrollAxis(node, axis)) {
+    return node;
+  }
   return findScrollingAncestorFrom(node.Parent, axis);
 }
 
 function acceptsScrollAxis(node: ScrollingFrame, axis: ScrollAxis): boolean {
-  if (!node.ScrollingEnabled) return false;
+  if (!node.ScrollingEnabled) {
+    return false;
+  }
   return node.ScrollingDirection === axis || node.ScrollingDirection === 'XY';
 }
 
 function resolveScrollbarWidth(thickness: number): string {
-  if (thickness === 0) return 'none';
-  if (thickness <= 8) return 'thin';
+  if (thickness === 0) {
+    return 'none';
+  }
+  if (thickness <= 8) {
+    return 'thin';
+  }
   return 'auto';
 }

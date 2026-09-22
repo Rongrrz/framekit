@@ -126,7 +126,9 @@ const textStylePropertyNames = new Set(Object.keys(createDefaultTextStylePropert
 /** Recognizes shared typography changes for text hosts and placeholder surfaces. */
 export function hasTextStyleChange(changedProperties: ReadonlySet<PropertyKey>): boolean {
   for (const property of changedProperties) {
-    if (typeof property === 'string' && textStylePropertyNames.has(property)) return true;
+    if (typeof property === 'string' && textStylePropertyNames.has(property)) {
+      return true;
+    }
   }
   return false;
 }

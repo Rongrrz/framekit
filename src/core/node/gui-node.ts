@@ -89,7 +89,9 @@ const guiNodeMethods = createGuiNodeMethods();
 
 function getGuiMethodTable(methods: GuiMethodTable): object {
   const existing = guiMethodTables.get(methods);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const methodTable = extendMethodTable(guiNodeMethods, methods);
   guiMethodTables.set(methods, methodTable);
   return methodTable;

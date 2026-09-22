@@ -10,11 +10,15 @@ export function assertAllowedValue<Value extends string>(
 }
 
 export function assertBoolean(value: unknown, propertyName: string): asserts value is boolean {
-  if (typeof value !== 'boolean') throw new TypeError(`${propertyName} must be a boolean.`);
+  if (typeof value !== 'boolean') {
+    throw new TypeError(`${propertyName} must be a boolean.`);
+  }
 }
 
 export function assertString(value: unknown, propertyName: string): asserts value is string {
-  if (typeof value !== 'string') throw new TypeError(`${propertyName} must be a string.`);
+  if (typeof value !== 'string') {
+    throw new TypeError(`${propertyName} must be a string.`);
+  }
 }
 
 export function assertFiniteNumber(value: unknown, propertyName: string): asserts value is number {
@@ -24,7 +28,9 @@ export function assertFiniteNumber(value: unknown, propertyName: string): assert
 }
 
 export function assertInteger(value: unknown, propertyName: string): asserts value is number {
-  if (!Number.isInteger(value)) throw new TypeError(`${propertyName} must be an integer.`);
+  if (!Number.isInteger(value)) {
+    throw new TypeError(`${propertyName} must be an integer.`);
+  }
 }
 
 export function assertNonNegativeFinite(

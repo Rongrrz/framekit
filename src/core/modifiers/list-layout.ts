@@ -126,18 +126,28 @@ function resolveChildOrders(children: readonly LayoutChild[], sortOrder: SortOrd
 
   // CSS order changes visual placement while the hierarchy retains its insertion order.
   const orderByChild = children.map((_, index) => index);
-  for (const [order, childIndex] of sortedIndices.entries()) orderByChild[childIndex] = order;
+  for (const [order, childIndex] of sortedIndices.entries()) {
+    orderByChild[childIndex] = order;
+  }
   return orderByChild;
 }
 
 function resolveHorizontalAlignment(alignment: HorizontalAlignment): string {
-  if (alignment === 'Center') return 'center';
-  if (alignment === 'Right') return 'flex-end';
+  if (alignment === 'Center') {
+    return 'center';
+  }
+  if (alignment === 'Right') {
+    return 'flex-end';
+  }
   return 'flex-start';
 }
 
 function resolveVerticalAlignment(alignment: VerticalAlignment): string {
-  if (alignment === 'Center') return 'center';
-  if (alignment === 'Bottom') return 'flex-end';
+  if (alignment === 'Center') {
+    return 'center';
+  }
+  if (alignment === 'Bottom') {
+    return 'flex-end';
+  }
   return 'flex-start';
 }

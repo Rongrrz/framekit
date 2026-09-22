@@ -4,10 +4,14 @@ export function snapshotPropertyValue<Value>(value: Value): Value {
 }
 
 function snapshotValue(value: unknown, copies: WeakMap<object, object>): unknown {
-  if (!isSnapshotContainer(value) || isImmutableSnapshot(value, new WeakSet())) return value;
+  if (!isSnapshotContainer(value) || isImmutableSnapshot(value, new WeakSet())) {
+    return value;
+  }
 
   const existing = copies.get(value);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
 
   const copy: unknown[] | Record<PropertyKey, unknown> = Array.isArray(value)
     ? []
@@ -16,7 +20,9 @@ function snapshotValue(value: unknown, copies: WeakMap<object, object>): unknown
 
   for (const key of Reflect.ownKeys(value)) {
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (!descriptor?.enumerable) continue;
+    if (!descriptor?.enumerable) {
+      continue;
+    }
     Object.defineProperty(copy, key, {
       configurable: false,
       enumerable: true,
@@ -28,23 +34,37 @@ function snapshotValue(value: unknown, copies: WeakMap<object, object>): unknown
 }
 
 function isSnapshotContainer(value: unknown): value is object {
-  if (typeof value !== 'object' || value === null) return false;
-  if (Array.isArray(value)) return true;
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return true;
+  }
   const tag = Object.prototype.toString.call(value);
   return tag === '[object Object]';
 }
 
 function isImmutableSnapshot(value: object, checked: WeakSet<object>): boolean {
-  if (!Object.isFrozen(value)) return false;
-  if (checked.has(value)) return true;
+  if (!Object.isFrozen(value)) {
+    return false;
+  }
+  if (checked.has(value)) {
+    return true;
+  }
   checked.add(value);
 
   for (const key of Reflect.ownKeys(value)) {
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (!descriptor?.enumerable) continue;
-    if (!('value' in descriptor)) return false;
+    if (!descriptor?.enumerable) {
+      continue;
+    }
+    if (!('value' in descriptor)) {
+      return false;
+    }
     const child = descriptor.value;
-    if (isSnapshotContainer(child) && !isImmutableSnapshot(child, checked)) return false;
+    if (isSnapshotContainer(child) && !isImmutableSnapshot(child, checked)) {
+      return false;
+    }
   }
   return true;
 }

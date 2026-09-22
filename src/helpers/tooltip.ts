@@ -81,7 +81,9 @@ export const bindTooltip = (
       destroyContent: typeof content === 'string',
     });
   } catch (error) {
-    if (typeof content === 'string') tooltip.destroy();
+    if (typeof content === 'string') {
+      tooltip.destroy();
+    }
     throw error;
   }
 };
@@ -113,8 +115,9 @@ const createTextTooltip = (
     display: 'block',
     padding: '8px 10px',
     'overflow-wrap': 'anywhere',
-  }))
+  })) {
     setStyle(textElement, property, value);
+  }
   setStyle(tooltip.unsafeElement, 'max-width', 'min(320px, calc(100vw - 16px))');
   setStyle(tooltip.unsafeElement, 'max-height', 'calc(100vh - 16px)');
   setStyle(tooltip.unsafeElement, 'overflow', 'auto');

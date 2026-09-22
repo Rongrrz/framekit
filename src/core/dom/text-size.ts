@@ -69,7 +69,9 @@ export function bindTextScaleResize<Properties extends InstanceProperties & Text
   let observerState: ObserverState | undefined;
   const setEnabled = (enabled: boolean): void => {
     if (!enabled) {
-      if (!observerState) return;
+      if (!observerState) {
+        return;
+      }
       observerState.observer.unobserve(element);
       observerState.renders.delete(element);
       if (observerState.renders.size === 0) {
@@ -81,7 +83,9 @@ export function bindTextScaleResize<Properties extends InstanceProperties & Text
     }
     const ResizeObserverConstructor =
       element.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
-    if (observerState || typeof ResizeObserverConstructor !== 'function') return;
+    if (observerState || typeof ResizeObserverConstructor !== 'function') {
+      return;
+    }
     observerState = observerStatesByConstructor.get(ResizeObserverConstructor);
     if (!observerState) {
       const renders = new Map<Element, () => void>();
@@ -108,7 +112,9 @@ function renderScaledTextEntries(
   renders: ReadonlyMap<Element, () => void>,
 ): void {
   if (entries.length === 0) {
-    for (const render of renders.values()) render();
+    for (const render of renders.values()) {
+      render();
+    }
     return;
   }
   for (const entry of entries) {
@@ -137,7 +143,9 @@ function renderEstimatedTextSize(
   }
   while (fittedSize < maximumSize) {
     setStyle(element, 'font-size', `${fittedSize + 1}px`);
-    if (!textFits(element)) break;
+    if (!textFits(element)) {
+      break;
+    }
     fittedSize += 1;
   }
   setStyle(element, 'font-size', `${fittedSize}px`);
@@ -154,7 +162,9 @@ function estimateUnwrappedTextSize(
     textMeasureContext = ownerDocument.createElement('canvas').getContext('2d');
     textMeasureContexts.set(ownerDocument, textMeasureContext);
   }
-  if (!textMeasureContext) return;
+  if (!textMeasureContext) {
+    return;
+  }
 
   const measurementSize = 100;
   textMeasureContext.font = `${properties.FontWeight} ${measurementSize}px ${properties.FontFamily}`;

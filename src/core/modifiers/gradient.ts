@@ -75,7 +75,9 @@ function resolveGradientStyles(
   properties: Readonly<UIGradientProperties>,
   target: ModifierTarget,
 ): Styles {
-  if (!properties.Enabled) return {};
+  if (!properties.Enabled) {
+    return {};
+  }
 
   const targetColor = readTargetColor(target, properties.ApplyTo);
   const targetTransparency = readTargetTransparency(target, properties.ApplyTo);
@@ -151,7 +153,9 @@ function surroundingKeypoints<Keypoint extends { Time: number }>(
   time: number,
 ): readonly [Keypoint, Keypoint] {
   const endIndex = sequence.findIndex((keypoint) => keypoint.Time >= time);
-  if (endIndex <= 0) return [sequence[0]!, sequence[0]!];
+  if (endIndex <= 0) {
+    return [sequence[0]!, sequence[0]!];
+  }
   return [sequence[endIndex - 1]!, sequence[endIndex]!];
 }
 

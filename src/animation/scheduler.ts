@@ -9,10 +9,15 @@ let runningFrame = false;
 
 /** Schedules persistent animation work behind the runtime's single browser-frame callback. */
 export function scheduleAnimationTask(task: AnimationFrameTask): void {
-  if (activeTasks.has(task) || pendingTasks.has(task)) return;
+  if (activeTasks.has(task) || pendingTasks.has(task)) {
+    return;
+  }
   // Work started during a callback begins on the next frame.
-  if (runningFrame) pendingTasks.add(task);
-  else activeTasks.add(task);
+  if (runningFrame) {
+    pendingTasks.add(task);
+  } else {
+    activeTasks.add(task);
+  }
   scheduleBrowserFrame();
 }
 
@@ -27,7 +32,9 @@ export function cancelAnimationTask(task: AnimationFrameTask): void {
 }
 
 function scheduleBrowserFrame(): void {
-  if (scheduledFrame !== undefined || activeTasks.size + pendingTasks.size === 0) return;
+  if (scheduledFrame !== undefined || activeTasks.size + pendingTasks.size === 0) {
+    return;
+  }
   scheduledFrame = requestAnimationFrame(runAnimationFrame);
 }
 
@@ -45,7 +52,9 @@ function runAnimationFrame(timestamp: number): void {
   }
   runningFrame = false;
 
-  for (const task of pendingTasks) activeTasks.add(task);
+  for (const task of pendingTasks) {
+    activeTasks.add(task);
+  }
   pendingTasks.clear();
   scheduleBrowserFrame();
 

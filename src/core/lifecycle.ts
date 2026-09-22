@@ -29,7 +29,9 @@ function destroyRecursively(
   ancestorElementBeingRemoved?: HTMLElement,
 ): void {
   const state = getNodeState(node);
-  if (state.destroyed) return;
+  if (state.destroyed) {
+    return;
+  }
 
   const children = getChildren(state);
   const subtreeElementBeingRemoved =
@@ -66,7 +68,9 @@ function destroyRecursively(
   if (state.kind === 'gui') {
     try {
       const element = (node as GuiElement).unsafeElement;
-      if (!ancestorElementBeingRemoved?.contains(element)) element.remove();
+      if (!ancestorElementBeingRemoved?.contains(element)) {
+        element.remove();
+      }
     } catch (error) {
       errors.push(error);
     }
