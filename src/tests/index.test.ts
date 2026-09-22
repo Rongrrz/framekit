@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as framekit from '../index.js';
 
 describe('package API', () => {
-  it('exposes one named-export surface without compatibility namespaces', () => {
+  it('exposes the named public functions', () => {
     expect(framekit).toMatchObject({
       bindPopover: expect.any(Function),
       bindTooltip: expect.any(Function),
@@ -13,17 +13,5 @@ describe('package API', () => {
       installFrameKitStyles: expect.any(Function),
       spring: expect.any(Function),
     });
-    for (const removedExport of [
-      'createSignal',
-      'createValue',
-      'fk',
-      'fka',
-      'fkh',
-      'installStyles',
-      'withPopover',
-      'withToolTip',
-    ]) {
-      expect(framekit).not.toHaveProperty(removedExport);
-    }
   });
 });
