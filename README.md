@@ -326,13 +326,15 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 ## Package organization
 
-The package entry point exposes core, animation, and helper APIs as named exports. The source tree keeps their implementation boundaries explicit:
+The package entry point assembles named exports from domain-owned modules. The source tree keeps implementation ownership explicit:
 
-- `core/` — nodes and values; hierarchy, rendering, and lifecycle each have a direct owning module
-- `core/node/` — private node handles, state, properties, and event implementation
-- `animation/` — spring and tween mechanics
-- `helpers/` — optional composed behavior
-- `tests/` — source tests mirror the implementation domains, with reusable test infrastructure under `tests/support`
+- `runtime/` — node handles and the hierarchy, lifecycle, property, and rendering services
+- `elements/` and `modifiers/` — public UI factories plus their focused DOM behavior services
+- `values/` and `state/` — immutable value objects, signals, and observable values
+- `animation/` — shared animation runtime with separate spring and tween mechanics
+- `behaviors/` — optional composed interactions such as responsive layouts and floating panels
+- `dom/` and `internal/` — low-level browser infrastructure, validation, snapshots, and error plumbing
+- `tests/` — tests mirror the implementation domains, with reusable infrastructure under `tests/support`
 
 Values and types come from the same entry point:
 
@@ -344,7 +346,7 @@ function show(panel: Frame): void {
 }
 ```
 
-Internal validation and error plumbing live under `core/internal`; they are implementation details rather than a secondary public entry point. Package consumers should import only from `framekit`. Source dependency tests enforce core's independence from animation and helpers; package exports keep those implementation paths out of the consumer API.
+Internal modules are implementation details rather than secondary public entry points. Package consumers should import only from `framekit`. Source dependency tests enforce the domain direction, while package exports keep implementation paths out of the consumer API.
 
 ## Reusable UI factories
 

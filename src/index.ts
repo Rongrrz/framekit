@@ -1,7 +1,9 @@
-/**
- * FrameKit's public API. Internal domains retain their dependency boundaries while callers use one
- * tree-shakeable set of named exports.
- */
-export * from './core/index.js';
+/** FrameKit's tree-shakeable public API, assembled from domain-owned entry points. */
 export * from './animation/index.js';
-export * from './helpers/index.js';
+export * from './behaviors/index.js';
+export * from './dom/index.js';
+export * from './elements/index.js';
+export * from './modifiers/index.js';
+export * from './runtime/index.js';
+export * from './state/index.js';
+export * from './values/index.js';
