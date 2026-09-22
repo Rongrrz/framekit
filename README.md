@@ -279,6 +279,7 @@ list.MaxCanvasPosition;
 ```
 
 Set `ScrollingEnabled` to `false` to temporarily disable native mouse, touch, and keyboard scrolling without discarding the current canvas position.
+Nested scrolling frames pass gestures and keyboard commands for unsupported axes to the nearest enabled FrameKit scrolling ancestor.
 
 ## Spring motion
 

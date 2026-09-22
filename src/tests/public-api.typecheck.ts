@@ -3,11 +3,53 @@ import { fk, fka, fkh } from '../index.js';
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
   const frame = fk.createFrame();
+  const frameViews: readonly [fk.Frame, fk.Instance, fk.GuiElement, fk.GuiObject] = [
+    frame,
+    frame,
+    frame,
+    frame,
+  ];
+  void frameViews;
   const button = fk.createTextButton();
   const scale = fk.createUIScale();
   scale.Parent = button;
   const dispose: fk.Unsubscribe = fkh.bindHoverScale(button, scale);
   void dispose;
+  const disposeToolTip: fk.Unsubscribe = fkh.withToolTip(button, 'Save', {
+    followCursor: true,
+    style: { TextColor3: fk.color3FromRGB(255, 255, 255) },
+  });
+  void disposeToolTip;
+  fkh.withToolTip(frame, fk.createTextLabel(), { placement: 'right' });
+  const animatePanel: fkh.FloatingPanelHook = ({ content, signal }) => {
+    content.BackgroundTransparency = 0;
+    signal.addEventListener('abort', () => undefined);
+    return Promise.resolve();
+  };
+  fkh.withToolTip(button, 'Save', { onShow: animatePanel, onHide: animatePanel });
+  const disposePopover: fk.Unsubscribe = fkh.withPopover(button, frame, {
+    openOn: 'hover',
+    placement: 'bottom',
+    onShow: animatePanel,
+    onHide: animatePanel,
+  });
+  void disposePopover;
+  // @ts-expect-error Popovers require caller-owned GUI content.
+  fkh.withPopover(button, 'Actions');
+  // @ts-expect-error Unsupported triggers are not accepted.
+  fkh.withPopover(button, frame, { openOn: 'focus' });
+  // @ts-expect-error Interactive popovers remain anchored.
+  fkh.withPopover(button, frame, { followCursor: true });
+  // @ts-expect-error Hooks settle without returning a value.
+  fkh.withToolTip(button, 'Save', { onHide: () => Promise.resolve(42) });
+  // @ts-expect-error Tooltips need a DOM-backed target.
+  fkh.withToolTip(scale, 'Scale');
+  // @ts-expect-error Tooltip content is text or a rectangular GUI instance.
+  fkh.withToolTip(button, fk.createScreenGui());
+  // @ts-expect-error Placement accepts only supported sides.
+  fkh.withToolTip(button, 'Save', { placement: 'cursor' });
+  // @ts-expect-error Generated tooltip styles do not own positioning.
+  fkh.withToolTip(button, 'Save', { style: { Position: fk.udim2FromOffset(0, 0) } });
 
   // @ts-expect-error Unknown constructor properties are not accepted.
   fk.createFrame({ Typo: true });

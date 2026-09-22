@@ -110,7 +110,7 @@ function renderLayouts(node: Instance): void {
   const nextChildren = layouts.length > 0 ? new Set(children) : new Set<GuiElement>();
   for (const child of new Set([...previousChildren, ...nextChildren])) {
     if (getNodeState(child).destroyed) continue;
-    setStyleLayer(child.unsafeElement, 'layout', stylesByChild.get(child) ?? {});
+    setStyleLayer(child.unsafeElement, 'parent-layout', stylesByChild.get(child) ?? {});
   }
   state.layoutChildren = nextChildren;
 }

@@ -37,17 +37,27 @@ describe('images', () => {
     expect(image.unsafeElement.querySelector('img')?.hasAttribute('src')).toBe(false);
   });
 
-  it('rejects executable URL schemes without corrupting the previous source', () => {
-    expect(() => fk.createImageLabel({ Image: 'javascript:alert(1)' })).toThrow(
-      /Unsupported image URL protocol/,
-    );
+  it.each([
+    'javascript:alert(1)',
+    ' JaVaScRiPt:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+  ])('rejects unsafe image source %s without corrupting the previous source', (source) => {
+    expect(() => fk.createImageLabel({ Image: source })).toThrow(/Unsupported image URL protocol/);
 
     const image = fk.createImageLabel({ Image: '/safe.png' });
 
-    expect(() => image.setProperties({ Image: 'javascript:alert(1)' })).toThrow(
-      /Unsupported image URL protocol/,
-    );
+    expect(() => image.setProperties({ Image: source })).toThrow(/Unsupported image URL protocol/);
     expect(image.Image).toBe('/safe.png');
     expect(image.unsafeElement.querySelector('img')?.getAttribute('src')).toBe('/safe.png');
+  });
+
+  it.each([
+    'https://example.com/image.png',
+    'blob:https://example.com/image',
+    'data:image/png;base64,iVBORw0KGgo=',
+  ])('accepts supported image source %s', (source) => {
+    const image = fk.createImageLabel({ Image: source });
+    expect(image.unsafeElement.querySelector('img')?.getAttribute('src')).toBe(source);
+    image.destroy();
   });
 });

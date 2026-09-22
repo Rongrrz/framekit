@@ -113,7 +113,7 @@ export const createHomePage = (
     foreground: 'onAccent',
   });
   bindLayoutProperties(page, layout, start, {
-    desktop: { Position: fk.udim2FromOffset(0, 446) },
+    desktop: { Size: fk.udim2FromOffset(174, 48), Position: fk.udim2FromOffset(0, 446) },
     mobile: { Size: fk.udim2FromOffset(358, 48), Position: fk.udim2FromOffset(0, 402) },
   });
   const api = createButton(theme, {
@@ -125,7 +125,7 @@ export const createHomePage = (
     foreground: 'text',
   });
   bindLayoutProperties(page, layout, api, {
-    desktop: { Position: fk.udim2FromOffset(188, 446) },
+    desktop: { Size: fk.udim2FromOffset(188, 48), Position: fk.udim2FromOffset(188, 446) },
     mobile: { Size: fk.udim2FromOffset(358, 48), Position: fk.udim2FromOffset(0, 462) },
   });
   const install = createButton(theme, {
@@ -139,7 +139,7 @@ export const createHomePage = (
     textSize: typeScale.code,
   });
   bindLayoutProperties(page, layout, install, {
-    desktop: { Position: fk.udim2FromOffset(390, 446) },
+    desktop: { Size: fk.udim2FromOffset(208, 48), Position: fk.udim2FromOffset(390, 446) },
     mobile: { Size: fk.udim2FromOffset(358, 38), Position: fk.udim2FromOffset(0, 522) },
   });
   start.onClick(() => navigate('guide'));
@@ -210,7 +210,7 @@ const createHomeVisual = (layout: fk.Value<PlaygroundLayout>, theme: ThemeValue)
     font: fonts.mono,
     weight: 800,
   }).Parent = visual;
-  appendCodeLines(
+  const codeLines = appendCodeLines(
     visual,
     theme,
     [
@@ -226,6 +226,18 @@ const createHomeVisual = (layout: fk.Value<PlaygroundLayout>, theme: ThemeValue)
     64,
     30,
   );
+  for (const [index, line] of codeLines.entries()) {
+    bindLayoutProperties(visual, layout, line, {
+      desktop: {
+        Size: fk.udim2FromOffset(line.Size.X.Offset, 30),
+        Position: fk.udim2FromOffset(20, 64 + index * 30),
+      },
+      mobile: {
+        Size: fk.udim2FromOffset(line.Size.X.Offset, 26),
+        Position: fk.udim2FromOffset(20, 64 + index * 26),
+      },
+    });
+  }
   const result = createSurface(theme, {
     name: 'HomeResult',
     size: fk.udim2(1, -44, 0, 90),

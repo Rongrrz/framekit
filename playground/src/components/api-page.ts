@@ -1,9 +1,9 @@
-import { fk } from 'framekit';
+import { fk, fkh } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
 import { fonts, typeScale, type ThemeToken, type ThemeValue } from '../theme';
-import { createSurface, createText } from '../ui';
+import { createButton, createSurface, createText } from '../ui';
 import {
   appendArticleSection,
   appendArticleTitle,
@@ -12,7 +12,9 @@ import {
   appendOutline,
   appendSidebarGroup,
   createDocsShell,
+  createExampleRow,
 } from './docs-shell';
+import { appendPopoverExamples } from './popover-examples';
 
 export const createApiPage = (
   layout: fk.Value<PlaygroundLayout>,
@@ -32,7 +34,6 @@ export const createApiPage = (
     shell.article,
     theme,
     '📘 All public factories and properties are typed. Your editor remains the most exact reference.',
-    220,
   );
 
   const factories = appendArticleSection(
@@ -40,59 +41,42 @@ export const createApiPage = (
     theme,
     'Factories',
     'Factories create persistent instances. Initial properties are optional and typed. Every DOM factory accepts { ownerDocument } as a second argument, alongside any tag option.',
-    310,
   );
-  appendCodeBlock(
-    shell.article,
-    theme,
-    'FactoryCode',
-    [
-      { text: 'fk.createScreenGui(properties?)', color: 'accent' },
-      { text: 'fk.createFrame(properties?, { tagName? })', color: 'blue' },
-      { text: 'fk.createTextLabel(properties?, { textTagName? })', color: 'purple' },
-      { text: 'fk.createTextButton(properties?)', color: 'orange' },
-      { text: 'fk.createLink(properties?)', color: 'blue' },
-      { text: 'fk.createTextInput(properties?)' },
-      { text: 'fk.createTextArea(properties?)' },
-      { text: 'fk.createImageLabel(properties?, { tagName? })' },
-      { text: 'fk.createImageButton(properties?)' },
-      { text: 'fk.createScrollingFrame(properties?, { tagName? })' },
-    ],
-    492,
-    300,
-  );
+  appendCodeBlock(shell.article, theme, 'FactoryCode', [
+    { text: 'fk.createScreenGui(properties?)', color: 'accent' },
+    { text: 'fk.createFrame(properties?, { tagName? })', color: 'blue' },
+    { text: 'fk.createTextLabel(properties?, { textTagName? })', color: 'purple' },
+    { text: 'fk.createTextButton(properties?)', color: 'orange' },
+    { text: 'fk.createLink(properties?)', color: 'blue' },
+    { text: 'fk.createTextInput(properties?)' },
+    { text: 'fk.createTextArea(properties?)' },
+    { text: 'fk.createImageLabel(properties?, { tagName? })' },
+    { text: 'fk.createImageButton(properties?)' },
+    { text: 'fk.createScrollingFrame(properties?, { tagName? })' },
+  ]);
 
   const instances = appendArticleSection(
     shell.article,
     theme,
     'Instance methods',
     'Every instance shares hierarchy, inspection, property observation, and lifecycle methods. Use onDestroy to register subscription cleanup.',
-    810,
   );
-  appendCodeBlock(
-    shell.article,
-    theme,
-    'InstanceMethodsCode',
-    [
-      { text: 'node.setProperties(patch)' },
-      { text: "node.onPropertyChanged('Visible', listener)" },
-      { text: 'child.Parent = node' },
-      { text: 'node.Parent = undefined' },
-      { text: 'node.getChildren() / getDescendants()' },
-      { text: "node.findFirstChild('Name', true)" },
-      { text: "child.isA('TextButton')", color: 'blue' },
-      { text: 'node.destroy() / isDestroyed()', color: 'orange' },
-    ],
-    992,
-    260,
-  );
+  appendCodeBlock(shell.article, theme, 'InstanceMethodsCode', [
+    { text: 'node.setProperties(patch)' },
+    { text: "node.onPropertyChanged('Visible', listener)" },
+    { text: 'child.Parent = node' },
+    { text: 'node.Parent = undefined' },
+    { text: 'node.getChildren() / getDescendants()' },
+    { text: "node.findFirstChild('Name', true)" },
+    { text: "child.isA('TextButton')", color: 'blue' },
+    { text: 'node.destroy() / isDestroyed()', color: 'orange' },
+  ]);
 
   const elementsSection = appendArticleSection(
     shell.article,
     theme,
     'Elements',
     'Choose the smallest concrete element that owns the behavior you need. All visible elements also inherit the shared GUI properties.',
-    1310,
   );
   const elements = [
     ['ScreenGui', 'Mountable hierarchy root with mount and unmount.', 'accent'],
@@ -103,89 +87,64 @@ export const createApiPage = (
     ['ImageLabel / ImageButton', 'Images with Stretch, Fit, or Crop scaling.', 'accent'],
     ['ScrollingFrame', 'Native scrolling with synchronized canvas position.', 'purple'],
   ] as const satisfies readonly (readonly [string, string, ThemeToken])[];
-  appendReferenceCards(shell.article, layout, theme, elements, 1492);
+  appendReferenceCards(shell.article, layout, theme, elements);
 
   const properties = appendArticleSection(
     shell.article,
     theme,
     'Shared GUI properties',
     'Every rectangular GUI element uses the same geometry, visibility, background, layout, and clipping properties.',
-    2126,
   );
-  appendCodeBlock(
-    shell.article,
-    theme,
-    'GuiPropertiesCode',
-    [
-      { text: 'Size / Position: UDim2', color: 'blue' },
-      { text: 'AnchorPoint: Vector2' },
-      { text: 'Rotation: number' },
-      { text: 'Visible: boolean' },
-      { text: 'BackgroundColor3: Color3' },
-      { text: 'BackgroundTransparency: number' },
-      { text: 'ZIndex / LayoutOrder: number' },
-      { text: "AutomaticSize: 'None' | 'X' | 'Y' | 'XY'" },
-      { text: 'ClipsDescendants: boolean' },
-    ],
-    2308,
-    286,
-  );
+  appendCodeBlock(shell.article, theme, 'GuiPropertiesCode', [
+    { text: 'Size / Position: UDim2', color: 'blue' },
+    { text: 'AnchorPoint: Vector2' },
+    { text: 'Rotation: number' },
+    { text: 'Visible: boolean' },
+    { text: 'BackgroundColor3: Color3' },
+    { text: 'BackgroundTransparency: number' },
+    { text: 'ZIndex / LayoutOrder: number' },
+    { text: "AutomaticSize: 'None' | 'X' | 'Y' | 'XY'" },
+    { text: 'ClipsDescendants: boolean' },
+  ]);
 
   const events = appendArticleSection(
     shell.article,
     theme,
     'Events',
     'All GUI elements support pointer entry and exit. Buttons add mouse-button events, while native text controls add user-edit events.',
-    2652,
   );
-  appendCodeBlock(
-    shell.article,
-    theme,
-    'EventsApiCode',
-    [
-      { text: 'node.onMouseEnter(listener)' },
-      { text: 'node.onMouseLeave(listener)' },
-      { text: 'button.onClick(listener)', color: 'accent' },
-      { text: 'button.onPrimaryButtonDown(listener)' },
-      { text: 'button.onPrimaryButtonUp(listener)' },
-      { text: 'button.onSecondaryClick(listener)' },
-      { text: 'textControl.onTextChanged(listener)', color: 'blue' },
-    ],
-    2834,
-    234,
-  );
+  appendCodeBlock(shell.article, theme, 'EventsApiCode', [
+    { text: 'node.onMouseEnter(listener)' },
+    { text: 'node.onMouseLeave(listener)' },
+    { text: 'button.onClick(listener)', color: 'accent' },
+    { text: 'button.onPrimaryButtonDown(listener)' },
+    { text: 'button.onPrimaryButtonUp(listener)' },
+    { text: 'button.onSecondaryClick(listener)' },
+    { text: 'textControl.onTextChanged(listener)', color: 'blue' },
+  ]);
 
   const values = appendArticleSection(
     shell.article,
     theme,
     'Values and signals',
     'Values model mutable state. Signals model typed events. Register the unsubscribe function with owner.onDestroy to release a subscription when its owner is destroyed.',
-    3126,
   );
-  appendCodeBlock(
-    shell.article,
-    theme,
-    'ValuesApiCode',
-    [
-      { text: 'const value = fk.createValue(initial);', color: 'purple' },
-      { text: 'value.get()' },
-      { text: 'value.set(next)' },
-      { text: 'owner.onDestroy(value.onChange(listener))', color: 'accent' },
-      { text: '' },
-      { text: 'const event = fk.createSignal<[number]>();' },
-      { text: 'event.subscribe(listener)' },
-      { text: 'event.emit(42)' },
-    ],
-    3308,
-    260,
-  );
+  appendCodeBlock(shell.article, theme, 'ValuesApiCode', [
+    { text: 'const value = fk.createValue(initial);', color: 'purple' },
+    { text: 'value.get()' },
+    { text: 'value.set(next)' },
+    { text: 'owner.onDestroy(value.onChange(listener))', color: 'accent' },
+    { text: '' },
+    { text: 'const event = fk.createSignal<[number]>();' },
+    { text: 'event.subscribe(listener)' },
+    { text: 'event.emit(42)' },
+  ]);
 
   const modifiersSection = appendArticleSection(
     shell.article,
     theme,
     'Modifiers',
     'Attach focused layout or appearance behavior as children. A modifier belongs to the same hierarchy and cleanup model as every other instance.',
-    3626,
   );
   const modifiers = [
     ['UICorner', 'Rounded corners using CornerRadius.', 'accent'],
@@ -198,37 +157,28 @@ export const createApiPage = (
     ['UIShadow', 'Configurable shadow color, blur, and offset.', 'purple'],
     ['UIAspectRatioConstraint', 'Keeps a stable width-to-height ratio.', 'orange'],
   ] as const satisfies readonly (readonly [string, string, ThemeToken])[];
-  appendReferenceCards(shell.article, layout, theme, modifiers, 3808);
+  appendReferenceCards(shell.article, layout, theme, modifiers);
 
   const animation = appendArticleSection(
     shell.article,
     theme,
     'Animation',
     'Tween provides timed playback controls. Spring retains one controller per instance so retargeting shares velocity and avoids overlapping writers.',
-    4644,
   );
-  appendCodeBlock(
-    shell.article,
-    theme,
-    'AnimationApiCode',
-    [
-      { text: 'const tween = fka.createTween(card, {' },
-      { text: '  Duration: 0.3,' },
-      { text: "  EasingStyle: 'Quad'," },
-      { text: '}, { Rotation: 12 });' },
-      { text: 'tween.play();', color: 'blue' },
-      { text: '' },
-      { text: 'fka.spring(card, { Rotation: 0 });', color: 'purple' },
-      { text: "fka.spring(card).stop('Rotation');" },
-    ],
-    4826,
-    260,
-  );
+  appendCodeBlock(shell.article, theme, 'AnimationApiCode', [
+    { text: 'const tween = fka.createTween(card, {' },
+    { text: '  Duration: 0.3,' },
+    { text: "  EasingStyle: 'Quad'," },
+    { text: '}, { Rotation: 12 });' },
+    { text: 'tween.play();', color: 'blue' },
+    { text: '' },
+    { text: 'fka.spring(card, { Rotation: 0 });', color: 'purple' },
+    { text: "fka.spring(card).stop('Rotation');" },
+  ]);
   appendCallout(
     shell.article,
     theme,
     '🎯 Assigning card.Rotation directly stops the current Rotation animation, even when the assigned value is unchanged.',
-    5132,
   );
 
   const helpers = appendArticleSection(
@@ -236,19 +186,26 @@ export const createApiPage = (
     theme,
     'Helpers',
     'The fkh namespace contains optional behavior built on core instances. It does not add extra support code to fk.',
-    5252,
   );
-  appendCodeBlock(
+  appendCodeBlock(shell.article, theme, 'HelpersApiCode', [
+    { text: 'fkh.bindResponsiveLayout(owner, options)' },
+    { text: 'fkh.bindHoverScale(node, scale, 1.035)' },
+    { text: '' },
+    { text: "const dispose = fkh.withToolTip(button, 'Save');", color: 'accent' },
+    { text: "fkh.withToolTip(button, 'Inspect', { followCursor: true });" },
+    { text: 'fkh.withToolTip(button, detachedFrame, { followCursor: true });' },
+    { text: '// Options: placement, followCursor, delay, gap, style' },
+    { text: '// Animation hooks: onShow, onHide' },
+    { text: 'dispose(); // Target destruction also releases the binding.' },
+  ]);
+  appendArticleSection(
     shell.article,
     theme,
-    'HelpersApiCode',
-    [
-      { text: 'fkh.bindResponsiveLayout(owner, options)' },
-      { text: 'fkh.bindHoverScale(node, scale, 1.035)' },
-    ],
-    5434,
-    154,
+    'Try tooltips',
+    'Hover or focus a button. Cursor tooltips fade on exit; focused tooltips stay anchored. Escape dismisses them.',
   );
+  appendToolTipExamples(shell.article, layout, theme);
+  const popovers = appendPopoverExamples(shell.article, layout, theme);
   const coreItems = [
     { label: 'Factories', target: factories, active: true },
     { label: 'Instances', target: instances },
@@ -263,6 +220,7 @@ export const createApiPage = (
     { label: 'Modifiers', target: modifiersSection },
     { label: 'Animation', target: animation },
     { label: 'Helpers', target: helpers },
+    { label: 'Popovers', target: popovers },
   ];
   appendSidebarGroup(shell.sidebar, theme, 'CORE API', coreItems, 0, scrollTo);
   appendSidebarGroup(shell.sidebar, theme, 'STATE AND INPUT', behaviorItems, 220, scrollTo);
@@ -271,17 +229,78 @@ export const createApiPage = (
   return shell.page;
 };
 
+const appendToolTipExamples = (
+  article: fk.Frame,
+  layout: fk.Value<PlaygroundLayout>,
+  theme: ThemeValue,
+): void => {
+  const row = createExampleRow(article, layout);
+  const buttons = ['Anchored text', 'Follow cursor', 'Custom Frame'].map((label, index) => {
+    const button = createButton(theme, {
+      label,
+      name: `ToolTipExample${index + 1}`,
+      position: fk.udim2FromOffset(0, 0),
+      size: fk.udim2FromOffset(216, 44),
+    });
+    bindLayoutProperties(button, layout, button, {
+      desktop: {
+        Size: fk.udim2FromOffset(216, 44),
+      },
+      mobile: {
+        Size: fk.udim2FromOffset(358, 44),
+      },
+    });
+    button.Parent = row;
+    return button;
+  });
+  fkh.withToolTip(buttons[0]!, 'I stay above this button. You can hover over me.');
+  fkh.withToolTip(buttons[1]!, 'I follow the pointer and fade when you leave.', {
+    followCursor: true,
+  });
+  const custom = createSurface(theme, {
+    name: 'CustomToolTip',
+    size: fk.udim2FromOffset(260, 100),
+    background: 'surfaceRaised',
+    radius: 12,
+  });
+  createText(theme, {
+    text: 'Your own Frame',
+    size: fk.udim2FromOffset(232, 26),
+    position: fk.udim2FromOffset(14, 10),
+    color: 'accent',
+    weight: 800,
+  }).Parent = custom;
+  createText(theme, {
+    text: 'Custom layout and theme colors.\nFades as soon as you leave.',
+    size: fk.udim2FromOffset(232, 48),
+    position: fk.udim2FromOffset(14, 40),
+    color: 'textMuted',
+    textSize: typeScale.small,
+    wrapped: true,
+  }).Parent = custom;
+  const customButton = buttons[2]!;
+  fkh.withToolTip(customButton, custom, { followCursor: true });
+  // Supplied content remains caller-owned after the binding is released.
+  customButton.onDestroy(() => custom.destroy());
+};
+
 const appendReferenceCards = (
   parent: fk.Frame,
   layout: fk.Value<PlaygroundLayout>,
   theme: ThemeValue,
   items: readonly (readonly [string, string, ThemeToken])[],
-  startY: number,
 ): void => {
-  for (const [index, [name, description, color]] of items.entries()) {
-    createReferenceCard(layout, theme, name, description, color, startY + index * 82).Parent =
-      parent;
+  const cards = fk.createFrame({
+    Name: 'ReferenceCards',
+    Size: fk.udim2FromScale(1, 0),
+    AutomaticSize: 'Y',
+    BackgroundTransparency: 1,
+  });
+  fk.createUIListLayout({ Padding: fk.udim(0, 12) }).Parent = cards;
+  for (const [name, description, color] of items) {
+    createReferenceCard(layout, theme, name, description, color).Parent = cards;
   }
+  cards.Parent = parent;
 };
 
 const createReferenceCard = (
@@ -290,12 +309,10 @@ const createReferenceCard = (
   name: string,
   description: string,
   color: ThemeToken,
-  y: number,
 ): fk.Frame => {
   const card = createSurface(theme, {
     name: `${name.replaceAll(/\W+/g, '')}ReferenceCard`,
     size: fk.udim2(1, 0, 0, 68),
-    position: fk.udim2FromOffset(0, y),
     background: 'surface',
     radius: 10,
   });

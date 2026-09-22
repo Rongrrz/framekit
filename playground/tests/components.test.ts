@@ -15,46 +15,62 @@ const createState = (page: SitePage) => ({
 });
 
 describe('playground pages', () => {
-  it('reflows one home hierarchy and uses scaled display text', () => {
+  it('separates landing-page code from its preview and restores desktop action widths', () => {
     const state = createState('home');
     const home = createHomePage(state.layout, state.theme, state.route, () => undefined);
+    const names = ['GetStartedButton', 'ApiReferenceButton', 'HomeInstallButton'];
+    const buttons = names.map((name) => home.findFirstChild(name, true) as fk.TextButton);
     const visual = home.findFirstChild('HomeCodeVisual', true) as fk.Frame;
-    state.layout.set('mobile');
-    expect(home.findFirstChild('HomeCodeVisual', true)).toBe(visual);
-    expect(visual.Size).toEqual(fk.udim2FromOffset(358, 370));
-    expect((home.findFirstChild('HomeProductName', true) as fk.TextLabel).TextScaled).toBe(true);
+    const lastLine = visual.findFirstChild('CodeLine8') as fk.TextLabel;
+    const result = visual.findFirstChild('HomeResult') as fk.Frame;
+    for (const currentLayout of ['desktop', 'mobile', 'desktop'] as const) {
+      state.layout.set(currentLayout);
+      expect(lastLine.Position.Y.Offset + lastLine.Size.Y.Offset).toBeLessThan(
+        result.Position.Y.Offset,
+      );
+      if (currentLayout === 'mobile') {
+        expect(buttons.map((button) => button.Size.X.Offset)).toEqual([358, 358, 358]);
+      } else {
+        expect(buttons.map((button) => button.Size.X.Offset)).toEqual([174, 188, 208]);
+        expect(buttons[0]!.Position.X.Offset + buttons[0]!.Size.X.Offset).toBeLessThan(
+          buttons[1]!.Position.X.Offset,
+        );
+        expect(buttons[1]!.Position.X.Offset + buttons[1]!.Size.X.Offset).toBeLessThan(
+          buttons[2]!.Position.X.Offset,
+        );
+      }
+    }
     home.destroy();
   });
 
   it('presents a focused guide with local navigation', () => {
     const state = createState('guide');
-    const guide = createGuidePage(
-      state.layout,
-      state.theme,
-      state.route,
-      () => undefined,
-      () => undefined,
-    );
+    const scrollTo = vi.fn();
+    const navigate = vi.fn();
+    const guide = createGuidePage(state.layout, state.theme, state.route, scrollTo, navigate);
     const sidebar = guide.findFirstChild('GuidePageSidebar', true) as fk.Frame;
     expect(sidebar.unsafeElement.style.position).toBe('sticky');
-    expect(guide.unsafeElement.textContent).toContain('Create your first interface');
-    expect(guide.unsafeElement.textContent).toContain('TextScaled: true');
-    expect(guide.unsafeElement.textContent).toContain('Bind reactive values');
-    expect(guide.unsafeElement.textContent).toContain('Respond to the viewport');
-    expect(guide.unsafeElement.textContent).toContain('Clean up one owner');
+    const next = guide.findFirstChild('GuideNextButton', true);
+    if (!next?.isA('TextButton')) throw new Error('Missing guide next button.');
+    next.unsafeElement.click();
+    expect(navigate).toHaveBeenCalledWith('api');
+    const outline = guide.findFirstChild('CleanupOutlineButton', true);
+    if (!outline?.isA('TextButton')) throw new Error('Missing cleanup outline button.');
+    const heading = guide
+      .getDescendants()
+      .find((node) => node.isA('TextLabel') && node.Text === 'Clean up one owner');
+    if (!heading?.isA('TextLabel')) throw new Error('Missing cleanup heading.');
+    outline.unsafeElement.click();
+    expect(scrollTo).toHaveBeenCalledWith(heading);
+    state.layout.set('mobile');
+    expect((guide.findFirstChild('GuidePageSidebarRail', true) as fk.Frame).Visible).toBe(false);
+    expect((guide.findFirstChild('GuidePageOutlineRail', true) as fk.Frame).Visible).toBe(false);
     guide.destroy();
   });
 
-  it('documents core APIs and optional namespaces', () => {
+  it('keeps API cards usable in the mobile layout', () => {
     const state = createState('api');
     const api = createApiPage(state.layout, state.theme, state.route, () => undefined);
-    expect(api.unsafeElement.textContent).toContain('Factories');
-    expect(api.unsafeElement.textContent).toContain('Instance methods');
-    expect(api.findFirstChild('ScrollingFrameReferenceCard', true)).toBeDefined();
-    expect(api.findFirstChild('UIListLayoutReferenceCard', true)).toBeDefined();
-    expect(api.unsafeElement.textContent).toContain('fka.spring');
-    expect(api.unsafeElement.textContent).toContain('fkh.bindResponsiveLayout');
-
     state.layout.set('mobile');
     const cornerCard = api.findFirstChild('UICornerReferenceCard', true) as fk.Frame;
     const cornerTitle = cornerCard.findFirstChild('Text') as fk.TextLabel;

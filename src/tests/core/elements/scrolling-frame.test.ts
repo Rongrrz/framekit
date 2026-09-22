@@ -18,14 +18,66 @@ describe('scrolling frames', () => {
   it('maps scrolling direction to native overflow', () => {
     const scrolling = fk.createScrollingFrame({ ScrollingDirection: 'Y' });
 
-    expect(scrolling.unsafeElement.style.overscrollBehavior).toBe('none');
     expect(scrolling.unsafeElement.style.overflowX).toBe('hidden');
     expect(scrolling.unsafeElement.style.overflowY).toBe('auto');
+    expect(scrolling.unsafeElement.style.overscrollBehaviorX).toBe('auto');
+    expect(scrolling.unsafeElement.style.overscrollBehaviorY).toBe('none');
 
     scrolling.setProperties({ ScrollingDirection: 'X' });
 
     expect(scrolling.unsafeElement.style.overflowX).toBe('auto');
     expect(scrolling.unsafeElement.style.overflowY).toBe('hidden');
+    expect(scrolling.unsafeElement.style.overscrollBehaviorX).toBe('none');
+    expect(scrolling.unsafeElement.style.overscrollBehaviorY).toBe('auto');
+
+    scrolling.ScrollingEnabled = false;
+
+    expect(scrolling.unsafeElement.style.overscrollBehaviorX).toBe('auto');
+    expect(scrolling.unsafeElement.style.overscrollBehaviorY).toBe('auto');
+  });
+
+  it('hands unsupported keyboard scrolling to the nearest eligible ancestor', () => {
+    const page = fk.createScrollingFrame({ ScrollingDirection: 'Y' });
+    const section = fk.createFrame();
+    const code = fk.createScrollingFrame({ ScrollingDirection: 'X' });
+    section.Parent = page;
+    code.Parent = section;
+    Object.defineProperty(page.unsafeElement, 'clientHeight', { configurable: true, value: 480 });
+    page.unsafeElement.scrollTop = 120;
+    page.unsafeElement.dispatchEvent(new Event('scroll'));
+
+    const pageDown = new KeyboardEvent('keydown', {
+      key: 'PageDown',
+      bubbles: true,
+      cancelable: true,
+    });
+    code.unsafeElement.dispatchEvent(pageDown);
+
+    expect(pageDown.defaultPrevented).toBe(true);
+    expect(page.CanvasPosition).toEqual(fk.vector2(0, 600));
+    expect(code.CanvasPosition).toEqual(fk.vector2(0, 0));
+
+    const arrowRight = new KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true,
+      cancelable: true,
+    });
+    code.unsafeElement.dispatchEvent(arrowRight);
+
+    expect(arrowRight.defaultPrevented).toBe(false);
+    expect(page.CanvasPosition).toEqual(fk.vector2(0, 600));
+
+    const input = document.createElement('input');
+    code.unsafeElement.append(input);
+    const inputPageDown = new KeyboardEvent('keydown', {
+      key: 'PageDown',
+      bubbles: true,
+      cancelable: true,
+    });
+    input.dispatchEvent(inputPageDown);
+
+    expect(inputPageDown.defaultPrevented).toBe(false);
+    expect(page.CanvasPosition).toEqual(fk.vector2(0, 600));
   });
 
   it('configures canvas sizing, native scrolling, and scrollbar appearance', () => {

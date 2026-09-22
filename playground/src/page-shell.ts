@@ -9,6 +9,7 @@ type PageShell = Readonly<{
   app: fk.ScreenGui;
   page: fk.ScrollingFrame;
   content: fk.Frame;
+  addPage: (name: SitePage, frame: fk.Frame) => void;
   scrollTo: (target: fk.GuiElement) => void;
 }>;
 
@@ -46,6 +47,7 @@ export const createPageShell = (
     BackgroundTransparency: 1,
   });
   const contentScale = fk.createUIScale();
+  const pages = new Map<SitePage, fk.Frame>();
 
   bindThemeColors(page, theme, (palette) => ({
     BackgroundColor3: palette.canvas,
@@ -63,7 +65,7 @@ export const createPageShell = (
 
   const updateCanvas = (): void => {
     const currentLayout = layout.get();
-    const height = pageHeight[currentLayout][route.get()];
+    const height = pages.get(route.get())?.Size.Y.Offset ?? pageHeight[currentLayout][route.get()];
     const scale = calculateScale(currentLayout);
     const availableWidth = Math.max(1, window.innerWidth - scrollbarThickness);
     const width = Math.max(pageWidth[currentLayout], availableWidth / scale);
@@ -89,6 +91,12 @@ export const createPageShell = (
     app,
     page,
     content,
+    addPage: (name: SitePage, frame: fk.Frame) => {
+      pages.set(name, frame);
+      frame.Parent = content;
+      frame.onPropertyChanged('Size', updateCanvas);
+      updateCanvas();
+    },
     scrollTo: (target: fk.GuiElement) => {
       const goal = fk.vector2(
         0,

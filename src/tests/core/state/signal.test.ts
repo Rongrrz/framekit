@@ -53,4 +53,30 @@ describe('signals', () => {
     expect(() => event.emit()).toThrow(/first failed/);
     expect(laterSubscriber).toHaveBeenCalledOnce();
   });
+
+  it('keeps removed listeners in the current emission but not the next one', () => {
+    const event = fk.createSignal();
+    const later = vi.fn();
+    event.subscribe(() => unsubscribe());
+    const unsubscribe = event.subscribe(later);
+    event.emit();
+    event.emit();
+    expect(later).toHaveBeenCalledOnce();
+  });
+
+  it('aggregates listener failures without skipping successful listeners', () => {
+    const event = fk.createSignal();
+    const first = new Error('first failed');
+    const second = new Error('second failed');
+    const later = vi.fn();
+    event.subscribe(() => {
+      throw first;
+    });
+    event.subscribe(() => {
+      throw second;
+    });
+    event.subscribe(later);
+    expect(() => event.emit()).toThrow(expect.objectContaining({ errors: [first, second] }));
+    expect(later).toHaveBeenCalledOnce();
+  });
 });

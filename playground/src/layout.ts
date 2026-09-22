@@ -12,8 +12,8 @@ export const mobileBreakpoint = pageWidth.desktop + scrollbarThickness;
 export const contentWidth: Responsive<number> = { desktop: 1216, mobile: 358 };
 
 export const pageHeight: Responsive<Readonly<Record<SitePage, number>>> = {
-  desktop: { home: 1120, guide: 3686, api: 5742 },
-  mobile: { home: 1660, guide: 3836, api: 5842 },
+  desktop: { home: 1120, guide: 3686, api: 7140 },
+  mobile: { home: 1660, guide: 3836, api: 7240 },
 };
 
 /** Keeps one instance responsive without creating separate desktop and mobile trees. */

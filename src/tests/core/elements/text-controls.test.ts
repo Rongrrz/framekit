@@ -33,6 +33,7 @@ describe('native text controls', () => {
     input.Text = 'next@example.com';
 
     expect(input.unsafeElement.value).toBe('next@example.com');
+    expect(changed).toHaveBeenCalledOnce();
   });
 
   it('uses a native textarea for multiline text', () => {
@@ -104,4 +105,23 @@ describe('native text controls', () => {
     expect(input.getChildren()).toEqual([corner]);
     expect(child.Parent).toBeUndefined();
   });
+
+  it.each([
+    ['input', fk.createTextInput],
+    ['textarea', fk.createTextArea],
+  ] as const)(
+    'synchronizes %s before notifying edit observers and releases them on destruction',
+    (_, createControl) => {
+      const control = createControl();
+      const observed: string[] = [];
+      control.onTextChanged(() => observed.push(control.Text));
+      control.unsafeElement.value = 'edited';
+      control.unsafeElement.dispatchEvent(new InputEvent('input'));
+      expect(observed).toEqual(['edited']);
+      control.destroy();
+      control.unsafeElement.value = 'too late';
+      expect(() => control.unsafeElement.dispatchEvent(new InputEvent('input'))).not.toThrow();
+      expect(observed).toEqual(['edited']);
+    },
+  );
 });

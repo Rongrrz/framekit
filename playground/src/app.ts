@@ -26,16 +26,16 @@ export const createPlaygroundApp = (
   const theme = fk.createValue<ThemeMode>(initialTheme);
   const palette = fk.createValue(themes[initialTheme]);
   const route = fk.createValue(resolveInitialPage());
-  const { app, page, content, scrollTo } = createPageShell(layout, palette, route);
+  const { app, page, addPage, scrollTo } = createPageShell(layout, palette, route);
   const navigate = (destination: Parameters<typeof navigateToPage>[1]): void =>
     navigateToPage(route, destination);
 
   bindDocumentTheme(app, theme);
   bindThemeTransition(app, theme, palette);
   bindHashRouter(app, route);
-  createHomePage(layout, palette, route, navigate).Parent = content;
-  createGuidePage(layout, palette, route, scrollTo, navigate).Parent = content;
-  createApiPage(layout, palette, route, scrollTo).Parent = content;
+  addPage('home', createHomePage(layout, palette, route, navigate));
+  addPage('guide', createGuidePage(layout, palette, route, scrollTo, navigate));
+  addPage('api', createApiPage(layout, palette, route, scrollTo));
   createNavigation(page, route, navigate, layout, theme, palette).Parent = app;
 
   if (forcedLayout === undefined) {

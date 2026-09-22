@@ -15,7 +15,27 @@ describe('playground application', () => {
   it('creates one persistent routed site and a styled native scrollbar', () => {
     const app = createPlaygroundApp('desktop', 'dark');
     app.mount(document.body);
-    expect(document.querySelectorAll('[data-framekit="ScreenGui"]')).toHaveLength(1);
+    const siteRoots = Array.from(document.querySelectorAll('[data-framekit="ScreenGui"]')).filter(
+      (element) => !element.querySelector('[role="tooltip"], [role="group"]'),
+    );
+    expect(siteRoots).toEqual([app.unsafeElement]);
+    for (const name of [
+      'ThemeToggleButton',
+      'ToolTipExample1',
+      'ToolTipExample2',
+      'ToolTipExample3',
+    ]) {
+      const button = app.findFirstChild(name, true) as fk.TextButton;
+      const id = button.unsafeElement.getAttribute('aria-describedby');
+      expect(id).toBeTruthy();
+      expect(document.getElementById(id!)?.getAttribute('role')).toBe('tooltip');
+    }
+    for (const name of ['PopoverExample1', 'PopoverExample2']) {
+      const button = app.findFirstChild(name, true) as fk.TextButton;
+      const id = button.unsafeElement.getAttribute('aria-controls');
+      expect(document.getElementById(id!)?.querySelectorAll('button')).toHaveLength(3);
+      expect(button.unsafeElement.getAttribute('aria-expanded')).toBe('false');
+    }
     expect((app.findFirstChild('HomePage', true) as fk.Frame).Visible).toBe(true);
     expect((app.findFirstChild('GuidePage', true) as fk.Frame).Visible).toBe(false);
     expect((app.findFirstChild('ApiPage', true) as fk.Frame).Visible).toBe(false);
@@ -25,6 +45,8 @@ describe('playground application', () => {
     expect(page.ScrollBarImageColor3).toEqual(fk.color3FromRGB(105, 120, 137));
     expect(page.ScrollBarImageTransparency).toBe(0);
     app.destroy();
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    expect(document.querySelector('[data-framekit="ScreenGui"]')).toBeNull();
   });
 
   it('navigates between persistent pages without rebuilding them', () => {
