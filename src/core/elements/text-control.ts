@@ -1,5 +1,5 @@
 import { createRealmAbortController } from '../dom/environment.js';
-import { installStyles } from '../dom/stylesheet.js';
+import { installFrameKitStyles } from '../dom/stylesheet.js';
 import { bindTextScaleResize, renderTextSize } from '../dom/text-size.js';
 import {
   createDefaultTextStyleProperties,
@@ -80,7 +80,7 @@ export function createTextControl<
   renderProperties,
   validateProperties,
 }: TextControlOptions<Properties, Element>): TextControl<Properties, Element> {
-  installStyles({ ownerDocument: element.ownerDocument });
+  installFrameKitStyles({ ownerDocument: element.ownerDocument });
   element.dataset.framekitTextControl = className;
   Object.assign(element.style, {
     appearance: 'none',

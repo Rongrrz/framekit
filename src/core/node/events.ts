@@ -1,5 +1,5 @@
 import {
-  createSignal,
+  createSignalEmitter,
   emitSignalSafely,
   type SignalEmitter,
   type Unsubscribe,
@@ -29,7 +29,7 @@ export function subscribeToNodeEvent<Arguments extends unknown[]>(
 
   let eventSignal = signalsByEvent.get(eventKey);
   if (!eventSignal) {
-    eventSignal = createSignal();
+    eventSignal = createSignalEmitter();
     signalsByEvent.set(eventKey, eventSignal);
   }
   return eventSignal.subscribe(listener as (...args: unknown[]) => void);

@@ -9,7 +9,7 @@ import {
   udim2,
   udim2FromOffset,
   udim2FromScale,
-  type Value,
+  type ObservableValue,
   vector2,
 } from 'framekit';
 
@@ -41,9 +41,9 @@ export type NavigationItem = Readonly<{
 export const createDocsShell = (
   name: string,
   pageName: Exclude<SitePage, 'home'>,
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-  route: Value<SitePage>,
+  route: ObservableValue<SitePage>,
 ): DocsShell => {
   const page = createRoutedPage(name, pageName, layout, route);
   const content = createFrame({
@@ -159,7 +159,10 @@ const appendFlowText = (
 };
 
 /** Keeps interactive examples in one row on desktop and a vertical stack on mobile. */
-export const createExampleRow = (parent: Frame, layout: Value<PlaygroundLayout>): Frame => {
+export const createExampleRow = (
+  parent: Frame,
+  layout: ObservableValue<PlaygroundLayout>,
+): Frame => {
   const row = createFrame({
     Name: 'ExampleRow',
     Size: udim2FromScale(1, 0),

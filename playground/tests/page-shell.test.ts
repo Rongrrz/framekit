@@ -1,7 +1,7 @@
 import {
   createFrame,
   createTextLabel,
-  createValue,
+  createObservableValue,
   type Frame,
   udim2,
   udim2FromOffset,
@@ -23,8 +23,12 @@ afterEach(() => {
 describe('playground page shell', () => {
   it('sizes the scroll canvas from the active page as its content changes', () => {
     vi.stubGlobal('innerWidth', 1292);
-    const route = createValue<SitePage>('guide');
-    const shell = createPageShell(createValue('desktop'), createValue(themes.dark), route);
+    const route = createObservableValue<SitePage>('guide');
+    const shell = createPageShell(
+      createObservableValue('desktop'),
+      createObservableValue(themes.dark),
+      route,
+    );
     const guide = createFrame({ Size: udim2(1, 0, 0, 1400) });
     const api = createFrame({ Size: udim2(1, 0, 0, 2400) });
     shell.addPage('guide', guide);
@@ -45,9 +49,9 @@ describe('playground page shell', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('innerWidth', 1292);
     const shell = createPageShell(
-      createValue('desktop'),
-      createValue(themes.dark),
-      createValue('guide'),
+      createObservableValue('desktop'),
+      createObservableValue(themes.dark),
+      createObservableValue('guide'),
     );
     const heading = createTextLabel({ Position: udim2FromOffset(0, 600) });
     heading.Parent = shell.content;
@@ -70,9 +74,9 @@ describe('playground page shell', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('innerWidth', 1292);
     const shell = createPageShell(
-      createValue('desktop'),
-      createValue(themes.dark),
-      createValue('guide'),
+      createObservableValue('desktop'),
+      createObservableValue(themes.dark),
+      createObservableValue('guide'),
     );
     const heading = createTextLabel();
     heading.Parent = shell.content;
@@ -90,8 +94,12 @@ describe('playground page shell', () => {
 
   it('resets scrolling and cancels in-flight section navigation when the route changes', () => {
     const clock = installAnimationClock();
-    const route = createValue<SitePage>('guide');
-    const shell = createPageShell(createValue('desktop'), createValue(themes.dark), route);
+    const route = createObservableValue<SitePage>('guide');
+    const shell = createPageShell(
+      createObservableValue('desktop'),
+      createObservableValue(themes.dark),
+      route,
+    );
     const heading = createTextLabel();
     heading.Parent = shell.content;
     vi.spyOn(heading.unsafeElement, 'getBoundingClientRect').mockReturnValue(
@@ -114,8 +122,12 @@ describe('playground page shell', () => {
     ['mobile', 207, 0.5],
   ] as const)('scales the %s canvas at viewport width %s', (initialLayout, width, scale) => {
     vi.stubGlobal('innerWidth', width);
-    const layout = createValue<PlaygroundLayout>(initialLayout);
-    const shell = createPageShell(layout, createValue(themes.dark), createValue('home'));
+    const layout = createObservableValue<PlaygroundLayout>(initialLayout);
+    const shell = createPageShell(
+      layout,
+      createObservableValue(themes.dark),
+      createObservableValue('home'),
+    );
     const contentScale = shell.content.getChildren().find((node) => node.isA('UIScale'));
     const scrollSizer = shell.content.Parent;
     if (!contentScale?.isA('UIScale') || !scrollSizer?.isA('Frame'))
@@ -133,9 +145,9 @@ describe('playground page shell', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     const shell = createPageShell(
-      createValue('desktop'),
-      createValue(themes.dark),
-      createValue('guide'),
+      createObservableValue('desktop'),
+      createObservableValue(themes.dark),
+      createObservableValue('guide'),
     );
     const heading = createTextLabel();
     heading.Parent = shell.content;

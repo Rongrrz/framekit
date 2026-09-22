@@ -1,4 +1,4 @@
-import { createFrame, createValue } from 'framekit';
+import { createFrame, createObservableValue } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
 import { watchOwnedValue } from '../src/owned-value';
@@ -6,7 +6,7 @@ import { watchOwnedValue } from '../src/owned-value';
 describe('owned value subscriptions', () => {
   it('publishes immediately and stops when its owner is destroyed', () => {
     const owner = createFrame();
-    const value = createValue(1);
+    const value = createObservableValue(1);
     const listener = vi.fn();
     watchOwnedValue(owner, value, listener);
     value.set(2);
@@ -17,7 +17,7 @@ describe('owned value subscriptions', () => {
 
   it('can be disposed repeatedly without destroying the owner', () => {
     const owner = createFrame();
-    const value = createValue(1);
+    const value = createObservableValue(1);
     const listener = vi.fn();
     const dispose = watchOwnedValue(owner, value, listener);
     dispose();
@@ -32,13 +32,13 @@ describe('owned value subscriptions', () => {
     const owner = createFrame();
     owner.destroy();
     const listener = vi.fn();
-    expect(() => watchOwnedValue(owner, createValue(1), listener)).toThrow(/destroyed/);
+    expect(() => watchOwnedValue(owner, createObservableValue(1), listener)).toThrow(/destroyed/);
     expect(listener).not.toHaveBeenCalled();
   });
 
   it('does not subscribe when the immediate listener destroys its owner', () => {
     const owner = createFrame();
-    const value = createValue(1);
+    const value = createObservableValue(1);
     const listener = vi.fn(() => owner.destroy());
     const dispose = watchOwnedValue(owner, value, listener);
     value.set(2);

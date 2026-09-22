@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { createTextButton, installStyles } from '../../../index.js';
+import { createTextButton, installFrameKitStyles } from '../../../index.js';
 
 describe('shared stylesheet installation', () => {
   it('installs one nonce-authorized stylesheet before factories run', () => {
     const ownerDocument = document.implementation.createHTMLDocument();
     const options = { ownerDocument, nonce: 'server-generated-nonce' };
 
-    installStyles(options);
+    installFrameKitStyles(options);
     const button = createTextButton({}, { ownerDocument });
-    installStyles(options);
+    installFrameKitStyles(options);
 
     const styles = ownerDocument.querySelectorAll<HTMLStyleElement>('[data-framekit-styles]');
 
@@ -17,7 +17,7 @@ describe('shared stylesheet installation', () => {
     expect(styles[0]?.nonce).toBe(options.nonce);
     expect(styles[0]?.textContent).toContain('::placeholder');
     expect(styles[0]?.textContent).toContain('::-webkit-scrollbar');
-    expect(() => installStyles({ ownerDocument, nonce: 'different' })).toThrow(
+    expect(() => installFrameKitStyles({ ownerDocument, nonce: 'different' })).toThrow(
       /before creating nodes/,
     );
 
@@ -27,9 +27,9 @@ describe('shared stylesheet installation', () => {
   it('reinstalls a stylesheet that was removed instead of trusting stale installation state', () => {
     const ownerDocument = document.implementation.createHTMLDocument();
 
-    installStyles({ ownerDocument });
+    installFrameKitStyles({ ownerDocument });
     ownerDocument.querySelector('[data-framekit-styles]')!.remove();
-    installStyles({ ownerDocument });
+    installFrameKitStyles({ ownerDocument });
 
     expect(ownerDocument.querySelectorAll('[data-framekit-styles]')).toHaveLength(1);
   });

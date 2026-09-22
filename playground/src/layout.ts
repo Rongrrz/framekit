@@ -1,4 +1,4 @@
-import { type Instance, type InstanceProperties, type Value } from 'framekit';
+import { type Instance, type InstanceProperties, type ObservableValue } from 'framekit';
 
 import { watchOwnedValue } from './owned-value';
 import type { SitePage } from './router';
@@ -19,7 +19,7 @@ export const pageHeight: Responsive<Readonly<Record<SitePage, number>>> = {
 /** Keeps one instance responsive without creating separate desktop and mobile trees. */
 export const bindLayoutProperties = <Properties extends InstanceProperties>(
   owner: Instance,
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   instance: Instance<Properties>,
   properties: Responsive<Partial<Properties>>,
 ): void => {

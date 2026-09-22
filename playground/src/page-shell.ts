@@ -11,7 +11,7 @@ import {
   type SpringOptions,
   udim2,
   udim2FromOffset,
-  type Value,
+  type ObservableValue,
   vector2,
 } from 'framekit';
 
@@ -39,9 +39,9 @@ const scrollSpringOptions = {
 
 /** Owns the responsive canvas, native scrolling, and route-specific page height. */
 export const createPageShell = (
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-  route: Value<SitePage>,
+  route: ObservableValue<SitePage>,
 ): PageShell => {
   const app = createScreenGui({ Name: appName, DisplayOrder: 10 });
   const page = createScrollingFrame({

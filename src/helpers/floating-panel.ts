@@ -65,7 +65,7 @@ export const validatePanelOptions = (target: GuiElement, options: PanelOptions):
   if (target.isDestroyed()) throw new Error('Floating panel target has been destroyed.');
   if (!target.unsafeElement.ownerDocument.defaultView)
     throw new Error('Floating panel requires a document with a window.');
-  if (options.kind === 'tooltip') assertBoolean(options.followCursor, 'ToolTip followCursor');
+  if (options.kind === 'tooltip') assertBoolean(options.followCursor, 'Tooltip followCursor');
   else assertAllowedValue(options.openOn, ['hover', 'click'], 'Popover openOn');
   if (options.placement !== undefined)
     assertAllowedValue(
@@ -104,7 +104,7 @@ export const bindFloatingPanel = (
   if (panel.ownerDocument !== document)
     throw new TypeError('Floating panel content must belong to the target document.');
   if (!popover && (panel.matches(interactiveContent) || panel.querySelector(interactiveContent)))
-    throw new TypeError('ToolTip content must be non-interactive.');
+    throw new TypeError('Tooltip content must be non-interactive.');
   if (panel.id && document.getElementById(panel.id))
     throw new Error('Floating panel content must have a unique id.');
   const original = {
@@ -120,7 +120,7 @@ export const bindFloatingPanel = (
   const relation = popover ? 'aria-controls' : 'aria-describedby';
   const relationAlreadyPresent = (element.getAttribute(relation) ?? '').split(/\s+/).includes(id);
   const layer = createScreenGui(
-    { Name: popover ? 'PopoverLayer' : 'ToolTipLayer', Enabled: false, DisplayOrder: 2147483647 },
+    { Name: popover ? 'PopoverLayer' : 'TooltipLayer', Enabled: false, DisplayOrder: 2147483647 },
     { ownerDocument: document },
   );
   const layerElement = layer.unsafeElement;

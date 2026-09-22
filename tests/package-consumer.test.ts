@@ -64,10 +64,21 @@ describe('packed package consumers', () => {
         format,
         '-e',
         `${load}
-      const value = api.createValue(1);
+      const value = api.createObservableValue(1);
       value.set(2);
       console.log(JSON.stringify({
+        bindPopover: typeof api.bindPopover,
+        bindTooltip: typeof api.bindTooltip,
+        createSignalEmitter: typeof api.createSignalEmitter,
+        installFrameKitStyles: typeof api.installFrameKitStyles,
         namespaces: ['fk', 'fka', 'fkh'].filter((name) => name in api),
+        removedNames: [
+          'createSignal',
+          'createValue',
+          'installStyles',
+          'withPopover',
+          'withToolTip',
+        ].filter((name) => name in api),
         frame: typeof api.createFrame,
         spring: typeof api.spring,
         hover: typeof api.bindHoverScale,
@@ -77,7 +88,12 @@ describe('packed package consumers', () => {
       { cwd: consumer, encoding: 'utf8' },
     );
     expect(JSON.parse(output)).toEqual({
+      bindPopover: 'function',
+      bindTooltip: 'function',
+      createSignalEmitter: 'function',
+      installFrameKitStyles: 'function',
       namespaces: [],
+      removedNames: [],
       frame: 'function',
       spring: 'function',
       hover: 'function',

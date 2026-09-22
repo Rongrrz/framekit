@@ -2,7 +2,7 @@ import {
   createFrame,
   createTextButton,
   createUIListLayout,
-  createValue,
+  createObservableValue,
   type Frame,
   type ScrollingFrame,
   type TextLabel,
@@ -26,7 +26,7 @@ afterEach(() => {
 describe('documentation spacing', () => {
   it('uses the shared axis-aware scrolling behavior for code examples', () => {
     const parent = createFrame();
-    appendCodeBlock(parent, createValue(themes.dark), 'Example', [
+    appendCodeBlock(parent, createObservableValue(themes.dark), 'Example', [
       { text: 'message.Text = "Ready";' },
     ]);
     const scroll = parent.findFirstChild('ExampleScroll', true) as ScrollingFrame;
@@ -43,7 +43,7 @@ describe('documentation spacing', () => {
     const parent = createFrame();
     appendCodeBlock(
       parent,
-      createValue(themes.dark),
+      createObservableValue(themes.dark),
       'Example',
       Array.from({ length: lineCount }, () => ({ text: 'const example = true;' })),
     );
@@ -58,7 +58,12 @@ describe('documentation spacing', () => {
 
   it('uses natural paragraph height and fixed heading typography', () => {
     const parent = createFrame();
-    const heading = appendArticleSection(parent, createValue(themes.dark), 'Heading', 'Body');
+    const heading = appendArticleSection(
+      parent,
+      createObservableValue(themes.dark),
+      'Heading',
+      'Body',
+    );
     const labels = parent.getChildren().filter((child) => child.isA('TextLabel'));
     expect(heading.TextScaled).toBe(false);
     expect(heading.TextSize).toBe(28);
@@ -75,7 +80,7 @@ describe('documentation spacing', () => {
   it('keeps example rows in the article flow when the responsive direction changes', () => {
     const parent = createFrame();
     createUIListLayout().Parent = parent;
-    const layout = createValue<PlaygroundLayout>('desktop');
+    const layout = createObservableValue<PlaygroundLayout>('desktop');
     const row = createExampleRow(parent, layout);
     createTextButton().Parent = row;
     expect(row.unsafeElement.style.position).toBe('relative');
@@ -100,13 +105,13 @@ describe('documentation spacing', () => {
         disconnect = disconnect;
       },
     );
-    const layout = createValue<PlaygroundLayout>('desktop');
+    const layout = createObservableValue<PlaygroundLayout>('desktop');
     const shell = createDocsShell(
       'GuidePage',
       'guide',
       layout,
-      createValue(themes.dark),
-      createValue('guide'),
+      createObservableValue(themes.dark),
+      createObservableValue('guide'),
     );
     const height = vi
       .spyOn(shell.article.unsafeElement, 'offsetHeight', 'get')

@@ -1,4 +1,4 @@
-import { createFrame, createValue, udim2FromOffset } from 'framekit';
+import { createFrame, createObservableValue, udim2FromOffset } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../src/layout';
@@ -7,7 +7,7 @@ describe('playground layout', () => {
   it('applies layout patches immediately and only for the owner lifetime', () => {
     const owner = createFrame();
     const frame = createFrame();
-    const layout = createValue<PlaygroundLayout>('desktop');
+    const layout = createObservableValue<PlaygroundLayout>('desktop');
     bindLayoutProperties(owner, layout, frame, {
       desktop: { Size: udim2FromOffset(400, 200), Visible: true },
       mobile: { Size: udim2FromOffset(200, 300), Visible: false },

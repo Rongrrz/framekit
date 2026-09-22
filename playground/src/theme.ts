@@ -6,7 +6,7 @@ import {
   type InstanceProperties,
   spring,
   type SpringOptions,
-  type Value,
+  type ObservableValue,
 } from 'framekit';
 
 import { watchOwnedValue } from './owned-value';
@@ -30,7 +30,7 @@ export type ThemePalette = Readonly<{
 }>;
 
 export type ThemeToken = keyof ThemePalette;
-export type ThemeValue = Value<ThemePalette>;
+export type ThemeValue = ObservableValue<ThemePalette>;
 
 export const themes = {
   dark: {
@@ -122,7 +122,7 @@ export const themeColor = (theme: ThemeValue, token: ThemeToken): Color3 => them
 /** Drives every theme consumer from one retained spring so colors stay synchronized. */
 export const bindThemeTransition = (
   owner: Instance,
-  mode: Value<ThemeMode>,
+  mode: ObservableValue<ThemeMode>,
   palette: ThemeValue,
 ): void => {
   const transition = createFrame({
@@ -169,7 +169,7 @@ export const resolveInitialTheme = (): ThemeMode => {
 };
 
 /** Keeps DOM-only styling and persistence synchronized with the FrameKit theme value. */
-export const bindDocumentTheme = (owner: Instance, theme: Value<ThemeMode>): void => {
+export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeMode>): void => {
   const root = document.documentElement;
   const themeColorMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   const previousTheme = root.getAttribute('data-framekit-theme');

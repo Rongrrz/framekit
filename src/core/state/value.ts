@@ -1,10 +1,10 @@
-import { createSignal, emitSignalSafely, type Unsubscribe } from './signal.js';
+import { createSignalEmitter, emitSignalSafely, type Unsubscribe } from './signal.js';
 
 type ValueListener<T> = (value: T) => void;
 type ValueUpdater<T> = (currentValue: T) => T;
 
 /** A small synchronous container for explicitly shared state. */
-export type Value<T> = {
+export type ObservableValue<T> = {
   /** Returns the current value. */
   get(): T;
   /** Replaces the value and notifies listeners when it changed. */
@@ -15,9 +15,9 @@ export type Value<T> = {
   onChange(listener: ValueListener<T>): Unsubscribe;
 };
 
-/** Creates a value that synchronously notifies listeners when it changes. */
-export function createValue<T>(initialValue: T): Value<T> {
-  const changedSignal = createSignal<[T]>();
+/** Creates an observable value that synchronously notifies listeners when it changes. */
+export function createObservableValue<T>(initialValue: T): ObservableValue<T> {
+  const changedSignal = createSignalEmitter<[T]>();
   let currentValue = initialValue;
 
   function set(nextValue: T): void {

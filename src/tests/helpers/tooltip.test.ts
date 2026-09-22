@@ -11,7 +11,7 @@ import {
   type TextButton,
   udim2FromOffset,
   vector2,
-  withToolTip,
+  bindTooltip,
 } from '../../index.js';
 import { setupAnimationClock } from '../support/animation-clock.js';
 
@@ -86,7 +86,7 @@ const layerOf = (tooltip: GuiObject): ScreenGui => {
 describe('tooltips', () => {
   it('delays hover, cancels early exits, and lets the pointer move into the tooltip', () => {
     const { target, tooltip } = fixture();
-    withToolTip(target, tooltip);
+    bindTooltip(target, tooltip);
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     vi.advanceTimersByTime(299);
@@ -110,7 +110,7 @@ describe('tooltips', () => {
 
   it('opens immediately on focus, stays while focused, and respects Escape until focus ends', () => {
     const { target, tooltip } = fixture();
-    withToolTip(target, tooltip, { followCursor: true });
+    bindTooltip(target, tooltip, { followCursor: true });
     const layer = layerOf(tooltip);
     target.unsafeElement.focus();
     expect(layer.Enabled).toBe(true);
@@ -135,7 +135,7 @@ describe('tooltips', () => {
 
   it('cancels a pending tooltip with Escape and reopens after a new hover', () => {
     const { target, tooltip } = fixture();
-    withToolTip(target, tooltip);
+    bindTooltip(target, tooltip);
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -154,7 +154,7 @@ describe('tooltips', () => {
     ['right', 312, 200],
   ] as const)('anchors on the %s side', (placement, x, y) => {
     const { target, tooltip } = fixture();
-    withToolTip(target, tooltip, { placement, delay: 0 });
+    bindTooltip(target, tooltip, { placement, delay: 0 });
     pointer(target.unsafeElement, 'pointerenter');
     expect(tooltip.Position).toEqual(udim2FromOffset(x, y));
     pointer(target.unsafeElement, 'pointermove', 270, 230);
@@ -163,7 +163,7 @@ describe('tooltips', () => {
 
   it('follows the cursor and flips/clamps near viewport edges', () => {
     const { target, tooltip } = fixture();
-    withToolTip(target, tooltip, { followCursor: true, delay: 0 });
+    bindTooltip(target, tooltip, { followCursor: true, delay: 0 });
     pointer(target.unsafeElement, 'pointerenter');
     expect(tooltip.Position).toEqual(udim2FromOffset(220, 242));
     pointer(target.unsafeElement, 'pointermove', 310, 260);
@@ -182,7 +182,7 @@ describe('tooltips', () => {
     (placement, left, top, x, y) => {
       const { target, tooltip, moveTarget } = fixture();
       moveTarget(rect(left, top, 100, 40));
-      withToolTip(target, tooltip, { placement, delay: 0 });
+      bindTooltip(target, tooltip, { placement, delay: 0 });
       pointer(target.unsafeElement, 'pointerenter');
       expect(tooltip.Position).toEqual(udim2FromOffset(x, y));
     },
@@ -192,7 +192,7 @@ describe('tooltips', () => {
     'fades cursor-following %s content on exit without moving or accepting tooltip hover',
     async (content) => {
       const { target, tooltip, moveTarget } = fixture();
-      withToolTip(target, content === 'frame' ? tooltip : 'Pointer help', {
+      bindTooltip(target, content === 'frame' ? tooltip : 'Pointer help', {
         followCursor: true,
         delay: 0,
       });
@@ -223,7 +223,7 @@ describe('tooltips', () => {
 
   it('cancels a cursor fade on re-entry and preserves focus until blur or Escape', async () => {
     const { target, tooltip } = fixture();
-    withToolTip(target, tooltip, { followCursor: true, delay: 300 });
+    bindTooltip(target, tooltip, { followCursor: true, delay: 300 });
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     vi.advanceTimersByTime(300);
@@ -262,7 +262,7 @@ describe('tooltips', () => {
     const { target, tooltip } = fixture();
     const originalPosition = tooltip.Position;
     tooltip.unsafeElement.style.pointerEvents = 'auto';
-    const dispose = withToolTip(target, tooltip, { followCursor: true, delay: 0 });
+    const dispose = bindTooltip(target, tooltip, { followCursor: true, delay: 0 });
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     pointer(target.unsafeElement, 'pointerleave');
@@ -277,7 +277,7 @@ describe('tooltips', () => {
 
   it('tracks changing bounds, content size, and viewport size; unmounting hides it', () => {
     const { root, target, tooltip, moveTarget } = fixture();
-    withToolTip(target, tooltip, { delay: 0 });
+    bindTooltip(target, tooltip, { delay: 0 });
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     moveTarget(rect(20, 10, 100, 40));
@@ -297,7 +297,7 @@ describe('tooltips', () => {
     vi.mocked(tooltip.unsafeElement.getBoundingClientRect).mockImplementation(() =>
       rect(tooltip.Position.X.Offset - 10, tooltip.Position.Y.Offset - 20, 100, 80),
     );
-    withToolTip(target, tooltip, { delay: 0 });
+    bindTooltip(target, tooltip, { delay: 0 });
     pointer(target.unsafeElement, 'pointerenter');
     expect(tooltip.AbsolutePosition).toEqual(vector2(200, 108));
     clock.advance();
@@ -313,7 +313,7 @@ describe('tooltips', () => {
     tooltip.unsafeElement.setAttribute('role', 'note');
     tooltip.unsafeElement.style.pointerEvents = 'none';
     target.unsafeElement.setAttribute('aria-describedby', 'help');
-    const dispose = withToolTip(target, tooltip, { delay: 0 });
+    const dispose = bindTooltip(target, tooltip, { delay: 0 });
     const layer = layerOf(tooltip);
     expect(target.unsafeElement.getAttribute('aria-describedby')).toBe('help custom-tip');
     expect(tooltip.unsafeElement.getAttribute('role')).toBe('tooltip');
@@ -340,17 +340,17 @@ describe('tooltips', () => {
     const { target, tooltip } = fixture();
     tooltip.unsafeElement.id = 'existing-tip';
     target.unsafeElement.setAttribute('aria-describedby', 'existing-tip');
-    withToolTip(target, tooltip)();
+    bindTooltip(target, tooltip)();
     expect(target.unsafeElement.getAttribute('aria-describedby')).toBe('existing-tip');
     expect(tooltip.unsafeElement.hasAttribute('role')).toBe(false);
     tooltip.unsafeElement.removeAttribute('id');
-    withToolTip(target, tooltip)();
+    bindTooltip(target, tooltip)();
     expect(tooltip.unsafeElement.hasAttribute('id')).toBe(false);
   });
 
   it.each([false, true])('cleans up when the target is destroyed (already open: %s)', (open) => {
     const { target, tooltip } = fixture();
-    const dispose = withToolTip(target, tooltip);
+    const dispose = bindTooltip(target, tooltip);
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     if (open) vi.advanceTimersByTime(300);
@@ -366,7 +366,7 @@ describe('tooltips', () => {
 
   it('releases the binding when custom content is destroyed', () => {
     const { target, tooltip } = fixture();
-    const dispose = withToolTip(target, tooltip, { delay: 0 });
+    const dispose = bindTooltip(target, tooltip, { delay: 0 });
     const layer = layerOf(tooltip);
     pointer(target.unsafeElement, 'pointerenter');
     tooltip.destroy();
@@ -379,7 +379,7 @@ describe('tooltips', () => {
 
   it('creates styled, literal text in the target document and destroys generated content', () => {
     const { target } = fixture();
-    const dispose = withToolTip(target, '<img src=x> Help', { style: { TextSize: 17 } });
+    const dispose = bindTooltip(target, '<img src=x> Help', { style: { TextSize: 17 } });
     const id = target.unsafeElement.getAttribute('aria-describedby')!;
     const bubble = document.getElementById(id)!;
     expect(bubble.ownerDocument).toBe(target.unsafeElement.ownerDocument);
@@ -395,11 +395,11 @@ describe('tooltips', () => {
   it('opens for an already-focused trigger and ignores touch hover', () => {
     const { target, tooltip } = fixture();
     target.unsafeElement.focus();
-    const dispose = withToolTip(target, tooltip);
+    const dispose = bindTooltip(target, tooltip);
     expect(layerOf(tooltip).Enabled).toBe(true);
     dispose();
     target.unsafeElement.blur();
-    withToolTip(target, tooltip, { delay: 0 });
+    bindTooltip(target, tooltip, { delay: 0 });
     pointer(target.unsafeElement, 'pointerenter', 260, 230, 'touch');
     expect(layerOf(tooltip).Enabled).toBe(false);
   });
@@ -408,7 +408,7 @@ describe('tooltips', () => {
     const { root, target, tooltip } = fixture();
     const dialog = document.body.appendChild(document.createElement('dialog'));
     root.mount(dialog);
-    withToolTip(target, tooltip, { delay: 0 });
+    bindTooltip(target, tooltip, { delay: 0 });
     const layer = layerOf(tooltip);
     expect(layer.unsafeElement.parentElement).toBe(dialog);
     target.unsafeElement.focus();
@@ -423,7 +423,7 @@ describe('tooltips', () => {
     owners.add(root);
     root.mount(ownerDocument.body);
     target.Parent = root;
-    const dispose = withToolTip(target, 'Iframe help');
+    const dispose = bindTooltip(target, 'Iframe help');
     const id = target.unsafeElement.getAttribute('aria-describedby')!;
     const bubble = ownerDocument.getElementById(id)!;
     expect(bubble.ownerDocument).toBe(ownerDocument);
@@ -436,25 +436,25 @@ describe('tooltips', () => {
 
   it('rejects invalid bindings before changing content or mounting a layer', () => {
     const { root, target, tooltip } = fixture();
-    expect(() => withToolTip(target, tooltip, { delay: -1 })).toThrow(/delay/);
-    expect(() => withToolTip(target, tooltip, { gap: Infinity })).toThrow(/gap/);
+    expect(() => bindTooltip(target, tooltip, { delay: -1 })).toThrow(/delay/);
+    expect(() => bindTooltip(target, tooltip, { gap: Infinity })).toThrow(/gap/);
     tooltip.Parent = root;
-    expect(() => withToolTip(target, tooltip)).toThrow(/detached/);
+    expect(() => bindTooltip(target, tooltip)).toThrow(/detached/);
     expect(tooltip.Parent).toBe(root);
     tooltip.Parent = undefined;
     const button = createTextButton();
     owners.add(button);
-    expect(() => withToolTip(target, button)).toThrow(/non-interactive/);
+    expect(() => bindTooltip(target, button)).toThrow(/non-interactive/);
     const foreign = createFrame(
       {},
       { ownerDocument: document.implementation.createHTMLDocument() },
     );
     owners.add(foreign);
-    expect(() => withToolTip(target, foreign)).toThrow(/target document/);
+    expect(() => bindTooltip(target, foreign)).toThrow(/target document/);
     tooltip.destroy();
-    expect(() => withToolTip(target, tooltip)).toThrow(/destroyed/);
+    expect(() => bindTooltip(target, tooltip)).toThrow(/destroyed/);
     target.destroy();
-    expect(() => withToolTip(target, 'Help')).toThrow(/destroyed/);
+    expect(() => bindTooltip(target, 'Help')).toThrow(/destroyed/);
     expect(document.querySelector('[role="tooltip"]')).toBeNull();
   });
 });

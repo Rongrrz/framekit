@@ -1,7 +1,7 @@
 import type { Instance, InstanceProperties } from '../core/node/instance.js';
 import { getActiveNodeState } from '../core/node/state.js';
 import {
-  createSignal,
+  createSignalEmitter,
   emitSignalSafely,
   readonlySignal,
   type Signal,
@@ -53,7 +53,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   const animationPatch: Partial<Properties> = {};
   const settledProperties: (keyof Properties)[] = [];
   const springSolution: SpringSolution = { value: 0, velocity: 0 };
-  const completedEmitter = createSignal<[]>();
+  const completedEmitter = createSignalEmitter<[]>();
   const completed = readonlySignal(completedEmitter);
   let previousTimestampMs = 0;
 

@@ -1,5 +1,5 @@
 import {
-  createValue,
+  createObservableValue,
   type Frame,
   type TextButton,
   type TextLabel,
@@ -16,9 +16,9 @@ import type { SitePage } from '../src/router';
 import { themes } from '../src/theme';
 
 const createState = (page: SitePage) => ({
-  layout: createValue<PlaygroundLayout>('desktop'),
-  theme: createValue(themes.dark),
-  route: createValue<SitePage>(page),
+  layout: createObservableValue<PlaygroundLayout>('desktop'),
+  theme: createObservableValue(themes.dark),
+  route: createObservableValue<SitePage>(page),
 });
 
 describe('playground pages', () => {

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createSignal } from '../../../index.js';
+import { createSignalEmitter } from '../../../index.js';
 
 describe('signals', () => {
   it('subscribes with an idempotent unsubscribe function', () => {
-    const event = createSignal<[number]>();
+    const event = createSignalEmitter<[number]>();
 
     expect(Object.isFrozen(event)).toBe(true);
 
@@ -21,7 +21,7 @@ describe('signals', () => {
   });
 
   it('uses an emission snapshot and can clear every subscriber', () => {
-    const event = createSignal();
+    const event = createSignalEmitter();
     const lateSubscriber = vi.fn();
     const firstSubscriber = vi.fn(() => event.subscribe(lateSubscriber));
 
@@ -42,7 +42,7 @@ describe('signals', () => {
   });
 
   it('notifies later subscribers when an earlier subscriber fails', () => {
-    const event = createSignal();
+    const event = createSignalEmitter();
     const laterSubscriber = vi.fn();
 
     event.subscribe(() => {
@@ -55,7 +55,7 @@ describe('signals', () => {
   });
 
   it('keeps removed listeners in the current emission but not the next one', () => {
-    const event = createSignal();
+    const event = createSignalEmitter();
     const later = vi.fn();
     event.subscribe(() => unsubscribe());
     const unsubscribe = event.subscribe(later);
@@ -65,7 +65,7 @@ describe('signals', () => {
   });
 
   it('aggregates listener failures without skipping successful listeners', () => {
-    const event = createSignal();
+    const event = createSignalEmitter();
     const first = new Error('first failed');
     const second = new Error('second failed');
     const later = vi.fn();

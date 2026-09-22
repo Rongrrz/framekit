@@ -10,7 +10,7 @@ import {
   udim2,
   udim2FromOffset,
   udim2FromScale,
-  type Value,
+  type ObservableValue,
   vector2,
 } from 'framekit';
 
@@ -41,9 +41,9 @@ const features = [
 ] as const satisfies readonly (readonly [string, string, string, ThemeToken])[];
 
 export const createHomePage = (
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-  route: Value<SitePage>,
+  route: ObservableValue<SitePage>,
   navigate: (page: SitePage) => void,
 ): Frame => {
   const page = createRoutedPage('HomePage', 'home', layout, route);
@@ -196,7 +196,7 @@ export const createHomePage = (
   return page;
 };
 
-const createHomeVisual = (layout: Value<PlaygroundLayout>, theme: ThemeValue): Frame => {
+const createHomeVisual = (layout: ObservableValue<PlaygroundLayout>, theme: ThemeValue): Frame => {
   const visual = createSurface(theme, {
     name: 'HomeCodeVisual',
     background: 'surface',

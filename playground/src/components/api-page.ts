@@ -7,8 +7,8 @@ import {
   udim2,
   udim2FromOffset,
   udim2FromScale,
-  type Value,
-  withToolTip,
+  type ObservableValue,
+  bindTooltip,
 } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
@@ -28,9 +28,9 @@ import {
 import { appendPopoverExamples } from './popover-examples';
 
 export const createApiPage = (
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-  route: Value<SitePage>,
+  route: ObservableValue<SitePage>,
   scrollTo: (target: GuiElement) => void,
 ): Frame => {
   const shell = createDocsShell('ApiPage', 'api', layout, theme, route);
@@ -141,12 +141,12 @@ export const createApiPage = (
     'Values model mutable state. Signals model typed events. Register the unsubscribe function with owner.onDestroy to release a subscription when its owner is destroyed.',
   );
   appendCodeBlock(shell.article, theme, 'ValuesApiCode', [
-    { text: 'const value = createValue(initial);', color: 'purple' },
+    { text: 'const value = createObservableValue(initial);', color: 'purple' },
     { text: 'value.get()' },
     { text: 'value.set(next)' },
     { text: 'owner.onDestroy(value.onChange(listener))', color: 'accent' },
     { text: '' },
-    { text: 'const event = createSignal<[number]>();' },
+    { text: 'const event = createSignalEmitter<[number]>();' },
     { text: 'event.subscribe(listener)' },
     { text: 'event.emit(42)' },
   ]);
@@ -202,9 +202,9 @@ export const createApiPage = (
     { text: 'bindResponsiveLayout(owner, options)' },
     { text: 'bindHoverScale(node, scale, 1.035)' },
     { text: '' },
-    { text: "const dispose = withToolTip(button, 'Save');", color: 'accent' },
-    { text: "withToolTip(button, 'Inspect', { followCursor: true });" },
-    { text: 'withToolTip(button, detachedFrame, { followCursor: true });' },
+    { text: "const dispose = bindTooltip(button, 'Save');", color: 'accent' },
+    { text: "bindTooltip(button, 'Inspect', { followCursor: true });" },
+    { text: 'bindTooltip(button, detachedFrame, { followCursor: true });' },
     { text: '// Options: placement, followCursor, delay, gap, style' },
     { text: '// Animation hooks: onShow, onHide' },
     { text: 'dispose(); // Target destruction also releases the binding.' },
@@ -215,7 +215,7 @@ export const createApiPage = (
     'Try tooltips',
     'Hover or focus a button. Cursor tooltips fade on exit; focused tooltips stay anchored. Escape dismisses them.',
   );
-  appendToolTipExamples(shell.article, layout, theme);
+  appendTooltipExamples(shell.article, layout, theme);
   const popovers = appendPopoverExamples(shell.article, layout, theme);
   const coreItems = [
     { label: 'Factories', target: factories, active: true },
@@ -240,16 +240,16 @@ export const createApiPage = (
   return shell.page;
 };
 
-const appendToolTipExamples = (
+const appendTooltipExamples = (
   article: Frame,
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
 ): void => {
   const row = createExampleRow(article, layout);
   const buttons = ['Anchored text', 'Follow cursor', 'Custom Frame'].map((label, index) => {
     const button = createButton(theme, {
       label,
-      name: `ToolTipExample${index + 1}`,
+      name: `TooltipExample${index + 1}`,
       position: udim2FromOffset(0, 0),
       size: udim2FromOffset(216, 44),
     });
@@ -264,12 +264,12 @@ const appendToolTipExamples = (
     button.Parent = row;
     return button;
   });
-  withToolTip(buttons[0]!, 'I stay above this button. You can hover over me.');
-  withToolTip(buttons[1]!, 'I follow the pointer and fade when you leave.', {
+  bindTooltip(buttons[0]!, 'I stay above this button. You can hover over me.');
+  bindTooltip(buttons[1]!, 'I follow the pointer and fade when you leave.', {
     followCursor: true,
   });
   const custom = createSurface(theme, {
-    name: 'CustomToolTip',
+    name: 'CustomTooltip',
     size: udim2FromOffset(260, 100),
     background: 'surfaceRaised',
     radius: 12,
@@ -290,14 +290,14 @@ const appendToolTipExamples = (
     wrapped: true,
   }).Parent = custom;
   const customButton = buttons[2]!;
-  withToolTip(customButton, custom, { followCursor: true });
+  bindTooltip(customButton, custom, { followCursor: true });
   // Supplied content remains caller-owned after the binding is released.
   customButton.onDestroy(() => custom.destroy());
 };
 
 const appendReferenceCards = (
   parent: Frame,
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
   items: readonly (readonly [string, string, ThemeToken])[],
 ): void => {
@@ -315,7 +315,7 @@ const appendReferenceCards = (
 };
 
 const createReferenceCard = (
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
   name: string,
   description: string,

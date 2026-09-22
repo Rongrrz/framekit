@@ -5,8 +5,8 @@ import {
   udim2,
   udim2FromOffset,
   udim2FromScale,
-  type Value,
-  withToolTip,
+  type ObservableValue,
+  bindTooltip,
 } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
@@ -18,10 +18,10 @@ import { createButton, createText } from '../ui';
 
 export const createNavigation = (
   page: ScrollingFrame,
-  route: Value<SitePage>,
+  route: ObservableValue<SitePage>,
   navigate: (page: SitePage) => void,
-  layout: Value<PlaygroundLayout>,
-  mode: Value<ThemeMode>,
+  layout: ObservableValue<PlaygroundLayout>,
+  mode: ObservableValue<ThemeMode>,
   theme: ThemeValue,
 ): Frame => {
   const navigation = createFrame({
@@ -99,7 +99,7 @@ export const createNavigation = (
   });
   themeToggle.onClick(() => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
   themeToggle.Parent = navigation;
-  withToolTip(themeToggle, 'Switch between light and dark themes', { placement: 'bottom' });
+  bindTooltip(themeToggle, 'Switch between light and dark themes', { placement: 'bottom' });
 
   const track = createFrame({
     Name: 'ScrollProgressTrack',

@@ -17,8 +17,8 @@ export type SignalEmitter<Arguments extends unknown[] = []> = Signal<Arguments> 
   clear(): void;
 };
 
-/** Creates a standalone synchronous signal. */
-export function createSignal<Arguments extends unknown[] = []>(): SignalEmitter<Arguments> {
+/** Creates a standalone synchronous signal with explicit publishing methods. */
+export function createSignalEmitter<Arguments extends unknown[] = []>(): SignalEmitter<Arguments> {
   const listeners = new Set<(...args: Arguments) => void>();
   return Object.freeze({
     subscribe: (listener) => {

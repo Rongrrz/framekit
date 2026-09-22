@@ -5,7 +5,7 @@ import { resolveOwnerDocument, type DomOptions } from './environment.js';
 export type StyleOptions = DomOptions & Readonly<{ nonce?: string }>;
 
 /** Installs shared styles once. Supply a CSP nonce before creating nodes in a protected document. */
-export function installStyles(options: StyleOptions = {}): void {
+export function installFrameKitStyles(options: StyleOptions = {}): void {
   const ownerDocument = resolveOwnerDocument(options);
   if (options.nonce !== undefined) assertString(options.nonce, 'Style nonce');
   const existing = ownerDocument.querySelector<HTMLStyleElement>('style[data-framekit-styles]');

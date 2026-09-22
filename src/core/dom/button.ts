@@ -5,7 +5,7 @@ import { emitNodeEvent } from '../node/events.js';
 import { guiEventKeys, type ButtonEventMethods } from '../node/gui-events.js';
 import type { GuiElement } from '../node/gui-node.js';
 import { createRealmAbortController } from './environment.js';
-import { installStyles } from './stylesheet.js';
+import { installFrameKitStyles } from './stylesheet.js';
 
 export type ButtonProperties = {
   /** Disables interaction and keyboard activation. */
@@ -45,7 +45,7 @@ export function initializeButtonElement<Properties extends GuiObjectProperties &
     color: 'inherit',
     cursor: element.disabled ? 'not-allowed' : 'pointer',
   });
-  installStyles({ ownerDocument: element.ownerDocument });
+  installFrameKitStyles({ ownerDocument: element.ownerDocument });
 
   element.addEventListener(
     'click',

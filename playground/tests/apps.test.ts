@@ -28,9 +28,9 @@ describe('playground application', () => {
     expect(siteRoots).toEqual([app.unsafeElement]);
     for (const name of [
       'ThemeToggleButton',
-      'ToolTipExample1',
-      'ToolTipExample2',
-      'ToolTipExample3',
+      'TooltipExample1',
+      'TooltipExample2',
+      'TooltipExample3',
     ]) {
       const button = app.findFirstChild(name, true) as TextButton;
       const id = button.unsafeElement.getAttribute('aria-describedby');

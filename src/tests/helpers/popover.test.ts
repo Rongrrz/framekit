@@ -10,8 +10,8 @@ import {
   type ScreenGui,
   udim2FromOffset,
   vector2,
-  withPopover,
-  withToolTip,
+  bindPopover,
+  bindTooltip,
 } from '../../index.js';
 import { setupAnimationClock } from '../support/animation-clock.js';
 
@@ -79,7 +79,7 @@ const fixture = () => {
   const outside = createTextButton({ Text: 'Outside' });
   outside.Parent = root;
   const bind = (options: PopoverOptions = {}) => {
-    const dispose = withPopover(target, panel, options);
+    const dispose = bindPopover(target, panel, options);
     const layer = panel.Parent as ScreenGui;
     return { dispose, layer };
   };
@@ -246,12 +246,12 @@ describe('popovers', () => {
 
   it('validates interactive content and options before changing caller-owned state', () => {
     const { target, panel } = fixture();
-    expect(() => withToolTip(target, panel)).toThrow(/non-interactive/);
-    expect(() => withPopover(target, panel, { delay: -1 })).toThrow(/delay/);
+    expect(() => bindTooltip(target, panel)).toThrow(/non-interactive/);
+    expect(() => bindPopover(target, panel, { delay: -1 })).toThrow(/delay/);
     const other = document.implementation.createHTMLDocument();
     const foreign = createFrame({}, { ownerDocument: other });
     owners.add(foreign);
-    expect(() => withPopover(target, foreign)).toThrow(/target document/);
+    expect(() => bindPopover(target, foreign)).toThrow(/target document/);
     expect(panel.Parent).toBeUndefined();
     expect(panel.Visible).toBe(false);
   });
@@ -315,10 +315,10 @@ describe('floating panel transitions', () => {
       });
       if (kind === 'tooltip') {
         panel.getChildren().forEach((child) => child.destroy());
-        withToolTip(target, panel, { followCursor: true, delay: 0, onShow, onHide });
+        bindTooltip(target, panel, { followCursor: true, delay: 0, onShow, onHide });
         pointer(target.unsafeElement, 'pointerenter');
       } else {
-        withPopover(target, panel, { onShow, onHide });
+        bindPopover(target, panel, { onShow, onHide });
         target.unsafeElement.click();
       }
       const layer = panel.Parent as ScreenGui;

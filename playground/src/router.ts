@@ -1,4 +1,4 @@
-import { createFrame, type Frame, type Instance, udim2, type Value } from 'framekit';
+import { createFrame, type Frame, type Instance, udim2, type ObservableValue } from 'framekit';
 
 import { bindLayoutProperties, pageHeight, type PlaygroundLayout } from './layout';
 import { watchOwnedValue } from './owned-value';
@@ -17,7 +17,7 @@ export const resolveInitialPage = (): SitePage => {
   return 'home';
 };
 
-export const bindHashRouter = (owner: Instance, route: Value<SitePage>): void => {
+export const bindHashRouter = (owner: Instance, route: ObservableValue<SitePage>): void => {
   const listenerController = new AbortController();
   window.addEventListener('hashchange', () => route.set(resolveInitialPage()), {
     signal: listenerController.signal,
@@ -25,7 +25,7 @@ export const bindHashRouter = (owner: Instance, route: Value<SitePage>): void =>
   owner.onDestroy(() => listenerController.abort());
 };
 
-export const navigateToPage = (route: Value<SitePage>, page: SitePage): void => {
+export const navigateToPage = (route: ObservableValue<SitePage>, page: SitePage): void => {
   route.set(page);
   const hash = pageHashes[page];
   if (window.location.hash !== hash) window.location.hash = hash;
@@ -34,8 +34,8 @@ export const navigateToPage = (route: Value<SitePage>, page: SitePage): void => 
 export const createRoutedPage = (
   name: string,
   page: SitePage,
-  layout: Value<PlaygroundLayout>,
-  route: Value<SitePage>,
+  layout: ObservableValue<PlaygroundLayout>,
+  route: ObservableValue<SitePage>,
 ): Frame => {
   const frame = createFrame({ Name: name, BackgroundTransparency: 1 });
   bindLayoutProperties(frame, layout, frame, {

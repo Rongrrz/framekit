@@ -19,7 +19,7 @@ gui.mount('#app');
 FrameKit exposes one tree-shakeable set of named exports:
 
 ```ts
-import { createFrame, createTween, spring, withPopover } from 'framekit';
+import { createFrame, createTween, spring, bindPopover } from 'framekit';
 ```
 
 Core nodes, values, animation, and optional helpers share this single public entry point. Internal
@@ -40,7 +40,7 @@ The common vocabulary is deliberately small:
 | Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry      |
 | Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                     |
 | Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
-| Shared values | `createValue`, `onChange`; optional when a plain variable is enough                       |
+| Shared values | `createObservableValue`, `onChange`; optional when a plain variable is enough             |
 | Motion        | `spring`, `createTween`                                                                   |
 | Helpers       | `bindHoverScale`, `bindResponsiveLayout`                                                  |
 | Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
@@ -212,10 +212,10 @@ panel.onPropertyChanged('Position', (position, previousPosition) => {
 
 The event fires for direct assignments, `setProperties()`, animations, and browser-driven synchronization. Assigning the current value again does not fire it.
 
-Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createValue()` provides explicit `get()`, `set()`, and `update()` methods. Subscribe with `onChange()` and register its unsubscribe with the node that owns the binding:
+Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createObservableValue()` provides explicit `get()`, `set()`, and `update()` methods. Subscribe with `onChange()` and register its unsubscribe with the node that owns the binding:
 
 ```ts
-const selectedItem = createValue('Sword');
+const selectedItem = createObservableValue('Sword');
 const renderItem = (item: string) => {
   label.Text = item;
 };
@@ -223,7 +223,7 @@ renderItem(selectedItem.get());
 label.onDestroy(selectedItem.onChange(renderItem));
 ```
 
-There is no dependency tracking or render cycle. Value listeners run synchronously when the value changes.
+There is no dependency tracking or render cycle. Observable value listeners run synchronously when the value changes.
 
 All GUI nodes expose `onMouseEnter()` and `onMouseLeave()`. Button nodes add `onClick()`, primary-button, and secondary-button methods.
 
@@ -374,7 +374,7 @@ DOM factories accept `{ ownerDocument }` as a creation-only second argument, alo
 FrameKit automatically installs one shared stylesheet per document. Under a nonce-based Content Security Policy, authorize it before creating nodes:
 
 ```ts
-installStyles({ nonce: serverGeneratedNonce });
+installFrameKitStyles({ nonce: serverGeneratedNonce });
 ```
 
 Pass `ownerDocument` as well for another document. FrameKit sets individual CSSOM properties rather than `style` attributes or `cssText`; this preserves compatibility with `style-src-attr 'none'`. The stylesheet nonce must match the page's `style-src` policy. See [MDN's CSP styling guidance](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).

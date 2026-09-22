@@ -5,8 +5,8 @@ import {
   type TextLabel,
   udim2,
   udim2FromOffset,
-  type Value,
-  withPopover,
+  type ObservableValue,
+  bindPopover,
 } from 'framekit';
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
@@ -17,7 +17,7 @@ import { appendArticleSection, appendCodeBlock, createExampleRow } from './docs-
 /** Owns the interactive dropdown examples and their caller-owned content. */
 export const appendPopoverExamples = (
   article: Frame,
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
 ): TextLabel => {
   const heading = appendArticleSection(
@@ -91,7 +91,7 @@ export const appendPopoverExamples = (
       button.onClick(action);
       button.Parent = panel;
     }
-    withPopover(trigger, panel, {
+    bindPopover(trigger, panel, {
       openOn: 'hover',
       gap: 8,
       ...(index === 1 ? createPopoverAnimation() : {}),
@@ -100,7 +100,7 @@ export const appendPopoverExamples = (
   }
   status.Parent = article;
   appendCodeBlock(article, theme, 'PopoverHooksCode', [
-    { text: 'const dispose = withPopover(button, dropdown, {', color: 'accent' },
+    { text: 'const dispose = bindPopover(button, dropdown, {', color: 'accent' },
     { text: "  openOn: 'hover', placement: 'bottom'," },
     { text: '  onShow: ({ content, signal }) =>' },
     { text: '    animateIn(content, signal),' },
@@ -109,7 +109,7 @@ export const appendPopoverExamples = (
     { text: '});' },
     { text: '// Return a promise to finish hiding after your animation.' },
     { text: '// Honor signal to cancel on re-entry or disposal.' },
-    { text: '// The same hooks work with withToolTip().' },
+    { text: '// The same hooks work with bindTooltip().' },
     { text: '// Omit hooks for the built-in spring and reduced-motion support.' },
   ]);
   return heading;

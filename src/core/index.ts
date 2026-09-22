@@ -1,7 +1,7 @@
 export { createFrame } from './elements/frame.js';
 export type { Frame, FrameOptions, FrameProperties, FrameTagName } from './elements/frame.js';
 export type { DomOptions } from './dom/environment.js';
-export { installStyles } from './dom/stylesheet.js';
+export { installFrameKitStyles } from './dom/stylesheet.js';
 export type { StyleOptions } from './dom/stylesheet.js';
 export type { InstanceClassName, InstanceOf } from './node/classes.js';
 export type { AutomaticSize, GuiObject, GuiObjectProperties } from './gui-object.js';
@@ -86,10 +86,10 @@ export type { BorderStrokePosition, UIStrokeProperties, UIStroke } from './modif
 export { createUITextStroke } from './modifiers/text-stroke.js';
 export type { UITextStrokeProperties, UITextStroke } from './modifiers/text-stroke.js';
 
-export { createSignal } from './state/signal.js';
+export { createSignalEmitter } from './state/signal.js';
 export type { Signal, SignalEmitter, Unsubscribe } from './state/signal.js';
-export { createValue } from './state/value.js';
-export type { Value } from './state/value.js';
+export { createObservableValue } from './state/value.js';
+export type { ObservableValue } from './state/value.js';
 
 export { color3FromHex, color3FromRGB } from './values/color3.js';
 export type { Color3 } from './values/color3.js';

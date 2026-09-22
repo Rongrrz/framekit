@@ -16,10 +16,10 @@ import {
 } from './floating-panel.js';
 
 /** Preferred side of the trigger or pointer; placement can flip to fit the viewport. */
-export type ToolTipPlacement = FloatingPanelPlacement;
+export type TooltipPlacement = FloatingPanelPlacement;
 
 /** Appearance of generated text. Supply a GUI instance for custom layout and modifiers. */
-export type ToolTipStyle = Partial<
+export type TooltipStyle = Partial<
   Pick<
     TextLabelProperties,
     | 'BackgroundColor3'
@@ -33,17 +33,17 @@ export type ToolTipStyle = Partial<
 >;
 
 /** Placement, timing, appearance, and animation for descriptive content. */
-export type ToolTipOptions = Readonly<{
+export type TooltipOptions = Readonly<{
   /** Tracks the pointer and starts hiding immediately on exit. Focus anchors to the trigger. */
   followCursor?: boolean;
   /** Defaults to top for static tooltips and bottom for cursor-following tooltips. */
-  placement?: ToolTipPlacement;
+  placement?: TooltipPlacement;
   /** Distance from the trigger or pointer in viewport pixels. Defaults to 12. */
   gap?: number;
   /** Hover delay in milliseconds. Focus opens immediately. Defaults to 300. */
   delay?: number;
   /** Initial appearance of generated text; supplied instances retain their own styling. */
-  style?: ToolTipStyle;
+  style?: TooltipStyle;
   /** Replaces the default spring fade-in. Content is visible before this hook runs. */
   onShow?: FloatingPanelHook;
   /** Replaces the default spring fade-out. Return a promise to delay hiding until it settles. */
@@ -54,15 +54,15 @@ export type ToolTipOptions = Readonly<{
  * Binds descriptive hover/focus content and returns an idempotent disposer.
  * Custom content must be detached, non-interactive, and in the trigger's document.
  * Supplied instances remain caller-owned and have their geometry and visibility restored on disposal.
- * Escape dismisses until hover/focus ends. Use withPopover for interactive content.
+ * Escape dismisses until hover/focus ends. Use bindPopover for interactive content.
  *
  * @example
- * const dispose = withToolTip(button, 'Save', { followCursor: true });
+ * const dispose = bindTooltip(button, 'Save', { followCursor: true });
  */
-export const withToolTip = (
+export const bindTooltip = (
   target: GuiElement,
   content: string | GuiObject,
-  options: ToolTipOptions = {},
+  options: TooltipOptions = {},
 ): Unsubscribe => {
   validatePanelOptions(target, {
     ...options,
@@ -71,7 +71,7 @@ export const withToolTip = (
   });
   const tooltip =
     typeof content === 'string'
-      ? createTextToolTip(target.unsafeElement.ownerDocument, content, options.style)
+      ? createTextTooltip(target.unsafeElement.ownerDocument, content, options.style)
       : content;
   try {
     return bindFloatingPanel(target, tooltip, {
@@ -86,14 +86,14 @@ export const withToolTip = (
   }
 };
 
-const createTextToolTip = (
+const createTextTooltip = (
   ownerDocument: Document,
   text: string,
-  style?: ToolTipStyle,
+  style?: TooltipStyle,
 ): GuiObject => {
   const tooltip = createTextLabel(
     {
-      Name: 'ToolTip',
+      Name: 'Tooltip',
       Text: text,
       AutomaticSize: 'XY',
       TextWrapped: true,

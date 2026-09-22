@@ -3,7 +3,7 @@ import type { Instance, InstanceProperties } from '../core/node/instance.js';
 import { getPropertiesSnapshot } from '../core/node/properties.js';
 import { getActiveNodeState } from '../core/node/state.js';
 import {
-  createSignal,
+  createSignalEmitter,
   emitSignalSafely,
   readonlySignal,
   type Signal,
@@ -87,7 +87,7 @@ export function createTween<Properties extends InstanceProperties>(
       ? Number.POSITIVE_INFINITY
       : (resolvedOptions.RepeatCount + 1) * traversalsPerIteration;
 
-  const completedEmitter = createSignal<[TweenPlaybackState]>();
+  const completedEmitter = createSignalEmitter<[TweenPlaybackState]>();
   const completed = readonlySignal(completedEmitter);
   let playbackState: TweenPlaybackState = 'Idle';
   let startedAtMs = 0;

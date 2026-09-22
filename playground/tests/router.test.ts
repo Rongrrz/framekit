@@ -1,4 +1,4 @@
-import { createFrame, createValue } from 'framekit';
+import { createFrame, createObservableValue } from 'framekit';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bindHashRouter, navigateToPage, resolveInitialPage, type SitePage } from '../src/router';
@@ -21,7 +21,7 @@ describe('playground router', () => {
 
   it('updates route state and the address together', () => {
     const owner = createFrame();
-    const route = createValue<'home' | 'guide' | 'api'>('home');
+    const route = createObservableValue<'home' | 'guide' | 'api'>('home');
     bindHashRouter(owner, route);
 
     navigateToPage(route, 'api');
@@ -33,7 +33,7 @@ describe('playground router', () => {
 
   it('responds to external hash changes only while its owner is alive', () => {
     const owner = createFrame();
-    const route = createValue<SitePage>('home');
+    const route = createObservableValue<SitePage>('home');
     bindHashRouter(owner, route);
     window.history.replaceState(null, '', '#/guide');
     window.dispatchEvent(new HashChangeEvent('hashchange'));

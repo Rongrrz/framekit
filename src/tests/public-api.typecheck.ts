@@ -1,8 +1,12 @@
 import {
   bindHoverScale,
+  bindPopover,
+  bindTooltip,
   color3FromRGB,
   createFrame,
+  createObservableValue,
   createScreenGui,
+  createSignalEmitter,
   createTextButton,
   createTextLabel,
   createTween,
@@ -12,12 +16,14 @@ import {
   type GuiElement,
   type GuiObject,
   type Instance,
+  installFrameKitStyles,
+  type ObservableValue,
+  type SignalEmitter,
   spring,
+  type TooltipOptions,
   udim2FromOffset,
   type Unsubscribe,
   vector2,
-  withPopover,
-  withToolTip,
 } from '../index.js';
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
@@ -32,22 +38,28 @@ function verifyPublicTypeContracts(): void {
   void frameViews;
   const button = createTextButton();
   const scale = createUIScale();
+  const observableValue: ObservableValue<number> = createObservableValue(1);
+  observableValue.set(2);
+  const signalEmitter: SignalEmitter<[number]> = createSignalEmitter<[number]>();
+  signalEmitter.emit(observableValue.get());
+  installFrameKitStyles();
   scale.Parent = button;
   const dispose: Unsubscribe = bindHoverScale(button, scale);
   void dispose;
-  const disposeToolTip: Unsubscribe = withToolTip(button, 'Save', {
+  const tooltipOptions: TooltipOptions = {
     followCursor: true,
     style: { TextColor3: color3FromRGB(255, 255, 255) },
-  });
-  void disposeToolTip;
-  withToolTip(frame, createTextLabel(), { placement: 'right' });
+  };
+  const disposeTooltip: Unsubscribe = bindTooltip(button, 'Save', tooltipOptions);
+  void disposeTooltip;
+  bindTooltip(frame, createTextLabel(), { placement: 'right' });
   const animatePanel: FloatingPanelHook = ({ content, signal }) => {
     content.BackgroundTransparency = 0;
     signal.addEventListener('abort', () => undefined);
     return Promise.resolve();
   };
-  withToolTip(button, 'Save', { onShow: animatePanel, onHide: animatePanel });
-  const disposePopover: Unsubscribe = withPopover(button, frame, {
+  bindTooltip(button, 'Save', { onShow: animatePanel, onHide: animatePanel });
+  const disposePopover: Unsubscribe = bindPopover(button, frame, {
     openOn: 'hover',
     placement: 'bottom',
     onShow: animatePanel,
@@ -55,21 +67,21 @@ function verifyPublicTypeContracts(): void {
   });
   void disposePopover;
   // @ts-expect-error Popovers require caller-owned GUI content.
-  withPopover(button, 'Actions');
+  bindPopover(button, 'Actions');
   // @ts-expect-error Unsupported triggers are not accepted.
-  withPopover(button, frame, { openOn: 'focus' });
+  bindPopover(button, frame, { openOn: 'focus' });
   // @ts-expect-error Interactive popovers remain anchored.
-  withPopover(button, frame, { followCursor: true });
+  bindPopover(button, frame, { followCursor: true });
   // @ts-expect-error Hooks settle without returning a value.
-  withToolTip(button, 'Save', { onHide: () => Promise.resolve(42) });
+  bindTooltip(button, 'Save', { onHide: () => Promise.resolve(42) });
   // @ts-expect-error Tooltips need a DOM-backed target.
-  withToolTip(scale, 'Scale');
+  bindTooltip(scale, 'Scale');
   // @ts-expect-error Tooltip content is text or a rectangular GUI instance.
-  withToolTip(button, createScreenGui());
+  bindTooltip(button, createScreenGui());
   // @ts-expect-error Placement accepts only supported sides.
-  withToolTip(button, 'Save', { placement: 'cursor' });
+  bindTooltip(button, 'Save', { placement: 'cursor' });
   // @ts-expect-error Generated tooltip styles do not own positioning.
-  withToolTip(button, 'Save', { style: { Position: udim2FromOffset(0, 0) } });
+  bindTooltip(button, 'Save', { style: { Position: udim2FromOffset(0, 0) } });
 
   // @ts-expect-error Unknown constructor properties are not accepted.
   createFrame({ Typo: true });

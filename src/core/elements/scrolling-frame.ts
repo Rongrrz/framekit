@@ -4,7 +4,7 @@ import {
   type DomOptions,
 } from '../dom/environment.js';
 import { setStyle } from '../dom/styles.js';
-import { installStyles } from '../dom/stylesheet.js';
+import { installFrameKitStyles } from '../dom/stylesheet.js';
 import {
   type AutomaticSize,
   createDefaultGuiObjectProperties,
@@ -142,7 +142,7 @@ export function createScrollingFrame(
   });
   element.append(canvasBounds);
   element.tabIndex = 0;
-  installStyles({ ownerDocument });
+  installFrameKitStyles({ ownerDocument });
   // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
   // position accepted by the browser after each FrameKit write so those events can be ignored.
   let lastRenderedCanvasPosition = readCanvasPosition(element);

@@ -1,4 +1,4 @@
-import { installStyles } from './stylesheet.js';
+import { installFrameKitStyles } from './stylesheet.js';
 import {
   horizontalFlexAlignment,
   verticalFlexAlignment,
@@ -14,7 +14,7 @@ const textStrokeJustifyProperty = '--framekit-text-stroke-justify';
 
 /** Prepares one text host to render an optional outline without another DOM node. */
 export function initializeTextStrokeHost(host: HTMLElement): void {
-  installStyles({ ownerDocument: host.ownerDocument });
+  installFrameKitStyles({ ownerDocument: host.ownerDocument });
   host.dataset.framekitTextStrokeHost = '';
 }
 

@@ -1,4 +1,4 @@
-import { bindResponsiveLayout, createValue, type ScreenGui } from 'framekit';
+import { bindResponsiveLayout, createObservableValue, type ScreenGui } from 'framekit';
 
 import { createApiPage } from './components/api-page';
 import { createGuidePage } from './components/guide-page';
@@ -22,10 +22,10 @@ export const createPlaygroundApp = (
 ): ScreenGui => {
   const initialLayout =
     forcedLayout ?? (window.innerWidth < mobileBreakpoint ? 'mobile' : 'desktop');
-  const layout = createValue<PlaygroundLayout>(initialLayout);
-  const theme = createValue<ThemeMode>(initialTheme);
-  const palette = createValue(themes[initialTheme]);
-  const route = createValue(resolveInitialPage());
+  const layout = createObservableValue<PlaygroundLayout>(initialLayout);
+  const theme = createObservableValue<ThemeMode>(initialTheme);
+  const palette = createObservableValue(themes[initialTheme]);
+  const route = createObservableValue(resolveInitialPage());
   const { app, page, addPage, scrollTo } = createPageShell(layout, palette, route);
   const navigate = (destination: Parameters<typeof navigateToPage>[1]): void =>
     navigateToPage(route, destination);

@@ -1,4 +1,10 @@
-import { type Frame, type GuiElement, udim2, udim2FromOffset, type Value } from 'framekit';
+import {
+  type Frame,
+  type GuiElement,
+  udim2,
+  udim2FromOffset,
+  type ObservableValue,
+} from 'framekit';
 
 import type { PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
@@ -15,9 +21,9 @@ import {
 } from './docs-shell';
 
 export const createGuidePage = (
-  layout: Value<PlaygroundLayout>,
+  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
-  route: Value<SitePage>,
+  route: ObservableValue<SitePage>,
   scrollTo: (target: GuiElement) => void,
   navigate: (page: SitePage) => void,
 ): Frame => {
@@ -94,10 +100,10 @@ export const createGuidePage = (
     shell.article,
     theme,
     'Bind reactive values',
-    'A Value stores small pieces of state. Subscribe with onChange and register its unsubscribe with the node that owns the binding.',
+    'An observable value stores small pieces of state. Subscribe with onChange and register its unsubscribe with the node that owns the binding.',
   );
   appendCodeBlock(shell.article, theme, 'ValueGuideCode', [
-    { text: 'const count = createValue(0);', color: 'purple' },
+    { text: 'const count = createObservableValue(0);', color: 'purple' },
     { text: '' },
     { text: 'message.onDestroy(count.onChange((value) => {' },
     { text: '  message.Text = `Count: ${value}`;', color: 'accent' },
