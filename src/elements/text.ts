@@ -1,29 +1,29 @@
-import { resolveOwnerDocument, type DomOptions } from '#dom/environment.js';
+import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
+import { buttonEventMethods, type GuiMethodTable } from '#internal/runtime/node/gui-events.js';
+import type { GuiElement, PropertyRenderer } from '#internal/runtime/node/gui-node.js';
+import type { PropertyValidator } from '#internal/runtime/node/registry.js';
+import { getNodeProperties } from '#internal/runtime/systems/properties.js';
 import { assertAllowedValue } from '#internal/validation.js';
-import { buttonEventMethods, type GuiMethodTable } from '#runtime/node/gui-events.js';
-import type { GuiElement, PropertyRenderer } from '#runtime/node/gui-node.js';
-import type { PropertyValidator } from '#runtime/node/registry.js';
-import { getNodeProperties } from '#runtime/services/properties.js';
 
-import {
-  createDefaultGuiObjectProperties,
-  createGuiObjectNode,
-  type GuiObjectProperties,
-} from './gui-object.js';
 import {
   initializeButtonElement,
   renderButtonProperties,
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from './services/button-events.js';
-import { initializeTextGradient, resetTextGradientHost } from './services/text-gradient.js';
-import { bindTextScaleResize } from './services/text-size.js';
+} from './button-events.js';
+import {
+  createDefaultGuiObjectProperties,
+  createGuiObjectNode,
+  type GuiObjectProperties,
+} from './gui-object.js';
+import { initializeTextGradient, resetTextGradientHost } from './text/gradient.js';
+import { bindTextScaleResize } from './text/sizing.js';
 import {
   initializeTextStrokeHost,
   resetTextStrokeHost,
   syncTextStrokeHost,
-} from './services/text-stroke.js';
+} from './text/stroke.js';
 import {
   createDefaultTextStyleProperties,
   hasTextStyleChange,
@@ -32,9 +32,9 @@ import {
   validateTextStyleProperties,
   verticalFlexAlignment,
   type TextStyleProperties,
-} from './services/text-style.js';
+} from './text/style.js';
 
-export type { TextXAlignment, TextYAlignment } from './services/text-style.js';
+export type { TextXAlignment, TextYAlignment } from './text/style.js';
 
 /** Properties shared by text labels and text buttons. */
 export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;

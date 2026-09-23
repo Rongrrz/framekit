@@ -1,6 +1,6 @@
-import { resolveOwnerDocument, type DomOptions } from '#dom/environment.js';
+import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
+import type { GuiElement } from '#internal/runtime/node/gui-node.js';
 import { assertAllowedValue } from '#internal/validation.js';
-import type { GuiElement } from '#runtime/node/gui-node.js';
 
 import {
   createDefaultGuiObjectProperties,

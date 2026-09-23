@@ -1,13 +1,13 @@
-import { assertAllowedValue, assertBoolean } from '#internal/validation.js';
-import type { InstanceProperties } from '#runtime/node/instance.js';
+import type { InstanceProperties } from '#internal/runtime/node/instance.js';
 import {
   createLayoutModifier,
   type LayoutChild,
   type LayoutModifier,
   type LayoutStyles,
   type Styles,
-} from '#runtime/node/modifier.js';
-import { mergeProperties } from '#runtime/services/properties.js';
+} from '#internal/runtime/node/modifier.js';
+import { mergeProperties } from '#internal/runtime/systems/properties.js';
+import { assertAllowedValue, assertBoolean } from '#internal/validation.js';
 import { assertUDim, udim, udimToCss, type UDim } from '#values/udim.js';
 
 /** Primary axis used to arrange children. */

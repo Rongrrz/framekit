@@ -326,15 +326,14 @@ Tweens support delay, repeats, reversing, pause, and cancellation. A new animati
 
 ## Package organization
 
-The package entry point assembles named exports from domain-owned modules. The source tree keeps implementation ownership explicit:
+The package entry point is the only public API manifest. The source tree groups code by the concept a contributor is looking for:
 
-- `runtime/` — node handles and the hierarchy, lifecycle, property, and rendering services
-- `elements/` and `modifiers/` — public UI factories plus their focused DOM behavior services
-- `values/` and `state/` — immutable value objects, signals, and observable values
+- `elements/` and `modifiers/` — public UI factories and attachable modifiers
 - `animation/` — shared animation runtime with separate spring and tween mechanics
-- `behaviors/` — optional composed interactions such as responsive layouts and floating panels
-- `dom/` and `internal/` — low-level browser infrastructure, validation, snapshots, and error plumbing
-- `tests/` — tests mirror the implementation domains, with reusable infrastructure under `tests/support`
+- `helpers/` — optional composition such as responsive layouts, tooltips, and popovers
+- `values/` and `state/` — immutable value objects, signals, and observable values
+- `internal/dom/` and `internal/runtime/` — browser integration, node handles, hierarchy, lifecycle, properties, and rendering
+- `__tests__/` — tests mirror the implementation domains, with reusable infrastructure under `__tests__/support`
 
 Values and types come from the same entry point:
 
@@ -396,7 +395,7 @@ npm run test:playground     # playground integration tests
 npm run check               # formatting, types, lint, tests, and both builds
 ```
 
-Package tests mirror the implementation domains under `src/tests`; playground integration tests stay under `playground/tests`. Test-only utilities live under `src/tests/support` and are excluded from the published package.
+Package tests mirror the implementation domains under `src/__tests__`; playground integration tests stay under `playground/tests`. Test-only utilities live under `src/__tests__/support` and are excluded from the published package.
 
 ## Inspiration
 

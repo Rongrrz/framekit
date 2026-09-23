@@ -2,16 +2,16 @@ import {
   createRealmAbortController,
   resolveOwnerDocument,
   type DomOptions,
-} from '#dom/environment.js';
-import { assertAllowedValue, assertString } from '#internal/validation.js';
-import { emitNodeEvent } from '#runtime/node/events.js';
+} from '#internal/dom/environment.js';
+import { emitNodeEvent } from '#internal/runtime/node/events.js';
 import {
   guiEventKeys,
   linkEventMethods,
   type ClickEventMethods,
-} from '#runtime/node/gui-events.js';
-import type { GuiElement } from '#runtime/node/gui-node.js';
-import * as lifecycle from '#runtime/services/lifecycle.js';
+} from '#internal/runtime/node/gui-events.js';
+import type { GuiElement } from '#internal/runtime/node/gui-node.js';
+import * as lifecycle from '#internal/runtime/systems/lifecycle.js';
+import { assertAllowedValue, assertString } from '#internal/validation.js';
 
 import { createDefaultTextProperties, createTextNode, type TextLabelProperties } from './text.js';
 

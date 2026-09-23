@@ -1,20 +1,20 @@
-import { resolveOwnerDocument, type DomOptions } from '#dom/environment.js';
+import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
+import { buttonEventMethods, type GuiMethodTable } from '#internal/runtime/node/gui-events.js';
+import type { GuiElement, PropertyRenderer } from '#internal/runtime/node/gui-node.js';
 import { assertAllowedValue, assertString, assertUnitInterval } from '#internal/validation.js';
-import { buttonEventMethods, type GuiMethodTable } from '#runtime/node/gui-events.js';
-import type { GuiElement, PropertyRenderer } from '#runtime/node/gui-node.js';
 
-import {
-  createDefaultGuiObjectProperties,
-  createGuiObjectNode,
-  type GuiObjectProperties,
-} from './gui-object.js';
 import {
   initializeButtonElement,
   renderButtonProperties,
   type ButtonElement,
   type ButtonProperties,
   validateButtonProperties,
-} from './services/button-events.js';
+} from './button-events.js';
+import {
+  createDefaultGuiObjectProperties,
+  createGuiObjectNode,
+  type GuiObjectProperties,
+} from './gui-object.js';
 
 /** How an image is fitted within its node bounds. */
 export type ScaleType = 'Stretch' | 'Fit' | 'Crop';

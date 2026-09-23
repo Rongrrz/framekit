@@ -1,4 +1,4 @@
-import type { InstanceProperties } from '#runtime/node/instance.js';
+import type { InstanceProperties } from '#internal/runtime/node/instance.js';
 import type { Color3 } from '#values/color3.js';
 import type { UDim, UDim2 } from '#values/udim.js';
 import type { Vector2 } from '#values/vector2.js';

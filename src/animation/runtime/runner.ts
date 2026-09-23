@@ -1,5 +1,5 @@
-import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
-import * as lifecycle from '#runtime/services/lifecycle.js';
+import type { Instance, InstanceProperties } from '#internal/runtime/node/instance.js';
+import * as lifecycle from '#internal/runtime/systems/lifecycle.js';
 
 import {
   applyAnimationProperties,

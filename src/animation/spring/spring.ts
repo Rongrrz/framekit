@@ -1,4 +1,4 @@
-import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
+import type { Instance, InstanceProperties } from '#internal/runtime/node/instance.js';
 
 import type { AnimationGoal } from '../runtime/types.js';
 import {

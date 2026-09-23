@@ -1,7 +1,7 @@
+import type { Instance, InstanceProperties } from '#internal/runtime/node/instance.js';
+import { getActiveNodeState } from '#internal/runtime/node/registry.js';
+import { getPropertiesSnapshot } from '#internal/runtime/systems/properties.js';
 import { assertNonNegativeFinite } from '#internal/validation.js';
-import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
-import { getActiveNodeState } from '#runtime/node/registry.js';
-import { getPropertiesSnapshot } from '#runtime/services/properties.js';
 import {
   createSignalEmitter,
   emitSignalSafely,

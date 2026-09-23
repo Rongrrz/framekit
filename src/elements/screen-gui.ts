@@ -1,14 +1,14 @@
-import { resolveOwnerDocument, type DomOptions } from '#dom/environment.js';
-import { setStyle } from '#dom/styles.js';
+import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
+import { setStyle } from '#internal/dom/styles.js';
+import { guiEventMethods } from '#internal/runtime/node/gui-events.js';
+import { createGuiNode, type GuiElement } from '#internal/runtime/node/gui-node.js';
+import type { InstanceProperties } from '#internal/runtime/node/instance.js';
+import { getActiveNodeState } from '#internal/runtime/node/registry.js';
+import * as lifecycle from '#internal/runtime/systems/lifecycle.js';
+import { mergeProperties } from '#internal/runtime/systems/properties.js';
 import { assertBoolean, assertInteger } from '#internal/validation.js';
-import { guiEventMethods } from '#runtime/node/gui-events.js';
-import { createGuiNode, type GuiElement } from '#runtime/node/gui-node.js';
-import type { InstanceProperties } from '#runtime/node/instance.js';
-import { getActiveNodeState } from '#runtime/node/registry.js';
-import * as lifecycle from '#runtime/services/lifecycle.js';
-import { mergeProperties } from '#runtime/services/properties.js';
 
-import { connectHoverEvents } from './services/hover-events.js';
+import { connectHoverEvents } from './hover-events.js';
 
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = InstanceProperties & {

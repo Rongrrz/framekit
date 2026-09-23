@@ -15,12 +15,10 @@
     "paths": {
       "framekit": ["./src/index.ts"],
       "#animation/*": ["./src/animation/*"],
-      "#behaviors/*": ["./src/behaviors/*"],
-      "#dom/*": ["./src/dom/*"],
       "#elements/*": ["./src/elements/*"],
+      "#helpers/*": ["./src/helpers/*"],
       "#internal/*": ["./src/internal/*"],
       "#modifiers/*": ["./src/modifiers/*"],
-      "#runtime/*": ["./src/runtime/*"],
       "#state/*": ["./src/state/*"],
       "#values/*": ["./src/values/*"]
     },

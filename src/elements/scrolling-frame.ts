@@ -1,21 +1,15 @@
-import {
-  createRealmAbortController,
-  resolveOwnerDocument,
-  type DomOptions,
-} from '#dom/environment.js';
-import { setStyle } from '#dom/styles.js';
-import { installFrameKitStyles } from '#dom/stylesheet.js';
+import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
+import { setStyle } from '#internal/dom/styles.js';
+import { installFrameKitStyles } from '#internal/dom/stylesheet.js';
+import { guiEventMethods } from '#internal/runtime/node/gui-events.js';
+import type { GuiElement } from '#internal/runtime/node/gui-node.js';
+import { getActiveNodeState } from '#internal/runtime/node/registry.js';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
   assertUnitInterval,
 } from '#internal/validation.js';
-import { guiEventMethods } from '#runtime/node/gui-events.js';
-import type { GuiElement } from '#runtime/node/gui-node.js';
-import { getActiveNodeState } from '#runtime/node/registry.js';
-import * as lifecycle from '#runtime/services/lifecycle.js';
-import { setNodeProperties, getNodeProperty } from '#runtime/services/properties.js';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '#values/udim.js';
 import { assertVector2, vector2, type Vector2 } from '#values/vector2.js';
@@ -26,6 +20,12 @@ import {
   createGuiObjectNode,
   type GuiObjectProperties,
 } from './gui-object.js';
+import {
+  createCanvasPositionSync,
+  isCanvasAxisAutomatic,
+  resolveScrollbarWidth,
+} from './scrolling-frame/canvas.js';
+import { connectKeyboardScrolling } from './scrolling-frame/keyboard.js';
 
 /** Axes on which a scrolling frame accepts native scrolling. */
 export type ScrollingDirection = 'X' | 'Y' | 'XY';
@@ -77,13 +77,6 @@ export type ScrollingFrame = GuiElement<ScrollingFrameProperties> &
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
 const scrollingFrameTagNames = ['div', 'main', 'section', 'article', 'aside', 'nav'] as const;
-type ScrollAxis = 'X' | 'Y';
-type KeyboardScrollIntent = Readonly<{
-  axis: ScrollAxis;
-  direction: -1 | 1;
-  distance: 'Line' | 'Page';
-}>;
-
 const scrollingFrameMethodTable = {
   ...guiEventMethods,
   scrollTo(this: ScrollingFrame, position: Vector2): void {
@@ -144,9 +137,7 @@ export function createScrollingFrame(
   element.append(canvasBounds);
   element.tabIndex = 0;
   installFrameKitStyles({ ownerDocument });
-  // Scroll events do not identify whether the browser or FrameKit moved the element. Remember the
-  // position accepted by the browser after each FrameKit write so those events can be ignored.
-  let lastRenderedCanvasPosition = readCanvasPosition(element);
+  const canvasPositionSync = createCanvasPositionSync(element);
   const node = createGuiObjectNode<ScrollingFrameProperties>({
     className: 'ScrollingFrame',
     element,
@@ -216,12 +207,9 @@ export function createScrollingFrame(
         );
       }
       if (changedProperties.has('CanvasPosition')) {
-        if (!positionsMatch(readCanvasPosition(element), properties.CanvasPosition)) {
-          writeCanvasPosition(element, properties.CanvasPosition);
-        }
-        lastRenderedCanvasPosition = readCanvasPosition(element);
-        if (!positionsMatch(lastRenderedCanvasPosition, properties.CanvasPosition)) {
-          return { CanvasPosition: lastRenderedCanvasPosition };
+        const acceptedPosition = canvasPositionSync.render(properties.CanvasPosition);
+        if (acceptedPosition) {
+          return { CanvasPosition: acceptedPosition };
         }
       }
     },
@@ -229,33 +217,8 @@ export function createScrollingFrame(
     validateProperties: validateScrollingFrameProperties,
   }) as ScrollingFrame;
 
-  const syncCanvasPositionFromBrowser = (): void => {
-    const browserPosition = readCanvasPosition(element);
-    if (
-      positionsMatch(browserPosition, lastRenderedCanvasPosition) &&
-      positionsMatch(browserPosition, getNodeProperty(node, 'CanvasPosition'))
-    ) {
-      return;
-    }
-    const canvasPosition = getNodeProperty(node, 'CanvasPosition');
-    if (positionsMatch(browserPosition, canvasPosition)) {
-      lastRenderedCanvasPosition = browserPosition;
-      return;
-    }
-    setNodeProperties(node, { CanvasPosition: browserPosition });
-  };
-
-  const listenerController = createRealmAbortController(element);
-  const passiveListenerOptions = { passive: true, signal: listenerController.signal };
-  const listenerElement: HTMLElement = element;
-  listenerElement.addEventListener('scroll', syncCanvasPositionFromBrowser, passiveListenerOptions);
-  listenerElement.addEventListener(
-    'keydown',
-    (event: KeyboardEvent) => forwardUnsupportedKeyboardScroll(node, event),
-    { signal: listenerController.signal },
-  );
-
-  lifecycle.onDestroy(node, () => listenerController.abort());
+  canvasPositionSync.connect(node);
+  connectKeyboardScrolling(node);
   return node;
 }
 
@@ -268,110 +231,4 @@ function validateScrollingFrameProperties(properties: Readonly<ScrollingFramePro
   assertColor3(properties.ScrollBarImageColor3, 'ScrollBarImageColor3');
   assertUnitInterval(properties.ScrollBarImageTransparency, 'ScrollBarImageTransparency');
   assertNonNegativeFinite(properties.ScrollBarThickness, 'ScrollBarThickness');
-}
-
-function isCanvasAxisAutomatic(size: AutomaticSize, axis: 'X' | 'Y'): boolean {
-  return size === axis || size === 'XY';
-}
-
-function readCanvasPosition(element: HTMLElement): Vector2 {
-  return vector2(element.scrollLeft, element.scrollTop);
-}
-
-function writeCanvasPosition(element: HTMLElement, position: Vector2): void {
-  if (typeof element.scrollTo === 'function') {
-    element.scrollTo(position.X, position.Y);
-    return;
-  }
-  element.scrollLeft = position.X;
-  element.scrollTop = position.Y;
-}
-
-function positionsMatch(first: Vector2, second: Vector2): boolean {
-  return first.X === second.X && first.Y === second.Y;
-}
-
-function forwardUnsupportedKeyboardScroll(node: ScrollingFrame, event: KeyboardEvent): void {
-  if (
-    event.target !== node.unsafeElement ||
-    event.defaultPrevented ||
-    event.altKey ||
-    event.ctrlKey ||
-    event.metaKey
-  ) {
-    return;
-  }
-  const intent = resolveKeyboardScrollIntent(event);
-  if (!intent || acceptsScrollAxis(node, intent.axis)) {
-    return;
-  }
-  const ancestor = findScrollingAncestor(node, intent.axis);
-  if (!ancestor) {
-    return;
-  }
-
-  const distance =
-    intent.distance === 'Line'
-      ? 40
-      : intent.axis === 'X'
-        ? ancestor.unsafeElement.clientWidth
-        : ancestor.unsafeElement.clientHeight;
-  const offset = intent.direction * distance;
-  event.preventDefault();
-  ancestor.scrollBy(intent.axis === 'X' ? vector2(offset, 0) : vector2(0, offset));
-}
-
-function resolveKeyboardScrollIntent(event: KeyboardEvent): KeyboardScrollIntent | undefined {
-  switch (event.key) {
-    case 'ArrowLeft':
-      return { axis: 'X', direction: -1, distance: 'Line' };
-    case 'ArrowRight':
-      return { axis: 'X', direction: 1, distance: 'Line' };
-    case 'ArrowUp':
-      return { axis: 'Y', direction: -1, distance: 'Line' };
-    case 'ArrowDown':
-      return { axis: 'Y', direction: 1, distance: 'Line' };
-    case 'PageUp':
-      return { axis: 'Y', direction: -1, distance: 'Page' };
-    case 'PageDown':
-      return { axis: 'Y', direction: 1, distance: 'Page' };
-    case ' ':
-      return { axis: 'Y', direction: event.shiftKey ? -1 : 1, distance: 'Page' };
-    default:
-      return undefined;
-  }
-}
-
-function findScrollingAncestor(node: ScrollingFrame, axis: ScrollAxis): ScrollingFrame | undefined {
-  return findScrollingAncestorFrom(node.Parent, axis);
-}
-
-function findScrollingAncestorFrom(
-  node: ScrollingFrame['Parent'],
-  axis: ScrollAxis,
-): ScrollingFrame | undefined {
-  if (!node) {
-    return undefined;
-  }
-  if (node.isA('ScrollingFrame') && acceptsScrollAxis(node, axis)) {
-    return node;
-  }
-  return findScrollingAncestorFrom(node.Parent, axis);
-}
-
-function acceptsScrollAxis(node: ScrollingFrame, axis: ScrollAxis): boolean {
-  if (!node.ScrollingEnabled) {
-    return false;
-  }
-  return node.ScrollingDirection === axis || node.ScrollingDirection === 'XY';
-}
-
-function resolveScrollbarWidth(thickness: number): string {
-  if (thickness === 0) {
-    return 'none';
-  }
-  if (thickness <= 8) {
-    return 'thin';
-  }
-  return 'auto';
 }

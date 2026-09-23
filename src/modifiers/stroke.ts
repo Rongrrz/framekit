@@ -1,12 +1,16 @@
+import type { InstanceProperties } from '#internal/runtime/node/instance.js';
+import {
+  createStyleModifier,
+  type StyleModifier,
+  type Styles,
+} from '#internal/runtime/node/modifier.js';
+import { mergeProperties } from '#internal/runtime/systems/properties.js';
 import {
   assertAllowedValue,
   assertBoolean,
   assertNonNegativeFinite,
   assertUnitInterval,
 } from '#internal/validation.js';
-import type { InstanceProperties } from '#runtime/node/instance.js';
-import { createStyleModifier, type StyleModifier, type Styles } from '#runtime/node/modifier.js';
-import { mergeProperties } from '#runtime/services/properties.js';
 import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/color3.js';
 
 /** Where a stroke is drawn relative to its GUI parent's edge. */

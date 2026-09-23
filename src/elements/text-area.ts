@@ -1,4 +1,4 @@
-import { resolveOwnerDocument, type DomOptions } from '#dom/environment.js';
+import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
 import { assertAllowedValue } from '#internal/validation.js';
 
 import {
@@ -6,7 +6,7 @@ import {
   createTextControl,
   type TextControl,
   type TextControlProperties,
-} from './text-control.js';
+} from './text/control.js';
 
 /** Native resize directions supported by TextArea. */
 export type TextAreaResizeDirection = (typeof resizeDirections)[number];

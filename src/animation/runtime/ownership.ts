@@ -1,6 +1,6 @@
 import { throwCollectedErrors } from '#internal/errors.js';
-import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
-import { subscribeToPropertyWrite } from '#runtime/services/properties.js';
+import type { Instance, InstanceProperties } from '#internal/runtime/node/instance.js';
+import { subscribeToPropertyWrite } from '#internal/runtime/systems/properties.js';
 import type { Unsubscribe } from '#state/signal.js';
 
 export type AnimationOwner = {

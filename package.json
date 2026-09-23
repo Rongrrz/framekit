@@ -14,12 +14,10 @@
   "types": "./dist/index.d.ts",
   "imports": {
     "#animation/*": "./dist/animation/*",
-    "#behaviors/*": "./dist/behaviors/*",
-    "#dom/*": "./dist/dom/*",
     "#elements/*": "./dist/elements/*",
+    "#helpers/*": "./dist/helpers/*",
     "#internal/*": "./dist/internal/*",
     "#modifiers/*": "./dist/modifiers/*",
-    "#runtime/*": "./dist/runtime/*",
     "#state/*": "./dist/state/*",
     "#values/*": "./dist/values/*"
   },

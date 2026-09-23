@@ -1,5 +1,5 @@
-import type { Instance, InstanceProperties } from '#runtime/node/instance.js';
-import { getActiveNodeState } from '#runtime/node/registry.js';
+import type { Instance, InstanceProperties } from '#internal/runtime/node/instance.js';
+import { getActiveNodeState } from '#internal/runtime/node/registry.js';
 import {
   createSignalEmitter,
   emitSignalSafely,
