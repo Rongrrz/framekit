@@ -1,6 +1,6 @@
 # FrameKit
 
-FrameKit brings an engine-style UI object model to the browser. Create typed instances, arrange them in an explicit tree, change their properties, and connect events. If you have used Roblox Instances—or scene trees in other engines—the ownership model should feel familiar.
+FrameKit brings an engine-style UI object model to the browser. Create typed, persistent instances, arrange them in an explicit tree, update their properties, and connect events. If you know Roblox Instances or scene trees, the ownership model should feel familiar.
 
 ```ts
 import { color3FromRGB, createFrame, createScreenGui, udim2FromOffset } from 'framekit';
@@ -9,394 +9,91 @@ const gui = createScreenGui();
 const card = createFrame({
   Size: udim2FromOffset(320, 180),
   BackgroundColor3: color3FromRGB(238, 113, 99),
-  Rotation: 2,
 });
 
 card.Parent = gui;
 gui.mount('#app');
 ```
 
-FrameKit exposes one tree-shakeable set of named exports:
+FrameKit has no components, render functions, hooks, virtual tree, or implicit rerendering. A factory creates one object, FrameKit keeps its DOM element synchronized, and `Parent` defines ownership.
 
-```ts
-import { createFrame, createTween, spring, bindPopover } from 'framekit';
-```
+## Core API
 
-Core nodes, values, animation, and optional helpers share this single public entry point. Internal
-modules retain their dependency boundaries without requiring callers to import namespace objects.
+Everything is available from the `framekit` entry point.
 
-## The model
+| Area      | API                                                                                    |
+| --------- | -------------------------------------------------------------------------------------- |
+| Elements  | `createScreenGui`, `createFrame`, text, image, link, and native text-control factories |
+| Modifiers | Corners, gradients, strokes, shadows, padding, scale, aspect ratio, and list layout    |
+| Hierarchy | `Parent`, `isA`, `getChildren`, `getDescendants`, `findFirstChild`                     |
+| Lifecycle | `mount`, `unmount`, `destroy`, `onDestroy`                                             |
+| State     | Direct properties, `setProperties`, `onPropertyChanged`, `createObservableValue`       |
+| Motion    | `spring`, `createTween`                                                                |
+| Helpers   | Tooltips, popovers, hover scale, and responsive layouts                                |
+| Values    | `Color3`, `UDim`, `UDim2`, `Vector2`, and sequences                                    |
 
-FrameKit has no components, render functions, hooks, throwaway virtual trees, dependency arrays, or implicit rerender rules. A factory creates one persistent object. Those objects form an inspectable hierarchy—the FrameKit representation of your UI—and FrameKit keeps the browser DOM synchronized with it immediately. The hierarchy is never recreated or diffed behind your back.
-
-The common vocabulary is deliberately small:
-
-| Area          | What you use                                                                              |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| Elements      | `createScreenGui`, frames, text, native text controls, images, and links                  |
-| Modifiers     | `createUICorner`, gradients, border and text strokes, shadows, padding, scale, and layout |
-| Hierarchy     | `Parent`, `ClassName`, `isA`, `getChildren`, `getDescendants`, `findFirstChild`           |
-| Properties    | `node.Text`, `node.Position`; `setProperties({...})`; typed `onPropertyChanged()`         |
-| Geometry      | Readonly `AbsolutePosition` and `AbsoluteSize`; scrolling frames add canvas geometry      |
-| Lifecycle     | `node.destroy`, `isDestroyed`, `onDestroy`; `gui.mount` and `unmount`                     |
-| Input         | `node.onClick`, `node.onMouseEnter`, and other capability-specific methods                |
-| Shared values | `createObservableValue`, `onChange`; optional when a plain variable is enough             |
-| Motion        | `spring`, `createTween`                                                                   |
-| Helpers       | `bindHoverScale`, `bindResponsiveLayout`                                                  |
-| Values        | `color3FromRGB`, `udim`, `udim2`, `vector2` and their convenience constructors            |
-
-Factories accept initial properties. After creation, properties behave like engine object properties:
+Properties are typed, validated, and applied immediately:
 
 ```ts
 card.Name = 'Inventory';
 card.Visible = false;
-
-card.setProperties({
-  Position: udim2FromOffset(40, 80),
-  Rotation: 4,
-});
+card.setProperties({ Position: udim2FromOffset(40, 80), Rotation: 4 });
 ```
 
-Assignments and `setProperties()` are validated and applied immediately. They never rerun application code or recreate the node. Use `setProperties()` when several changes belong to one update; otherwise direct assignment is the simplest option.
-
-For the complete runtime sequence—including property transactions, modifier rendering, animation ownership, detach/unmount, and destruction—see [`FRAMEKIT_LIFECYCLE.md`](FRAMEKIT_LIFECYCLE.md).
-
-## Elements and modifiers
-
-Elements are DOM-backed nodes. Modifiers are element-less nodes that affect their parent and participate in the same tree and lifecycle.
-
-Container and display factories accept creation-only semantic HTML options. The default tags preserve the existing generic structure; choose a semantic tag when the node's content has that role:
+Elements are DOM-backed. Modifiers are element-less children that affect their parent and share its lifecycle:
 
 ```ts
-const article = createFrame({}, { tagName: 'article' });
-const title = createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
-const galleryItem = createImageLabel({ AltText: 'Steel sword' }, { tagName: 'figure' });
-const content = createScrollingFrame({}, { tagName: 'main' });
-```
+import {
+  createTextButton,
+  createUICorner,
+  createUIGradient,
+  color3FromHex,
+  colorSequence,
+  spring,
+} from 'framekit';
 
-`Frame` supports `div`, `main`, `section`, `article`, `aside`, `header`, `footer`, `nav`, and `figure`. `ScrollingFrame` supports scrolling-region equivalents. `TextLabel` renders text as `span` by default and also supports paragraphs, headings, emphasis, code, preformatted text, and block quotes. `ImageLabel` supports `div` or `figure`. Interactive instances remain native `button` elements.
-
-Use `Link` for navigation instead of attaching a click handler to a frame. It renders a real anchor, preserving browser navigation and accessibility behavior:
-
-```ts
-const guide = createLink({
-  Text: 'Read the guide',
-  Href: '/guide',
-  Rel: 'help',
-});
-```
-
-```ts
-const panel = createFrame({
-  Name: 'Inventory',
-  Position: udim2(0.5, -180, 0.5, -120),
-  Size: udim2FromOffset(360, 240),
-  BackgroundColor3: color3FromHex('#171820'),
-});
-
-createUICorner({ CornerRadius: 18 }).Parent = panel;
+const button = createTextButton({ Text: 'Equip' });
+createUICorner({ CornerRadius: 12 }).Parent = button;
 createUIGradient({
   Color: colorSequence(color3FromHex('#9e83ee'), color3FromHex('#5f9cf5')),
-  Rotation: 90,
-}).Parent = panel;
-createUIStroke({
-  Color: color3FromHex('#9e83ee'),
-  Thickness: 2,
-  BorderStrokePosition: 'Outer',
-}).Parent = panel;
-createUIPadding({
-  PaddingTop: udim(0, 16),
-  PaddingRight: udim(0, 16),
-  PaddingBottom: udim(0, 16),
-  PaddingLeft: udim(0, 16),
-}).Parent = panel;
-```
+}).Parent = button;
 
-A parent accepts one modifier of each kind. Duplicate modifiers throw without disturbing either tree. `UIListLayout` controls the positions of its parent's direct GUI children while attached; detaching it restores their own `Position` and `AnchorPoint` rendering.
-
-Use optional helpers when their interaction conventions fit your UI. `bindHoverScale(node, scale)` controls a caller-owned, attached `UIScale` and returns a disposer. Disposing disconnects events and stops its scale motion without destroying either node.
-
-Compose scrolling lists explicitly, keeping the layout reference when its configuration needs to change. Set row widths through their own `Size` properties:
-
-```ts
-const list = createScrollingFrame({
-  Size: udim2(1, 0, 1, -64),
-  ScrollingDirection: 'Y',
-  AutomaticCanvasSize: 'Y',
-});
-const layout = createUIListLayout({ Padding: udim(0, 12) });
-layout.Parent = list;
-
-firstRow.Parent = list;
-secondRow.Parent = list;
-```
-
-`bindResponsiveLayout()` applies one layout immediately, then switches only when the viewport crosses its breakpoint. It returns a disposer; its resize listener is also removed when the owner is destroyed.
-
-```ts
-bindResponsiveLayout(panel, {
-  breakpoint: 700,
-  mobile: applyMobileLayout,
-  desktop: applyDesktopLayout,
-});
-```
-
-## Hierarchy and input
-
-Nodes are persistent objects with explicit ownership. Setting `Parent = undefined` keeps a node reusable. `destroy()` recursively releases its descendants, event listeners, registered subscriptions, and animations.
-
-`Name` is editable application data. `ClassName` identifies the node's concrete FrameKit type. `Parent` is the single hierarchy mutation API: assign another node to reparent, or `undefined` to detach.
-
-```ts
-const menu = createFrame({ Name: 'InventoryMenu' });
-const equip = createTextButton({ Name: 'EquipButton', Text: 'Equip' });
-
-equip.Parent = menu;
-
-equip.Parent === menu; // true
-menu.getChildren(); // [equip]
-menu.findFirstChild('EquipButton'); // equip
-equip.getFullName(); // "InventoryMenu.EquipButton"
-```
-
-Traversal reads the FrameKit hierarchy, not the HTML DOM. `getChildren()` returns direct children; `getDescendants()` returns every nested node in depth-first order. Both return snapshots, so callers cannot mutate FrameKit's internal child list.
-
-Use `child.isA('TextButton')` to test an exact built-in class and narrow a traversal result to its concrete TypeScript API. For example, `if (child.isA('TextButton')) child.Text = 'Run'` needs no cast.
-
-Every node can format or print its current subtree:
-
-```ts
-console.log(gui.toTreeString());
-```
-
-```text
-ScreenGui [ScreenGui]
-└─ InventoryMenu [Frame]
-   ├─ UICorner [UICorner]
-   └─ EquipButton [TextButton]
-```
-
-Use `toTreeString()` when you want the same output without writing to the console—for example in a custom inspector or a test assertion.
-
-```ts
-const button = createTextButton({ Text: 'Equip' });
-
-button.onMouseEnter(() => {
-  button.Rotation = 2;
-});
-button.onMouseLeave(() => {
-  button.Rotation = 0;
-});
+button.onMouseEnter(() => spring(button, { Rotation: 2 }));
+button.onMouseLeave(() => spring(button, { Rotation: 0 }));
 button.onClick(() => console.log('equipped'));
+button.Parent = card;
 ```
 
-Event connections belong to the node and are released when it is destroyed. Each event method also returns an unsubscribe function for stopping it earlier.
+Use semantic creation options when appropriate: frames can render as `main`, `section`, `article`, `nav`, and related elements; text can render as headings, paragraphs, code, and more. Buttons, links, inputs, and text areas use their native HTML elements.
 
-Text labels, text buttons, and text boxes support `TextScaled`. When enabled, FrameKit chooses the largest whole-pixel font size that fits the object's current bounds and recalculates it when those bounds change. `TextSize` remains the fallback while an object has no measurable browser size.
+## Ownership and lifecycle
 
-```ts
-const title = createTextLabel({
-  Text: 'Inventory',
-  TextScaled: true,
-  TextWrapped: true,
-});
-```
+Setting `Parent = undefined` detaches a reusable node. `destroy()` recursively releases descendants, listeners, subscriptions, and animations. Event methods return an unsubscribe function, and `onDestroy()` can own other cleanup.
 
-Subscribe to a particular property when another object needs to react to it. Property names are autocomplete-safe, and the callback receives correctly typed new and previous values:
+Traversal reads the FrameKit tree rather than the DOM. `isA()` narrows concrete TypeScript types, while `toTreeString()` provides an inspectable hierarchy for debugging and tests.
 
-```ts
-panel.onPropertyChanged('Position', (position, previousPosition) => {
-  console.log(previousPosition, position);
-});
-```
+Direct writes take control of animated properties. Springs preserve velocity when retargeted; tweens support delay, repeats, reversing, pause, and cancellation. Animations on unrelated properties can run concurrently.
 
-The event fires for direct assignments, `setProperties()`, animations, and browser-driven synchronization. Assigning the current value again does not fire it.
+For the complete runtime sequence, see [FRAMEKIT_LIFECYCLE.md](FRAMEKIT_LIFECYCLE.md).
 
-Most local interactions need only ordinary variables and direct property assignments. When several objects need the same piece of state, `createObservableValue()` provides explicit `get()`, `set()`, and `update()` methods. Subscribe with `onChange()` and register its unsubscribe with the node that owns the binding:
+## Browser behavior and safety
 
-```ts
-const selectedItem = createObservableValue('Sword');
-const renderItem = (item: string) => {
-  label.Text = item;
-};
-renderItem(selectedItem.get());
-label.onDestroy(selectedItem.onChange(renderItem));
-```
+FrameKit exposes readonly browser geometry, native scrolling, keyboard-aware nested scrolling, text scaling, accessible labels, reduced-motion behavior, and focus-aware tooltips and popovers.
 
-There is no dependency tracking or render cycle. Observable value listeners run synchronously when the value changes.
+Caller text is never treated as HTML. Image protocols and property values are validated, hierarchy cycles are rejected, and cross-document trees are not allowed. `unsafeElement` is available for integrations, but should not mutate FrameKit-owned hierarchy or inline styles.
 
-All GUI nodes expose `onMouseEnter()` and `onMouseLeave()`. Button nodes add `onClick()`, primary-button, and secondary-button methods.
+FrameKit installs one shared stylesheet per document. For a nonce-based Content Security Policy, call `installFrameKitStyles({ nonce })` before creating nodes.
 
-`TextInput` and `TextArea` use native form controls. Both keep their current string in `Text`, and `onTextChanged()` emits that same string as the user edits. Use `TextInput` for a single line and `TextArea` for multiline content:
+## Development
 
-```ts
-const email = createTextInput({
-  InputType: 'Email',
-  PlaceholderText: 'you@example.com',
-  FieldName: 'email',
-  AutoComplete: 'email',
-});
-
-const bio = createTextArea({
-  Text: 'Hello FrameKit',
-  PlaceholderText: 'Write something…',
-  ResizeDirection: 'Vertical',
-});
-
-bio.onTextChanged((value) => console.log(value));
-```
-
-`TextBox` has been removed. Migrate a single-line `TextBox` to `TextInput`; migrate one that used `MultiLine: true` to `TextArea` and remove `MultiLine`.
-
-The controls also expose `Disabled`, `ReadOnly`, `AccessibleLabel`, and native form/autocomplete properties. Text is always treated as text rather than HTML. `UIShadow` models both directional shadows and centered glow-like effects through its animated offset, blur, spread, color, and transparency properties.
-
-## Geometry and scrolling
-
-Every GUI node exposes browser-computed geometry as readonly `Vector2` values:
-
-```ts
-panel.AbsolutePosition;
-panel.AbsoluteSize;
-```
-
-Scrolling frames use the same direct property model. `CanvasSize` sets explicit bounds, `AutomaticCanvasSize` grows selected axes around descendants, and `CanvasPosition` stays synchronized with native scrolling:
-
-```ts
-const list = createScrollingFrame({
-  ScrollingDirection: 'Y',
-  CanvasSize: udim2FromOffset(0, 1200),
-  AutomaticCanvasSize: 'X',
-  ScrollBarThickness: 8,
-});
-
-list.scrollTo(vector2(0, 240));
-list.scrollBy(vector2(0, 80));
-list.AbsoluteCanvasSize;
-list.MaxCanvasPosition;
-```
-
-Set `ScrollingEnabled` to `false` to temporarily disable native mouse, touch, and keyboard scrolling without discarding the current canvas position.
-Nested scrolling frames pass gestures and keyboard commands for unsupported axes to the nearest enabled FrameKit scrolling ancestor.
-
-## Spring motion
-
-Call `spring()` with a node and its goal. FrameKit retains the spring for you, so calling it again retargets from the current visual value and preserves velocity.
-
-```ts
-const scale = createUIScale();
-scale.Parent = button;
-
-button.onMouseEnter(() => spring(scale, { Scale: 1.04 }));
-button.onMouseLeave(() => spring(scale, { Scale: 1 }));
-```
-
-The default matches Ripple's physical spring: `{ tension: 170, friction: 26, mass: 1, precision: 0.001, restVelocity: 0.0625 }`. Most interactions should leave it alone. When a particular motion needs a different feel, pass a separate settings object:
-
-```ts
-spring(panel, { Rotation: 4 }, { tension: 210, friction: 20 });
-```
-
-`spring()` animates numeric properties plus `Color3`, `Vector2`, `UDim`, and `UDim2`, including `Position`, `Size`, `Rotation`, and a scrolling frame's `CanvasPosition`. It returns the node's retained controller when you need `completed`, `isAnimating()`, or `stop()`.
-
-Assigning a property directly or including it in `setProperties()` immediately stops any spring or tween controlling that property. Animations on other properties continue, and the write takes control even when it assigns the property's current value.
-
-For scrolling frames, native scrolling takes control once it changes `CanvasPosition`. Scroll events produced by the animation itself do not interrupt it.
-
-Scaling with `UIScale` is useful for hover effects because it changes visual size without asking a `UIListLayout` to reposition neighboring items.
-
-## Tweens
-
-Tweens are the explicit, timed alternative to springs:
-
-```ts
-const tween = createTween(
-  panel,
-  { Duration: 0.3, EasingStyle: 'Quad' },
-  {
-    Position: udim2FromOffset(240, 40),
-    BackgroundTransparency: 0.1,
-  },
-);
-
-tween.completed.subscribe((state) => console.log(state));
-tween.play();
-```
-
-Tweens support delay, repeats, reversing, pause, and cancellation. A new animation that claims the same property cancels the previous owner of that property; disjoint properties can animate concurrently. A newly played tween snapshots the property's current value, so interrupting a halfway-complete tween continues from that visible midpoint rather than its original start.
-
-## Package organization
-
-The package entry point is the only public API manifest. The source tree groups code by the concept a contributor is looking for:
-
-- `elements/` and `modifiers/` — public UI factories and attachable modifiers
-- `animation/` — shared animation runtime with separate spring and tween mechanics
-- `helpers/` — optional composition such as responsive layouts, tooltips, and popovers
-- `values/` and `state/` — immutable value objects, signals, and observable values
-- `internal/dom/` and `internal/runtime/` — browser integration, node handles, hierarchy, lifecycle, properties, and rendering
-- `__tests__/` — tests mirror the implementation domains, with reusable infrastructure under `__tests__/support`
-
-Values and types come from the same entry point:
-
-```ts
-import { type Frame, spring } from 'framekit';
-
-function show(panel: Frame): void {
-  spring(panel, { BackgroundTransparency: 0 });
-}
-```
-
-Internal modules are implementation details rather than secondary public entry points. Package consumers should import only from `framekit`. Source dependency tests enforce the domain direction, while package exports keep implementation paths out of the consumer API.
-
-## Reusable UI factories
-
-Compose built-in nodes in ordinary functions. Return the parts that callers need to update; destroying the root destroys its owned descendants.
-
-```ts
-function createBadge(text: string) {
-  const frame = createFrame({ Name: 'Badge' });
-  const label = createTextLabel({ Text: text, Size: udim2FromScale(1, 1) });
-  label.Parent = frame;
-  return { frame, label };
-}
-
-const badge = createBadge('Featured');
-badge.label.Text = 'Updated';
-badge.frame.Parent = panel;
-```
-
-## Safety boundaries
-
-FrameKit treats caller-provided text as text, never HTML. Image sources accept only `http:`, `https:`, `blob:`, and `data:image/*` URLs and use a no-referrer policy. Constructors and updates reject unknown properties, missing values, non-finite numbers, and invalid runtime enum members. Tree operations reject cycles and invalid modifier parents, and destroyed nodes reject further operations.
-
-`GuiElement.unsafeElement` is an intentional low-level escape hatch for integrations FrameKit does not cover. Do not use it to change hierarchy or FrameKit-owned inline styles: those mutations bypass node state and may be overwritten by the next property render. Event listeners, browser APIs, and application-owned attributes are appropriate uses.
-
-DOM factories accept `{ ownerDocument }` as a creation-only second argument, alongside any tag option. Use the same document for a GUI tree and its mount target; FrameKit rejects cross-document reparenting rather than silently adopting DOM without its styles and listeners. Selector mounts resolve in the GUI's own document.
-
-FrameKit automatically installs one shared stylesheet per document. Under a nonce-based Content Security Policy, authorize it before creating nodes:
-
-```ts
-installFrameKitStyles({ nonce: serverGeneratedNonce });
-```
-
-Pass `ownerDocument` as well for another document. FrameKit sets individual CSSOM properties rather than `style` attributes or `cssText`; this preserves compatibility with `style-src-attr 'none'`. The stylesheet nonce must match the page's `style-src` policy. See [MDN's CSP styling guidance](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
-
-## Playground and development
-
-The playground is a complete, long-form FrameKit product page built with FrameKit itself. It demonstrates composition, scale/offset `UDim2` layout, modifiers, shared values, input, spring motion, tweens, scrolling, and lifecycle patterns.
-
-Its desktop/mobile module boundaries and extension rules are documented in [`playground/README.md`](playground/README.md).
+The playground is a documentation site built entirely with FrameKit. See [playground/README.md](playground/README.md) for its architecture.
 
 ```sh
-npm run dev                 # playground development server
-npm run build               # package bundles and declarations only
-npm run build:playground    # production playground build
-npm test                    # package tests only
-npm run test:playground     # playground integration tests
-npm run check               # formatting, types, lint, tests, and both builds
+npm run dev              # start the playground
+npm test                 # run library tests
+npm run test:playground  # run playground tests
+npm run build            # build the package
+npm run check            # run every quality gate
 ```
 
-Package tests mirror the implementation domains under `src/__tests__`; playground integration tests stay under `playground/tests`. Test-only utilities live under `src/__tests__/support` and are excluded from the published package.
-
-## Inspiration
-
-FrameKit grew from a Roblox Luau and Roblox-TS background, where `Frame`, `UDim2`, anchor points, scale/offset positioning, and explicit UI instances feel natural. Its goal is not to recreate every Roblox API or hide the browser. It is to preserve that productive mental model while providing a small, typed, browser-native toolkit.
+Package consumers should import only from `framekit`. Internal modules are implementation details.
