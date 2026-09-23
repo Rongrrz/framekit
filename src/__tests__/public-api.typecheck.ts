@@ -1,6 +1,7 @@
 import {
   bindHoverScale,
   bindPopover,
+  bindResponsiveLayout,
   bindTooltip,
   color3FromRGB,
   createFrame,
@@ -18,6 +19,7 @@ import {
   type Instance,
   installFrameKitStyles,
   type ObservableValue,
+  type ResponsiveLayoutContext,
   type SignalEmitter,
   spring,
   type TooltipOptions,
@@ -66,6 +68,16 @@ function verifyPublicTypeContracts(): void {
     onHide: animatePanel,
   });
   void disposePopover;
+  const applyContainerLayout = ({ width, height }: ResponsiveLayoutContext): void => {
+    frame.Size = udim2FromOffset(width, height);
+  };
+  const disposeResponsiveLayout: Unsubscribe = bindResponsiveLayout(frame, {
+    observe: frame,
+    breakpoints: [{ maxWidth: 479, apply: applyContainerLayout }, { apply: applyContainerLayout }],
+  });
+  void disposeResponsiveLayout;
+  // @ts-expect-error Container breakpoint widths are numeric.
+  bindResponsiveLayout(frame, { observe: frame, breakpoints: [{ maxWidth: 'small', apply() {} }] });
   // @ts-expect-error Popovers require caller-owned GUI content.
   bindPopover(button, 'Actions');
   // @ts-expect-error Unsupported triggers are not accepted.

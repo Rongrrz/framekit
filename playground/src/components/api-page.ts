@@ -199,7 +199,7 @@ export const createApiPage = (
     'Helpers are named exports that compose optional behavior from the same core instances.',
   );
   appendCodeBlock(shell.article, theme, 'HelpersApiCode', [
-    { text: 'bindResponsiveLayout(owner, options)' },
+    { text: 'bindResponsiveLayout(owner, { observe, breakpoints })' },
     { text: 'bindHoverScale(node, scale, 1.035)' },
     { text: '' },
     { text: "const dispose = bindTooltip(button, 'Save');", color: 'accent' },

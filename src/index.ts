@@ -62,7 +62,13 @@ export { bindHoverScale } from './helpers/hover-scale.js';
 export { bindPopover } from './helpers/popover.js';
 export type { PopoverOptions } from './helpers/popover.js';
 export { bindResponsiveLayout } from './helpers/responsive-layout.js';
-export type { ResponsiveLayoutOptions } from './helpers/responsive-layout.js';
+export type {
+  ContainerResponsiveLayoutOptions,
+  ResponsiveLayoutBreakpoint,
+  ResponsiveLayoutContext,
+  ResponsiveLayoutOptions,
+  ViewportResponsiveLayoutOptions,
+} from './helpers/responsive-layout.js';
 export { bindTooltip } from './helpers/tooltip.js';
 export type { TooltipOptions, TooltipPlacement, TooltipStyle } from './helpers/tooltip.js';
 export type {

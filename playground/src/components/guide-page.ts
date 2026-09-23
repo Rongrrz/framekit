@@ -115,18 +115,17 @@ export const createGuidePage = (
   const responsive = appendArticleSection(
     shell.article,
     theme,
-    'Respond to the viewport',
-    'Use the responsive layout helper when geometry needs a breakpoint. The owner controls the resize listener lifetime.',
+    'Respond to a container',
+    'Apply layout functions when a container crosses an ordered width breakpoint. The owner controls the observer lifetime.',
   );
   appendCodeBlock(shell.article, theme, 'ResponsiveGuideCode', [
     { text: 'bindResponsiveLayout(app, {' },
-    { text: '  breakpoint: 720,' },
-    { text: '  mobile: () => {' },
-    { text: '    card.Size = udim2(1, -32, 0, 240);' },
-    { text: '  },' },
-    { text: '  desktop: () => {' },
-    { text: '    card.Size = udim2FromOffset(520, 280);' },
-    { text: '  },' },
+    { text: '  observe: card,' },
+    { text: '  breakpoints: [' },
+    { text: '    { maxWidth: 479, apply: applyCompact },' },
+    { text: '    { maxWidth: 899, apply: applyMedium },' },
+    { text: '    { apply: applyWide },' },
+    { text: '  ],' },
     { text: '});' },
   ]);
 
