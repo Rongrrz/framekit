@@ -10,6 +10,12 @@ import { mergeProperties } from '#internal/runtime/systems/properties.js';
 import { assertAllowedValue, assertBoolean } from '#internal/validation.js';
 import { assertUDim, udim, udimToCss, type UDim } from '#values/udim.js';
 
+import {
+  resolveChildOrders,
+  resolveHorizontalAlignment,
+  resolveVerticalAlignment,
+} from './layout.js';
+
 /** Primary axis used to arrange children. */
 export type FillDirection = 'Horizontal' | 'Vertical';
 
@@ -110,44 +116,4 @@ function validateListLayoutProperties(properties: Readonly<UIListLayoutPropertie
   assertAllowedValue(properties.SortOrder, sortOrders, 'SortOrder');
   assertBoolean(properties.Wraps, 'Wraps');
   assertUDim(properties.Padding, 'Padding');
-}
-
-function resolveChildOrders(children: readonly LayoutChild[], sortOrder: SortOrder): number[] {
-  const sortedIndices = children.map((_, index) => index);
-  sortedIndices.sort((leftIndex, rightIndex) => {
-    const left = children[leftIndex]!;
-    const right = children[rightIndex]!;
-    const comparison =
-      sortOrder === 'Name'
-        ? left.Name.localeCompare(right.Name)
-        : left.LayoutOrder - right.LayoutOrder;
-    return comparison || leftIndex - rightIndex;
-  });
-
-  // CSS order changes visual placement while the hierarchy retains its insertion order.
-  const orderByChild = children.map((_, index) => index);
-  for (const [order, childIndex] of sortedIndices.entries()) {
-    orderByChild[childIndex] = order;
-  }
-  return orderByChild;
-}
-
-function resolveHorizontalAlignment(alignment: HorizontalAlignment): string {
-  if (alignment === 'Center') {
-    return 'center';
-  }
-  if (alignment === 'Right') {
-    return 'flex-end';
-  }
-  return 'flex-start';
-}
-
-function resolveVerticalAlignment(alignment: VerticalAlignment): string {
-  if (alignment === 'Center') {
-    return 'center';
-  }
-  if (alignment === 'Bottom') {
-    return 'flex-end';
-  }
-  return 'flex-start';
 }

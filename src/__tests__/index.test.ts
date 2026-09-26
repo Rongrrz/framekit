@@ -7,6 +7,7 @@ describe('package API', () => {
       bindPopover: expect.any(Function),
       bindTooltip: expect.any(Function),
       createFrame: expect.any(Function),
+      createUIGridLayout: expect.any(Function),
       createObservableValue: expect.any(Function),
       createSignalEmitter: expect.any(Function),
       installFrameKitStyles: expect.any(Function),

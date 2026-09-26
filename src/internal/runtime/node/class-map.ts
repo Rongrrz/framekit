@@ -9,6 +9,7 @@ import type { TextButton, TextLabel } from '#elements/text.js';
 import type { UIAspectRatioConstraint } from '#modifiers/aspect-ratio.js';
 import type { UICorner } from '#modifiers/corner.js';
 import type { UIGradient } from '#modifiers/gradient.js';
+import type { UIGridLayout } from '#modifiers/grid-layout.js';
 import type { UIListLayout } from '#modifiers/list-layout.js';
 import type { UIPadding } from '#modifiers/padding.js';
 import type { UIScale } from '#modifiers/scale.js';
@@ -30,6 +31,7 @@ type InstanceTypes = {
   UIAspectRatioConstraint: UIAspectRatioConstraint;
   UICorner: UICorner;
   UIGradient: UIGradient;
+  UIGridLayout: UIGridLayout;
   UIListLayout: UIListLayout;
   UIPadding: UIPadding;
   UIScale: UIScale;

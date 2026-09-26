@@ -163,6 +163,7 @@ export const createApiPage = (
     ['UITextStroke', 'Adjustable outlines around rendered text.', 'purple'],
     ['UIPadding', 'Independent top, right, bottom, and left padding.', 'purple'],
     ['UIListLayout', 'Horizontal or vertical ordered child layout.', 'orange'],
+    ['UIGridLayout', 'Equal-sized cells arranged across rows or columns.', 'blue'],
     ['UIGradient', 'Color and transparency sequences.', 'accent'],
     ['UIScale', 'Uniform visual scaling for a subtree.', 'blue'],
     ['UIShadow', 'Configurable shadow color, blur, and offset.', 'purple'],

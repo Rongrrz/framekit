@@ -96,6 +96,8 @@ export { createUICorner } from './modifiers/corner.js';
 export type { UICorner, UICornerProperties } from './modifiers/corner.js';
 export { createUIGradient } from './modifiers/gradient.js';
 export type { GradientTarget, UIGradient, UIGradientProperties } from './modifiers/gradient.js';
+export { createUIGridLayout } from './modifiers/grid-layout.js';
+export type { UIGridLayout, UIGridLayoutProperties } from './modifiers/grid-layout.js';
 export { createUIListLayout } from './modifiers/list-layout.js';
 export type {
   FillDirection,

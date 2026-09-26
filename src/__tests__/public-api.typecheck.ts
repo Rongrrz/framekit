@@ -11,6 +11,7 @@ import {
   createTextButton,
   createTextLabel,
   createTween,
+  createUIGridLayout,
   createUIScale,
   type FloatingPanelHook,
   type Frame,
@@ -40,6 +41,8 @@ function verifyPublicTypeContracts(): void {
   void frameViews;
   const button = createTextButton();
   const scale = createUIScale();
+  const grid = createUIGridLayout({ FillDirectionMaxCells: 3 });
+  grid.Parent = frame;
   const observableValue: ObservableValue<number> = createObservableValue(1);
   observableValue.set(2);
   const signalEmitter: SignalEmitter<[number]> = createSignalEmitter<[number]>();
