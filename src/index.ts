@@ -120,8 +120,10 @@ export type { UITextStroke, UITextStrokeProperties } from './modifiers/text-stro
 
 export { createSignalEmitter } from './state/signal.js';
 export type { Signal, SignalEmitter, Unsubscribe } from './state/signal.js';
+export { createComputedValue } from './state/computed.js';
+export type { ComputedValue } from './state/computed.js';
 export { createObservableValue } from './state/value.js';
-export type { ObservableValue } from './state/value.js';
+export type { ObservableValue, ReadonlyObservableValue } from './state/value.js';
 
 export { color3FromHex, color3FromRGB } from './values/color3.js';
 export type { Color3 } from './values/color3.js';

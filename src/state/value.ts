@@ -3,16 +3,20 @@ import { createSignalEmitter, emitSignalSafely, type Unsubscribe } from './signa
 type ValueListener<T> = (value: T) => void;
 type ValueUpdater<T> = (currentValue: T) => T;
 
-/** A small synchronous container for explicitly shared state. */
-export type ObservableValue<T> = {
+/** A synchronous value that can be read and observed without being mutated. */
+export type ReadonlyObservableValue<T> = {
   /** Returns the current value. */
   get(): T;
+  /** Subscribes to later changes and returns an unsubscribe function. */
+  onChange(listener: ValueListener<T>): Unsubscribe;
+};
+
+/** A small synchronous container for explicitly shared state. */
+export type ObservableValue<T> = ReadonlyObservableValue<T> & {
   /** Replaces the value and notifies listeners when it changed. */
   set(nextValue: T): void;
   /** Replaces the value using its current value. */
   update(updater: ValueUpdater<T>): void;
-  /** Subscribes to later changes and returns an unsubscribe function. */
-  onChange(listener: ValueListener<T>): Unsubscribe;
 };
 
 /** Creates an observable value that synchronously notifies listeners when it changes. */

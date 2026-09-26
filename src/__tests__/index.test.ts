@@ -6,6 +6,7 @@ describe('package API', () => {
     expect(framekit).toMatchObject({
       bindPopover: expect.any(Function),
       bindTooltip: expect.any(Function),
+      createComputedValue: expect.any(Function),
       createFrame: expect.any(Function),
       createUIGridLayout: expect.any(Function),
       createObservableValue: expect.any(Function),

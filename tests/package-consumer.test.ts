@@ -64,16 +64,19 @@ describe('packed package consumers', () => {
         '-e',
         `${load}
       const value = api.createObservableValue(1);
+      const doubled = api.createComputedValue([value], () => value.get() * 2);
       value.set(2);
       console.log(JSON.stringify({
         bindPopover: typeof api.bindPopover,
         bindTooltip: typeof api.bindTooltip,
         createSignalEmitter: typeof api.createSignalEmitter,
+        createComputedValue: typeof api.createComputedValue,
         installFrameKitStyles: typeof api.installFrameKitStyles,
         frame: typeof api.createFrame,
         spring: typeof api.spring,
         hover: typeof api.bindHoverScale,
         value: value.get(),
+        doubled: doubled.get(),
       }));`,
       ],
       { cwd: consumer, encoding: 'utf8' },
@@ -82,11 +85,13 @@ describe('packed package consumers', () => {
       bindPopover: 'function',
       bindTooltip: 'function',
       createSignalEmitter: 'function',
+      createComputedValue: 'function',
       installFrameKitStyles: 'function',
       frame: 'function',
       spring: 'function',
       hover: 'function',
       value: 2,
+      doubled: 4,
     });
   });
 

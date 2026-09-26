@@ -27,7 +27,7 @@ Everything is available from the `framekit` entry point.
 | Modifiers | Corners, gradients, strokes, shadows, padding, scale, aspect ratio, and list layout    |
 | Hierarchy | `Parent`, `isA`, `getChildren`, `getDescendants`, `findFirstChild`                     |
 | Lifecycle | `mount`, `unmount`, `destroy`, `onDestroy`                                             |
-| State     | Direct properties, `setProperties`, `onPropertyChanged`, `createObservableValue`       |
+| State     | Direct properties, property observers, observable and computed values                  |
 | Motion    | `spring`, `createTween`                                                                |
 | Helpers   | Tooltips, popovers, hover scale, and responsive layouts                                |
 | Values    | `Color3`, `UDim`, `UDim2`, `Vector2`, and sequences                                    |

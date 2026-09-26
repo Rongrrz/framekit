@@ -4,6 +4,7 @@ import {
   bindResponsiveLayout,
   bindTooltip,
   color3FromRGB,
+  createComputedValue,
   createFrame,
   createObservableValue,
   createScreenGui,
@@ -14,6 +15,7 @@ import {
   createUIGridLayout,
   createUIScale,
   type FloatingPanelHook,
+  type ComputedValue,
   type Frame,
   type GuiElement,
   type GuiObject,
@@ -45,6 +47,12 @@ function verifyPublicTypeContracts(): void {
   grid.Parent = frame;
   const observableValue: ObservableValue<number> = createObservableValue(1);
   observableValue.set(2);
+  const computedValue: ComputedValue<string> = createComputedValue([observableValue], () =>
+    String(observableValue.get()),
+  );
+  computedValue.onChange((value) => value.toUpperCase());
+  // @ts-expect-error Computed values are readonly.
+  computedValue.set('3');
   const signalEmitter: SignalEmitter<[number]> = createSignalEmitter<[number]>();
   signalEmitter.emit(observableValue.get());
   installFrameKitStyles();

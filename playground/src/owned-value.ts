@@ -1,9 +1,9 @@
-import { type Instance, type Unsubscribe, type ObservableValue } from 'framekit';
+import { type Instance, type ReadonlyObservableValue, type Unsubscribe } from 'framekit';
 
 /** Playground convenience for immediate, node-owned value subscriptions. */
 export function watchOwnedValue<T>(
   owner: Instance,
-  value: ObservableValue<T>,
+  value: ReadonlyObservableValue<T>,
   listener: (value: T) => void,
 ): Unsubscribe {
   if (owner.isDestroyed()) {
