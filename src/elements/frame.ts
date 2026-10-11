@@ -24,6 +24,7 @@ export type Frame = GuiElement<FrameProperties> & {
 
 const frameTagNames = [
   'div',
+  'dialog',
   'main',
   'section',
   'article',

@@ -4,6 +4,8 @@ import type { FloatingPanelController } from './controller.js';
 import type { FloatingPanelPortal } from './portal.js';
 import type { PanelOptions } from './types.js';
 
+const escapeControllers = new WeakMap<Document, Set<FloatingPanelController>>();
+
 const focusableContent =
   'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
@@ -14,6 +16,9 @@ export const connectFloatingPanelInteractions = (
   options: PanelOptions,
 ): (() => void) => {
   const { target, panel, document } = portal;
+  const controllers = escapeControllers.get(document) ?? new Set<FloatingPanelController>();
+  escapeControllers.set(document, controllers);
+  controllers.add(controller);
   const popover = options.kind === 'popover';
   const listeners = createRealmAbortController(target);
   const listenerOptions = { signal: listeners.signal };
@@ -104,13 +109,15 @@ export const connectFloatingPanelInteractions = (
   document.addEventListener(
     'keydown',
     (event) => {
-      if (event.key !== 'Escape' || !controller.shouldHandleEscape()) {
+      if (
+        event.defaultPrevented ||
+        event.key !== 'Escape' ||
+        [...controllers].filter((candidate) => candidate.shouldHandleEscape()).at(-1) !== controller
+      ) {
         return;
       }
       const restoreFocus = popover && panel.contains(document.activeElement);
-      if (popover) {
-        event.preventDefault();
-      }
+      event.preventDefault();
       controller.dismiss();
       if (restoreFocus) {
         target.focus();
@@ -119,5 +126,8 @@ export const connectFloatingPanelInteractions = (
     listenerOptions,
   );
 
-  return () => listeners.abort();
+  return () => {
+    controllers.delete(controller);
+    listeners.abort();
+  };
 };

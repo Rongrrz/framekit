@@ -58,6 +58,12 @@ export type {
   TextAreaResizeDirection,
 } from './elements/text-area.js';
 
+export { bindTreeView } from './helpers/tree-view.js';
+export type { TreeViewItem, TreeViewOptions } from './helpers/tree-view.js';
+export { bindMenu } from './helpers/menu.js';
+export type { MenuController } from './helpers/menu.js';
+export { bindDialog } from './helpers/dialog.js';
+export type { DialogController, DialogOptions } from './helpers/dialog.js';
 export { bindKeyedChildren } from './helpers/keyed-children.js';
 export type { KeyedChildrenOptions } from './helpers/keyed-children.js';
 export { watchOwnedValue } from './helpers/owned-value.js';

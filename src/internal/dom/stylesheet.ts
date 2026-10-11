@@ -28,6 +28,10 @@ export function installFrameKitStyles(options: StyleOptions = {}): void {
 }
 
 const sharedStyles = `
+  [data-framekit][popover]:not(:popover-open),
+  dialog[data-framekit]:not([open]) {
+    display: none !important;
+  }
   [data-framekit-button][data-framekit-auto-button-color] {
     transition: filter 140ms ease;
   }
