@@ -58,6 +58,8 @@ export type {
   TextAreaResizeDirection,
 } from './elements/text-area.js';
 
+export { bindKeyedChildren } from './helpers/keyed-children.js';
+export type { KeyedChildrenOptions } from './helpers/keyed-children.js';
 export { watchOwnedValue } from './helpers/owned-value.js';
 export { bindHoverScale } from './helpers/hover-scale.js';
 export { bindPopover } from './helpers/popover.js';

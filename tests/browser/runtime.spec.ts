@@ -201,3 +201,48 @@ test('layout sorting aligns visual order with native tab order', async ({ page }
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'First' })).toBeFocused();
 });
+
+test('keyed collection updates retain focused controls and release removed views', async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    const {
+      createScreenGui,
+      createFrame,
+      createTextInput,
+      createObservableValue,
+      bindKeyedChildren,
+    } = window.framekit;
+    const gui = createScreenGui();
+    const parent = createFrame();
+    parent.Parent = gui;
+    gui.mount('#root');
+    const items = createObservableValue<readonly number[]>([1, 2]);
+    let destroyed = 0;
+    bindKeyedChildren(parent, items, {
+      key: (id) => id,
+      create: (id) => {
+        const input = createTextInput({ Text: `item ${id}` });
+        input.onDestroy(() => {
+          destroyed += 1;
+        });
+        return input;
+      },
+    });
+    const focused = parent.getChildren()[1]!;
+    if (!focused.isA('TextInput')) {
+      throw new Error('Expected an input');
+    }
+    focused.focus();
+    focused.unsafeElement.setSelectionRange(1, 4);
+    items.set([2, 3, 1]);
+    const retained = parent.getChildren()[0] === focused;
+    const selection = focused.unsafeElement.selectionStart;
+    const active = document.activeElement === focused.unsafeElement;
+    items.set([2]);
+    const removed = destroyed;
+    gui.destroy();
+    return { retained, selection, active, removed, destroyed };
+  });
+  expect(result).toEqual({ retained: true, selection: 1, active: true, removed: 2, destroyed: 3 });
+});
