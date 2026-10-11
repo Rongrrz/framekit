@@ -112,3 +112,24 @@ test('repeated subtree lifetimes release watchers, events, animations, and DOM',
   });
   expect(result).toEqual({ notifications: 100, clicks: 0, remaining: 2, roots: 0 });
 });
+
+test('captures dragging pointers outside the element bounds', async ({ page }) => {
+  await page.evaluate(() => {
+    const { createScreenGui, createFrame, udim2FromOffset } = window.framekit;
+    const gui = createScreenGui();
+    const drag = createFrame({ Size: udim2FromOffset(100, 100) });
+    drag.unsafeElement.id = 'drag';
+    drag.Parent = gui;
+    gui.mount('#root');
+    drag.on('pointerdown', (event) => drag.setPointerCapture(event.pointerId));
+    drag.on('pointermove', (event) => {
+      drag.unsafeElement.dataset.lastX = String(event.clientX);
+    });
+    drag.on('pointerup', (event) => drag.releasePointerCapture(event.pointerId));
+  });
+  await page.mouse.move(20, 20);
+  await page.mouse.down();
+  await page.mouse.move(250, 20);
+  await expect(page.locator('#drag')).toHaveAttribute('data-last-x', '250');
+  await page.mouse.up();
+});

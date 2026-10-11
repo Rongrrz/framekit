@@ -9,6 +9,7 @@ import {
   type Instance,
   type InstanceProperties,
 } from './instance.js';
+import { nativeGuiMethods, type NativeGuiMethods } from './native-events.js';
 import {
   createBaseState,
   getActiveNodeState,
@@ -29,6 +30,7 @@ export type GuiGeometry = {
 export type GuiElement<Properties extends InstanceProperties = InstanceProperties> =
   Instance<Properties> &
     GuiEventMethods &
+    NativeGuiMethods &
     GuiGeometry & {
       /**
        * Low-level DOM escape hatch. Do not change hierarchy or FrameKit-owned inline styles;
@@ -99,7 +101,7 @@ function getGuiMethodTable(methods: GuiMethodTable): object {
 }
 
 function createGuiNodeMethods(): object {
-  const methodTable = Object.create(nodeMethods) as object;
+  const methodTable = Object.create(extendMethodTable(nodeMethods, nativeGuiMethods)) as object;
   Object.defineProperties(methodTable, {
     AbsolutePosition: {
       get(this: GuiElement): Vector2 {

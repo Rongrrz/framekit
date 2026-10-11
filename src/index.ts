@@ -83,6 +83,7 @@ export { installFrameKitStyles } from './internal/dom/stylesheet.js';
 export type { StyleOptions } from './internal/dom/stylesheet.js';
 export type { InstanceClassName, InstanceOf } from './internal/runtime/node/class-map.js';
 export type { GuiElement, GuiGeometry } from './internal/runtime/node/gui-node.js';
+export type { GuiEventOptions } from './internal/runtime/node/native-events.js';
 export type { Instance, InstanceProperties } from './internal/runtime/node/instance.js';
 export type { LayoutModifier, StyleModifier } from './internal/runtime/node/modifier-types.js';
 
