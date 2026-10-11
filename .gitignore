@@ -25,3 +25,7 @@ playground/dist
 *.sw?
 
 .env
+
+# Browser test artifacts
+playwright-report/
+test-results/
