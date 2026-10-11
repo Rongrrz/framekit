@@ -19,6 +19,12 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      input: {
+        docs: fileURLToPath(new URL('index.html', import.meta.url)),
+        workbench: fileURLToPath(new URL('workbench.html', import.meta.url)),
+      },
+    },
   },
   test: {
     environment: 'happy-dom',
