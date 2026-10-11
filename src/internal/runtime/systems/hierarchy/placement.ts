@@ -1,3 +1,5 @@
+import { placeElement } from '#internal/dom/placement.js';
+
 import type { GuiElement } from '../../node/gui-node.js';
 import type { Instance } from '../../node/instance.js';
 import { getChildren, isGuiNode, type NodeState } from '../../node/registry.js';
@@ -26,5 +28,5 @@ export const placeChildElement = (
     nextGuiSibling = sibling;
     break;
   }
-  parent.unsafeElement.insertBefore(child.unsafeElement, nextGuiSibling?.unsafeElement ?? null);
+  placeElement(parent.unsafeElement, child.unsafeElement, nextGuiSibling?.unsafeElement ?? null);
 };

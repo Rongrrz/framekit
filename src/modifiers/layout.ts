@@ -17,7 +17,7 @@ export function resolveChildOrders(
     return comparison || leftIndex - rightIndex;
   });
 
-  // CSS order changes visual placement while the hierarchy retains its insertion order.
+  // The renderer uses these ranks for both CSS placement and DOM reading order.
   const orderByChild = children.map((_, index) => index);
   for (const [order, childIndex] of sortedIndices.entries()) {
     orderByChild[childIndex] = order;

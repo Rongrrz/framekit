@@ -1,7 +1,7 @@
 import type { Unsubscribe } from '#state/signal.js';
 
 import { toTreeString } from '../systems/hierarchy/formatting.js';
-import { setParent } from '../systems/hierarchy/mutation.js';
+import { reorderChildren, setParent } from '../systems/hierarchy/mutation.js';
 import {
   children,
   descendants,
@@ -49,6 +49,8 @@ export type InstanceMethods<Properties extends InstanceProperties = InstanceProp
   ): Unsubscribe;
   /** Returns a snapshot of the direct children. */
   getChildren(): readonly Instance[];
+  /** Reorders every direct child, including modifiers. Existing objects are preserved. */
+  reorderChildren(children: readonly Instance[]): void;
   /** Returns a depth-first snapshot of every nested child. */
   getDescendants(): readonly Instance[];
   /** Finds a direct child by Name, or any descendant when recursive is true. */
@@ -128,6 +130,9 @@ const methodTable = {
   },
   getChildren(this: Instance): readonly Instance[] {
     return children(this);
+  },
+  reorderChildren(this: Instance, orderedChildren: readonly Instance[]): void {
+    reorderChildren(this, orderedChildren);
   },
   getDescendants(this: Instance): readonly Instance[] {
     return descendants(this);

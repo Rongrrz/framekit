@@ -133,3 +133,71 @@ test('captures dragging pointers outside the element bounds', async ({ page }) =
   await expect(page.locator('#drag')).toHaveAttribute('data-last-x', '250');
   await page.mouse.up();
 });
+
+for (const nativeMove of [true, false]) {
+  test(`preserves focus and text selection through reorder and reparent (native move: ${nativeMove})`, async ({
+    page,
+  }) => {
+    const result = await page.evaluate((useNative) => {
+      const { createScreenGui, createFrame, createTextInput } = window.framekit;
+      const gui = createScreenGui();
+      const left = createFrame();
+      const right = createFrame();
+      left.Parent = gui;
+      right.Parent = gui;
+      if (!useNative) {
+        Object.defineProperty(left.unsafeElement, 'moveBefore', { value: undefined });
+        Object.defineProperty(right.unsafeElement, 'moveBefore', { value: undefined });
+      }
+      const first = createFrame();
+      const second = createFrame();
+      first.Parent = left;
+      second.Parent = left;
+      const input = createTextInput({ Text: 'persistent selection' });
+      input.Parent = second;
+      gui.mount('#root');
+      input.focus();
+      input.unsafeElement.setSelectionRange(2, 8, 'backward');
+      left.reorderChildren([second, first]);
+      second.Parent = right;
+      const result = {
+        focused: document.activeElement === input.unsafeElement,
+        start: input.unsafeElement.selectionStart,
+        end: input.unsafeElement.selectionEnd,
+        direction: input.unsafeElement.selectionDirection,
+        sameElement: right.unsafeElement.firstElementChild === second.unsafeElement,
+      };
+      gui.destroy();
+      return result;
+    }, nativeMove);
+    expect(result).toEqual({
+      focused: true,
+      start: 2,
+      end: 8,
+      direction: 'backward',
+      sameElement: true,
+    });
+  });
+}
+
+test('layout sorting aligns visual order with native tab order', async ({ page }) => {
+  await page.evaluate(() => {
+    const { createScreenGui, createFrame, createTextButton, createUIListLayout } = window.framekit;
+    const gui = createScreenGui();
+    const parent = createFrame();
+    parent.Parent = gui;
+    const first = createTextButton({ Text: 'First', LayoutOrder: 2 });
+    const second = createTextButton({ Text: 'Second', LayoutOrder: 1 });
+    // Explicit tab stops also exercise WebKit with macOS keyboard navigation defaults.
+    first.unsafeElement.tabIndex = 0;
+    second.unsafeElement.tabIndex = 0;
+    first.Parent = parent;
+    second.Parent = parent;
+    createUIListLayout().Parent = parent;
+    gui.mount('#root');
+    second.focus();
+  });
+  await expect(page.getByRole('button', { name: 'Second' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'First' })).toBeFocused();
+});

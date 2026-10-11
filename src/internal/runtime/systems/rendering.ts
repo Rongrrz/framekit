@@ -1,3 +1,4 @@
+import { placeElements } from '#internal/dom/placement.js';
 import { setStyleLayer } from '#internal/dom/styles.js';
 
 import type { GuiElement } from '../node/gui-node.js';
@@ -147,6 +148,16 @@ function renderLayouts(node: Instance): void {
     setStyleLayer(child.unsafeElement, 'parent-layout', stylesByChild.get(child) ?? {});
   }
   state.layoutChildren = nextChildren;
+  // Layout sorting affects reading and tab order as well as visual placement. The logical
+  // hierarchy retains explicit insertion order, including modifiers and equal-order ties.
+  const ordered = [...children].sort(
+    (left, right) =>
+      Number(stylesByChild.get(left)?.order ?? 0) - Number(stylesByChild.get(right)?.order ?? 0),
+  );
+  placeElements(
+    guiNode.unsafeElement,
+    ordered.map((child) => child.unsafeElement),
+  );
 }
 
 function getLayoutChildProperties(child: GuiElement): LayoutChild {

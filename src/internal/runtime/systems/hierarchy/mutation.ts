@@ -209,3 +209,36 @@ const linkNodeToParent = (
   }
   return insertionIndex;
 };
+
+/** Reorders the exact set of direct children in one hierarchy and layout transaction. */
+export const reorderChildren = (parent: Instance, orderedChildren: readonly Instance[]): void => {
+  const state = getActiveNodeState(parent);
+  if (state.kind !== 'gui') {
+    throw new TypeError('Only GUI nodes can contain children.');
+  }
+  const previous = state.children;
+  const next = [...orderedChildren];
+  const existing = new Set(previous);
+  if (
+    next.length !== previous.length ||
+    new Set(next).size !== next.length ||
+    next.some((child) => !existing.has(child))
+  ) {
+    throw new TypeError('Expected every direct child exactly once.');
+  }
+  if (next.every((child, index) => child === previous[index])) {
+    return;
+  }
+  state.children = next;
+  try {
+    rendering.renderDerivedStyles(parent);
+  } catch (error) {
+    state.children = previous;
+    restoreRendering(
+      parent,
+      undefined,
+      error,
+      'Reordering failed, and rendering could not be fully restored.',
+    );
+  }
+};
