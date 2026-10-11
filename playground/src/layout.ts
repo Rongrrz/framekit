@@ -1,6 +1,10 @@
-import { type Instance, type InstanceProperties, type ObservableValue } from 'framekit';
+import {
+  watchOwnedValue,
+  type Instance,
+  type InstanceProperties,
+  type ObservableValue,
+} from 'framekit';
 
-import { watchOwnedValue } from './owned-value';
 import type { SitePage } from './router';
 import { scrollbarThickness } from './theme';
 

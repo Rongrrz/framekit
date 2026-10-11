@@ -1,7 +1,7 @@
 import { createFrame, createObservableValue } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { watchOwnedValue } from '../src/owned-value';
+import { watchOwnedValue } from '../../helpers/owned-value.js';
 
 describe('owned value subscriptions', () => {
   it('publishes immediately and stops when its owner is destroyed', () => {
@@ -45,4 +45,46 @@ describe('owned value subscriptions', () => {
     dispose();
     expect(listener).toHaveBeenCalledOnce();
   });
+});
+
+it('subscribes before immediate delivery so reentrant updates are not lost', () => {
+  const owner = createFrame();
+  const value = createObservableValue(1);
+  const seen: number[] = [];
+  watchOwnedValue(owner, value, (next) => {
+    seen.push(next);
+    if (next === 1) {
+      value.set(2);
+    }
+  });
+  expect(seen).toEqual([1, 2]);
+  owner.destroy();
+});
+
+it('releases the subscription when initial delivery fails', () => {
+  const owner = createFrame();
+  const value = createObservableValue(1);
+  const listener = vi.fn(() => {
+    throw new Error('initial delivery');
+  });
+  expect(() => watchOwnedValue(owner, value, listener)).toThrow('initial delivery');
+  value.set(2);
+  expect(listener).toHaveBeenCalledOnce();
+  owner.destroy();
+});
+
+it('keeps detached owners subscribed until destruction', () => {
+  const parent = createFrame();
+  const owner = createFrame();
+  owner.Parent = parent;
+  const value = createObservableValue(1);
+  watchOwnedValue(owner, value, (next) => {
+    owner.Name = String(next);
+  });
+  owner.Parent = undefined;
+  value.set(2);
+  expect(owner.Name).toBe('2');
+  owner.destroy();
+  value.set(3);
+  parent.destroy();
 });

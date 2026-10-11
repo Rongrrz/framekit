@@ -1,4 +1,5 @@
 import {
+  watchOwnedValue,
   type Color3,
   color3FromRGB,
   createFrame,
@@ -8,8 +9,6 @@ import {
   type SpringOptions,
   type ObservableValue,
 } from 'framekit';
-
-import { watchOwnedValue } from './owned-value';
 
 export type ThemeMode = 'dark' | 'light';
 

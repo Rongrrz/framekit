@@ -58,6 +58,7 @@ export type {
   TextAreaResizeDirection,
 } from './elements/text-area.js';
 
+export { watchOwnedValue } from './helpers/owned-value.js';
 export { bindHoverScale } from './helpers/hover-scale.js';
 export { bindPopover } from './helpers/popover.js';
 export type { PopoverOptions } from './helpers/popover.js';

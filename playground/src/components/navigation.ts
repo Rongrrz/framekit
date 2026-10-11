@@ -1,4 +1,5 @@
 import {
+  watchOwnedValue,
   createFrame,
   type Frame,
   type ScrollingFrame,
@@ -11,7 +12,6 @@ import {
 
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
-import { watchOwnedValue } from '../owned-value';
 import type { SitePage } from '../router';
 import { bindThemeColors, fonts, typeScale, type ThemeMode, type ThemeValue } from '../theme';
 import { createButton, createText } from '../ui';

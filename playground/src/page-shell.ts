@@ -1,4 +1,5 @@
 import {
+  watchOwnedValue,
   createFrame,
   createScreenGui,
   createScrollingFrame,
@@ -16,7 +17,6 @@ import {
 } from 'framekit';
 
 import { pageHeight, pageWidth, type PlaygroundLayout } from './layout';
-import { watchOwnedValue } from './owned-value';
 import type { SitePage } from './router';
 import { bindThemeColors, scrollbarThickness, themeColor, type ThemeValue } from './theme';
 

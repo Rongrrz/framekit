@@ -1,7 +1,13 @@
-import { createFrame, type Frame, type Instance, udim2, type ObservableValue } from 'framekit';
+import {
+  watchOwnedValue,
+  createFrame,
+  type Frame,
+  type Instance,
+  udim2,
+  type ObservableValue,
+} from 'framekit';
 
 import { bindLayoutProperties, pageHeight, type PlaygroundLayout } from './layout';
-import { watchOwnedValue } from './owned-value';
 
 export type SitePage = 'home' | 'guide' | 'api';
 
