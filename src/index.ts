@@ -58,6 +58,8 @@ export type {
   TextAreaResizeDirection,
 } from './elements/text-area.js';
 
+export { bindVirtualList } from './helpers/virtual-list.js';
+export type { VirtualListOptions, VirtualListController } from './helpers/virtual-list.js';
 export { bindTreeView } from './helpers/tree-view.js';
 export type { TreeViewItem, TreeViewOptions } from './helpers/tree-view.js';
 export { bindMenu } from './helpers/menu.js';
