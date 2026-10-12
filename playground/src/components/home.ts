@@ -3,7 +3,6 @@ import {
   color3FromRGB,
   colorSequence,
   createFrame,
-  createLink,
   createUIGradient,
   createUIShadow,
   createUITextStroke,
@@ -165,23 +164,6 @@ export const createHomePage = (
   for (const child of [product, title, body, start, api, install]) {
     child.Parent = content;
   }
-  const workbench = createLink({
-    Name: 'WorkbenchLink',
-    Text: 'Open the interface workbench →',
-    Href: './workbench.html',
-    Size: udim2FromOffset(358, 32),
-    BackgroundTransparency: 1,
-    TextColor3: theme.get().accent,
-    FontFamily: fonts.sans,
-    TextSize: 14,
-    TextXAlignment: 'Left',
-  });
-  bindThemeColors(workbench, theme, (palette) => ({ TextColor3: palette.accent }));
-  bindLayoutProperties(page, layout, workbench, {
-    desktop: { Position: udim2FromOffset(0, 514) },
-    mobile: { Position: udim2FromOffset(0, 574) },
-  });
-  workbench.Parent = content;
   createHomeVisual(layout, theme).Parent = content;
 
   for (const [index, [icon, title, description, accent]] of features.entries()) {

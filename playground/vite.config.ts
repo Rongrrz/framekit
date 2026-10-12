@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  appType: 'mpa',
   root: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [
     {
@@ -10,7 +11,7 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use((request, _response, next) => {
           if (request.url?.split('?')[0]?.replace(/\/$/, '') === '/fkdebug') {
-            request.url = '/workbench.html';
+            request.url = '/index.html';
           }
           next();
         });
@@ -36,7 +37,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         docs: fileURLToPath(new URL('index.html', import.meta.url)),
-        workbench: fileURLToPath(new URL('workbench.html', import.meta.url)),
         collections: fileURLToPath(new URL('collections.html', import.meta.url)),
       },
     },

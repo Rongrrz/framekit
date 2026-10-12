@@ -3,9 +3,10 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  appType: 'mpa',
   plugins: [
     {
-      name: 'workbench-test-entry',
+      name: 'playground-test-entry',
       transformIndexHtml: {
         order: 'pre',
         handler(html) {
@@ -18,7 +19,7 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use((request, _response, next) => {
           if (request.url?.split('?')[0]?.replace(/\/$/, '') === '/fkdebug') {
-            request.url = '/playground/workbench.html';
+            request.url = '/playground/index.html';
           }
           next();
         });

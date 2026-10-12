@@ -87,7 +87,7 @@ FrameKit installs one shared stylesheet per document. For a nonce-based Content 
 
 ## Development
 
-The playground includes a documentation site, an interface workbench (`/workbench.html`), and a 100,000-item virtual collection (`/collections.html`), built with FrameKit. See [playground/README.md](playground/README.md) for its architecture.
+The playground includes a documentation site and a 100,000-item virtual collection (`/collections.html`), built with FrameKit. See [playground/README.md](playground/README.md) for its architecture.
 
 ```sh
 npm run dev              # start the playground

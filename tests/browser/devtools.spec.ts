@@ -10,10 +10,11 @@ test('opens /fkdebug on demand and preserves the live app through browser Back a
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/playground/workbench.html');
+  await page.goto('/playground/index.html');
   await expect(inspectorFor(page)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Add card', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Keep this card');
+  const originalRoot = await page.locator('#root > [data-framekit="ScreenGui"]').elementHandle();
+  await page.getByRole('button', { name: /Switch to (light|dark) mode/ }).click();
+  const theme = await page.locator('html').getAttribute('data-framekit-theme');
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
   await expect(page).toHaveURL(/\/fkdebug$/);
   const inspector = inspectorFor(page);
@@ -23,14 +24,13 @@ test('opens /fkdebug on demand and preserves the live app through browser Back a
   ).toBeFocused();
   await page.goBack();
   await expect(inspector).toHaveCount(0);
-  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(
-    'Keep this card',
-  );
+  expect(await originalRoot!.evaluate((node) => node.isConnected)).toBe(true);
+  await expect(page.locator('html')).toHaveAttribute('data-framekit-theme', theme!);
   await expect(page.getByRole('button', { name: 'Debug', exact: true })).toBeFocused();
   await page.goForward();
   await expect(inspector).toBeVisible();
   await page.getByRole('button', { name: 'Close runtime inspector' }).click();
-  await expect(page).toHaveURL(/\/playground\/workbench.html$/);
+  await expect(page).toHaveURL(/\/playground\/index.html$/);
   await expect(inspector).toHaveCount(0);
   expect(errors).toEqual([]);
 });
@@ -42,17 +42,17 @@ test('searches collapsed paths, navigates ancestors and selection history, and f
   const inspector = inspectorFor(page);
   const search = inspector.getByRole('searchbox', { name: 'Search runtime hierarchy' });
   const tree = inspector.getByRole('tree', { name: 'Runtime hierarchy' });
-  await search.fill('Preview:title');
-  const row = tree.getByRole('treeitem', { name: 'Preview:title (TextButton)', exact: true });
+  await search.fill('GetStartedButton');
+  const row = tree.getByRole('treeitem', { name: 'GetStartedButton (TextButton)', exact: true });
   await expect(row).toBeVisible();
   await row.focus();
   await page.keyboard.press('Enter');
   await expect(inspector).toContainText('Class: TextButton');
-  await expect(search).toHaveValue('Preview:title');
+  await expect(search).toHaveValue('GetStartedButton');
   const properties = inspector.getByRole('searchbox', { name: 'Filter runtime properties' });
   await properties.fill('BackgroundColor3');
   await expect(
-    inspector.getByRole('group', { name: 'BackgroundColor3: #76EDAD', exact: true }),
+    inspector.getByRole('group', { name: /^BackgroundColor3: #[A-F0-9]{6}$/ }),
   ).toBeVisible();
   await properties.fill('no such property');
   await expect(inspector.getByText('No matching properties', { exact: true })).toBeVisible();
@@ -70,7 +70,7 @@ test('searches collapsed paths, navigates ancestors and selection history, and f
   await search.fill('');
   await inspector.getByRole('button', { name: 'Collapse all nodes' }).click();
   await expect(tree.getByRole('treeitem')).toHaveCount(1);
-  await search.fill('Preview:title');
+  await search.fill('GetStartedButton');
   await expect(row).toBeVisible();
   await row.click();
   await search.fill('');
@@ -88,27 +88,19 @@ test('picks elements without activating app commands and releases picking when c
   const pick = inspector.getByRole('button', { name: 'Pick an element' });
   await pick.click();
   await expect(pick).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: 'Select Explore', exact: true }).click();
+  await page.getByRole('button', { name: /GET STARTED/ }).click();
   await expect(pick).toHaveAttribute('aria-pressed', 'false');
-  await expect(inspector).toContainText('Preview:primary');
-  // Picking must not change the workbench's model selection.
-  await expect(
-    page
-      .getByRole('tree', { name: 'Objects' })
-      .getByRole('treeitem', { name: 'Welcome', exact: true }),
-  ).toHaveAttribute('aria-selected', 'true');
+  await expect(inspector).toContainText('GetStartedButton');
+  // Picking must not activate the playground's navigation command.
+  await expect(page).toHaveURL(/\/fkdebug$/);
   await pick.click();
   await page.keyboard.press('Escape');
   await expect(pick).toHaveAttribute('aria-pressed', 'false');
   await pick.click();
   await inspector.getByRole('button', { name: 'Close runtime inspector' }).click();
   await expect(inspector).toHaveCount(0);
-  await page.getByRole('button', { name: 'Select Explore', exact: true }).click();
-  await expect(
-    page
-      .getByRole('tree', { name: 'Objects' })
-      .getByRole('treeitem', { name: 'Explore', exact: true }),
-  ).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('button', { name: /GET STARTED/ }).click();
+  await expect(page).toHaveURL(/#\/guide$/);
 });
 
 test('resizes with keyboard and pointer, and uses navigable tabs on a compact screen', async ({
@@ -135,9 +127,9 @@ test('resizes with keyboard and pointer, and uses navigable tabs on a compact sc
   );
   await inspector
     .getByRole('searchbox', { name: 'Search runtime hierarchy' })
-    .fill('Preview:title');
+    .fill('GetStartedButton');
   await inspector
-    .getByRole('treeitem', { name: 'Preview:title (TextButton)', exact: true })
+    .getByRole('treeitem', { name: 'GetStartedButton (TextButton)', exact: true })
     .click();
   const detailTab = inspector.getByRole('tab', { name: 'Details', exact: true });
   await expect(detailTab).toHaveAttribute('aria-selected', 'true');
@@ -165,9 +157,25 @@ test('supports direct /fkdebug navigation and refresh, then exits without losing
     .getByRole('searchbox', { name: 'Search runtime hierarchy' })
     .press('Escape');
   await expect(inspectorFor(page)).toHaveCount(0);
-  await expect(page).toHaveURL(/\/workbench.html$/);
-  await page.getByRole('button', { name: 'Add card', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('Card 1');
+  await expect(page).toHaveURL(/\/index.html$/);
+  await page.getByRole('button', { name: /GET STARTED/ }).click();
+  await expect(page).toHaveURL(/#\/guide$/);
+});
+
+test('removes the old workbench entry and inspects the playground at /fkdebug', async ({
+  page,
+  request,
+}) => {
+  const response = await request.get('/playground/workbench.html');
+  expect(response.status()).toBe(404);
+  await page.goto('/fkdebug');
+  await expect(
+    inspectorFor(page).getByRole('treeitem', {
+      name: 'FrameKitPlayground (ScreenGui)',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add card', exact: true })).toHaveCount(0);
 });
 
 test('the same route controller inspects an independent FrameKit project and releases on root destruction', async ({

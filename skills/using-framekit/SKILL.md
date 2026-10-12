@@ -122,6 +122,6 @@ than exact listener counts.
 
 Verify changed interactions in real browsers when layout, focus, scrolling, or native overlays
 matter. The FrameKit repository offers `npm run check`, a separate `npm run test:browser` across
-Chromium/Firefox/WebKit, and diagnostic `npm run benchmark`. Its workbench exercises editing and
-undo; `/collections.html` demonstrates bounded views for 100,000 items. Browser automation does
+Chromium/Firefox/WebKit, and diagnostic `npm run benchmark`. Its playground demonstrates
+persistent routed pages; `/collections.html` demonstrates bounded views for 100,000 items. Browser automation does
 not establish how the finished application behaves with assistive technology.

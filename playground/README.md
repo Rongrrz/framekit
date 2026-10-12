@@ -1,6 +1,6 @@
 # Playground architecture
 
-The playground includes a FrameKit documentation site, an interface workbench, and a virtual-collection stress page. Its visual hierarchy is inspired by focused documentation sites, while the implementation remains FrameKit and plain TypeScript.
+The playground includes a FrameKit documentation site and a virtual-collection stress page. Its visual hierarchy is inspired by focused documentation sites, while the implementation remains FrameKit and plain TypeScript.
 
 ```text
 playground/src/
@@ -38,17 +38,13 @@ playground/src/
 
 ## Interactive examples
 
-`/workbench.html` uses the public package API for an object tree, preview cards, property edits,
-keyed updates, dragging, command menus, modal help, and a resizable sidebar. On compact screens,
-Properties opens the same design-editing form in a native modal. Data and bounded undo history
-live in `src/workbench/model.ts`; pointer-driven preview behavior and field editing have separate
-owners. This form edits design data; runtime debugging is owned entirely by `framekit/devtools`.
-In development, every page binds the shared Debug launcher. Click it or open `/fkdebug` for the
-optional runtime inspector.
-Its searchable hierarchy, breadcrumbs/history, grouped properties, element picker, and resizable
-dock come from the general `framekit/devtools` package. Back/Forward and Close preserve the
-inspected application's live objects. The development server routes `/fkdebug` to the workbench bootstrap;
-production builds remove the integration.
+`/` demonstrates persistent routed pages, native inputs and overlays, responsive layout, and
+shared theme state. In development, each page binds the shared Debug launcher from
+`framekit/devtools`. Click it or open `/fkdebug` for the runtime inspector. Its searchable
+hierarchy, breadcrumbs/history, grouped properties, element picker, and resizable dock all
+belong to devtools. Back/Forward and Close preserve the inspected application's live objects.
+The development server routes `/fkdebug` to the documentation site's bootstrap. Production
+builds remove the integration.
 
 `/collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top
 to see scroll anchoring, or use End to navigate to the last row without mounting every view.

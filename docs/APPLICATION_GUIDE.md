@@ -3,10 +3,9 @@
 FrameKit objects are persistent. Application state describes the interface; owned callbacks
 update existing objects. `Parent` defines the ownership tree. No render function recreates it.
 
-Start with `playground/src/workbench/app.ts` in the repository for a larger example, or run
-`npm run dev` and open `/workbench.html`. Open `/collections.html` to inspect a 100,000-item
-virtual list. The workbench's data commands and history live in `model.ts`; its views consume
-that state through the public package API.
+Start with `playground/src/app.ts` in the repository for a complete routed interface, or run
+`npm run dev` and open `/`. Use the shared Debug launcher or `/fkdebug` to inspect its live
+FrameKit hierarchy. Open `/collections.html` for a 100,000-item virtual list.
 
 ## Use this checkout from another project
 
@@ -155,9 +154,8 @@ When no one observes a computed value, it releases source subscriptions and deri
 
 User typing is synchronized to `Text` before `onTextChanged` and native `input` listeners run.
 Update state in `onTextChanged`; use an owned watcher for programmatic changes back to the input.
-Avoid rewriting an actively edited field with incomplete numeric or color data. The workbench
-property editor keeps the editing buffer in the native input, validates into the model, and normalizes
-on blur. Its focus/blur events group an edit into one undo step.
+Avoid rewriting an actively edited field with incomplete numeric or color data. Keep the editing
+buffer in the native input, validate into application state, and normalize on blur.
 
 ## Identity, ownership, and ordering
 
@@ -295,7 +293,7 @@ in a search field it clears the query first, then closes the inspector. Compact 
 Hierarchy/Details tabs. Navigation and styling do not mutate inspected objects.
 
 Each playground page binds the same devtools launcher during development, and its dev server
-serves `/fkdebug` directly using the workbench bootstrap. Production playground builds remove the integration. For custom mounting without
+serves `/fkdebug` directly using the playground bootstrap. Production playground builds remove the integration. For custom mounting without
 routing, use `createRuntimeInspector(root)` and mount its `gui` yourself.
 
 `unsafeElement` is useful for native integration, labels, input modes, and unsupported attributes.
