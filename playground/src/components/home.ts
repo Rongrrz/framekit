@@ -144,7 +144,7 @@ export const createHomePage = (
     mobile: { Size: udim2FromOffset(358, 48), Position: udim2FromOffset(0, 462) },
   });
   const install = createButton(theme, {
-    label: 'COPY  npm i framekit',
+    label: 'COPY  build + pack',
     name: 'HomeInstallButton',
     size: udim2FromOffset(208, 48),
     position: udim2FromOffset(0, 0),
@@ -159,7 +159,9 @@ export const createHomePage = (
   });
   start.onClick(() => navigate('guide'));
   api.onClick(() => navigate('api'));
-  install.onClick(() => void copyCommand(install, 'npm i framekit', 'COPY  npm i framekit'));
+  install.onClick(
+    () => void copyCommand(install, 'npm run build && npm pack', 'COPY  build + pack'),
+  );
   for (const child of [product, title, body, start, api, install]) {
     child.Parent = content;
   }

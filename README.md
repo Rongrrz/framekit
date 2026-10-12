@@ -19,18 +19,19 @@ FrameKit has no components, render functions, hooks, virtual tree, or implicit r
 
 ## Core API
 
-Everything is available from the `framekit` entry point.
+Runtime APIs are available from `framekit`. Optional inspection tools use `framekit/devtools`.
 
-| Area      | API                                                                                    |
-| --------- | -------------------------------------------------------------------------------------- |
-| Elements  | `createScreenGui`, `createFrame`, text, image, link, and native text-control factories |
-| Modifiers | Corners, gradients, strokes, shadows, padding, scale, aspect ratio, and list layout    |
-| Hierarchy | `Parent`, `isA`, `getChildren`, `getDescendants`, `findFirstChild`                     |
-| Lifecycle | `mount`, `unmount`, `destroy`, `onDestroy`                                             |
-| State     | Direct properties, property observers, observable and computed values                  |
-| Motion    | `spring`, `createTween`                                                                |
-| Helpers   | Tooltips, popovers, hover scale, and responsive layouts                                |
-| Values    | `Color3`, `UDim`, `UDim2`, `Vector2`, and sequences                                    |
+| Area        | API                                                                                    |
+| ----------- | -------------------------------------------------------------------------------------- |
+| Elements    | `createScreenGui`, `createFrame`, text, image, link, and native text-control factories |
+| Modifiers   | Corners, gradients, strokes, shadows, padding, scale, aspect ratio, and list layout    |
+| Hierarchy   | `Parent`, `isA`, `getChildren`, `getDescendants`, `findFirstChild`                     |
+| Lifecycle   | `mount`, `unmount`, `destroy`, `onDestroy`                                             |
+| State       | Direct properties, property observers, observable and computed values, owned watchers  |
+| Collections | Keyed children and fixed-height virtual lists                                          |
+| Motion      | `spring`, `createTween`                                                                |
+| Helpers     | Tooltips, popovers, hover scale, and responsive layouts                                |
+| Values      | `Color3`, `UDim`, `UDim2`, `Vector2`, and sequences                                    |
 
 Properties are typed, validated, and applied immediately:
 
@@ -86,14 +87,28 @@ FrameKit installs one shared stylesheet per document. For a nonce-based Content 
 
 ## Development
 
-The playground is a documentation site built entirely with FrameKit. See [playground/README.md](playground/README.md) for its architecture.
+The playground includes a documentation site, an interface workbench (`/workbench.html`), and a 100,000-item virtual collection (`/collections.html`), built with FrameKit. See [playground/README.md](playground/README.md) for its architecture.
 
 ```sh
 npm run dev              # start the playground
 npm test                 # run library tests
 npm run test:playground  # run playground tests
+npm run test:browser     # Chromium, Firefox, WebKit (install browsers first)
+npm run benchmark        # record browser performance diagnostics
 npm run build            # build the package
-npm run check            # run every quality gate
+npm run check            # formatting, types, lint, units, builds, package checks
 ```
 
-Package consumers should import only from `framekit`. Internal modules are implementation details.
+Package consumers should import from `framekit` or the optional `framekit/devtools` entry. Internal modules are implementation details.
+
+## Build applications
+
+This checkout is marked `private`; use `npm run build` followed by `npm pack`, then install the
+resulting archive in your application. The [application guide](docs/APPLICATION_GUIDE.md) includes
+the exact installation steps, a complete dynamic interface, and contracts for state, ordering,
+input, accessibility, virtualization, and diagnostics. [Performance diagnostics](benchmarks/README.md)
+include reproducible workloads and the first measured DOM baseline.
+
+Before browser tests, run `npx playwright install chromium firefox webkit`. Browser checks run in
+a separate CI job; `npm run check` runs formatting, types, lint, unit tests, builds, and package
+consumer contracts.

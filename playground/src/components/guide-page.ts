@@ -44,17 +44,19 @@ export const createGuidePage = (
     shell.article,
     theme,
     'Install FrameKit',
-    'Add the package to an existing web project. Vite is convenient, but FrameKit works with any modern bundler.',
+    'This checkout is private. Run npm ci, build, and pack in the FrameKit repository, then install its archive in your web application.',
   );
   appendCodeBlock(shell.article, theme, 'InstallCode', [
-    { text: 'npm install framekit', color: 'accent' },
+    { text: 'npm ci && npm run build && npm pack', color: 'accent' },
+    { text: '// In your browser application:' },
+    { text: 'npm install /path/to/framekit/framekit-0.1.0.tgz' },
   ]);
 
   const firstInterface = appendArticleSection(
     shell.article,
     theme,
     'Create your first interface',
-    'Create the root, make a child, and connect them. Parent is the only step that attaches the child to the rendered hierarchy.',
+    'Add a div with id app to your HTML. Create the root, make a child, assign Parent, and mount the root.',
   );
   appendCodeBlock(shell.article, theme, 'FirstInterfaceCode', [
     { text: "import { createScreenGui, createTextLabel } from 'framekit';", color: 'purple' },
@@ -65,6 +67,7 @@ export const createGuidePage = (
     { text: '  TextScaled: true,' },
     { text: '});' },
     { text: 'message.Parent = app;', color: 'accent' },
+    { text: "app.mount('#app');", color: 'blue' },
   ]);
 
   const properties = appendArticleSection(
@@ -92,7 +95,8 @@ export const createGuidePage = (
     { text: "  Text: 'Save'," },
     { text: '});' },
     { text: '' },
-    { text: 'button.onClick(() => save());', color: 'blue' },
+    { text: "button.onClick(() => console.log('Saved'));", color: 'blue' },
+    { text: 'button.Parent = app;' },
     { text: "button.onMouseEnter(() => (button.Text = 'Save now'));" },
   ]);
 
@@ -100,14 +104,14 @@ export const createGuidePage = (
     shell.article,
     theme,
     'Bind reactive values',
-    'An observable value stores small pieces of state. Subscribe with onChange and register its unsubscribe with the node that owns the binding.',
+    'An observable value stores shared state. watchOwnedValue delivers its current value immediately and unsubscribes when the owner is destroyed.',
   );
   appendCodeBlock(shell.article, theme, 'ValueGuideCode', [
     { text: 'const count = createObservableValue(0);', color: 'purple' },
     { text: '' },
-    { text: 'message.onDestroy(count.onChange((value) => {' },
+    { text: 'watchOwnedValue(message, count, (value) => {' },
     { text: '  message.Text = `Count: ${value}`;', color: 'accent' },
-    { text: '}));' },
+    { text: '});' },
     { text: '' },
     { text: 'count.set(count.get() + 1);' },
   ]);

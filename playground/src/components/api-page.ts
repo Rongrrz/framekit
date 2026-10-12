@@ -78,6 +78,7 @@ export const createApiPage = (
     { text: 'child.Parent = node' },
     { text: 'node.Parent = undefined' },
     { text: 'node.getChildren() / getDescendants()' },
+    { text: 'node.reorderChildren(allDirectChildren)' },
     { text: "node.findFirstChild('Name', true)" },
     { text: "child.isA('TextButton')", color: 'blue' },
     { text: 'node.destroy() / isDestroyed()', color: 'orange' },
@@ -122,9 +123,14 @@ export const createApiPage = (
     shell.article,
     theme,
     'Events',
-    'All GUI elements support pointer entry and exit. Buttons add mouse-button events, while native text controls add user-edit events.',
+    'All GUI elements support typed native events, focus, blur, and pointer capture. Buttons add activation helpers; text controls synchronize Text before user-edit events.',
   );
   appendCodeBlock(shell.article, theme, 'EventsApiCode', [
+    { text: "node.on('keydown', (event) => handleKey(event.key))" },
+    { text: "node.on('pointerdown', handlePointer)" },
+    { text: 'node.focus() / blur()' },
+    { text: 'node.setPointerCapture(pointerId)' },
+    { text: 'node.releasePointerCapture(pointerId)' },
     { text: 'node.onMouseEnter(listener)' },
     { text: 'node.onMouseLeave(listener)' },
     { text: 'button.onClick(listener)', color: 'accent' },
@@ -138,13 +144,13 @@ export const createApiPage = (
     shell.article,
     theme,
     'Values and signals',
-    'Values model mutable state. Signals model typed events. Register the unsubscribe function with owner.onDestroy to release a subscription when its owner is destroyed.',
+    'Values model mutable state. Signals model typed events. watchOwnedValue immediately delivers current state and releases its subscription with its owner. Register other unsubscribe functions with onDestroy.',
   );
   appendCodeBlock(shell.article, theme, 'ValuesApiCode', [
     { text: 'const value = createObservableValue(initial);', color: 'purple' },
     { text: 'value.get()' },
     { text: 'value.set(next)' },
-    { text: 'owner.onDestroy(value.onChange(listener))', color: 'accent' },
+    { text: 'watchOwnedValue(owner, value, listener)', color: 'accent' },
     { text: '' },
     { text: 'const total = createComputedValue([price, quantity], () =>' },
     { text: '  price.get() * quantity.get(),', color: 'purple' },
@@ -204,6 +210,11 @@ export const createApiPage = (
     'Helpers are named exports that compose optional behavior from the same core instances.',
   );
   appendCodeBlock(shell.article, theme, 'HelpersApiCode', [
+    { text: 'bindKeyedChildren(parent, items, { key, create, update })' },
+    { text: 'bindVirtualList(viewport, items, options)' },
+    { text: 'bindTreeView(root, visibleRows, { onSelect, onToggle })' },
+    { text: 'bindMenu(trigger, menu, commandItems)' },
+    { text: 'bindDialog(dialogFrame, { initialFocus })' },
     { text: 'bindResponsiveLayout(owner, { observe, breakpoints })' },
     { text: 'bindHoverScale(node, scale, 1.035)' },
     { text: '' },

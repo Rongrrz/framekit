@@ -5,7 +5,11 @@
   "description": "Roblox-inspired TypeScript UI primitives for the browser DOM.",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "FRAMEKIT_LIFECYCLE.md",
+    "docs",
+    "benchmarks/README.md",
+    "benchmarks/baseline.json"
   ],
   "type": "module",
   "sideEffects": false,

@@ -1,6 +1,6 @@
 # Playground architecture
 
-The playground is a small FrameKit documentation site. Its visual hierarchy is inspired by focused documentation sites, while the implementation remains FrameKit and plain TypeScript.
+The playground includes a FrameKit documentation site, an interface workbench, and a virtual-collection stress page. Its visual hierarchy is inspired by focused documentation sites, while the implementation remains FrameKit and plain TypeScript.
 
 ```text
 playground/src/
@@ -35,3 +35,18 @@ playground/src/
 - Light and dark mode update existing instances in place.
 - Navigation uses local hash routes and remains usable without a framework router.
 - Motion is used only when it helps explain an API or interaction.
+
+## Interactive examples
+
+`/workbench.html` uses the public package API for an object tree, preview cards, property edits,
+keyed updates, dragging, command menus, modal help, and a resizable sidebar. On compact screens,
+Properties opens the same inspector objects in a native modal. Data and bounded undo history
+live in `src/workbench/model.ts`; pointer-driven preview behavior and field editing have separate
+owners. Use `?inspect=1` in development to load the optional runtime inspector. Production builds
+remove that development branch.
+
+`/collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top
+to see scroll anchoring, or use End to navigate to the last row without mounting every view.
+
+Both pages are included in production builds. Browser tests cover their workflows across
+Chromium, Firefox, and WebKit.

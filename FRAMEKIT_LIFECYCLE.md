@@ -123,7 +123,7 @@ Cleanup continues after individual callbacks fail. One failure is rethrown; mult
 
 ## Useful invariants and boundaries
 
-The FrameKit hierarchy is authoritative; DOM traversal does not reveal logical ownership. `getChildren()` and `getDescendants()` return snapshots. `Name` is editable data, while `ClassName` identifies the concrete type. Events and value subscriptions are synchronous; register unsubscribers with `onDestroy()` when a node owns them.
+The FrameKit hierarchy is authoritative; DOM traversal does not reveal logical ownership. `getChildren()` and `getDescendants()` return snapshots. `Name` is editable data, while `ClassName` identifies the concrete type. Events and value subscriptions are synchronous. `watchOwnedValue()` owns immediate value delivery and subscription disposal. Native `on()` listeners also belong to their GUI node; register other external unsubscribers with `onDestroy()`.
 
 `GuiElement.unsafeElement` is an escape hatch: direct DOM edits do not update FrameKit state. Destroy permanently removes a subtree; detach or unmount when objects should remain reusable.
 
@@ -135,3 +135,19 @@ When behavior is surprising:
 2. Compare properties with DOM styles and temporarily subscribe with `onPropertyChanged()`.
 3. For motion, inspect tween `playbackState()` or spring `isAnimating()` and look for a direct write or competing owner.
 4. For layout, verify the modifier is attached to the expected parent and the node is a direct GUI child.
+
+## Dynamic collections and browser ordering
+
+`reorderChildren()` validates an exact permutation of all direct children before updating the
+hierarchy. Layout ranks determine both CSS placement and DOM reading order; the logical
+hierarchy keeps explicit order and resolves equal-rank ties. Removing a layout restores DOM
+order from the hierarchy. Moves use native state-preserving placement when available and
+restore connected focus and input selection in the fallback.
+
+Keyed collections own generated views. Updates retain matching keys, dispose removed keys,
+and leave unrelated parent children alive. Explicit binding disposal destroys generated views.
+Virtual lists additionally separate data lifetime from view lifetime: views outside the mounted
+window are destroyed, while key-based application selection survives. Their listbox focus stays
+on the viewport and references only a mounted active descendant.
+
+The [application guide](docs/APPLICATION_GUIDE.md) explains the public contracts and examples.
