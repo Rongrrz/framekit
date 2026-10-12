@@ -35,6 +35,7 @@ export const nativeGuiMethods = Object.freeze({
   ): Unsubscribe {
     const state = getActiveNodeState(this);
     const element = this.unsafeElement;
+    const listenerOptions = { ...options };
     let disposed = false;
     const dispose = (): void => {
       if (disposed) {
@@ -42,15 +43,15 @@ export const nativeGuiMethods = Object.freeze({
       }
       disposed = true;
       state.cleanups.delete(dispose);
-      element.removeEventListener(eventName, handle, options.capture);
+      element.removeEventListener(eventName, handle, listenerOptions.capture);
     };
     const handle = (event: HTMLElementEventMap[EventName]): void => {
-      if (options.once) {
+      if (listenerOptions.once) {
         dispose();
       }
       listener(event);
     };
-    element.addEventListener(eventName, handle, options);
+    element.addEventListener(eventName, handle, listenerOptions);
     state.cleanups.add(dispose);
     return dispose;
   },

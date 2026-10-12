@@ -14,7 +14,7 @@ export type DialogController = Readonly<{
 /** Uses a native dialog for top-layer rendering, background inertness, and nested modal focus. */
 export const bindDialog = (node: GuiElement, options: DialogOptions = {}): DialogController => {
   const element = node.unsafeElement;
-  if (element.tagName !== 'DIALOG') {
+  if (node.isDestroyed() || element.tagName !== 'DIALOG') {
     throw new TypeError('bindDialog requires a frame created with tagName: dialog.');
   }
   const dialog = element as HTMLDialogElement;
@@ -64,16 +64,22 @@ export const bindDialog = (node: GuiElement, options: DialogOptions = {}): Dialo
       if (dialog.open) {
         return;
       }
+      if (
+        options.initialFocus &&
+        (options.initialFocus.isDestroyed() || !dialog.contains(options.initialFocus.unsafeElement))
+      ) {
+        throw new TypeError('Initial focus must be a live descendant of the dialog.');
+      }
+      if (
+        trigger &&
+        (trigger.isDestroyed() || trigger.unsafeElement.ownerDocument !== element.ownerDocument)
+      ) {
+        throw new TypeError('The dialog opener must be live and belong to the same document.');
+      }
       opener =
         trigger?.unsafeElement ?? (element.ownerDocument.activeElement as HTMLElement | undefined);
       dialog.showModal();
-      if (options.initialFocus) {
-        if (!dialog.contains(options.initialFocus.unsafeElement)) {
-          close();
-          throw new TypeError('Initial focus must belong to the dialog.');
-        }
-        options.initialFocus.focus();
-      }
+      options.initialFocus?.focus();
     },
     close,
     dispose,

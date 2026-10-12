@@ -52,3 +52,43 @@ it('rejects invalid geometry and duplicate keys without retaining a subtree', ()
   expect(viewport.getChildren()).toEqual([]);
   viewport.destroy();
 });
+
+it('preserves surviving scroll and selection neighbors when several earlier items are deleted', () => {
+  const viewport = createScrollingFrame();
+  Object.defineProperty(viewport.unsafeElement, 'clientHeight', { value: 160 });
+  const source = createObservableValue(Array.from({ length: 100 }, (_, index) => index));
+  const selection = createObservableValue<string | number | undefined>(90);
+  const list = bindVirtualList(viewport, source, {
+    itemHeight: 32,
+    key: (id) => id,
+    selection,
+    create: () => createTextLabel(),
+  });
+  viewport.unsafeElement.scrollTop = 327; // Item 10 with a seven-pixel offset.
+  source.set(source.get().filter((id) => id !== 0 && id !== 10 && id !== 90));
+  expect(viewport.unsafeElement.scrollTop).toBe(295); // Surviving item 11 is now at index 9.
+  expect(selection.get()).toBe(91);
+  list.dispose();
+  viewport.destroy();
+});
+
+it('rejects caller-owned rows without mutating or destroying them', () => {
+  const viewport = createScrollingFrame();
+  const parent = createScrollingFrame();
+  const row = createTextLabel();
+  row.Parent = parent;
+  expect(() =>
+    bindVirtualList(viewport, createObservableValue([1]), {
+      itemHeight: 32,
+      key: (id) => id,
+      selection: createObservableValue<string | number | undefined>(undefined),
+      create: () => row,
+    }),
+  ).toThrow(/unique, live, unattached/);
+  expect(row.Parent).toBe(parent);
+  expect(row.isDestroyed()).toBe(false);
+  expect(row.unsafeElement.hasAttribute('role')).toBe(false);
+  expect(viewport.getChildren()).toEqual([]);
+  viewport.destroy();
+  parent.destroy();
+});

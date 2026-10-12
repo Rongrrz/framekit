@@ -49,3 +49,18 @@ it('uses native focus and rejects operations after destruction', () => {
   expect(() => button.focus()).toThrow(/destroyed/);
   expect(() => button.setPointerCapture(1)).toThrow(/destroyed/);
 });
+
+it('snapshots listener options so later caller mutation cannot prevent cleanup', () => {
+  const node = createFrame();
+  const options = { capture: true, once: false };
+  const listener = vi.fn();
+  node.on('click', listener, options);
+  options.capture = false;
+  options.once = true;
+  node.unsafeElement.click();
+  node.unsafeElement.click();
+  expect(listener).toHaveBeenCalledTimes(2);
+  node.destroy();
+  node.unsafeElement.click();
+  expect(listener).toHaveBeenCalledTimes(2);
+});

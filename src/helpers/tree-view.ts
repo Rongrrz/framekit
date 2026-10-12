@@ -30,7 +30,6 @@ export const bindTreeView = (
   const element = root.unsafeElement;
   const role = element.getAttribute('role');
   const rootTabIndex = element.getAttribute('tabindex');
-  element.setAttribute('role', 'tree');
   let items: readonly TreeViewItem[] = [];
   let active: GuiElement | undefined;
   let focusWithin = false;
@@ -72,15 +71,20 @@ export const bindTreeView = (
       new Set(next.map((item) => item.node)).size !== next.length ||
       next.some(
         (item, index) =>
+          item.node.isDestroyed() ||
+          item.node === root ||
+          !element.contains(item.node.unsafeElement) ||
           !Number.isInteger(item.level) ||
           item.level < 1 ||
-          item.level > (index === 0 ? 1 : next[index - 1]!.level + 1),
+          item.level > (index === 0 ? 1 : next[index - 1]!.level + 1) ||
+          (index > 0 && item.level > next[index - 1]!.level && next[index - 1]!.expanded !== true),
       )
     ) {
       throw new TypeError(
-        'Tree rows must be unique and use valid depth-first levels starting at 1.',
+        'Tree rows must be unique live descendants with visible depth-first levels starting at 1.',
       );
     }
+    element.setAttribute('role', 'tree');
     const previousIndex = items.findIndex((item) => item.node === active);
     for (const node of originals.keys()) {
       if (!next.some((item) => item.node === node)) {
@@ -138,7 +142,7 @@ export const bindTreeView = (
   const subscriptions = [
     root.on('focusin', (event) => {
       focusWithin = true;
-      const item = items.find((item) => item.node.unsafeElement.contains(event.target as Node));
+      const item = items.findLast((item) => item.node.unsafeElement.contains(event.target as Node));
       if (item) {
         setActive(item.node, false);
       }
@@ -152,7 +156,7 @@ export const bindTreeView = (
       if (isTextEntry(event.target)) {
         return;
       }
-      const item = items.find((item) => item.node.unsafeElement.contains(event.target as Node));
+      const item = items.findLast((item) => item.node.unsafeElement.contains(event.target as Node));
       if (item) {
         setActive(item.node, true);
         options.onSelect(item.node);
@@ -227,6 +231,8 @@ export const bindTreeView = (
     for (const node of originals.keys()) {
       restore(node);
     }
+    items = [];
+    active = undefined;
     if (role === null) {
       element.removeAttribute('role');
     } else {

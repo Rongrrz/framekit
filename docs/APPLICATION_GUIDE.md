@@ -138,7 +138,8 @@ or a new lifecycle system.
 `watchOwnedValue(owner, value, listener)` subscribes before immediately delivering `value.get()`.
 That prevents changes made during initial delivery from being lost. It returns an idempotent
 disposer, unsubscribes when the owner is destroyed, and releases its subscription if initial
-delivery throws. Detaching or unmounting the owner keeps it subscribed.
+delivery throws. Later listener failures are reported through FrameKit's observer error handling;
+other observers still run. Detaching or unmounting the owner keeps it subscribed.
 
 Computed values require explicit dependencies. Include every observable read by the derivation.
 When no one observes a computed value, it releases source subscriptions and derives on demand.
@@ -245,7 +246,9 @@ Page Up/Down update selection and scroll it into view. If a selected option scro
 view is destroyed and the active-descendant reference is removed; data selection survives.
 A remounted key gets a new view. Preserve editable draft data in the application model.
 
-Source changes preserve the first visible key and its pixel offset when possible. Explicit
+Source changes preserve the first visible key and its pixel offset when possible. If that key is
+removed, the next surviving neighbor anchors the viewport. Removing a selected item chooses its
+next surviving neighbor, falling back to the previous one. Explicit
 disposal destroys generated content, disconnects observation, and restores viewport settings.
 Variable-height rows and grids are outside the current contract.
 

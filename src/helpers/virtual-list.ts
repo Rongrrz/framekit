@@ -6,11 +6,8 @@ import {
   assertPositiveFinite,
   assertInteger,
 } from '#internal/validation.js';
-import {
-  createObservableValue,
-  type ObservableValue,
-  type ReadonlyObservableValue,
-} from '#state/value.js';
+import { createSignalEmitter } from '#state/signal.js';
+import type { ObservableValue, ReadonlyObservableValue } from '#state/value.js';
 import { udim2 } from '#values/udim.js';
 import { vector2 } from '#values/vector2.js';
 
@@ -66,41 +63,54 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
   element.setAttribute('role', 'listbox');
   element.tabIndex = 0;
   viewport.setProperties({ AutomaticCanvasSize: 'None', ScrollingDirection: 'Y' });
-  const visible = createObservableValue<readonly Entry<Item>[]>([]);
+  let visible: readonly Entry<Item>[] = [];
+  const visibleChanged = createSignalEmitter<[readonly Entry<Item>[]]>();
   const views = new Map<string | number, Node>();
   let entries: readonly Entry<Item>[] = [];
   let indices = new Map<string | number, number>();
   let disposed = false;
-  bindKeyedChildren(content, visible, {
-    key: (entry) => entry.key,
-    create: (entry) => {
-      const node = options.create(entry.item);
-      if (!node.unsafeElement.id) {
-        nextRowId += 1;
-        node.unsafeElement.id = `framekit-option-${nextRowId}`;
-      }
-      node.unsafeElement.setAttribute('role', 'option');
-      node.unsafeElement.tabIndex = -1;
-      node.on('click', (event) => {
-        if (!isTextEntry(event.target)) {
-          options.selection.set(entry.key);
-          viewport.focus({ preventScroll: true });
+  bindKeyedChildren(
+    content,
+    { get: () => visible, onChange: visibleChanged.subscribe },
+    {
+      key: (entry) => entry.key,
+      create: (entry) => {
+        const node = options.create(entry.item);
+        if (
+          node.isDestroyed() ||
+          node.Parent ||
+          node.unsafeElement === element ||
+          [...views.values()].includes(node)
+        ) {
+          throw new TypeError('A virtual row factory must return a unique, live, unattached view.');
         }
-      });
-      views.set(entry.key, node);
-      node.onDestroy(() => views.delete(entry.key));
-      return node;
+        if (!node.unsafeElement.id) {
+          nextRowId += 1;
+          node.unsafeElement.id = `framekit-option-${nextRowId}`;
+        }
+        node.unsafeElement.setAttribute('role', 'option');
+        node.unsafeElement.tabIndex = -1;
+        node.on('click', (event) => {
+          if (!isTextEntry(event.target)) {
+            options.selection.set(entry.key);
+            viewport.focus({ preventScroll: true });
+          }
+        });
+        views.set(entry.key, node);
+        node.onDestroy(() => views.delete(entry.key));
+        return node;
+      },
+      update: (node, entry) => {
+        options.update?.(node, entry.item, entry.index);
+        node.setProperties({
+          Position: udim2(0, 0, 0, entry.index * options.itemHeight),
+          Size: udim2(1, 0, 0, options.itemHeight),
+        });
+        node.unsafeElement.setAttribute('aria-posinset', String(entry.index + 1));
+        node.unsafeElement.setAttribute('aria-setsize', String(entries.length));
+      },
     },
-    update: (node, entry) => {
-      options.update?.(node, entry.item, entry.index);
-      node.setProperties({
-        Position: udim2(0, 0, 0, entry.index * options.itemHeight),
-        Size: udim2(1, 0, 0, options.itemHeight),
-      });
-      node.unsafeElement.setAttribute('aria-posinset', String(entry.index + 1));
-      node.unsafeElement.setAttribute('aria-setsize', String(entries.length));
-    },
-  });
+  );
   const render = (): void => {
     if (disposed || viewport.isDestroyed()) {
       return;
@@ -110,9 +120,15 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     const start = Math.max(0, Math.floor(top / options.itemHeight) - overscan);
     const end = Math.min(entries.length, Math.ceil((top + height) / options.itemHeight) + overscan);
     const next = entries.slice(start, end);
-    const previous = visible.get();
+    const previous = visible;
     if (next.length !== previous.length || next.some((entry, index) => entry !== previous[index])) {
-      visible.set(next);
+      visible = next;
+      try {
+        visibleChanged.emit(next);
+      } catch (error) {
+        visible = previous;
+        throw error;
+      }
     }
     const selection = options.selection.get();
     for (const [key, view] of views) {
@@ -149,7 +165,13 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
       throw new TypeError('Virtual list requires unique keys.');
     }
     const oldIndex = Math.floor(element.scrollTop / options.itemHeight);
-    const anchor = entries[oldIndex];
+    const selection = options.selection.get();
+    const selectedIndex = selection === undefined ? oldIndex : (indices.get(selection) ?? oldIndex);
+    const survivor = (from: number): Entry<Item> | undefined =>
+      entries.find((entry, index) => index >= from && nextIndices.has(entry.key)) ??
+      entries.findLast((entry, index) => index < from && nextIndices.has(entry.key));
+    const anchor = survivor(oldIndex);
+    const nextSelection = survivor(selectedIndex)?.key;
     const offset = element.scrollTop % options.itemHeight;
     entries = next;
     indices = nextIndices;
@@ -160,9 +182,10 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
       ? (indices.get(anchor.key) ?? Math.min(oldIndex, entries.length - 1))
       : 0;
     viewport.CanvasPosition = vector2(0, Math.max(0, anchorIndex * options.itemHeight + offset));
-    const selection = options.selection.get();
     if (selection !== undefined && !indices.has(selection)) {
-      options.selection.set(entries[Math.min(oldIndex, entries.length - 1)]?.key);
+      options.selection.set(
+        nextSelection ?? entries[Math.min(selectedIndex, entries.length - 1)]?.key,
+      );
     }
     render();
   };
@@ -179,6 +202,10 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     stops.forEach((stop) => stop());
     resize.disconnect();
     content.destroy();
+    entries = [];
+    indices.clear();
+    visible = [];
+    views.clear();
     if (!viewport.isDestroyed()) {
       viewport.setProperties(saved);
     }

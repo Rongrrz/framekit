@@ -23,14 +23,19 @@ export const bindMenu = (
   items: readonly GuiElement[],
 ): MenuController => {
   const element = menu.unsafeElement;
-  installFrameKitStyles({ ownerDocument: element.ownerDocument });
   if (
+    trigger.isDestroyed() ||
+    menu.isDestroyed() ||
+    trigger.unsafeElement.ownerDocument !== element.ownerDocument ||
     items.length === 0 ||
     new Set(items).size !== items.length ||
-    items.some((item) => !element.contains(item.unsafeElement))
+    items.some(
+      (item) => item.isDestroyed() || item === menu || !element.contains(item.unsafeElement),
+    )
   ) {
     throw new TypeError('Menu items must be descendants of the menu.');
   }
+  installFrameKitStyles({ ownerDocument: element.ownerDocument });
   const typeahead = createTypeahead();
   const savedTrigger = ['aria-haspopup', 'aria-expanded', 'aria-controls'].map((name) =>
     trigger.unsafeElement.getAttribute(name),
@@ -82,10 +87,21 @@ export const bindMenu = (
       throw new Error('Menu binding has been disposed.');
     }
     const bounds = trigger.unsafeElement.getBoundingClientRect();
-    menu.Position = udim2FromOffset(position?.X ?? bounds.left, position?.Y ?? bounds.bottom);
+    const x = position?.X ?? bounds.left;
+    const y = position?.Y ?? bounds.bottom;
+    menu.Position = udim2FromOffset(x, y);
     if (!isOpen()) {
       element.showPopover();
     }
+    const window = element.ownerDocument.defaultView!;
+    const menuBounds = element.getBoundingClientRect();
+    const left = Math.max(0, Math.min(x, window.innerWidth - menuBounds.width));
+    const top =
+      !position && y + menuBounds.height > window.innerHeight
+        ? Math.max(0, bounds.top - menuBounds.height)
+        : Math.max(0, Math.min(y, window.innerHeight - menuBounds.height));
+    // Correct against measured viewport geometry, including a scrolled document.
+    menu.Position = udim2FromOffset(x + left - menuBounds.left, y + top - menuBounds.top);
     trigger.unsafeElement.setAttribute('aria-expanded', 'true');
     enabled()[0]?.focus();
   };
@@ -107,17 +123,31 @@ export const bindMenu = (
       }
     }),
     menu.on('toggle', () => trigger.unsafeElement.setAttribute('aria-expanded', String(isOpen()))),
+    menu.on(
+      'click',
+      (event) => {
+        const item = items.find((item) => item.unsafeElement.contains(event.target as Node));
+        if (item?.unsafeElement.matches(':disabled, [aria-disabled="true"]')) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      { capture: true },
+    ),
     menu.on('click', (event) => {
-      if (
-        items.length === 0 ||
-        new Set(items).size !== items.length ||
-        items.some((item) => item.unsafeElement.contains(event.target as Node))
-      ) {
+      if (enabled().some((item) => item.unsafeElement.contains(event.target as Node))) {
         close();
       }
     }),
     menu.on('keydown', (event) => {
-      if (event.defaultPrevented || isTextEntry(event.target) || event.isComposing) {
+      if (
+        event.defaultPrevented ||
+        isTextEntry(event.target) ||
+        event.isComposing ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey
+      ) {
         return;
       }
       if (event.key === 'Escape') {
@@ -134,6 +164,11 @@ export const bindMenu = (
       const index = controls.findIndex(
         (item) => item.unsafeElement === element.ownerDocument.activeElement,
       );
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        controls[index]?.unsafeElement.click();
+        return;
+      }
       let next: number | undefined;
       if (event.key === 'ArrowDown') {
         next = (index + 1) % controls.length;

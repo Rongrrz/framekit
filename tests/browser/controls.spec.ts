@@ -154,3 +154,95 @@ test('nested native dialogs contain focus and restore the opener one Escape at a
   await expect(page.getByRole('dialog', { name: 'Outer dialog' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Open dialog', exact: true })).toBeFocused();
 });
+
+test('menu activation works once for custom commands and stays inside a scrolled viewport', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const {
+      createScreenGui,
+      createFrame,
+      createTextButton,
+      createTextLabel,
+      bindMenu,
+      udim2FromOffset,
+      vector2,
+    } = window.framekit;
+    const gui = createScreenGui();
+    const trigger = createTextButton({ Text: 'Custom actions' });
+    trigger.Parent = gui;
+    const menu = createFrame({ Size: udim2FromOffset(160, 96) });
+    menu.Parent = gui;
+    menu.unsafeElement.dataset.testid = 'custom-menu';
+    const command = createTextLabel({ Text: 'Run command', Size: udim2FromOffset(160, 32) });
+    command.Parent = menu;
+    const disabled = createTextLabel({
+      Text: 'Blocked command',
+      Position: udim2FromOffset(0, 32),
+      Size: udim2FromOffset(160, 32),
+    });
+    disabled.unsafeElement.setAttribute('aria-disabled', 'true');
+    disabled.Parent = menu;
+    let count = 0;
+    command.on('click', () => {
+      menu.unsafeElement.dataset.count = String(++count);
+    });
+    disabled.on('click', () => {
+      menu.unsafeElement.dataset.blocked = 'activated';
+    });
+    const controller = bindMenu(trigger, menu, [command, disabled]);
+    gui.mount('#root');
+    document.body.style.height = '2000px';
+    window.scrollTo(0, 200);
+    controller.open(vector2(innerWidth - 2, innerHeight - 2));
+  });
+  const menu = page.getByTestId('custom-menu');
+  const bounds = await menu.boundingBox();
+  const viewport = page.viewportSize()!;
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width + 1);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height + 1);
+  await menu
+    .getByRole('menuitem', { name: 'Blocked command' })
+    .evaluate((node: HTMLElement) => node.click());
+  await expect(menu).not.toHaveAttribute('data-blocked');
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Run command' })).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(menu).toHaveAttribute('data-count', '1');
+  await expect(menu).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Custom actions' })).toBeFocused();
+});
+
+test('invalid initial dialog focus fails before opening a modal or moving focus', async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    const { createFrame, createTextButton, createTextInput, bindDialog } = window.framekit;
+    const dialog = createFrame({}, { tagName: 'dialog' });
+    document.body.append(dialog.unsafeElement);
+    const input = createTextInput();
+    input.Parent = dialog;
+    const controller = bindDialog(dialog, { initialFocus: input });
+    const opener = createTextButton();
+    document.body.append(opener.unsafeElement);
+    opener.focus();
+    input.destroy();
+    let rejected = false;
+    try {
+      controller.open(opener);
+    } catch {
+      rejected = true;
+    }
+    const result = {
+      rejected,
+      open: dialog.unsafeElement.hasAttribute('open'),
+      focusKept: document.activeElement === opener.unsafeElement,
+    };
+    dialog.destroy();
+    opener.destroy();
+    return result;
+  });
+  expect(result).toEqual({ rejected: true, open: false, focusKept: true });
+});

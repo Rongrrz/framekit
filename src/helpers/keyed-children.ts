@@ -34,6 +34,7 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
       return;
     }
     disposed = true;
+    pending = undefined;
     unregisterDestroy();
     stopWatching();
     const owned = [...views.values()];
