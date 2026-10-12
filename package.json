@@ -9,7 +9,9 @@
     "FRAMEKIT_LIFECYCLE.md",
     "docs",
     "benchmarks/README.md",
-    "benchmarks/baseline.json"
+    "benchmarks/baseline.json",
+    "SKILLS.md",
+    "skills"
   ],
   "type": "module",
   "sideEffects": false,

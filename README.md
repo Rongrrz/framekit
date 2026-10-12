@@ -112,3 +112,5 @@ include reproducible workloads and the first measured DOM baseline.
 Before browser tests, run `npx playwright install chromium firefox webkit`. Browser checks run in
 a separate CI job; `npm run check` runs formatting, types, lint, unit tests, builds, and package
 consumer contracts.
+
+For agent-assisted application work, start with [SKILLS.md](SKILLS.md).
