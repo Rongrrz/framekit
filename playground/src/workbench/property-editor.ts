@@ -13,7 +13,11 @@ import { createText } from '../ui';
 import type { DesignObject, ObjectPatch, WorkbenchModel } from './model';
 
 /** Edits the selected data object without replacing focused text controls. */
-export const createInspector = (parent: Frame, model: WorkbenchModel, theme: ThemeValue): void => {
+export const createPropertyEditor = (
+  parent: Frame,
+  model: WorkbenchModel,
+  theme: ThemeValue,
+): void => {
   const title = createText(theme, {
     text: 'Properties',
     size: udim2(1, -32, 0, 32),

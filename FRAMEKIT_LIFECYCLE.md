@@ -131,7 +131,7 @@ The FrameKit hierarchy is authoritative; DOM traversal does not reveal logical o
 
 When behavior is surprising:
 
-1. Check `isDestroyed()` and `Parent`, then print `toTreeString()`.
+1. Check `isDestroyed()` and `Parent`, then print `toTreeString(root)` imported from `framekit/devtools`.
 2. Compare properties with DOM styles and temporarily subscribe with `onPropertyChanged()`.
 3. For motion, inspect tween `playbackState()` or spring `isAnimating()` and look for a direct write or competing owner.
 4. For layout, verify the modifier is attached to the expected parent and the node is a direct GUI child.

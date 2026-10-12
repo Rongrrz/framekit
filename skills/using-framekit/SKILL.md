@@ -106,13 +106,17 @@ arbitrary focused view; generic keyed reconciliation cannot infer application in
 `unsafeElement` supports unsupported attributes, labels, and native integrations. Avoid changing
 FrameKit-owned hierarchy or inline styles through it. Use public properties and ownership operations.
 
-For development, conditionally import `framekit/devtools`. `inspectInstance(node)` returns property,
+All debugging helpers belong to `framekit/devtools`; `toTreeString(root)` formats a hierarchy
+without adding debug methods to core instances. For development, conditionally import devtools.
+`inspectInstance(node)` returns property,
 hierarchy, cleanup-registration, and animation-claim snapshots. `createRuntimeInspector(root)`
 creates a separate GUI; mount `inspector.gui` in a host. For an owned `/fkdebug` route, use
-`bindRuntimeInspectorRoute(root, { returnTo? })` and call its `open()` from your Debug command.
+`bindRuntimeInspectorRoute(root, { returnTo? })`. The binding supplies its own floating Debug
+launcher; commands can also call `open()`. Keep debugging UI in devtools rather than duplicating
+it in an application.
 The host server must serve the same application bootstrap at `/fkdebug` for direct navigation
 and refresh. The helper preserves the live root, supports Back/Forward, and releases its UI on
-exit. It does not intercept an application's router. Gate the dynamic import behind the bundler's
+exit; the launcher remains until disposal or root destruction. It does not intercept an application's router. Gate the dynamic import behind the bundler's
 development constant so the UI stays out of production. Cleanup counts are registrations rather
 than exact listener counts.
 

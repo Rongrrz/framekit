@@ -1,6 +1,5 @@
 import type { Unsubscribe } from '#state/signal.js';
 
-import { toTreeString } from '../systems/hierarchy/formatting.js';
 import { reorderChildren, setParent } from '../systems/hierarchy/mutation.js';
 import {
   children,
@@ -57,8 +56,6 @@ export type InstanceMethods<Properties extends InstanceProperties = InstanceProp
   findFirstChild(name: string, recursive?: boolean): Instance | undefined;
   /** Returns the dot-separated Name path from the hierarchy root. */
   getFullName(): string;
-  /** Formats this node and its descendants as a readable tree. */
-  toTreeString(): string;
   /** Permanently destroys this node and its descendants. */
   destroy(): void;
   /** Reports whether this node has been destroyed. */
@@ -142,9 +139,6 @@ const methodTable = {
   },
   getFullName(this: Instance): string {
     return getFullName(this);
-  },
-  toTreeString(this: Instance): string {
-    return toTreeString(this);
   },
   destroy(this: Instance): void {
     lifecycle.destroy(this);

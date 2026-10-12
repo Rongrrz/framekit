@@ -2,6 +2,7 @@ import type { Instance } from '#internal/runtime/node/instance.js';
 
 import { createRuntimeInspector, type RuntimeInspector } from './inspector.js';
 import { inspectionDocument } from './snapshot.js';
+import { createInspectorLauncher } from './view.js';
 
 /** Owns an opt-in /fkdebug route. Application routers should call open rather than reload the app. */
 export type RuntimeInspectorRoute = Readonly<{
@@ -11,7 +12,7 @@ export type RuntimeInspectorRoute = Readonly<{
 }>;
 
 /**
- * Lazily mounts the inspector at /fkdebug and releases it on exit. The host must serve its
+ * Mounts a Debug launcher and lazily opens the inspector at /fkdebug. The host must serve its
  * application entry at this path for direct navigation; no router or server is installed.
  * returnTo is used only when /fkdebug was loaded directly, without an application history entry.
  */
@@ -52,6 +53,7 @@ export const bindRuntimeInspectorRoute = (
       return;
     }
     if (isActive()) {
+      launcher.Enabled = false;
       if (inspector) {
         return;
       }
@@ -60,6 +62,7 @@ export const bindRuntimeInspectorRoute = (
       inspector.gui.onDestroy(() => {
         inspector = undefined;
         if (!disposed) {
+          launcher.Enabled = true;
           leave();
         }
       });
@@ -68,6 +71,7 @@ export const bindRuntimeInspectorRoute = (
         ?.focus({ preventScroll: true });
     } else {
       inspector?.gui.destroy();
+      launcher.Enabled = true;
     }
   };
   const open = (): void => {
@@ -94,12 +98,15 @@ export const bindRuntimeInspectorRoute = (
     unregisterRoot();
     window.removeEventListener('popstate', sync);
     inspector?.gui.destroy();
+    launcher.destroy();
     inspector = undefined;
     opener = undefined;
   };
   const unregisterRoot = root.onDestroy(dispose);
+  const launcher = createInspectorLauncher(document, open);
   window.addEventListener('popstate', sync);
   try {
+    launcher.mount(document.body);
     sync();
   } catch (error) {
     dispose();

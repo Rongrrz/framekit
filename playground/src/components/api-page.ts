@@ -70,7 +70,7 @@ export const createApiPage = (
     shell.article,
     theme,
     'Instance methods',
-    'Every instance shares hierarchy, inspection, property observation, and lifecycle methods. Use onDestroy to register subscription cleanup.',
+    'Every instance shares hierarchy, property observation, and lifecycle methods. Debugging tools live in framekit/devtools. Use onDestroy to register subscription cleanup.',
   );
   appendCodeBlock(shell.article, theme, 'InstanceMethodsCode', [
     { text: 'node.setProperties(patch)' },

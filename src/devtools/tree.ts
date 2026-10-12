@@ -1,5 +1,5 @@
-import type { Instance } from '../../node/instance.js';
-import { getActiveNodeState, getChildren, getNodeState } from '../../node/registry.js';
+import type { Instance } from '#internal/runtime/node/instance.js';
+import { getActiveNodeState, getChildren, getNodeState } from '#internal/runtime/node/registry.js';
 
 type TreeLine = Readonly<{ current: Instance; prefix: string; isLast: boolean }>;
 

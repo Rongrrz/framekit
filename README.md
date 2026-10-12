@@ -71,7 +71,7 @@ Use semantic creation options when appropriate: frames can render as `main`, `se
 
 Setting `Parent = undefined` detaches a reusable node. `destroy()` recursively releases descendants, listeners, subscriptions, and animations. Event methods return an unsubscribe function, and `onDestroy()` can own other cleanup.
 
-Traversal reads the FrameKit tree rather than the DOM. `isA()` narrows concrete TypeScript types, while `toTreeString()` provides an inspectable hierarchy for debugging and tests.
+Traversal reads the FrameKit tree rather than the DOM. `isA()` narrows concrete TypeScript types, while `toTreeString(root)` from `framekit/devtools` formats a hierarchy for debugging and tests.
 
 Direct writes take control of animated properties. Springs preserve velocity when retargeted; tweens support delay, repeats, reversing, pause, and cancellation. Animations on unrelated properties can run concurrently.
 
@@ -115,6 +115,7 @@ consumer contracts.
 
 For agent-assisted application work, start with [SKILLS.md](SKILLS.md).
 
-During development, the workbench's **Debug** button opens `/fkdebug`: a searchable runtime
+During development, the shared devtools **Debug** button opens `/fkdebug`: a searchable runtime
 hierarchy, element picker, grouped properties, and resizable inspector. The route integration is
 available to any application through `bindRuntimeInspectorRoute` from `framekit/devtools`.
+The binding owns the launcher and debugging UI; the playground only binds it to each application root.

@@ -130,24 +130,4 @@ describe('hierarchy', () => {
     expect(root.getDescendants()).toEqual([branch, nested, direct]);
     root.destroy();
   });
-
-  it('formats a stable hierarchy snapshot', () => {
-    const root = createFrame({ Name: 'Root' });
-    const first = createFrame({ Name: 'First' });
-    const second = createFrame({ Name: 'Second' });
-    const grandchild = createFrame({ Name: 'Grandchild' });
-
-    first.Parent = root;
-    second.Parent = root;
-    grandchild.Parent = first;
-
-    const expected = [
-      'Root [Frame]',
-      '├─ First [Frame]',
-      '│  └─ Grandchild [Frame]',
-      '└─ Second [Frame]',
-    ].join('\n');
-
-    expect(root.toTreeString()).toBe(expected);
-  });
 });

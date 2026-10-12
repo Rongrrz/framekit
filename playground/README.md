@@ -40,12 +40,14 @@ playground/src/
 
 `/workbench.html` uses the public package API for an object tree, preview cards, property edits,
 keyed updates, dragging, command menus, modal help, and a resizable sidebar. On compact screens,
-Properties opens the same inspector objects in a native modal. Data and bounded undo history
+Properties opens the same design-editing form in a native modal. Data and bounded undo history
 live in `src/workbench/model.ts`; pointer-driven preview behavior and field editing have separate
-owners. In development, click Debug or open `/fkdebug` for the optional runtime inspector.
+owners. This form edits design data; runtime debugging is owned entirely by `framekit/devtools`.
+In development, every page binds the shared Debug launcher. Click it or open `/fkdebug` for the
+optional runtime inspector.
 Its searchable hierarchy, breadcrumbs/history, grouped properties, element picker, and resizable
 dock come from the general `framekit/devtools` package. Back/Forward and Close preserve the
-workbench's live objects. The development server routes `/fkdebug` to the workbench bootstrap;
+inspected application's live objects. The development server routes `/fkdebug` to the workbench bootstrap;
 production builds remove the integration.
 
 `/collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top

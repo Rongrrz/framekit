@@ -9,10 +9,7 @@ export default defineConfig({
       transformIndexHtml: {
         order: 'pre',
         handler(html) {
-          return html.replace(
-            'src="/src/workbench/main.ts"',
-            'src="/playground/src/workbench/main.ts"',
-          );
+          return html.replaceAll('src="/src/', 'src="/playground/src/');
         },
       },
     },

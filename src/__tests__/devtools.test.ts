@@ -1,6 +1,55 @@
 import { createFrame, createTextButton, spring } from 'framekit';
-import { createRuntimeInspector, inspectInstance } from 'framekit/devtools';
+import {
+  bindRuntimeInspectorRoute,
+  createRuntimeInspector,
+  inspectInstance,
+  toTreeString,
+} from 'framekit/devtools';
+import { Window } from 'happy-dom';
 import { expect, it, vi } from 'vitest';
+
+it('owns the launcher outside the inspected tree and removes all UI when the binding is disposed', () => {
+  const window = new Window({ url: 'http://localhost/demo' }) as unknown as globalThis.Window;
+  const document = window.document;
+  const root = createFrame({ Name: 'Application' }, { ownerDocument: document });
+  const binding = bindRuntimeInspectorRoute(root);
+  expect(root.getChildren()).toEqual([]);
+  const launcher = document.querySelector<HTMLButtonElement>('[aria-label="Debug"]')!;
+  expect(launcher).not.toBeNull();
+  launcher.click();
+  expect(document.defaultView!.location.pathname).toBe('/fkdebug');
+  expect(document.querySelector('[aria-label="FrameKit runtime inspector"]')).not.toBeNull();
+  expect(root.getChildren()).toEqual([]);
+  binding.dispose();
+  expect(document.querySelector('[data-fk-debug]')).toBeNull();
+  expect(document.defaultView!.location.pathname).toBe('/fkdebug');
+  expect(() => binding.open()).toThrow(/disposed/);
+  root.destroy();
+});
+
+it('formats an ordered hierarchy through devtools without adding debug methods to core nodes', () => {
+  const root = createFrame({ Name: 'Root' });
+  const first = createFrame({ Name: 'First' });
+  const second = createFrame({ Name: 'Second' });
+  const grandchild = createFrame({ Name: 'Grandchild' });
+  first.Parent = root;
+  second.Parent = root;
+  grandchild.Parent = first;
+  expect(toTreeString(root)).toBe(
+    ['Root [Frame]', '├─ First [Frame]', '│  └─ Grandchild [Frame]', '└─ Second [Frame]'].join(
+      '\n',
+    ),
+  );
+  expect('toTreeString' in root).toBe(false);
+  root.reorderChildren([second, first]);
+  expect(toTreeString(root)).toBe(
+    ['Root [Frame]', '├─ Second [Frame]', '└─ First [Frame]', '   └─ Grandchild [Frame]'].join(
+      '\n',
+    ),
+  );
+  root.destroy();
+  expect(() => toTreeString(root)).toThrow(/destroyed/);
+});
 
 it('returns readonly snapshots and reports animation claims through destruction', () => {
   const frame = createFrame();

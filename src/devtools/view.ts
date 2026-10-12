@@ -1,4 +1,5 @@
 import { createFrame, type Frame, type FrameProperties } from '#elements/frame.js';
+import { createScreenGui, type ScreenGui } from '#elements/screen-gui.js';
 import { createScrollingFrame, type ScrollingFrame } from '#elements/scrolling-frame.js';
 import { createTextInput, type TextInput } from '#elements/text-input.js';
 import {
@@ -45,6 +46,33 @@ export const installInspectorStyles = (owner: GuiElement): void => {
   `;
   document.head.append(style);
   owner.onDestroy(() => style.remove());
+};
+
+/** The route owns its entry point so applications only need to bind devtools. */
+export const createInspectorLauncher = (document: Document, open: () => void): ScreenGui => {
+  const gui = createScreenGui(
+    { Name: 'FrameKitDevtoolsLauncher', DisplayOrder: 9999 },
+    { ownerDocument: document },
+  );
+  gui.unsafeElement.dataset.fkDebug = '';
+  gui.unsafeElement.style.pointerEvents = 'none';
+  installInspectorStyles(gui);
+  const button = createDebugUI(document).button(gui, 'Debug', {
+    Name: 'OpenRuntimeInspector',
+    AccessibleLabel: 'Debug',
+    Size: udim2FromOffset(104, 36),
+    Position: udim2(1, -120, 1, -52),
+    BackgroundColor3: colors.ink,
+    TextColor3: colors.paper,
+  });
+  button.unsafeElement.style.pointerEvents = 'auto';
+  button.unsafeElement.style.boxShadow = '0 4px 20px #17223330';
+  button.onClick(() => {
+    // Safari does not focus buttons on pointer activation; keep the return target consistent.
+    button.focus();
+    open();
+  });
+  return gui;
 };
 
 /** Native creation options keep secondary documents isolated from the global document. */

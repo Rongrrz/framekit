@@ -12,3 +12,11 @@ const forcedLayout: PlaygroundLayout | undefined =
 installPlaygroundStyles();
 const playground = createPlaygroundApp(forcedLayout);
 playground.mount('#root');
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => playground.destroy());
+}
+if (import.meta.env.DEV) {
+  const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
+  bindRuntimeInspectorRoute(playground, { returnTo: '/index.html' });
+}

@@ -28,6 +28,18 @@ const allowedDependencies = {
     'state',
     'values',
   ],
+  devtools: [
+    'devtools',
+    'animation',
+    'elements',
+    'internal',
+    'internal/dom',
+    'internal/runtime',
+    'helpers',
+    'modifiers',
+    'state',
+    'values',
+  ],
 } as const;
 
 type SourceDomain = keyof typeof allowedDependencies;

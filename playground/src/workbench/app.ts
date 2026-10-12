@@ -31,9 +31,9 @@ import {
   type ThemeValue,
 } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
-import { createInspector } from './inspector';
 import { createWorkbenchModel, visibleObjects, type WorkbenchModel } from './model';
 import { bindPreview } from './preview';
+import { createPropertyEditor } from './property-editor';
 
 /** A bounded editor that exercises FrameKit ownership, state, ordering, input, and motion. */
 export const createWorkbench = (model: WorkbenchModel = createWorkbenchModel()): ScreenGui => {
@@ -88,9 +88,6 @@ export const createWorkbench = (model: WorkbenchModel = createWorkbenchModel()):
   const redo = command('Redo', model.redo);
   const actions = command('Actions', () => undefined);
   command('Theme', () => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
-  if (import.meta.env.DEV) {
-    command('Debug', () => undefined).Name = 'OpenRuntimeInspector';
-  }
   const docs = createLink({
     Text: 'Docs ↗',
     Href: './index.html',
@@ -105,10 +102,10 @@ export const createWorkbench = (model: WorkbenchModel = createWorkbenchModel()):
   sidebar.Parent = background;
   const stage = createSurface(theme, { name: 'PreviewPanel', radius: 14, clipsDescendants: true });
   stage.Parent = background;
-  const inspector = createSurface(theme, { name: 'InspectorPanel', radius: 14 });
-  inspector.Parent = background;
-  createInspector(inspector, model, theme);
-  const compactInspector = createFrame(
+  const propertyEditor = createSurface(theme, { name: 'PropertyEditorPanel', radius: 14 });
+  propertyEditor.Parent = background;
+  createPropertyEditor(propertyEditor, model, theme);
+  const compactProperties = createFrame(
     {
       Name: 'CompactProperties',
       Size: udim2FromOffset(340, 600),
@@ -117,9 +114,9 @@ export const createWorkbench = (model: WorkbenchModel = createWorkbenchModel()):
     },
     { tagName: 'dialog' },
   );
-  compactInspector.unsafeElement.setAttribute('aria-label', 'Properties');
-  compactInspector.Parent = app;
-  const propertyDialog = bindDialog(compactInspector);
+  compactProperties.unsafeElement.setAttribute('aria-label', 'Properties');
+  compactProperties.Parent = app;
+  const propertyDialog = bindDialog(compactProperties);
   const properties = command('Properties', () => propertyDialog.open(properties));
   const closeProperties = createButton(theme, {
     label: 'Close',
@@ -128,7 +125,7 @@ export const createWorkbench = (model: WorkbenchModel = createWorkbenchModel()):
     textSize: 12,
   });
   closeProperties.ZIndex = 10;
-  closeProperties.Parent = compactInspector;
+  closeProperties.Parent = compactProperties;
   closeProperties.onClick(() => propertyDialog.close());
   createText(theme, {
     text: 'Objects',
@@ -420,13 +417,13 @@ export const createWorkbench = (model: WorkbenchModel = createWorkbenchModel()):
     if (!compact) {
       propertyDialog.close();
     }
-    inspector.Parent = compact ? compactInspector : background;
+    propertyEditor.Parent = compact ? compactProperties : background;
     const dialogWidth = Math.min(340, width - 32);
-    compactInspector.setProperties({
+    compactProperties.setProperties({
       Size: udim2FromOffset(dialogWidth, Math.min(600, height - 32)),
       Position: udim2(0.5, -dialogWidth / 2, 0.5, -Math.min(600, height - 32) / 2),
     });
-    inspector.setProperties({
+    propertyEditor.setProperties({
       Position: compact ? udim2FromOffset(0, 0) : udim2FromOffset(width - right - 16, 76),
       Size: compact
         ? udim2FromOffset(dialogWidth, Math.min(600, height - 32))

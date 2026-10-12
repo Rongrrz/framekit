@@ -26,6 +26,7 @@ test('opens /fkdebug on demand and preserves the live app through browser Back a
   await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(
     'Keep this card',
   );
+  await expect(page.getByRole('button', { name: 'Debug', exact: true })).toBeFocused();
   await page.goForward();
   await expect(inspector).toBeVisible();
   await page.getByRole('button', { name: 'Close runtime inspector' }).click();
@@ -194,8 +195,9 @@ test('the same route controller inspects an independent FrameKit project and rel
     remove.onClick(() => corner.destroy());
     child.on('click', () => app.destroy());
     app.mount('#root');
-    window.framekitDevtools.bindRuntimeInspectorRoute(app).open();
+    window.framekitDevtools.bindRuntimeInspectorRoute(app);
   });
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
   const inspector = inspectorFor(page);
   await expect(page).toHaveURL(/\/fkdebug$/);
   await expect(
@@ -211,6 +213,7 @@ test('the same route controller inspects an independent FrameKit project and rel
   ).toHaveCount(0);
   await page.getByRole('button', { name: 'Submit', exact: true }).click();
   await expect(inspector).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Debug', exact: true })).toHaveCount(0);
   expect(
     await page
       .locator('style')
@@ -219,3 +222,23 @@ test('the same route controller inspects an independent FrameKit project and rel
       ),
   ).toBe(false);
 });
+
+for (const [entry, root] of [
+  ['index.html', 'FrameKitPlayground'],
+  ['collections.html', 'CollectionStressTest'],
+] as const) {
+  test(`uses the shared devtools launcher to inspect ${entry}`, async ({ page }) => {
+    await page.goto(`/playground/${entry}`);
+    await page.getByRole('button', { name: 'Debug', exact: true }).click();
+    await expect(page).toHaveURL(/\/fkdebug$/);
+    const inspector = inspectorFor(page);
+    await expect(inspector).toBeVisible();
+    await expect(
+      inspector.getByRole('treeitem', { name: `${root} (ScreenGui)`, exact: true }),
+    ).toBeVisible();
+    await inspector.getByRole('button', { name: 'Close runtime inspector' }).click();
+    await expect(page).toHaveURL(new RegExp(`/playground/${entry}$`));
+    await expect(inspector).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Debug', exact: true })).toBeFocused();
+  });
+}

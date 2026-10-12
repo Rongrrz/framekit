@@ -38,6 +38,7 @@ import {
   bindRuntimeInspectorRoute,
   createRuntimeInspector,
   inspectInstance,
+  toTreeString,
 } from 'framekit/devtools';
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
@@ -73,6 +74,10 @@ function verifyPublicTypeContracts(): void {
   const inspector = createRuntimeInspector(frame);
   inspector.gui.destroy();
   const snapshot = inspectInstance(frame);
+  const tree: string = toTreeString(frame);
+  void tree;
+  // @ts-expect-error Debugging helpers belong to framekit/devtools, not core instances.
+  frame.toTreeString();
   // @ts-expect-error Inspector property snapshots are readonly.
   snapshot.properties.Name = 'mutated';
 

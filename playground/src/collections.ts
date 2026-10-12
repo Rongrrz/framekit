@@ -93,7 +93,7 @@ const status = createText(theme, {
 status.unsafeElement.setAttribute('role', 'status');
 status.Parent = app;
 const updateStatus = (): void => {
-  status.Text = `${data.get().length.toLocaleString('en-US')} items · ${viewport.unsafeElement.querySelectorAll('[role="option"]').length} mounted views · selected ${selection.get() ?? 'none'} · Arrow keys / Home / End / Page Up / Page Down`;
+  status.Text = `${data.get().length.toLocaleString('en-US')} items · selected ${selection.get() ?? 'none'} · Arrow keys / Home / End / Page Up / Page Down`;
 };
 watchOwnedValue(app, selection, updateStatus);
 viewport.on('scroll', updateStatus);
@@ -102,4 +102,9 @@ app.mount('#root');
 requestAnimationFrame(updateStatus);
 if (import.meta.hot) {
   import.meta.hot.dispose(() => app.destroy());
+}
+
+if (import.meta.env.DEV) {
+  const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
+  bindRuntimeInspectorRoute(app, { returnTo: '/collections.html' });
 }

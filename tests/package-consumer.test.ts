@@ -118,7 +118,7 @@ describe('packed package consumers', () => {
         const inspector = devtools.createRuntimeInspector(frame);
         const isolatedDocument = inspector.gui.unsafeElement.ownerDocument === frame.unsafeElement.ownerDocument;
         inspector.gui.destroy();
-        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: 'inspectInstance' in api, isolatedDocument, routeBinding: typeof devtools.bindRuntimeInspectorRoute }));
+        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: ['inspectInstance', 'createRuntimeInspector', 'bindRuntimeInspectorRoute', 'toTreeString'].some((name) => name in api), isolatedDocument, routeBinding: typeof devtools.bindRuntimeInspectorRoute, tree: devtools.toTreeString(frame), coreTreeMethod: 'toTreeString' in frame }));
         frame.destroy();
       })().catch((error) => { console.error(error); process.exitCode = 1; });
     `,
@@ -131,6 +131,8 @@ describe('packed package consumers', () => {
         exportedByMain: false,
         isolatedDocument: true,
         routeBinding: 'function',
+        tree: 'Packaged instance [Frame]',
+        coreTreeMethod: false,
       });
     },
   );

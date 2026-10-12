@@ -156,7 +156,7 @@ When no one observes a computed value, it releases source subscriptions and deri
 User typing is synchronized to `Text` before `onTextChanged` and native `input` listeners run.
 Update state in `onTextChanged`; use an owned watcher for programmatic changes back to the input.
 Avoid rewriting an actively edited field with incomplete numeric or color data. The workbench
-inspector keeps the editing buffer in the native input, validates into the model, and normalizes
+property editor keeps the editing buffer in the native input, validates into the model, and normalizes
 on blur. Its focus/blur events group an edit into one undo step.
 
 ## Identity, ownership, and ordering
@@ -260,14 +260,16 @@ A new claim or direct write takes control of the affected property. For an owned
 binding, call `spring(node, goal)` from `watchOwnedValue`; there is no second binding ownership
 system. Direct manipulation should write directly so it interrupts an animation predictably.
 
-Use `toTreeString()` and `onPropertyChanged()` for simple diagnostics. Optional development UI:
+All debugging helpers live in `framekit/devtools`, including `toTreeString(root)` for a text
+snapshot and `inspectInstance(node)` for structured data. Tree traversal and property subscriptions
+remain core application APIs. Enable the optional development UI:
 
 ```ts
 // Keep this branch behind your bundler's development constant.
 if (import.meta.env.DEV) {
   const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
   const debug = bindRuntimeInspectorRoute(app, { returnTo: '/' });
-  // Your Debug button or command calls debug.open().
+  // The binding supplies a Debug launcher; commands can also call debug.open().
   // debug.close() exits; debug.dispose() removes the integration.
 }
 ```
@@ -278,11 +280,11 @@ registrations, not individual listeners. The UI refreshes every 250 ms and relea
 closed or when the inspected root is destroyed.
 
 `bindRuntimeInspectorRoute(root, { returnTo? })` is available to every FrameKit application. It
-lazily mounts the inspector at `/fkdebug`, supports browser Back/Forward, and destroys its UI
-on exit. Keep your application root alive while the route is open. For direct navigation or
+supplies a floating Debug launcher, lazily mounts the inspector at `/fkdebug`, supports browser
+Back/Forward, and destroys the inspector on exit. Keep your application root alive while the route is open. For direct navigation or
 refresh, configure your development server/router to serve the same application bootstrap at
 `/fkdebug`; the helper does not install a server or intercept your router's `pushState` calls.
-Call `debug.open()` from your command rather than reloading the page. `returnTo` defaults to `/`
+Use the supplied launcher or call `debug.open()` from a command to preserve the running app. `returnTo` defaults to `/`
 and is used when the debug route was loaded directly. Disposing the binding releases its UI
 and route listener without navigating the host application.
 
@@ -292,8 +294,8 @@ selects an element from the running app without activating its commands. Escape 
 in a search field it clears the query first, then closes the inspector. Compact screens use
 Hierarchy/Details tabs. Navigation and styling do not mutate inspected objects.
 
-The workbench has a Debug button during development, and its dev server serves `/fkdebug`
-directly. Production playground builds remove the integration. For custom mounting without
+Each playground page binds the same devtools launcher during development, and its dev server
+serves `/fkdebug` directly using the workbench bootstrap. Production playground builds remove the integration. For custom mounting without
 routing, use `createRuntimeInspector(root)` and mount its `gui` yourself.
 
 `unsafeElement` is useful for native integration, labels, input modes, and unsupported attributes.
