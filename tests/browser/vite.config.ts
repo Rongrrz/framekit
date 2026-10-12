@@ -14,17 +14,6 @@ export default defineConfig({
         },
       },
     },
-    {
-      name: 'framekit-debug-route-test',
-      configureServer(server) {
-        server.middlewares.use((request, _response, next) => {
-          if (request.url?.split('?')[0]?.replace(/\/$/, '') === '/fkdebug') {
-            request.url = '/playground/index.html';
-          }
-          next();
-        });
-      },
-    },
   ],
   resolve: {
     alias: {

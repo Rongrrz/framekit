@@ -110,13 +110,13 @@ All debugging helpers belong to `framekit/devtools`; `toTreeString(root)` format
 without adding debug methods to core instances. For development, conditionally import devtools.
 `inspectInstance(node)` returns property,
 hierarchy, cleanup-registration, and animation-claim snapshots. `createRuntimeInspector(root)`
-creates a separate GUI; mount `inspector.gui` in a host. For an owned `/fkdebug` route, use
-`bindRuntimeInspectorRoute(root)`. The binding supplies its own floating Debug
+creates a separate GUI; mount `inspector.gui` in a host. For a managed inspector overlay, use
+`bindRuntimeInspector(root)`. The binding supplies its own floating Debug
 launcher; commands can also call `open()`. Keep debugging UI in devtools rather than duplicating
 it in an application.
-The host server must serve the same application bootstrap at `/fkdebug` for direct navigation
-and refresh. The helper preserves the live root, URL, hash, and browser history, and releases its UI on
-exit; the launcher remains until disposal or root destruction. It does not intercept an application's router. Gate the dynamic import behind the bundler's
+The helper preserves the live root, URL, hash, and browser history. It has no dedicated route
+or URL entry point. Closing releases the inspector; the launcher remains until disposal or
+root destruction. Gate the dynamic import behind the bundler's
 development constant so the UI stays out of production. Cleanup counts are registrations rather
 than exact listener counts.
 

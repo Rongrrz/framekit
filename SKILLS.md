@@ -10,4 +10,4 @@ The skill is for application authors; repository implementation conventions live
 
 For a complete application example and detailed contracts, see the
 [application guide](docs/APPLICATION_GUIDE.md). In a repository checkout, run `npm run dev` and
-open `/` or `/collections.html`. Use the shared Debug launcher or `/fkdebug` for runtime inspection.
+open `/` or `/collections.html`. Use the shared Debug launcher for runtime inspection.

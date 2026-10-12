@@ -5,7 +5,7 @@ import { inspectionDocument } from './snapshot.js';
 import { createInspectorLauncher } from './view.js';
 
 /** An opt-in inspector overlay. Opening and closing it never changes the host URL or history. */
-export type RuntimeInspectorRoute = Readonly<{
+export type RuntimeInspectorBinding = Readonly<{
   open(): void;
   close(): void;
   dispose(): void;
@@ -13,9 +13,8 @@ export type RuntimeInspectorRoute = Readonly<{
 
 /**
  * Mounts a Debug launcher and lazily opens the inspector over the running application.
- * Loading /fkdebug opens it immediately; the host must serve its application entry there.
  */
-export const bindRuntimeInspectorRoute = (root: Instance): RuntimeInspectorRoute => {
+export const bindRuntimeInspector = (root: Instance): RuntimeInspectorBinding => {
   if (root.isDestroyed()) {
     throw new Error('Cannot inspect a destroyed root.');
   }
@@ -68,9 +67,6 @@ export const bindRuntimeInspectorRoute = (root: Instance): RuntimeInspectorRoute
   const launcher = createInspectorLauncher(document, open);
   try {
     launcher.mount(document.body);
-    if (window.location.pathname.replace(/\/$/, '') === '/fkdebug') {
-      open();
-    }
   } catch (error) {
     dispose();
     throw error;

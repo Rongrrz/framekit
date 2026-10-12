@@ -1,6 +1,6 @@
 import { createFrame, createTextButton, spring } from 'framekit';
 import {
-  bindRuntimeInspectorRoute,
+  bindRuntimeInspector,
   createRuntimeInspector,
   inspectInstance,
   toTreeString,
@@ -14,7 +14,7 @@ it('owns the launcher outside the inspected tree and removes all UI when the bin
   }) as unknown as globalThis.Window;
   const document = window.document;
   const root = createFrame({ Name: 'Application' }, { ownerDocument: document });
-  const binding = bindRuntimeInspectorRoute(root);
+  const binding = bindRuntimeInspector(root);
   expect(root.getChildren()).toEqual([]);
   const launcher = document.querySelector<HTMLButtonElement>('[aria-label="Debug"]')!;
   expect(launcher).not.toBeNull();

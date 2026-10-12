@@ -41,7 +41,8 @@ test('opens and closes the inspector without changing the host URL or history', 
 test('searches collapsed paths, navigates ancestors and selection history, and filters readable properties', async ({
   page,
 }, info) => {
-  await page.goto('/fkdebug');
+  await page.goto('/playground/index.html');
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
   const inspector = inspectorFor(page);
   const search = inspector.getByRole('searchbox', { name: 'Search runtime hierarchy' });
   const tree = inspector.getByRole('tree', { name: 'Runtime hierarchy' });
@@ -83,7 +84,8 @@ test('searches collapsed paths, navigates ancestors and selection history, and f
 test('picks elements without activating app commands and releases picking when closed', async ({
   page,
 }) => {
-  await page.goto('/fkdebug');
+  await page.goto('/playground/index.html');
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
   const inspector = inspectorFor(page);
   await inspector.getByRole('separator', { name: 'Resize runtime inspector' }).focus();
   await page.keyboard.press('Home');
@@ -95,7 +97,7 @@ test('picks elements without activating app commands and releases picking when c
   await expect(pick).toHaveAttribute('aria-pressed', 'false');
   await expect(inspector).toContainText('GetStartedButton');
   // Picking must not activate the playground's navigation command.
-  await expect(page).toHaveURL(/\/fkdebug$/);
+  await expect(page).toHaveURL(/\/playground\/index.html$/);
   await pick.click();
   await page.keyboard.press('Escape');
   await expect(pick).toHaveAttribute('aria-pressed', 'false');
@@ -109,7 +111,8 @@ test('picks elements without activating app commands and releases picking when c
 test('resizes with keyboard and pointer, and uses navigable tabs on a compact screen', async ({
   page,
 }, info) => {
-  await page.goto('/fkdebug');
+  await page.goto('/playground/index.html');
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
   const inspector = inspectorFor(page);
   const separator = inspector.getByRole('separator', { name: 'Resize runtime inspector' });
   await separator.focus();
@@ -149,39 +152,26 @@ test('resizes with keyboard and pointer, and uses navigable tabs on a compact sc
   await expect(inspector.getByRole('tree', { name: 'Runtime hierarchy' })).toBeVisible();
 });
 
-test('supports direct /fkdebug navigation and refresh, then exits without losing the app', async ({
-  page,
-}) => {
-  await page.goto('/fkdebug');
+test('keeps the inspector closed on page load and refresh', async ({ page }) => {
+  await page.goto('/playground/index.html#/guide');
+  await expect(inspectorFor(page)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
   await expect(inspectorFor(page)).toBeVisible();
   await page.reload();
-  await expect(inspectorFor(page)).toBeVisible();
-  await inspectorFor(page)
-    .getByRole('searchbox', { name: 'Search runtime hierarchy' })
-    .press('Escape');
   await expect(inspectorFor(page)).toHaveCount(0);
-  await expect(page).toHaveURL(/\/fkdebug$/);
-  await page.getByRole('button', { name: /GET STARTED/ }).click();
-  await expect(page).toHaveURL(/#\/guide$/);
+  await expect(page).toHaveURL(/\/index.html#\/guide$/);
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
+  await expect(inspectorFor(page)).toBeVisible();
 });
 
-test('removes the old workbench entry and inspects the playground at /fkdebug', async ({
-  page,
-  request,
-}) => {
-  const response = await request.get('/playground/workbench.html');
-  expect(response.status()).toBe(404);
-  await page.goto('/fkdebug');
-  await expect(
-    inspectorFor(page).getByRole('treeitem', {
-      name: 'FrameKitPlayground (ScreenGui)',
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Add card', exact: true })).toHaveCount(0);
+test('does not serve separate debugging or workbench entries', async ({ request }) => {
+  for (const path of ['/fkdebug', '/playground/workbench.html']) {
+    const response = await request.get(path);
+    expect(response.status()).toBe(404);
+  }
 });
 
-test('the same route controller inspects an independent FrameKit project and releases on root destruction', async ({
+test('the same inspector binding inspects an independent FrameKit project and releases on root destruction', async ({
   page,
 }) => {
   await page.goto('/tests/browser/index.html');
@@ -206,7 +196,7 @@ test('the same route controller inspects an independent FrameKit project and rel
     remove.onClick(() => corner.destroy());
     child.on('click', () => app.destroy());
     app.mount('#root');
-    window.framekitDevtools.bindRuntimeInspectorRoute(app);
+    window.framekitDevtools.bindRuntimeInspector(app);
   });
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
   const inspector = inspectorFor(page);

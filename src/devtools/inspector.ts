@@ -40,7 +40,7 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
   gui.unsafeElement.dataset.fkDebug = '';
   installInspectorStyles(gui);
   inspectorId += 1;
-  const id = `fkdebug-${inspectorId}`;
+  const id = `fk-inspector-${inspectorId}`;
   const ui = createDebugUI(document);
   const panel = ui.frame(gui, {
     Name: 'InspectorPanel',

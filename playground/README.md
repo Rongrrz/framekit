@@ -40,11 +40,10 @@ playground/src/
 
 `/` demonstrates persistent routed pages, native inputs and overlays, responsive layout, and
 shared theme state. In development, each page binds the shared Debug launcher from
-`framekit/devtools`. Click it or open `/fkdebug` for the runtime inspector. Its searchable
+`framekit/devtools`. Click it to open the runtime inspector. Its searchable
 hierarchy, breadcrumbs/history, grouped properties, element picker, and resizable dock all
 belong to devtools. Opening and closing preserve the current URL and live application.
-The development server routes `/fkdebug` to the documentation site's bootstrap. Production
-builds remove the integration.
+There is no dedicated debug route. Production builds remove the integration.
 
 `/collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top
 to see scroll anchoring, or use End to navigate to the last row without mounting every view.

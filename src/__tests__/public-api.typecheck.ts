@@ -35,7 +35,7 @@ import {
   vector2,
 } from 'framekit';
 import {
-  bindRuntimeInspectorRoute,
+  bindRuntimeInspector,
   createRuntimeInspector,
   inspectInstance,
   toTreeString,
@@ -69,8 +69,8 @@ function verifyPublicTypeContracts(): void {
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
-  const debugRoute = bindRuntimeInspectorRoute(frame);
-  debugRoute.dispose();
+  const debug = bindRuntimeInspector(frame);
+  debug.dispose();
   const inspector = createRuntimeInspector(frame);
   inspector.gui.destroy();
   const snapshot = inspectInstance(frame);

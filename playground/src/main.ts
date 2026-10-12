@@ -17,6 +17,6 @@ if (import.meta.hot) {
   import.meta.hot.dispose(() => playground.destroy());
 }
 if (import.meta.env.DEV) {
-  const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
-  bindRuntimeInspectorRoute(playground);
+  const { bindRuntimeInspector } = await import('framekit/devtools');
+  bindRuntimeInspector(playground);
 }

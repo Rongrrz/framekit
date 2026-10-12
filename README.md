@@ -119,6 +119,6 @@ For agent-assisted application work, start with [SKILLS.md](SKILLS.md).
 
 During development, the shared devtools **Debug** button opens a searchable runtime hierarchy,
 element picker, grouped properties, and resizable inspector without changing the current URL.
-Loading `/fkdebug` directly opens the same inspector. The route integration is
-available to any application through `bindRuntimeInspectorRoute` from `framekit/devtools`.
+The integration is available to any application through `bindRuntimeInspector` from
+`framekit/devtools`.
 The binding owns the launcher and debugging UI; the playground only binds it to each application root.

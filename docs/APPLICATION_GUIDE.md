@@ -4,7 +4,7 @@ FrameKit objects are persistent. Application state describes the interface; owne
 update existing objects. `Parent` defines the ownership tree. No render function recreates it.
 
 Start with `playground/src/app.ts` in the repository for a complete routed interface, or run
-`npm run dev` and open `/`. Use the shared Debug launcher or `/fkdebug` to inspect its live
+`npm run dev` and open `/`. Use the shared Debug launcher to inspect its live
 FrameKit hierarchy. Open `/collections.html` for a 100,000-item virtual list.
 
 ## Use this checkout from another project
@@ -265,8 +265,8 @@ remain core application APIs. Enable the optional development UI:
 ```ts
 // Keep this branch behind your bundler's development constant.
 if (import.meta.env.DEV) {
-  const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
-  const debug = bindRuntimeInspectorRoute(app);
+  const { bindRuntimeInspector } = await import('framekit/devtools');
+  const debug = bindRuntimeInspector(app);
   // The binding supplies a Debug launcher; commands can also call debug.open().
   // debug.close() exits; debug.dispose() removes the integration.
 }
@@ -277,15 +277,10 @@ counts, and animated property names. It can inspect destroyed handles. Counts re
 registrations, not individual listeners. The UI refreshes every 250 ms and releases its timer when
 closed or when the inspected root is destroyed.
 
-`bindRuntimeInspectorRoute(root)` is available to every FrameKit application. It supplies a
+`bindRuntimeInspector(root)` is available to every FrameKit application. It supplies a
 floating Debug launcher and opens the inspector over the running app. Opening and closing
 preserve the complete URL, hash, and browser history. Closing releases the inspector's UI
 and timer; disposing the binding also removes the launcher.
-
-Loading `/fkdebug` directly opens the inspector immediately. Configure your development server
-to serve the same application bootstrap there for direct navigation and refresh. The binding
-never navigates or intercepts your router; closing a directly loaded inspector leaves `/fkdebug`
-in the address bar.
 
 The inspector has a resizable dock, searchable hierarchy with ancestor paths, selection history,
 breadcrumb navigation, grouped property filtering, and readable color/geometry values. Pick
@@ -293,9 +288,9 @@ selects an element from the running app without activating its commands. Escape 
 in a search field it clears the query first, then closes the inspector. Compact screens use
 Hierarchy/Details tabs. Navigation and styling do not mutate inspected objects.
 
-Each playground page binds the same devtools launcher during development, and its dev server
-serves `/fkdebug` directly using the playground bootstrap. Production playground builds remove the integration. For custom mounting without
-routing, use `createRuntimeInspector(root)` and mount its `gui` yourself.
+Each playground page binds the same devtools launcher during development. The inspector has
+no dedicated route or URL entry point. Production playground builds remove the integration.
+For custom mounting, use `createRuntimeInspector(root)` and mount its `gui` yourself.
 
 `unsafeElement` is useful for native integration, labels, input modes, and unsupported attributes.
 Do not mutate FrameKit-owned hierarchy or inline styles through it. Use public geometry,

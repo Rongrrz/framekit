@@ -105,6 +105,6 @@ if (import.meta.hot) {
 }
 
 if (import.meta.env.DEV) {
-  const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
-  bindRuntimeInspectorRoute(app);
+  const { bindRuntimeInspector } = await import('framekit/devtools');
+  bindRuntimeInspector(app);
 }
