@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
+      'framekit/devtools': fileURLToPath(new URL('src/devtools.ts', import.meta.url)),
       framekit: fileURLToPath(new URL('src/index.ts', import.meta.url)),
       '#animation': fileURLToPath(new URL('src/animation', import.meta.url)),
       '#elements': fileURLToPath(new URL('src/elements', import.meta.url)),
@@ -17,9 +18,12 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: fileURLToPath(new URL('src/index.ts', import.meta.url)),
+      entry: {
+        index: fileURLToPath(new URL('src/index.ts', import.meta.url)),
+        devtools: fileURLToPath(new URL('src/devtools.ts', import.meta.url)),
+      },
       formats: ['es', 'cjs'],
-      fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs'),
+      fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
     },
   },
   test: {

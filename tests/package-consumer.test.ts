@@ -95,6 +95,41 @@ describe('packed package consumers', () => {
     });
   });
 
+  it.each(['module', 'commonjs'] as const)(
+    'shares the runtime with optional devtools through %s',
+    (format) => {
+      const load =
+        format === 'module'
+          ? "const api = await import('framekit'); const devtools = await import('framekit/devtools');"
+          : "const api = require('framekit'); const devtools = require('framekit/devtools');";
+      const environment = new URL('../node_modules/happy-dom/lib/index.js', import.meta.url).href;
+      const output = execFileSync(
+        process.execPath,
+        [
+          '--input-type',
+          format,
+          '-e',
+          `
+      (async () => {
+        const { Window } = await import(${JSON.stringify(environment)});
+        ${load}
+        const frame = api.createFrame({ Name: 'Packaged instance' }, { ownerDocument: new Window().document });
+        const snapshot = devtools.inspectInstance(frame);
+        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: 'inspectInstance' in api }));
+        frame.destroy();
+      })().catch((error) => { console.error(error); process.exitCode = 1; });
+    `,
+        ],
+        { cwd: consumer, encoding: 'utf8' },
+      );
+      expect(JSON.parse(output)).toEqual({
+        name: 'Packaged instance',
+        className: 'Frame',
+        exportedByMain: false,
+      });
+    },
+  );
+
   it.each([
     ['Bundler', 'ESNext', 'contracts.mts'],
     ['NodeNext', 'NodeNext', 'contracts.mts'],

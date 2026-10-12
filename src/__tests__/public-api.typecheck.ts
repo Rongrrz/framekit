@@ -1,5 +1,9 @@
 import {
   bindHoverScale,
+  bindKeyedChildren,
+  bindVirtualList,
+  watchOwnedValue,
+  createScrollingFrame,
   bindPopover,
   bindResponsiveLayout,
   bindTooltip,
@@ -30,10 +34,40 @@ import {
   type Unsubscribe,
   vector2,
 } from 'framekit';
+import { inspectInstance } from 'framekit/devtools';
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
   const frame = createFrame();
+  frame.on('keydown', (event) => event.key.toUpperCase());
+  frame.on('pointerdown', (event) => frame.setPointerCapture(event.pointerId));
+  // @ts-expect-error Keyboard events do not have pointer coordinates.
+  frame.on('keydown', (event) => event.pointerId);
+  // @ts-expect-error Native event names are checked.
+  frame.on('madeup', () => undefined);
+  frame.reorderChildren(frame.getChildren());
+  const items = createObservableValue<readonly { id: number; name: string }[]>([]);
+  bindKeyedChildren(frame, items, {
+    key: (item) => item.id,
+    create: () => createTextLabel(),
+    update: (node, item) => {
+      node.Text = item.name;
+    },
+  });
+  watchOwnedValue(frame, createObservableValue(1), (value) => {
+    frame.Rotation = value;
+  });
+  const viewport = createScrollingFrame();
+  bindVirtualList(viewport, items, {
+    itemHeight: 32,
+    key: (item) => item.id,
+    selection: createObservableValue<string | number | undefined>(undefined),
+    create: () => createTextLabel(),
+  });
+  const snapshot = inspectInstance(frame);
+  // @ts-expect-error Inspector property snapshots are readonly.
+  snapshot.properties.Name = 'mutated';
+
   const frameViews: readonly [Frame, Instance, GuiElement, GuiObject] = [
     frame,
     frame,

@@ -7,6 +7,7 @@ export default defineConfig({
   cacheDir: '../node_modules/.vite/playground',
   resolve: {
     alias: {
+      'framekit/devtools': fileURLToPath(new URL('../src/devtools.ts', import.meta.url)),
       framekit: fileURLToPath(new URL('../src/index.ts', import.meta.url)),
       '#animation': fileURLToPath(new URL('../src/animation', import.meta.url)),
       '#elements': fileURLToPath(new URL('../src/elements', import.meta.url)),

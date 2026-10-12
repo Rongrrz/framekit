@@ -13,6 +13,7 @@
     /* Node-compatible library imports */
     "moduleResolution": "NodeNext",
     "paths": {
+      "framekit/devtools": ["./src/devtools.ts"],
       "framekit": ["./src/index.ts"],
       "#animation/*": ["./src/animation/*"],
       "#elements/*": ["./src/elements/*"],

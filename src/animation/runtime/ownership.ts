@@ -209,3 +209,8 @@ function isAnimationWrite(node: Instance, property: PropertyKey, value: unknown)
   const writes = writesByNode.get(node);
   return writes?.has(property) === true && Object.is(writes.get(property), value);
 }
+
+/** Optional diagnostics copy claims without exposing mutable ownership maps. */
+export const getAnimatedProperties = (node: Instance): readonly PropertyKey[] => [
+  ...(claimsByNode.get(node)?.keys() ?? []),
+];

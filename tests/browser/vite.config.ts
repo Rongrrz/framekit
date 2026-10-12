@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   resolve: {
     alias: {
+      'framekit/devtools': fileURLToPath(new URL('../../src/devtools.ts', import.meta.url)),
       framekit: fileURLToPath(new URL('../../src/index.ts', import.meta.url)),
       ...Object.fromEntries(
         ['animation', 'elements', 'helpers', 'internal', 'modifiers', 'state', 'values'].map(
