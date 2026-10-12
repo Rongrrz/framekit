@@ -96,7 +96,8 @@ npm run test:playground  # run playground tests
 npm run test:browser     # Chromium, Firefox, WebKit (install browsers first)
 npm run benchmark        # record browser performance diagnostics
 npm run build            # build the package
-npm run check            # formatting, types, lint, units, builds, package checks
+npm run check            # quick static checks: formatting, types, lint
+npm run check:all        # full local pipeline: tests, builds, packaged consumers
 ```
 
 Package consumers should import from `framekit` or the optional `framekit/devtools` entry. Internal modules are implementation details.
@@ -110,8 +111,9 @@ input, accessibility, virtualization, and diagnostics. [Performance diagnostics]
 include reproducible workloads and the first measured DOM baseline.
 
 Before browser tests, run `npx playwright install chromium firefox webkit`. Browser checks run in
-a separate CI job; `npm run check` runs formatting, types, lint, unit tests, builds, and package
-consumer contracts.
+a separate CI job. Locally, run tests for the behavior you changed and type-check once.
+`npm run check` runs static checks; `npm run check:all` adds all unit tests, builds, and packaged
+consumer contracts. The commit hook checks formatting and lint.
 
 For agent-assisted application work, start with [SKILLS.md](SKILLS.md).
 

@@ -40,7 +40,7 @@
     }
   },
   "scripts": {
-    "check": "npm run format:check && npm run typecheck && npm run lint && npm run test:all && npm run build:all && npm run test:package",
+    "check": "npm run format:check && npm run typecheck && npm run lint",
     "dev": "vite --config playground/vite.config.ts",
     "build": "npm run build:library",
     "build:all": "npm run build:library && npm run build:playground",
@@ -59,7 +59,8 @@
     "preview": "vite preview --config playground/vite.config.ts",
     "prepare": "husky",
     "test:browser": "playwright test",
-    "benchmark": "playwright test --config playwright.benchmark.config.ts"
+    "benchmark": "playwright test --config playwright.benchmark.config.ts",
+    "check:all": "npm run check && npm run test:all && npm run build:all && npm run test:package"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.0",
