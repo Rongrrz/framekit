@@ -266,7 +266,7 @@ remain core application APIs. Enable the optional development UI:
 // Keep this branch behind your bundler's development constant.
 if (import.meta.env.DEV) {
   const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
-  const debug = bindRuntimeInspectorRoute(app, { returnTo: '/' });
+  const debug = bindRuntimeInspectorRoute(app);
   // The binding supplies a Debug launcher; commands can also call debug.open().
   // debug.close() exits; debug.dispose() removes the integration.
 }
@@ -277,14 +277,15 @@ counts, and animated property names. It can inspect destroyed handles. Counts re
 registrations, not individual listeners. The UI refreshes every 250 ms and releases its timer when
 closed or when the inspected root is destroyed.
 
-`bindRuntimeInspectorRoute(root, { returnTo? })` is available to every FrameKit application. It
-supplies a floating Debug launcher, lazily mounts the inspector at `/fkdebug`, supports browser
-Back/Forward, and destroys the inspector on exit. Keep your application root alive while the route is open. For direct navigation or
-refresh, configure your development server/router to serve the same application bootstrap at
-`/fkdebug`; the helper does not install a server or intercept your router's `pushState` calls.
-Use the supplied launcher or call `debug.open()` from a command to preserve the running app. `returnTo` defaults to `/`
-and is used when the debug route was loaded directly. Disposing the binding releases its UI
-and route listener without navigating the host application.
+`bindRuntimeInspectorRoute(root)` is available to every FrameKit application. It supplies a
+floating Debug launcher and opens the inspector over the running app. Opening and closing
+preserve the complete URL, hash, and browser history. Closing releases the inspector's UI
+and timer; disposing the binding also removes the launcher.
+
+Loading `/fkdebug` directly opens the inspector immediately. Configure your development server
+to serve the same application bootstrap there for direct navigation and refresh. The binding
+never navigates or intercepts your router; closing a directly loaded inspector leaves `/fkdebug`
+in the address bar.
 
 The inspector has a resizable dock, searchable hierarchy with ancestor paths, selection history,
 breadcrumb navigation, grouped property filtering, and readable color/geometry values. Pick

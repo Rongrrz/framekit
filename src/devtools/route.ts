@@ -4,7 +4,7 @@ import { createRuntimeInspector, type RuntimeInspector } from './inspector.js';
 import { inspectionDocument } from './snapshot.js';
 import { createInspectorLauncher } from './view.js';
 
-/** Owns an opt-in /fkdebug route. Application routers should call open rather than reload the app. */
+/** An opt-in inspector overlay. Opening and closing it never changes the host URL or history. */
 export type RuntimeInspectorRoute = Readonly<{
   open(): void;
   close(): void;
@@ -12,83 +12,46 @@ export type RuntimeInspectorRoute = Readonly<{
 }>;
 
 /**
- * Mounts a Debug launcher and lazily opens the inspector at /fkdebug. The host must serve its
- * application entry at this path for direct navigation; no router or server is installed.
- * returnTo is used only when /fkdebug was loaded directly, without an application history entry.
+ * Mounts a Debug launcher and lazily opens the inspector over the running application.
+ * Loading /fkdebug opens it immediately; the host must serve its application entry there.
  */
-export const bindRuntimeInspectorRoute = (
-  root: Instance,
-  options: Readonly<{ returnTo?: string }> = {},
-): RuntimeInspectorRoute => {
+export const bindRuntimeInspectorRoute = (root: Instance): RuntimeInspectorRoute => {
   if (root.isDestroyed()) {
     throw new Error('Cannot inspect a destroyed root.');
   }
   const document = inspectionDocument(root);
   const window = document.defaultView!;
-  const path = '/fkdebug';
-  const returnTo = new URL(options.returnTo ?? '/', window.location.href);
-  if (returnTo.origin !== window.location.origin || returnTo.pathname.replace(/\/$/, '') === path) {
-    throw new TypeError('The inspector return route must be another path on the same origin.');
-  }
   let inspector: RuntimeInspector | undefined;
   let opener: HTMLElement | undefined;
   let disposed = false;
-  const isActive = (): boolean => window.location.pathname.replace(/\/$/, '') === path;
-  const leave = (): void => {
-    if (isActive()) {
-      const marker: unknown = window.history.state?.framekitDebug;
-      if (marker === true) {
-        window.history.back();
-      } else {
-        window.history.replaceState(window.history.state, '', returnTo);
-      }
-    }
-    if (opener?.isConnected) {
-      opener.focus({ preventScroll: true });
-    }
-    opener = undefined;
-  };
-  const sync = (): void => {
-    if (disposed) {
-      return;
-    }
-    if (isActive()) {
-      launcher.Enabled = false;
-      if (inspector) {
-        return;
-      }
-      inspector = createRuntimeInspector(root);
-      inspector.gui.mount(document.body);
-      inspector.gui.onDestroy(() => {
-        inspector = undefined;
-        if (!disposed) {
-          launcher.Enabled = true;
-          leave();
-        }
-      });
-      inspector.gui.unsafeElement
-        .querySelector<HTMLElement>('[aria-label="Search runtime hierarchy"]')
-        ?.focus({ preventScroll: true });
-    } else {
-      inspector?.gui.destroy();
-      launcher.Enabled = true;
-    }
-  };
   const open = (): void => {
     if (disposed) {
-      throw new Error('Inspector route binding has been disposed.');
+      throw new Error('Inspector binding has been disposed.');
     }
-    if (!isActive()) {
-      opener =
-        document.activeElement instanceof window.HTMLElement ? document.activeElement : undefined;
-      window.history.pushState({ ...window.history.state, framekitDebug: true }, '', path);
+    if (inspector) {
+      return;
     }
-    sync();
+    opener =
+      document.activeElement instanceof window.HTMLElement ? document.activeElement : undefined;
+    inspector = createRuntimeInspector(root);
+    launcher.Enabled = false;
+    inspector.gui.mount(document.body);
+    inspector.gui.onDestroy(() => {
+      inspector = undefined;
+      if (!disposed) {
+        launcher.Enabled = true;
+        if (opener?.isConnected) {
+          opener.focus({ preventScroll: true });
+        }
+      }
+      opener = undefined;
+    });
+    inspector.gui.unsafeElement
+      .querySelector<HTMLElement>('[aria-label="Search runtime hierarchy"]')
+      ?.focus({ preventScroll: true });
   };
   const close = (): void => {
-    if (inspector) {
-      inspector.gui.destroy();
-    }
+    inspector?.gui.destroy();
   };
   const dispose = (): void => {
     if (disposed) {
@@ -96,7 +59,6 @@ export const bindRuntimeInspectorRoute = (
     }
     disposed = true;
     unregisterRoot();
-    window.removeEventListener('popstate', sync);
     inspector?.gui.destroy();
     launcher.destroy();
     inspector = undefined;
@@ -104,10 +66,11 @@ export const bindRuntimeInspectorRoute = (
   };
   const unregisterRoot = root.onDestroy(dispose);
   const launcher = createInspectorLauncher(document, open);
-  window.addEventListener('popstate', sync);
   try {
     launcher.mount(document.body);
-    sync();
+    if (window.location.pathname.replace(/\/$/, '') === '/fkdebug') {
+      open();
+    }
   } catch (error) {
     dispose();
     throw error;

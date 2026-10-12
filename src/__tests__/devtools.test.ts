@@ -9,7 +9,9 @@ import { Window } from 'happy-dom';
 import { expect, it, vi } from 'vitest';
 
 it('owns the launcher outside the inspected tree and removes all UI when the binding is disposed', () => {
-  const window = new Window({ url: 'http://localhost/demo' }) as unknown as globalThis.Window;
+  const window = new Window({
+    url: 'http://localhost/demo?item=2#/guide',
+  }) as unknown as globalThis.Window;
   const document = window.document;
   const root = createFrame({ Name: 'Application' }, { ownerDocument: document });
   const binding = bindRuntimeInspectorRoute(root);
@@ -17,12 +19,12 @@ it('owns the launcher outside the inspected tree and removes all UI when the bin
   const launcher = document.querySelector<HTMLButtonElement>('[aria-label="Debug"]')!;
   expect(launcher).not.toBeNull();
   launcher.click();
-  expect(document.defaultView!.location.pathname).toBe('/fkdebug');
+  expect(window.location.href).toBe('http://localhost/demo?item=2#/guide');
   expect(document.querySelector('[aria-label="FrameKit runtime inspector"]')).not.toBeNull();
   expect(root.getChildren()).toEqual([]);
   binding.dispose();
   expect(document.querySelector('[data-fk-debug]')).toBeNull();
-  expect(document.defaultView!.location.pathname).toBe('/fkdebug');
+  expect(window.location.href).toBe('http://localhost/demo?item=2#/guide');
   expect(() => binding.open()).toThrow(/disposed/);
   root.destroy();
 });

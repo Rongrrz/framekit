@@ -42,7 +42,7 @@ playground/src/
 shared theme state. In development, each page binds the shared Debug launcher from
 `framekit/devtools`. Click it or open `/fkdebug` for the runtime inspector. Its searchable
 hierarchy, breadcrumbs/history, grouped properties, element picker, and resizable dock all
-belong to devtools. Back/Forward and Close preserve the inspected application's live objects.
+belong to devtools. Opening and closing preserve the current URL and live application.
 The development server routes `/fkdebug` to the documentation site's bootstrap. Production
 builds remove the integration.
 

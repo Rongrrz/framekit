@@ -5,32 +5,35 @@ import type {} from './harness.js';
 const inspectorFor = (page: Page) =>
   page.getByRole('complementary', { name: 'FrameKit runtime inspector' });
 
-test('opens /fkdebug on demand and preserves the live app through browser Back and Forward', async ({
+test('opens and closes the inspector without changing the host URL or history', async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/playground/index.html');
+  await page.goto('/playground/index.html?preview=desktop#/guide');
   await expect(inspectorFor(page)).toHaveCount(0);
+  const originalUrl = page.url();
+  const historyLength = await page.evaluate(() => window.history.length);
   const originalRoot = await page.locator('#root > [data-framekit="ScreenGui"]').elementHandle();
   await page.getByRole('button', { name: /Switch to (light|dark) mode/ }).click();
   const theme = await page.locator('html').getAttribute('data-framekit-theme');
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
-  await expect(page).toHaveURL(/\/fkdebug$/);
+  await expect(page).toHaveURL(originalUrl);
   const inspector = inspectorFor(page);
   await expect(inspector).toBeVisible();
   await expect(
     inspector.getByRole('searchbox', { name: 'Search runtime hierarchy' }),
   ).toBeFocused();
-  await page.goBack();
+  await inspector.getByRole('button', { name: 'Close runtime inspector' }).click();
   await expect(inspector).toHaveCount(0);
   expect(await originalRoot!.evaluate((node) => node.isConnected)).toBe(true);
   await expect(page.locator('html')).toHaveAttribute('data-framekit-theme', theme!);
   await expect(page.getByRole('button', { name: 'Debug', exact: true })).toBeFocused();
-  await page.goForward();
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
   await expect(inspector).toBeVisible();
   await page.getByRole('button', { name: 'Close runtime inspector' }).click();
-  await expect(page).toHaveURL(/\/playground\/index.html$/);
+  await expect(page).toHaveURL(originalUrl);
+  expect(await page.evaluate(() => window.history.length)).toBe(historyLength);
   await expect(inspector).toHaveCount(0);
   expect(errors).toEqual([]);
 });
@@ -157,7 +160,7 @@ test('supports direct /fkdebug navigation and refresh, then exits without losing
     .getByRole('searchbox', { name: 'Search runtime hierarchy' })
     .press('Escape');
   await expect(inspectorFor(page)).toHaveCount(0);
-  await expect(page).toHaveURL(/\/index.html$/);
+  await expect(page).toHaveURL(/\/fkdebug$/);
   await page.getByRole('button', { name: /GET STARTED/ }).click();
   await expect(page).toHaveURL(/#\/guide$/);
 });
@@ -207,7 +210,7 @@ test('the same route controller inspects an independent FrameKit project and rel
   });
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
   const inspector = inspectorFor(page);
-  await expect(page).toHaveURL(/\/fkdebug$/);
+  await expect(page).toHaveURL(/\/tests\/browser\/index.html$/);
   await expect(
     inspector.getByRole('treeitem', { name: 'Independent project (ScreenGui)', exact: true }),
   ).toBeVisible();
@@ -238,7 +241,7 @@ for (const [entry, root] of [
   test(`uses the shared devtools launcher to inspect ${entry}`, async ({ page }) => {
     await page.goto(`/playground/${entry}`);
     await page.getByRole('button', { name: 'Debug', exact: true }).click();
-    await expect(page).toHaveURL(/\/fkdebug$/);
+    await expect(page).toHaveURL(new RegExp(`/playground/${entry}$`));
     const inspector = inspectorFor(page);
     await expect(inspector).toBeVisible();
     await expect(

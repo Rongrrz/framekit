@@ -69,7 +69,7 @@ function verifyPublicTypeContracts(): void {
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
-  const debugRoute = bindRuntimeInspectorRoute(frame, { returnTo: '/app' });
+  const debugRoute = bindRuntimeInspectorRoute(frame);
   debugRoute.dispose();
   const inspector = createRuntimeInspector(frame);
   inspector.gui.destroy();

@@ -18,5 +18,5 @@ if (import.meta.hot) {
 }
 if (import.meta.env.DEV) {
   const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
-  bindRuntimeInspectorRoute(playground, { returnTo: '/index.html' });
+  bindRuntimeInspectorRoute(playground);
 }
