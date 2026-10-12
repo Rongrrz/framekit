@@ -88,6 +88,9 @@ export const createWorkbench = (model: WorkbenchModel = createWorkbenchModel()):
   const redo = command('Redo', model.redo);
   const actions = command('Actions', () => undefined);
   command('Theme', () => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
+  if (import.meta.env.DEV) {
+    command('Debug', () => undefined).Name = 'OpenRuntimeInspector';
+  }
   const docs = createLink({
     Text: 'Docs ↗',
     Href: './index.html',

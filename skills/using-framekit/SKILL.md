@@ -108,7 +108,11 @@ FrameKit-owned hierarchy or inline styles through it. Use public properties and 
 
 For development, conditionally import `framekit/devtools`. `inspectInstance(node)` returns property,
 hierarchy, cleanup-registration, and animation-claim snapshots. `createRuntimeInspector(root)`
-creates a separate GUI; mount `inspector.gui` in a host. Gate the dynamic import behind the bundler's
+creates a separate GUI; mount `inspector.gui` in a host. For an owned `/fkdebug` route, use
+`bindRuntimeInspectorRoute(root, { returnTo? })` and call its `open()` from your Debug command.
+The host server must serve the same application bootstrap at `/fkdebug` for direct navigation
+and refresh. The helper preserves the live root, supports Back/Forward, and releases its UI on
+exit. It does not intercept an application's router. Gate the dynamic import behind the bundler's
 development constant so the UI stays out of production. Cleanup counts are registrations rather
 than exact listener counts.
 

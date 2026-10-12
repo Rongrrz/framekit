@@ -265,16 +265,36 @@ Use `toTreeString()` and `onPropertyChanged()` for simple diagnostics. Optional 
 ```ts
 // Keep this branch behind your bundler's development constant.
 if (import.meta.env.DEV) {
-  const { createRuntimeInspector } = await import('framekit/devtools');
-  const inspector = createRuntimeInspector(app);
-  inspector.gui.mount('#app');
+  const { bindRuntimeInspectorRoute } = await import('framekit/devtools');
+  const debug = bindRuntimeInspectorRoute(app, { returnTo: '/' });
+  // Your Debug button or command calls debug.open().
+  // debug.close() exits; debug.dispose() removes the integration.
 }
 ```
 
 `inspectInstance(node)` provides readonly property and hierarchy snapshots, cleanup registration
 counts, and animated property names. It can inspect destroyed handles. Counts represent cleanup
 registrations, not individual listeners. The UI refreshes every 250 ms and releases its timer when
-closed or when the inspected root is destroyed. In the workbench, use `?inspect=1` during development.
+closed or when the inspected root is destroyed.
+
+`bindRuntimeInspectorRoute(root, { returnTo? })` is available to every FrameKit application. It
+lazily mounts the inspector at `/fkdebug`, supports browser Back/Forward, and destroys its UI
+on exit. Keep your application root alive while the route is open. For direct navigation or
+refresh, configure your development server/router to serve the same application bootstrap at
+`/fkdebug`; the helper does not install a server or intercept your router's `pushState` calls.
+Call `debug.open()` from your command rather than reloading the page. `returnTo` defaults to `/`
+and is used when the debug route was loaded directly. Disposing the binding releases its UI
+and route listener without navigating the host application.
+
+The inspector has a resizable dock, searchable hierarchy with ancestor paths, selection history,
+breadcrumb navigation, grouped property filtering, and readable color/geometry values. Pick
+selects an element from the running app without activating its commands. Escape cancels picking;
+in a search field it clears the query first, then closes the inspector. Compact screens use
+Hierarchy/Details tabs. Navigation and styling do not mutate inspected objects.
+
+The workbench has a Debug button during development, and its dev server serves `/fkdebug`
+directly. Production playground builds remove the integration. For custom mounting without
+routing, use `createRuntimeInspector(root)` and mount its `gui` yourself.
 
 `unsafeElement` is useful for native integration, labels, input modes, and unsupported attributes.
 Do not mutate FrameKit-owned hierarchy or inline styles through it. Use public geometry,

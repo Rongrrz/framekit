@@ -115,7 +115,10 @@ describe('packed package consumers', () => {
         ${load}
         const frame = api.createFrame({ Name: 'Packaged instance' }, { ownerDocument: new Window().document });
         const snapshot = devtools.inspectInstance(frame);
-        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: 'inspectInstance' in api }));
+        const inspector = devtools.createRuntimeInspector(frame);
+        const isolatedDocument = inspector.gui.unsafeElement.ownerDocument === frame.unsafeElement.ownerDocument;
+        inspector.gui.destroy();
+        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: 'inspectInstance' in api, isolatedDocument, routeBinding: typeof devtools.bindRuntimeInspectorRoute }));
         frame.destroy();
       })().catch((error) => { console.error(error); process.exitCode = 1; });
     `,
@@ -126,6 +129,8 @@ describe('packed package consumers', () => {
         name: 'Packaged instance',
         className: 'Frame',
         exportedByMain: false,
+        isolatedDocument: true,
+        routeBinding: 'function',
       });
     },
   );

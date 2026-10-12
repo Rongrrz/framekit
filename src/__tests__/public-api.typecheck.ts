@@ -34,7 +34,11 @@ import {
   type Unsubscribe,
   vector2,
 } from 'framekit';
-import { inspectInstance } from 'framekit/devtools';
+import {
+  bindRuntimeInspectorRoute,
+  createRuntimeInspector,
+  inspectInstance,
+} from 'framekit/devtools';
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
@@ -64,6 +68,10 @@ function verifyPublicTypeContracts(): void {
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
+  const debugRoute = bindRuntimeInspectorRoute(frame, { returnTo: '/app' });
+  debugRoute.dispose();
+  const inspector = createRuntimeInspector(frame);
+  inspector.gui.destroy();
   const snapshot = inspectInstance(frame);
   // @ts-expect-error Inspector property snapshots are readonly.
   snapshot.properties.Name = 'mutated';

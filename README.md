@@ -114,3 +114,7 @@ a separate CI job; `npm run check` runs formatting, types, lint, unit tests, bui
 consumer contracts.
 
 For agent-assisted application work, start with [SKILLS.md](SKILLS.md).
+
+During development, the workbench's **Debug** button opens `/fkdebug`: a searchable runtime
+hierarchy, element picker, grouped properties, and resizable inspector. The route integration is
+available to any application through `bindRuntimeInspectorRoute` from `framekit/devtools`.

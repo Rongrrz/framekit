@@ -4,6 +4,19 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
+  plugins: [
+    {
+      name: 'framekit-debug-route',
+      configureServer(server) {
+        server.middlewares.use((request, _response, next) => {
+          if (request.url?.split('?')[0]?.replace(/\/$/, '') === '/fkdebug') {
+            request.url = '/workbench.html';
+          }
+          next();
+        });
+      },
+    },
+  ],
   cacheDir: '../node_modules/.vite/playground',
   resolve: {
     alias: {

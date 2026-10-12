@@ -42,8 +42,11 @@ playground/src/
 keyed updates, dragging, command menus, modal help, and a resizable sidebar. On compact screens,
 Properties opens the same inspector objects in a native modal. Data and bounded undo history
 live in `src/workbench/model.ts`; pointer-driven preview behavior and field editing have separate
-owners. Use `?inspect=1` in development to load the optional runtime inspector. Production builds
-remove that development branch.
+owners. In development, click Debug or open `/fkdebug` for the optional runtime inspector.
+Its searchable hierarchy, breadcrumbs/history, grouped properties, element picker, and resizable
+dock come from the general `framekit/devtools` package. Back/Forward and Close preserve the
+workbench's live objects. The development server routes `/fkdebug` to the workbench bootstrap;
+production builds remove the integration.
 
 `/collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top
 to see scroll anchoring, or use End to navigate to the last row without mounting every view.
