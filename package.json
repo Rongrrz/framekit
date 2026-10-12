@@ -47,7 +47,8 @@
     "test:playground": "vitest run --config playground/vite.config.ts",
     "preview": "vite preview --config playground/vite.config.ts",
     "prepare": "husky",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "benchmark": "playwright test --config playwright.benchmark.config.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.0",

@@ -26,6 +26,8 @@
   },
   "include": [
     "playwright.config.ts",
+    "playwright.benchmark.config.ts",
+    "benchmarks",
     "vite.config.ts",
     "vitest.package.config.ts",
     "tests",

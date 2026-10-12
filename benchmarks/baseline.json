@@ -1,0 +1,78 @@
+{
+  "measuredAt": "2026-10-12T00:38:05.195Z",
+  "revision": "c809e360ebefbf29690541ed588fd42592437cc8",
+  "environment": {
+    "browser": "156.0.8078.4",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5"
+  },
+  "synchronous": [
+    {
+      "count": 1000,
+      "runtime": "framekit",
+      "repetitions": 5,
+      "medianMs": {
+        "creationMs": 12.4,
+        "updateMs": 2.1,
+        "reorderMs": 2.5,
+        "destructionMs": 2.3
+      }
+    },
+    {
+      "count": 1000,
+      "runtime": "dom",
+      "repetitions": 5,
+      "medianMs": {
+        "creationMs": 1.4,
+        "updateMs": 1.2,
+        "reorderMs": 1.2,
+        "destructionMs": 0.1
+      }
+    },
+    {
+      "count": 5000,
+      "runtime": "framekit",
+      "repetitions": 5,
+      "medianMs": {
+        "creationMs": 58.1,
+        "updateMs": 14.8,
+        "reorderMs": 15,
+        "destructionMs": 12.6
+      }
+    },
+    {
+      "count": 5000,
+      "runtime": "dom",
+      "repetitions": 5,
+      "medianMs": {
+        "creationMs": 6.7,
+        "updateMs": 5.8,
+        "reorderMs": 6.4,
+        "destructionMs": 0.4
+      }
+    }
+  ],
+  "animation": {
+    "framekit": {
+      "samples": 40,
+      "medianMs": 16.7,
+      "p95Ms": 20.7,
+      "maxMs": 22
+    },
+    "dom": {
+      "samples": 40,
+      "medianMs": 16.7,
+      "p95Ms": 17.6,
+      "maxMs": 17.7
+    }
+  },
+  "virtualCollection": {
+    "count": 100000,
+    "maxMountedViews": 14,
+    "creationMs": 19.3,
+    "jumpMedianMs": 0.8,
+    "jumpP95Ms": 2.1
+  },
+  "remainingRoots": 0
+}
