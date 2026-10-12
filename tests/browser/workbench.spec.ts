@@ -73,7 +73,7 @@ test('opens keyboard context actions and preserves the focused row through reord
 });
 
 test('renders the desktop workbench and a compact viewport', async ({ page }, info) => {
-  await page.screenshot({ path: `/private/tmp/framekit-workbench-${info.project.name}.png` });
+  await page.screenshot({ path: info.outputPath('workbench-desktop.png') });
   await page.setViewportSize({ width: 800, height: 700 });
   await expect(page.getByRole('tree', { name: 'Objects' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Select Welcome' })).toBeVisible();
