@@ -40,7 +40,7 @@ export const createOverlaysPage = (
     shell.article,
     theme,
     'Explain with a tooltip',
-    'bindTooltip(target, textOrFrame, options?) opens on hover or focus. Choose placement, gap, delay, followCursor, or style. Escape dismisses the tooltip; keyboard focus keeps cursor-following tooltips anchored.',
+    'bindTooltip(target, textOrFrame, options?) opens on hover or keyboard focus (focus-visible). Clicking does not keep it open after the pointer leaves. Choose placement, gap, delay, followCursor, or style. Escape dismisses it; keyboard focus anchors cursor-following tooltips to the trigger.',
   );
   createCodeBlock(theme, 'TooltipCode', [
     "import { createTextButton, bindTooltip } from 'framekit';",

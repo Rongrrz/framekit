@@ -40,7 +40,9 @@ export const connectFloatingPanelInteractions = (
   panel.addEventListener('pointerenter', controller.panelPointerEnter, listenerOptions);
   panel.addEventListener('pointerleave', controller.panelPointerLeave, listenerOptions);
 
-  if (popover) {
+  if (!popover) {
+    target.addEventListener('pointerdown', controller.targetPointerDown, listenerOptions);
+  } else {
     panel.addEventListener('focusin', controller.panelFocusIn, listenerOptions);
     panel.addEventListener(
       'focusout',
@@ -109,6 +111,10 @@ export const connectFloatingPanelInteractions = (
   document.addEventListener(
     'keydown',
     (event) => {
+      if (!popover) {
+        // Tab originates on the previous control, before the tooltip trigger gains focus.
+        controller.keyboardInput(event);
+      }
       if (
         event.defaultPrevented ||
         event.key !== 'Escape' ||

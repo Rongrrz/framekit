@@ -1,5 +1,21 @@
 import { expect, test } from '@playwright/test';
 
+test('does not retain the theme tooltip after a pointer click and exit', async ({ page }) => {
+  await page.goto('/playground/index.html#/api');
+  const toggle = page.getByRole('button', { name: /Switch to (light|dark) mode/ });
+  const tooltip = page.getByRole('tooltip');
+  await toggle.hover();
+  await expect(tooltip).toBeVisible();
+  await toggle.click();
+  await page.mouse.move(500, 400);
+  await expect(tooltip).toBeHidden();
+  // Re-entering must still work without clicking elsewhere to clear focus.
+  await toggle.hover();
+  await expect(tooltip).toBeVisible();
+  await page.mouse.move(500, 400);
+  await expect(tooltip).toBeHidden();
+});
+
 test('switches the page and code palette immediately in both directions', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.addInitScript(() => window.localStorage.setItem('framekit-playground-theme', 'dark'));

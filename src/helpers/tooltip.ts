@@ -29,13 +29,13 @@ export type TooltipStyle = Partial<
 
 /** Placement, timing, appearance, and animation for descriptive content. */
 export type TooltipOptions = Readonly<{
-  /** Tracks the pointer and starts hiding immediately on exit. Focus anchors to the trigger. */
+  /** Tracks the pointer and starts hiding immediately on exit. Keyboard focus anchors to the trigger. */
   followCursor?: boolean;
   /** Defaults to top for static tooltips and bottom for cursor-following tooltips. */
   placement?: TooltipPlacement;
   /** Distance from the trigger or pointer in viewport pixels. Defaults to 12. */
   gap?: number;
-  /** Hover delay in milliseconds. Focus opens immediately. Defaults to 300. */
+  /** Hover delay in milliseconds. Focus-visible opens immediately. Defaults to 300. */
   delay?: number;
   /** Initial appearance of generated text; supplied instances retain their own styling. */
   style?: TooltipStyle;
@@ -46,7 +46,8 @@ export type TooltipOptions = Readonly<{
 }>;
 
 /**
- * Binds descriptive hover/focus content and returns an idempotent disposer.
+ * Binds descriptive hover/focus-visible content and returns an idempotent disposer.
+ * Pointer focus alone does not keep the tooltip open after hover ends.
  * Custom content must be detached, non-interactive, and in the trigger's document.
  * Supplied instances remain caller-owned and have their geometry and visibility restored on disposal.
  * Escape dismisses until hover/focus ends. Use bindPopover for interactive content.

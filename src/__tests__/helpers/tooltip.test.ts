@@ -151,6 +151,37 @@ describe('tooltips', () => {
     expect(layer.Enabled).toBe(true);
   });
 
+  it.each([false, true])(
+    'does not retain pointer focus after hover ends (followCursor: %s)',
+    (followCursor) => {
+      const { target, tooltip } = fixture();
+      bindTooltip(target, tooltip, { followCursor, delay: 0, onShow: () => {}, onHide: () => {} });
+      const layer = layerOf(tooltip);
+      pointer(target.unsafeElement, 'pointerenter');
+      pointer(target.unsafeElement, 'pointerdown');
+      target.unsafeElement.focus();
+      pointer(target.unsafeElement, 'pointerleave');
+      vi.advanceTimersByTime(80);
+      expect(layer.Enabled).toBe(false);
+      expect(document.activeElement).toBe(target.unsafeElement);
+      pointer(target.unsafeElement, 'pointerenter');
+      expect(layer.Enabled).toBe(true);
+      pointer(target.unsafeElement, 'pointerleave');
+      vi.advanceTimersByTime(80);
+      expect(layer.Enabled).toBe(false);
+      target.unsafeElement.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      );
+      expect(layer.Enabled).toBe(true);
+      pointer(target.unsafeElement, 'pointerdown');
+      vi.advanceTimersByTime(80);
+      expect(layer.Enabled).toBe(false);
+      target.unsafeElement.blur();
+      target.unsafeElement.focus();
+      expect(layer.Enabled).toBe(true);
+    },
+  );
+
   it.each([
     ['top', 210, 148],
     ['bottom', 210, 252],

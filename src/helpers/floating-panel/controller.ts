@@ -12,6 +12,8 @@ export type FloatingPanelController = Readonly<{
   targetPointerEnter(event: PointerEvent): void;
   targetPointerLeave(): void;
   targetPointerMove(event: PointerEvent): void;
+  targetPointerDown(): void;
+  keyboardInput(event: KeyboardEvent): void;
   targetFocusIn(): void;
   focusOut(relatedTarget: EventTarget | null): void;
   panelPointerEnter(): void;
@@ -43,6 +45,7 @@ export const createFloatingPanelController = (
   let hovered = false;
   let panelHovered = false;
   let focused = target.contains(document.activeElement);
+  let pointerFocus = false;
   let pinned = false;
   let dismissed = false;
   let pointer: Vector2 | undefined;
@@ -51,7 +54,14 @@ export const createFloatingPanelController = (
   let transition: Readonly<{ controller: AbortController; showing: boolean }> | undefined;
   const springMotion = { value: 0, velocity: 0 };
 
-  const active = (): boolean => pinned || (hoverEnabled && (hovered || panelHovered || focused));
+  // Pointer clicks may leave DOM focus behind. Only focus-visible keeps a tooltip open.
+  const hasFocus = (): boolean =>
+    popover
+      ? focused
+      : !pointerFocus &&
+        target.contains(document.activeElement) &&
+        document.activeElement?.matches(':focus-visible') === true;
+  const active = (): boolean => pinned || (hoverEnabled && (hovered || panelHovered || hasFocus()));
 
   const stopTransition = (): void => {
     const previous = transition;
@@ -84,7 +94,7 @@ export const createFloatingPanelController = (
     }
     const panelBounds = panel.getBoundingClientRect();
     const anchor =
-      followCursor && !focused && pointer
+      followCursor && !hasFocus() && pointer
         ? { left: pointer.X, right: pointer.X, top: pointer.Y, bottom: pointer.Y }
         : bounds;
     const point = panelPosition(
@@ -196,7 +206,7 @@ export const createFloatingPanelController = (
         } else {
           position();
         }
-      } else if (focused || pinned || delay === 0) {
+      } else if (hasFocus() || pinned || delay === 0) {
         show();
       } else {
         timer = window.setTimeout(show, delay);
@@ -247,12 +257,28 @@ export const createFloatingPanelController = (
         position();
       }
     },
+    targetPointerDown: (): void => {
+      // Clicking an already-focused button may leave :focus-visible matching until blur.
+      pointerFocus = true;
+      update();
+    },
+    keyboardInput: (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') {
+        pointerFocus = false;
+        if (target.contains(document.activeElement)) {
+          update();
+        }
+      }
+    },
     targetFocusIn: (): void => {
       focused = true;
       update();
     },
     focusOut: (relatedTarget: EventTarget | null): void => {
       focused = inside(relatedTarget);
+      if (!focused) {
+        pointerFocus = false;
+      }
       if (popover && !focused) {
         pinned = false;
       }
@@ -293,7 +319,7 @@ export const createFloatingPanelController = (
     isVisible: portal.isVisible,
     shouldHandleEscape: (): boolean => active() || portal.isVisible() || timer !== undefined,
     start: (): void => {
-      if (focused && hoverEnabled) {
+      if (hasFocus() && hoverEnabled) {
         update();
       }
     },
