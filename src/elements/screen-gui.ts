@@ -8,8 +8,6 @@ import * as lifecycle from '#internal/runtime/systems/lifecycle.js';
 import { mergeProperties } from '#internal/runtime/systems/properties.js';
 import { assertBoolean, assertInteger } from '#internal/validation.js';
 
-import { connectHoverEvents } from './hover-events.js';
-
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = InstanceProperties & {
   /** Whether this GUI is rendered while mounted. */
@@ -83,7 +81,6 @@ export function createScreenGui(
     canHaveParent: false,
   }) as ScreenGui;
 
-  connectHoverEvents(gui, element);
   lifecycle.onDestroy(gui, () => mountTargets.delete(gui));
   return gui;
 }

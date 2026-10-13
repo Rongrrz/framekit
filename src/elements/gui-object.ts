@@ -19,8 +19,6 @@ import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/c
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '#values/udim.js';
 import { assertVector2, vector2, type Vector2 } from '#values/vector2.js';
 
-import { connectHoverEvents } from './hover-events.js';
-
 /** Axes whose size should follow the rendered content. */
 export type AutomaticSize = 'None' | 'X' | 'Y' | 'XY';
 
@@ -55,23 +53,25 @@ export type GuiObject<Properties extends GuiObjectProperties = GuiObjectProperti
   GuiElement<Properties>;
 
 const automaticSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
+const defaultGuiObjectProperties = Object.freeze({
+  Name: 'GuiObject',
+  Size: udim2FromOffset(100, 100),
+  Position: udim2FromOffset(0, 0),
+  AnchorPoint: vector2(0, 0),
+  Rotation: 0,
+  Visible: true,
+  BackgroundColor3: color3FromRGB(200, 200, 200),
+  BackgroundTransparency: 0,
+  ZIndex: 1,
+  LayoutOrder: 0,
+  AutomaticSize: 'None',
+  ClipsDescendants: false,
+} satisfies GuiObjectProperties);
+const guiObjectPropertyNames = Object.keys(defaultGuiObjectProperties);
 
 /** Returns a fresh set of default GUI object properties. */
 export function createDefaultGuiObjectProperties(): GuiObjectProperties {
-  return {
-    Name: 'GuiObject',
-    Size: udim2FromOffset(100, 100),
-    Position: udim2FromOffset(0, 0),
-    AnchorPoint: vector2(0, 0),
-    Rotation: 0,
-    Visible: true,
-    BackgroundColor3: color3FromRGB(200, 200, 200),
-    BackgroundTransparency: 0,
-    ZIndex: 1,
-    LayoutOrder: 0,
-    AutomaticSize: 'None',
-    ClipsDescendants: false,
-  };
+  return { ...defaultGuiObjectProperties };
 }
 
 type GuiObjectNodeOptions<Properties extends GuiObjectProperties> = {
@@ -101,7 +101,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
   element.dataset.framekit = className;
   Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box', margin: '0' });
 
-  const node = createGuiNode({
+  return createGuiNode({
     className,
     properties: mergeProperties(defaultProperties, initialProperties),
     element,
@@ -109,17 +109,14 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
       renderGuiObject(element, properties, changedProperties);
       return renderProperties?.(properties, changedProperties);
     },
-    validateProperties: (properties) => {
-      validateGuiObjectProperties(properties);
+    validateProperties: (properties, requestedProperties) => {
+      validateGuiObjectProperties(properties, requestedProperties);
       validateProperties?.(properties);
     },
     methods,
     canContainGuiChildren,
     capabilities: { guiObject: true, ...capabilities },
   });
-
-  connectHoverEvents(node, element);
-  return node;
 }
 
 function renderGuiObject(
@@ -179,16 +176,45 @@ function renderGuiObject(
   }
 }
 
-function validateGuiObjectProperties(properties: Readonly<GuiObjectProperties>): void {
-  assertAllowedValue(properties.AutomaticSize, automaticSizes, 'AutomaticSize');
-  assertUDim2(properties.Size, 'Size');
-  assertUDim2(properties.Position, 'Position');
-  assertVector2(properties.AnchorPoint, 'AnchorPoint');
-  assertFiniteNumber(properties.Rotation, 'Rotation');
-  assertBoolean(properties.Visible, 'Visible');
-  assertColor3(properties.BackgroundColor3, 'BackgroundColor3');
-  assertUnitInterval(properties.BackgroundTransparency, 'BackgroundTransparency');
-  assertInteger(properties.ZIndex, 'ZIndex');
-  assertInteger(properties.LayoutOrder, 'LayoutOrder');
-  assertBoolean(properties.ClipsDescendants, 'ClipsDescendants');
+function validateGuiObjectProperties(
+  properties: Readonly<GuiObjectProperties>,
+  requestedProperties: readonly PropertyKey[] = guiObjectPropertyNames,
+): void {
+  for (const property of requestedProperties) {
+    switch (property) {
+      case 'AutomaticSize':
+        assertAllowedValue(properties.AutomaticSize, automaticSizes, 'AutomaticSize');
+        break;
+      case 'Size':
+        assertUDim2(properties.Size, 'Size');
+        break;
+      case 'Position':
+        assertUDim2(properties.Position, 'Position');
+        break;
+      case 'AnchorPoint':
+        assertVector2(properties.AnchorPoint, 'AnchorPoint');
+        break;
+      case 'Rotation':
+        assertFiniteNumber(properties.Rotation, 'Rotation');
+        break;
+      case 'Visible':
+        assertBoolean(properties.Visible, 'Visible');
+        break;
+      case 'BackgroundColor3':
+        assertColor3(properties.BackgroundColor3, 'BackgroundColor3');
+        break;
+      case 'BackgroundTransparency':
+        assertUnitInterval(properties.BackgroundTransparency, 'BackgroundTransparency');
+        break;
+      case 'ZIndex':
+        assertInteger(properties.ZIndex, 'ZIndex');
+        break;
+      case 'LayoutOrder':
+        assertInteger(properties.LayoutOrder, 'LayoutOrder');
+        break;
+      case 'ClipsDescendants':
+        assertBoolean(properties.ClipsDescendants, 'ClipsDescendants');
+        break;
+    }
+  }
 }

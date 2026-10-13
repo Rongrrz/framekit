@@ -152,4 +152,41 @@ describe('node properties', () => {
     expect(frame.Position).toEqual(udim2FromOffset(10, 20));
     expect(frame.unsafeElement.style.left).toBe('10px');
   });
+
+  it.each(['setter', 'patch'])(
+    'snapshots structured %s updates once and keeps later caller edits out of the runtime',
+    (mode) => {
+      const frame = createFrame();
+      let offset = 10;
+      let reads = 0;
+      const position = Object.freeze({
+        X: Object.freeze({
+          Scale: 0,
+          get Offset() {
+            reads += 1;
+            return offset;
+          },
+        }),
+        Y: udim(0, 20),
+      });
+      const update = (): void => {
+        if (mode === 'setter') {
+          frame.Position = position;
+        } else {
+          frame.setProperties({ Position: position });
+        }
+      };
+      update();
+      expect(reads).toBe(1);
+      offset = 30;
+      expect(frame.Position).toEqual(udim2FromOffset(10, 20));
+      expect(frame.unsafeElement.style.left).toBe('10px');
+      update();
+      expect(reads).toBe(2);
+      expect(frame.Position).toEqual(udim2FromOffset(30, 20));
+      expect(Object.isFrozen(frame.Position.X)).toBe(true);
+      expect(frame.unsafeElement.style.left).toBe('30px');
+      frame.destroy();
+    },
+  );
 });

@@ -10,11 +10,12 @@ import { getActiveNodeState, getNodeState } from './registry.js';
 
 const eventSignalsByNode = new WeakMap<Instance, Map<PropertyKey, SignalEmitter<unknown[]>>>();
 
-/** Subscribes to an event whose listeners are cleared with the node. */
+/** Subscribes to an owned event, connecting its source only when the first listener arrives. */
 export function subscribeToNodeEvent<Arguments extends unknown[]>(
   node: Instance,
   eventKey: PropertyKey,
   listener: (...args: Arguments) => void,
+  connect?: () => void,
 ): Unsubscribe {
   const state = getActiveNodeState(node);
   let signalsByEvent = eventSignalsByNode.get(node);
@@ -34,6 +35,7 @@ export function subscribeToNodeEvent<Arguments extends unknown[]>(
   if (!eventSignal) {
     eventSignal = createSignalEmitter();
     signalsByEvent.set(eventKey, eventSignal);
+    connect?.();
   }
   return eventSignal.subscribe(listener as (...args: unknown[]) => void);
 }
@@ -43,11 +45,9 @@ export function emitNodeEvent<Arguments extends unknown[]>(
   eventKey: PropertyKey,
   ...args: Arguments
 ): void {
-  if (getNodeState(node).destroyed) {
+  const emitter = eventSignalsByNode.get(node)?.get(eventKey);
+  if (!emitter || getNodeState(node).destroyed) {
     return;
   }
-  const emitter = eventSignalsByNode.get(node)?.get(eventKey);
-  if (emitter) {
-    emitSignalSafely(emitter, ...args);
-  }
+  emitSignalSafely(emitter, ...args);
 }

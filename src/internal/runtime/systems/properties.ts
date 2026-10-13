@@ -26,6 +26,26 @@ export function setNodeProperties<Properties extends InstanceProperties>(
 ): void {
   const propertySnapshot = snapshotPropertyValue(patch);
   const requestedProperties = Object.keys(propertySnapshot) as (keyof Properties)[];
+  applyPropertyPatch(node, propertySnapshot, requestedProperties);
+}
+
+/** Direct setters only snapshot their value; their patch envelope is created inside the runtime. */
+export function setNodeProperty<
+  Properties extends InstanceProperties,
+  Property extends keyof Properties,
+>(node: Instance<Properties>, property: Property, value: Properties[Property]): void {
+  applyPropertyPatch(
+    node,
+    { [property]: snapshotPropertyValue(value) } as unknown as Partial<Properties>,
+    [property],
+  );
+}
+
+function applyPropertyPatch<Properties extends InstanceProperties>(
+  node: Instance<Properties>,
+  propertySnapshot: Partial<Properties>,
+  requestedProperties: readonly (keyof Properties)[],
+): void {
   const commit = commitPropertyPatch(node, propertySnapshot, requestedProperties);
 
   for (const property of requestedProperties) {
@@ -92,11 +112,19 @@ export function validateNodeProperties<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
 ): void {
-  const state = getActiveNodeState(node);
-  validatePropertyPatch(state.properties, patch);
+  preparePropertyPatch(getActiveNodeState(node), patch);
+}
+
+function preparePropertyPatch<Properties extends InstanceProperties>(
+  state: NodeState<Properties>,
+  patch: Partial<Properties>,
+  requestedProperties: readonly (keyof Properties)[] = Object.keys(patch) as (keyof Properties)[],
+): Properties {
+  validatePropertyPatch(state.properties, patch, requestedProperties);
   const nextProperties = { ...state.properties, ...patch };
-  state.validateProperties?.(nextProperties);
+  state.validateProperties?.(nextProperties, requestedProperties);
   validateModifierRelationships(state, nextProperties);
+  return nextProperties;
 }
 
 function getPropertyWriteEventKey(property: PropertyKey): symbol {
@@ -115,6 +143,13 @@ export function mergeProperties<Properties extends InstanceProperties>(
   initialProperties: Partial<Properties>,
 ): Properties {
   validatePropertyPatch(defaultProperties, initialProperties);
+  if (
+    Object.isFrozen(defaultProperties) &&
+    snapshotPropertyValue(defaultProperties) === defaultProperties
+  ) {
+    // Immutable defaults can be shared; only the caller's values need a deep snapshot.
+    return Object.freeze({ ...defaultProperties, ...snapshotPropertyValue(initialProperties) });
+  }
   return snapshotPropertyValue({ ...defaultProperties, ...initialProperties });
 }
 
@@ -122,8 +157,9 @@ export function mergeProperties<Properties extends InstanceProperties>(
 function validatePropertyPatch<Properties extends InstanceProperties>(
   current: Readonly<Properties>,
   patch: Partial<Properties>,
+  requestedProperties: readonly (keyof Properties)[] = Object.keys(patch) as (keyof Properties)[],
 ): void {
-  for (const property of Object.keys(patch) as (keyof Properties)[]) {
+  for (const property of requestedProperties) {
     if (!Object.hasOwn(current, property)) {
       throw new TypeError(`Unknown property "${String(property)}" on ${current.Name}.`);
     }
@@ -147,7 +183,7 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   requestedProperties: readonly (keyof Properties)[],
 ): PropertyCommit<Properties> | undefined {
   const state = getActiveNodeState(node);
-  validateNodeProperties(node, patch);
+  const nextProperties = preparePropertyPatch(state, patch, requestedProperties);
 
   const previousProperties = state.properties;
   const changedProperties = new Set(
@@ -159,7 +195,6 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
     return;
   }
 
-  const nextProperties = { ...state.properties, ...patch };
   state.properties = nextProperties;
   try {
     rendering.renderPropertyChanges(node, changedProperties);

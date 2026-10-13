@@ -39,6 +39,10 @@ const frameTagNames = [
   'nav',
   'figure',
 ] as const;
+const defaultFrameProperties: Readonly<FrameProperties> = Object.freeze({
+  ...createDefaultGuiObjectProperties(),
+  Name: 'Frame',
+});
 
 /** Creates a rectangular GUI container. */
 export function createFrame(initialProperties: FrameOptions = {}, options: DomOptions = {}): Frame {
@@ -47,7 +51,7 @@ export function createFrame(initialProperties: FrameOptions = {}, options: DomOp
   return createGuiObjectNode({
     className: 'Frame',
     element: resolveOwnerDocument(options).createElement(TagName),
-    defaultProperties: { ...createDefaultGuiObjectProperties(), Name: 'Frame' },
+    defaultProperties: defaultFrameProperties,
     initialProperties: properties,
   }) as Frame;
 }

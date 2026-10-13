@@ -1,6 +1,7 @@
 import type { Unsubscribe } from '#state/signal.js';
 
-import { subscribeToNodeEvent } from './events.js';
+import { emitNodeEvent, subscribeToNodeEvent } from './events.js';
+import type { GuiElement } from './gui-node.js';
 import type { Instance } from './instance.js';
 
 /** Mouse events available on every DOM-backed GUI node. */
@@ -53,11 +54,15 @@ export const guiEventKeys = Object.freeze({
 
 // Nodes share frozen method tables so event methods are allocated once rather than per node.
 export const guiEventMethods = Object.freeze({
-  onMouseEnter(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
-    return subscribeToNodeEvent(this, guiEventKeys.mouseEnter, listener);
+  onMouseEnter(this: GuiElement, listener: (event: MouseEvent) => void): Unsubscribe {
+    return subscribeToNodeEvent(this, guiEventKeys.mouseEnter, listener, () => {
+      this.on('mouseenter', (event) => emitNodeEvent(this, guiEventKeys.mouseEnter, event));
+    });
   },
-  onMouseLeave(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
-    return subscribeToNodeEvent(this, guiEventKeys.mouseLeave, listener);
+  onMouseLeave(this: GuiElement, listener: (event: MouseEvent) => void): Unsubscribe {
+    return subscribeToNodeEvent(this, guiEventKeys.mouseLeave, listener, () => {
+      this.on('mouseleave', (event) => emitNodeEvent(this, guiEventKeys.mouseLeave, event));
+    });
   },
 } satisfies GuiEventMethods);
 

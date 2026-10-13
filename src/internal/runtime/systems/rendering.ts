@@ -47,7 +47,7 @@ export function renderPropertyChanges<Properties extends InstanceProperties>(
   if (state.kind === 'gui') {
     renderNode(node, changedProperties);
   }
-  if (state.parent && hasLayoutModifier(state.parent) && affectsParentLayout(changedProperties)) {
+  if (state.parent && affectsParentLayout(changedProperties) && hasLayoutModifier(state.parent)) {
     renderLayouts(state.parent);
   }
 }
@@ -65,7 +65,9 @@ export function renderNode<Properties extends InstanceProperties>(
   if (reconciledProperties) {
     state.properties = { ...state.properties, ...reconciledProperties };
   }
-  renderModifierStyles(node);
+  if (state.modifiers.size > 0) {
+    renderModifierStyles(node);
+  }
 }
 
 function affectsParentLayout<Properties extends InstanceProperties>(

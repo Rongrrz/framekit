@@ -113,6 +113,54 @@ test('repeated subtree lifetimes release watchers, events, animations, and DOM',
   expect(result).toEqual({ notifications: 100, clicks: 0, remaining: 2, roots: 0 });
 });
 
+test('hover subscriptions remain independent and stop on disposal and destruction', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const { createScreenGui, createFrame, createTextButton, udim2FromOffset } = window.framekit;
+    const gui = createScreenGui();
+    const frame = createFrame({ Size: udim2FromOffset(100, 100) });
+    const destroy = createTextButton({
+      Text: 'Destroy',
+      Size: udim2FromOffset(100, 40),
+      Position: udim2FromOffset(0, 150),
+    });
+    frame.unsafeElement.id = 'hover-target';
+    frame.Parent = gui;
+    destroy.Parent = gui;
+    let enters = 0;
+    let leaves = 0;
+    const stop = frame.onMouseEnter(() => {
+      enters += 1;
+    });
+    stop();
+    frame.onMouseEnter(() => {
+      enters += 1;
+      document.documentElement.dataset.enters = String(enters);
+    });
+    frame.onMouseLeave(() => {
+      leaves += 1;
+      document.documentElement.dataset.leaves = String(leaves);
+    });
+    frame.onDestroy(() => {
+      frame.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
+      frame.unsafeElement.dispatchEvent(new MouseEvent('mouseleave'));
+    });
+    destroy.onClick(() => gui.destroy());
+    gui.mount('#root');
+  });
+  await page.locator('#hover-target').hover();
+  await expect(page.locator('html')).toHaveAttribute('data-enters', '1');
+  await page.mouse.move(250, 250);
+  await expect(page.locator('html')).toHaveAttribute('data-leaves', '1');
+  await page.locator('#hover-target').hover();
+  await expect(page.locator('html')).toHaveAttribute('data-enters', '2');
+  await page.getByRole('button', { name: 'Destroy', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-enters', '2');
+  await expect(page.locator('html')).toHaveAttribute('data-leaves', '2');
+  await expect(page.locator('#root')).toBeEmpty();
+});
+
 test('captures dragging pointers outside the element bounds', async ({ page }) => {
   await page.evaluate(() => {
     const { createScreenGui, createFrame, udim2FromOffset } = window.framekit;

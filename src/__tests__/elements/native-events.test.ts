@@ -1,4 +1,4 @@
-import { createFrame, createTextButton, createTextInput } from 'framekit';
+import { createFrame, createScreenGui, createTextButton, createTextInput } from 'framekit';
 import { expect, it, vi } from 'vitest';
 
 it('owns native keyboard listeners and supports repeated early disposal', () => {
@@ -64,3 +64,38 @@ it('snapshots listener options so later caller mutation cannot prevent cleanup',
   node.unsafeElement.click();
   expect(listener).toHaveBeenCalledTimes(2);
 });
+
+it.each([createFrame, createScreenGui])(
+  'shares hover delivery and preserves early disposal, resubscription, and destruction',
+  (createNode) => {
+    const node = createNode();
+    const enter = vi.fn();
+    const otherEnter = vi.fn();
+    const leave = vi.fn();
+    const dispose = node.onMouseEnter(enter);
+    node.onMouseEnter(otherEnter);
+    node.onMouseLeave(leave);
+    const event = new MouseEvent('mouseenter');
+    node.unsafeElement.dispatchEvent(event);
+    expect(enter).toHaveBeenCalledExactlyOnceWith(event);
+    expect(otherEnter).toHaveBeenCalledExactlyOnceWith(event);
+    expect(leave).not.toHaveBeenCalled();
+    dispose();
+    dispose();
+    node.unsafeElement.dispatchEvent(event);
+    expect(enter).toHaveBeenCalledOnce();
+    expect(otherEnter).toHaveBeenCalledTimes(2);
+    node.onMouseEnter(enter);
+    node.unsafeElement.dispatchEvent(event);
+    expect(enter).toHaveBeenCalledTimes(2);
+    expect(otherEnter).toHaveBeenCalledTimes(3);
+    node.unsafeElement.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(leave).toHaveBeenCalledOnce();
+    node.destroy();
+    node.unsafeElement.dispatchEvent(event);
+    node.unsafeElement.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(enter).toHaveBeenCalledTimes(2);
+    expect(leave).toHaveBeenCalledOnce();
+    expect(() => node.onMouseEnter(enter)).toThrow(/destroyed/);
+  },
+);

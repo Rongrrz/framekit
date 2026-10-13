@@ -12,6 +12,7 @@ import {
 import * as lifecycle from '../systems/lifecycle.js';
 import {
   getNodeProperty,
+  setNodeProperty,
   setNodeProperties,
   subscribeToPropertyChange,
 } from '../systems/properties.js';
@@ -80,18 +81,33 @@ export function createNodeHandle<Properties extends InstanceProperties>(
     });
   }
   for (const propertyName of Object.keys(initialProperties)) {
-    Object.defineProperty(handle, propertyName, {
-      configurable: false,
-      enumerable: true,
-      get(this: Instance<Properties>) {
-        return getNodeProperty(this, propertyName as keyof Properties);
-      },
-      set(this: Instance<Properties>, value: Properties[keyof Properties]) {
-        setNodeProperties(this, { [propertyName]: value } as Partial<Properties>);
-      },
-    });
+    Object.defineProperty(handle, propertyName, getPropertyDescriptor<Properties>(propertyName));
   }
   return handle as Instance<Properties>;
+}
+
+const propertyDescriptors = new Map<string, PropertyDescriptor>();
+
+function getPropertyDescriptor<Properties extends InstanceProperties>(
+  propertyName: string,
+): PropertyDescriptor {
+  const existing = propertyDescriptors.get(propertyName);
+  if (existing) {
+    return existing;
+  }
+  // Accessors depend on the property name and receiver, so every instance can share them.
+  const descriptor: PropertyDescriptor = {
+    configurable: false,
+    enumerable: true,
+    get(this: Instance<Properties>) {
+      return getNodeProperty(this, propertyName as keyof Properties);
+    },
+    set(this: Instance<Properties>, value: Properties[keyof Properties]) {
+      setNodeProperty(this, propertyName as keyof Properties, value);
+    },
+  };
+  propertyDescriptors.set(propertyName, descriptor);
+  return descriptor;
 }
 
 /** Creates a frozen method table that inherits another capability table. */

@@ -30,10 +30,11 @@ export function removeStyle(element: HTMLElement, property: string): void {
 export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: StyleValues): void {
   const state = getStyleState(element);
   const previousStyles = state[layer];
-  const affectedProperties = new Set([...Object.keys(previousStyles), ...Object.keys(styles)]);
-  const nextStyles: Record<string, string> = {};
+  const properties = Object.keys(styles);
+  const nextStyles = Object.create(null) as Record<string, string>;
 
-  for (const [property, value] of Object.entries(styles)) {
+  for (const property of properties) {
+    const value = styles[property];
     if (value === undefined) {
       continue;
     }
@@ -41,8 +42,13 @@ export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: S
     nextStyles[property] = value;
   }
   state[layer] = nextStyles;
-  for (const property of affectedProperties) {
+  for (const property of Object.keys(previousStyles)) {
     renderResolvedProperty(element, state, property);
+  }
+  for (const property of properties) {
+    if (!Object.hasOwn(previousStyles, property)) {
+      renderResolvedProperty(element, state, property);
+    }
   }
 }
 
@@ -64,7 +70,7 @@ function getStyleState(element: HTMLElement): ElementStyleState {
 }
 
 function captureFallback(element: HTMLElement, state: ElementStyleState, property: string): void {
-  if (hasValue(state.base, property) || hasValue(state.fallback, property)) {
+  if (state.base[property] !== undefined || state.fallback[property] !== undefined) {
     return;
   }
   const currentValue = element.style.getPropertyValue(property);
@@ -79,7 +85,7 @@ function renderResolvedProperty(
 ): void {
   const value = resolveStyleValue(state, property);
   if (value === undefined) {
-    if (!hasValue(state.rendered, property) && !element.style.getPropertyValue(property)) {
+    if (state.rendered[property] === undefined && !element.style.getPropertyValue(property)) {
       return;
     }
     element.style.removeProperty(property);
@@ -98,24 +104,11 @@ function resolveStyleValue(state: ElementStyleState, property: string): string |
     return 'none';
   }
   // A container's own layout must not replace its placement in its parent's layout.
-  if (hasValue(state['parent-layout'], property)) {
-    return state['parent-layout'][property];
-  }
-  if (hasValue(state.layout, property)) {
-    return state.layout[property];
-  }
-  if (hasValue(state.modifier, property)) {
-    return state.modifier[property];
-  }
-  if (hasValue(state.base, property)) {
-    return state.base[property];
-  }
-  if (hasValue(state.fallback, property)) {
-    return state.fallback[property];
-  }
-  return undefined;
-}
-
-function hasValue(values: Record<string, string>, property: string): boolean {
-  return Object.hasOwn(values, property);
+  return (
+    state['parent-layout'][property] ??
+    state.layout[property] ??
+    state.modifier[property] ??
+    state.base[property] ??
+    state.fallback[property]
+  );
 }

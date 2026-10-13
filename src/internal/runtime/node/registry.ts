@@ -4,6 +4,7 @@ import type { LayoutNodeState, Modifier, StyleModifierState } from './modifier-t
 
 export type PropertyValidator<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
+  requestedProperties?: readonly (keyof Properties)[],
 ) => void;
 
 /** Rendering roles declared by a GUI node rather than inferred from its property names. */

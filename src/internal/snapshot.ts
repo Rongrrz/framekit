@@ -1,10 +1,20 @@
+const immutableSnapshots = new WeakSet<object>();
+
 /** Copies JSON-like property values so later caller mutation cannot bypass FrameKit updates. */
 export function snapshotPropertyValue<Value>(value: Value): Value {
+  if (!isSnapshotContainer(value)) {
+    return value;
+  }
   return snapshotValue(value, new WeakMap()) as Value;
 }
 
 function snapshotValue(value: unknown, copies: WeakMap<object, object>): unknown {
-  if (!isSnapshotContainer(value) || isImmutableSnapshot(value, new WeakSet())) {
+  if (!isSnapshotContainer(value) || immutableSnapshots.has(value)) {
+    return value;
+  }
+  if (isImmutableSnapshot(value, new WeakSet())) {
+    // A fully frozen data graph cannot become mutable later. Accessors never enter this cache.
+    immutableSnapshots.add(value);
     return value;
   }
 
