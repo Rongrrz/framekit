@@ -23,7 +23,7 @@ series = [
     ("reactLocal", "React local state", "#7d409a", "D", 0.24),
 ]
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "svg.fonttype": "none"})
-fig, ax = plt.subplots(figsize=(14, 12))
+fig, ax = plt.subplots(figsize=(14, max(12, len(rows) * 0.5 + 1.5)))
 for key, label, color, marker, offset in series:
     ratios = [row[key]["medianMs"] / row["reactRoot"]["medianMs"] for row in rows]
     ax.scatter(ratios, [index + offset for index in range(len(rows))], color=color,
@@ -46,7 +46,7 @@ ax.set_xlabel("Time relative to React root update (1×) · logarithmic scale · 
 ax.legend(loc="lower left", bbox_to_anchor=(0, 1.015), ncol=2, frameon=False)
 fig.suptitle("FrameKit / React: the expanded performance profile", x=0.03, ha="left", y=0.99, fontsize=17)
 fig.text(0.03, 0.945, f"{report['environment']['cpu']} · production Chromium · React {report['environment']['reactVersion']} · medians of {report['methodology']['rounds']} rounds", color="#555a62")
-fig.text(0.03, 0.025, "Relative times compare the same scenario only. Layout cases edit list tails; front edits still update following ranks.\nNative/synthetic hover, local-state bailouts, and immediate layout contracts differ; see results.md.", color="#555a62", fontsize=9)
+fig.text(0.03, 0.025, "Relative times compare the same scenario only. Both front and tail layout edits are measured; see results.md.\nNative/synthetic hover, local-state bailouts, and immediate layout contracts differ; see results.md.", color="#555a62", fontsize=9)
 fig.subplots_adjust(left=0.34, right=0.98, top=0.87, bottom=0.1)
 args.output.parent.mkdir(parents=True, exist_ok=True)
 fig.savefig(args.output.with_suffix(".png"), dpi=160, facecolor="white")

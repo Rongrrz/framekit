@@ -145,9 +145,10 @@ export function makeFixture(runtime, count, kind = 'rotation', targetCount = cou
   let root;
   let parent;
   let layout;
-  const newNode = (id) => {
+  const newNode = (id, prepend = false) => {
     const node = (kind === 'text' ? createTextLabel : createFrame)({
       Size: udim2FromOffset(800, 10),
+      ...(prepend ? { LayoutOrder: -1 } : {}),
       ...(kind === 'text' ? { Text: 'Row' } : {}),
     });
     if (kind === 'corner') {
@@ -173,7 +174,7 @@ export function makeFixture(runtime, count, kind = 'rotation', targetCount = cou
     parent = createFrame({ Size: udim2FromOffset(800, targetCount * 10) });
     parent.Parent = root;
     root.mount(host());
-    ids.forEach(newNode);
+    ids.forEach((id) => newNode(id));
     if (count) {
       layout = createUIListLayout();
       layout.Parent = parent;
@@ -193,11 +194,15 @@ export function makeFixture(runtime, count, kind = 'rotation', targetCount = cou
     notifications: () => notifications,
     hoverCalls: () => hoverCalls,
     cleanups: () => cleanups,
-    add(amount) {
+    add(amount, prepend = false) {
       const added = Array.from({ length: amount }, () => nextId++);
-      ids.push(...added);
+      if (prepend) {
+        ids.unshift(...added);
+      } else {
+        ids.push(...added);
+      }
       if (runtime === 'framekit') {
-        added.forEach(newNode);
+        added.forEach((id) => newNode(id, prepend));
         if (!layout) {
           layout = createUIListLayout();
           layout.Parent = parent;
@@ -207,8 +212,8 @@ export function makeFixture(runtime, count, kind = 'rotation', targetCount = cou
         render();
       }
     },
-    remove(amount) {
-      const removed = ids.splice(-amount);
+    remove(amount, fromStart = false) {
+      const removed = ids.splice(fromStart ? 0 : -amount, amount);
       if (runtime === 'framekit') {
         removed.forEach((id) => {
           nodes.get(id).destroy();

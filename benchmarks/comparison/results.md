@@ -1,33 +1,35 @@
 # Expanded FrameKit / React performance profile
 
-Library source: d156913a9e8702f608bacc310c1541304e48cceb. Baseline: 846fd1c58e29c3373dfb8daf70f1c0ef60a4059b.
-Measured: 2026-10-13T19:06:39.357Z. Apple M5, Chromium 156.0.8078.4, React 19.3.0; production builds; CPU throttle 1×.
+Library source: 2aadf96bc2ba2f39add00e364c6b91047eadd86e. Baseline: 846fd1c58e29c3373dfb8daf70f1c0ef60a4059b.
+Measured: 2026-10-13T19:15:46.474Z. Apple M5, Chromium 156.0.8078.4, React 19.3.0; production builds; CPU throttle 1×.
 
-All values below are **milliseconds; lower is better**. They are medians of 3 round medians, each with 7 measured repetitions after two warmups. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
+This run covers 23 scenarios. All values below are **milliseconds; lower is better**. They are medians of 5 round medians, each with 11 measured repetitions after two warmups. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
 
-| Scenario                                | Before FK | Optimized FK | React root update | React local state |
-| --------------------------------------- | --------: | -----------: | ----------------: | ----------------: |
-| Create 1,000 rows                       |       7.9 |          8.2 |               4.1 |               4.9 |
-| Create 5,000 rows                       |      37.2 |         36.4 |              32.2 |              33.3 |
-| Rotate 1 of 5,000 rows                  |       0.3 |          0.2 |               2.8 |               0.7 |
-| Rotate 10 of 5,000 rows                 |       0.3 |          0.3 |               3.0 |               0.6 |
-| Rotate 500 of 5,000 rows                |       1.3 |          1.5 |               3.3 |               1.9 |
-| Rotate 5,000 of 5,000 rows              |       7.8 |          8.2 |               6.6 |               7.8 |
-| 5,000 no-op writes                      |       0.8 |          1.1 |               2.5 |               0.9 |
-| Three-property patch × 1,000            |       3.8 |          3.8 |               2.9 |               3.5 |
-| Three direct setters × 1,000            |       3.9 |          3.7 |               2.8 |               3.3 |
-| Update 1,000 text labels                |      66.8 |          5.9 |               3.4 |               3.6 |
-| Update 1,000 corner modifiers           |       2.3 |          2.6 |               2.2 |               3.1 |
-| 1,000 writes + committed-DOM observers  |       2.6 |          2.7 |               2.7 |               2.9 |
-| Reverse 5,000 keyed rows                |      13.6 |         12.5 |              27.6 |              52.2 |
-| Append 10 to a live 1,000-row layout    |       6.0 |          0.5 |               0.8 |               1.1 |
-| Append 100 to a live 1,000-row layout   |      55.3 |          1.1 |               1.1 |               1.4 |
-| Remove 100 from a live 1,100-row layout |      71.1 |          1.3 |               0.8 |               1.1 |
-| Subscribe 1,000 hover targets           |       0.5 |          0.5 |               0.5 |               0.7 |
-| Deliver 1,000 hover events              |       1.2 |          1.6 |               4.9 |               4.2 |
-| Destroy 5,000 plain rows                |       2.0 |          1.8 |               1.0 |               1.3 |
-| Destroy 1,000 subscribed hover targets  |       0.6 |          0.7 |               0.4 |               0.4 |
-| 20 lifetimes × 100 subscribed rows      |      18.7 |         18.4 |               8.6 |               8.8 |
+| Scenario                                      | Before FK | Optimized FK | React root update | React local state |
+| --------------------------------------------- | --------: | -----------: | ----------------: | ----------------: |
+| Create 1,000 rows                             |       7.9 |          7.7 |               4.3 |               4.8 |
+| Create 5,000 rows                             |      37.1 |         35.3 |              31.9 |              33.1 |
+| Rotate 1 of 5,000 rows                        |       0.2 |          0.2 |               3.3 |               0.8 |
+| Rotate 10 of 5,000 rows                       |       0.3 |          0.3 |               3.2 |               0.7 |
+| Rotate 500 of 5,000 rows                      |       1.1 |          1.3 |               3.3 |               1.6 |
+| Rotate 5,000 of 5,000 rows                    |       6.8 |          6.6 |               6.7 |               7.3 |
+| 5,000 no-op writes                            |       0.9 |          0.9 |               2.8 |               0.6 |
+| Three-property patch × 1,000                  |       3.4 |          3.5 |               2.9 |               3.2 |
+| Three direct setters × 1,000                  |       3.4 |          3.5 |               2.9 |               3.1 |
+| Update 1,000 text labels                      |      66.0 |          5.3 |               3.4 |               3.7 |
+| Update 1,000 corner modifiers                 |       2.1 |          2.6 |               2.5 |               3.0 |
+| 1,000 writes + committed-DOM observers        |       2.3 |          2.6 |               2.7 |               2.8 |
+| Reverse 5,000 keyed rows                      |      12.3 |         11.1 |              27.2 |              48.8 |
+| Append 10 to a live 1,000-row layout          |       5.6 |          0.4 |               0.8 |               1.1 |
+| Append 100 to a live 1,000-row layout         |      54.9 |          1.0 |               1.1 |               1.4 |
+| Prepend 100 to a live 1,000-row layout        |      86.0 |         17.7 |               1.1 |               1.4 |
+| Remove 100 from a live 1,100-row layout       |      70.6 |          1.2 |               0.8 |               1.0 |
+| Remove first 100 from a live 1,100-row layout |      69.2 |         17.8 |               0.8 |               1.1 |
+| Subscribe 1,000 hover targets                 |       0.4 |          0.4 |               0.5 |               0.7 |
+| Deliver 1,000 hover events                    |       1.4 |          2.0 |               5.2 |               5.0 |
+| Destroy 5,000 plain rows                      |       1.6 |          1.6 |               0.9 |               1.2 |
+| Destroy 1,000 subscribed hover targets        |       0.7 |          0.6 |               0.3 |               0.3 |
+| 20 lifetimes × 100 subscribed rows            |      17.3 |         17.6 |               8.5 |               8.8 |
 
 ## Main optimizations and compatibility
 
@@ -53,7 +55,7 @@ Default sharing and hover registration are unaffected by these three optimizatio
 
 - Sparse updates and keyed reversal are useful FrameKit cases. Construction, text-host rendering, and repeated subscribed lifetimes still have measurable overhead.
 - **Text:** ordinary updates no longer force geometry reads. Scaled/wrapped fitting remains a separate, more expensive path that this ordinary-label case does not measure.
-- **Live-layout edits:** these cases append to the tail and remove the final 100 rows in forward order. Incremental edits avoid full sibling reconciliation, but edits near the front still renumber following CSS ranks. These results do not imply constant-time arbitrary insertion/removal.
+- **Live-layout edits:** the matrix measures both ends. Tail removal destroys the final 100 rows in forward order; front removal destroys the first 100 in forward order. Prepending assigns new FrameKit rows LayoutOrder -1 ahead of the existing rows at 0; React prepends keyed DOM rows in one commit. FrameKit synchronously renumbers following CSS ranks after each individual edit, while the React fixture uses keyed DOM order. That difference is included in the costs, and fast tail edits do not imply constant-time arbitrary insertion/removal.
 - **Transaction semantics:** React batches each requested operation into one commit; FrameKit commits each individual edit immediately. No-op writes also differ: FrameKit validates and publishes its internal write event, allowing assignment to interrupt an animation. React same-state local updates can bail out without rendering.
 
 ## Scope and reproduction

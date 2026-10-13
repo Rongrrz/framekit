@@ -1,8 +1,8 @@
 # Expanded production comparison
 
 This isolated package compares FrameKit with pinned React 19.3.0 without adding React to the
-library or Playground dependencies. It measures 21 scenarios: bulk creation, sparse/dense/no-op
-writes, grouped patches, text, modifiers, observers, keyed reversal, live-layout insertion/removal,
+library or Playground dependencies. It measures 23 scenarios: bulk creation, sparse/dense/no-op
+writes, grouped patches, text, modifiers, observers, keyed reversal, live-layout insertion/removal at both ends,
 hover, subscribed teardown, and repeated lifetimes.
 
 Run from the repository root with its development dependencies and Playwright Chromium installed.
@@ -18,7 +18,7 @@ checks geometry/identity/notifications/cleanup, and writes [results.json](result
 optimizations. It must be present in local Git history. Useful options:
 
 ```sh
-node benchmarks/comparison/run.mjs --baseline 846fd1c --rounds 3 --repetitions 7
+node benchmarks/comparison/run.mjs --baseline 846fd1c --rounds 5 --repetitions 11
 node benchmarks/comparison/run.mjs --cpu-throttle 4 --out /tmp/comparison.json
 node benchmarks/comparison/run.mjs --cases text --baseline 846fd1c --out /tmp/text.json
 ```
@@ -37,7 +37,9 @@ python3 benchmarks/comparison/plot.py benchmarks/comparison/results.json \
 
 ![Expanded benchmark comparison](comparison.png)
 
-The matrix intentionally retains unfavorable cases. Its live-list edits add/remove rows at the tail.
-Edits near the front still update following CSS order ranks; changes to sorting, layout settings, or
-explicit child order rebuild layout output. Construction, text rendering, and repeated lifetimes
+The matrix intentionally retains unfavorable cases and measures edits at both ends of a list.
+Prepending gives new FrameKit rows LayoutOrder -1 ahead of existing rows at 0; React prepends the
+keyed rows in one commit. FrameKit synchronously updates following CSS ranks after each insertion
+or removal, while React uses keyed DOM order. Changes to sorting, layout settings, or explicit child
+order rebuild FrameKit layout output. Construction, text rendering, and repeated lifetimes
 still include FrameKit feature overhead. See the report for measured differences and limitations.

@@ -45,7 +45,7 @@ export async function writeReport(report, path) {
 Library source: ${report.currentRevision}. Baseline: ${report.baselineRevision}.
 Measured: ${report.measuredAt}. ${report.environment.cpu}, Chromium ${report.environment.browser}, React ${report.environment.reactVersion}; production builds; CPU throttle ${report.environment.cpuThrottle}×.
 
-All values below are **milliseconds; lower is better**. They are medians of ${report.methodology.rounds} round medians, each with ${report.methodology.repetitions} measured repetitions after two warmups. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
+This run covers ${report.cases.length} scenarios. All values below are **milliseconds; lower is better**. They are medians of ${report.methodology.rounds} round medians, each with ${report.methodology.repetitions} measured repetitions after two warmups. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
 
 | Scenario | Before FK | Optimized FK | React root update | React local state |
 | --- | ---: | ---: | ---: | ---: |
@@ -75,7 +75,7 @@ Default sharing and hover registration are unaffected by these three optimizatio
 
 - Sparse updates and keyed reversal are useful FrameKit cases. Construction, text-host rendering, and repeated subscribed lifetimes still have measurable overhead.
 - **Text:** ordinary updates no longer force geometry reads. Scaled/wrapped fitting remains a separate, more expensive path that this ordinary-label case does not measure.
-- **Live-layout edits:** these cases append to the tail and remove the final 100 rows in forward order. Incremental edits avoid full sibling reconciliation, but edits near the front still renumber following CSS ranks. These results do not imply constant-time arbitrary insertion/removal.
+- **Live-layout edits:** the matrix measures both ends. Tail removal destroys the final 100 rows in forward order; front removal destroys the first 100 in forward order. Prepending assigns new FrameKit rows LayoutOrder -1 ahead of the existing rows at 0; React prepends keyed DOM rows in one commit. FrameKit synchronously renumbers following CSS ranks after each individual edit, while the React fixture uses keyed DOM order. That difference is included in the costs, and fast tail edits do not imply constant-time arbitrary insertion/removal.
 - **Transaction semantics:** React batches each requested operation into one commit; FrameKit commits each individual edit immediately. No-op writes also differ: FrameKit validates and publishes its internal write event, allowing assignment to interrupt an animation. React same-state local updates can bail out without rendering.
 
 ## Scope and reproduction
