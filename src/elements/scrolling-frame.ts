@@ -33,8 +33,13 @@ export type ScrollingDirection = 'X' | 'Y' | 'XY';
 /** Semantic HTML elements that can provide a scrolling region. */
 export type ScrollingFrameTagName = (typeof scrollingFrameTagNames)[number];
 
-/** Creation-only options for a scrolling frame's native element. */
-export type ScrollingFrameOptions = Readonly<DomOptions & { tagName?: ScrollingFrameTagName }>;
+/** Initial scrolling properties, including the creation-only native tag. */
+export type ScrollingFrameOptions = Readonly<
+  Partial<ScrollingFrameProperties> & {
+    /** Native scrolling region tag. Defaults to div; fixed after creation. */
+    TagName?: ScrollingFrameTagName;
+  }
+>;
 
 /** Frame properties plus controlled scroll position and direction. */
 export type ScrollingFrameProperties = GuiObjectProperties & {
@@ -116,13 +121,13 @@ const scrollingFrameMethods = Object.freeze(scrollingFrameMethodTable);
 
 /** Creates a native scrolling container with an animatable CanvasPosition. */
 export function createScrollingFrame(
-  initialProperties: Partial<ScrollingFrameProperties> = {},
-  options: ScrollingFrameOptions = {},
+  initialProperties: ScrollingFrameOptions = {},
+  options: DomOptions = {},
 ): ScrollingFrame {
-  const tagName = options.tagName ?? 'div';
-  assertAllowedValue(tagName, scrollingFrameTagNames, 'ScrollingFrame tagName');
+  const { TagName = 'div', ...properties } = initialProperties;
+  assertAllowedValue(TagName, scrollingFrameTagNames, 'ScrollingFrame TagName');
   const ownerDocument = resolveOwnerDocument(options);
-  const element = ownerDocument.createElement(tagName);
+  const element = ownerDocument.createElement(TagName);
   const canvasBounds = ownerDocument.createElement('div');
 
   canvasBounds.dataset.framekitCanvasBounds = '';
@@ -153,7 +158,7 @@ export function createScrollingFrame(
       ScrollBarImageTransparency: 0,
       ScrollBarThickness: 12,
     },
-    initialProperties,
+    initialProperties: properties,
     renderProperties: (properties, changedProperties) => {
       if (
         changedProperties.has('ScrollingDirection') ||

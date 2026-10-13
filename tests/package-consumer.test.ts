@@ -70,6 +70,7 @@ describe('packed package consumers', () => {
         bindPopover: typeof api.bindPopover,
         bindTooltip: typeof api.bindTooltip,
         createSignalEmitter: typeof api.createSignalEmitter,
+        createUserInputService: typeof api.createUserInputService,
         createComputedValue: typeof api.createComputedValue,
         installFrameKitStyles: typeof api.installFrameKitStyles,
         frame: typeof api.createFrame,
@@ -85,6 +86,7 @@ describe('packed package consumers', () => {
       bindPopover: 'function',
       bindTooltip: 'function',
       createSignalEmitter: 'function',
+      createUserInputService: 'function',
       createComputedValue: 'function',
       installFrameKitStyles: 'function',
       frame: 'function',
@@ -113,19 +115,27 @@ describe('packed package consumers', () => {
       (async () => {
         const { Window } = await import(${JSON.stringify(environment)});
         ${load}
-        const frame = api.createFrame({ Name: 'Packaged instance' }, { ownerDocument: new Window().document });
+        const frame = api.createFrame({ Name: 'Packaged instance', TagName: 'article' }, { ownerDocument: new Window().document });
         const snapshot = devtools.inspectInstance(frame);
         const inspector = devtools.createRuntimeInspector(frame);
         const isolatedDocument = inspector.gui.unsafeElement.ownerDocument === frame.unsafeElement.ownerDocument;
         inspector.gui.destroy();
         const document = frame.unsafeElement.ownerDocument;
+        const input = api.createUserInputService(frame);
+        let keyCount = 0;
+        input.inputBegan.subscribe(() => { keyCount += 1; });
+        document.dispatchEvent(new document.defaultView.KeyboardEvent('keydown', { key: 'u', code: 'KeyU' }));
+        const packagedInput = keyCount === 1 && input.isKeyDown('KeyU') && frame.unsafeElement.tagName === 'ARTICLE';
+        input.dispose();
+        document.dispatchEvent(new document.defaultView.KeyboardEvent('keydown', { key: 'u', code: 'KeyU' }));
+        const inputDisposed = keyCount === 1 && !input.isKeyDown('KeyU');
         const binding = devtools.bindRuntimeInspector(frame, { button: false, shortcut: { key: 'F8' } });
         const noLauncher = !document.querySelector('[aria-label="Debug"]');
         document.dispatchEvent(new document.defaultView.KeyboardEvent('keydown', { key: 'F8' }));
         const openedByShortcut = Boolean(document.querySelector('[data-fk-debug-panel]'));
         binding.dispose();
         const packagedShortcut = noLauncher && openedByShortcut && !document.querySelector('[data-fk-debug-panel]');
-        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: ['inspectInstance', 'createRuntimeInspector', 'bindRuntimeInspector', 'toTreeString'].some((name) => name in api), isolatedDocument, packagedShortcut, inspectorBinding: typeof devtools.bindRuntimeInspector, tree: devtools.toTreeString(frame), coreTreeMethod: 'toTreeString' in frame }));
+        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: ['inspectInstance', 'createRuntimeInspector', 'bindRuntimeInspector', 'toTreeString'].some((name) => name in api), isolatedDocument, packagedShortcut, packagedInput, inputDisposed, inspectorBinding: typeof devtools.bindRuntimeInspector, tree: devtools.toTreeString(frame), coreTreeMethod: 'toTreeString' in frame }));
         frame.destroy();
       })().catch((error) => { console.error(error); process.exitCode = 1; });
     `,
@@ -138,6 +148,8 @@ describe('packed package consumers', () => {
         exportedByMain: false,
         isolatedDocument: true,
         packagedShortcut: true,
+        packagedInput: true,
+        inputDisposed: true,
         inspectorBinding: 'function',
         tree: 'Packaged instance [Frame]',
         coreTreeMethod: false,

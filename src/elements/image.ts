@@ -22,8 +22,13 @@ export type ScaleType = 'Stretch' | 'Fit' | 'Crop';
 /** Semantic HTML elements that can wrap an image label. */
 export type ImageLabelTagName = (typeof imageLabelTagNames)[number];
 
-/** Creation-only options for an image label's native wrapper. */
-export type ImageLabelOptions = Readonly<DomOptions & { tagName?: ImageLabelTagName }>;
+/** Initial image label properties, including its creation-only native wrapper tag. */
+export type ImageLabelOptions = Readonly<
+  Partial<ImageLabelProperties> & {
+    /** Native wrapper tag. Defaults to div; fixed for the instance's lifetime. */
+    TagName?: ImageLabelTagName;
+  }
+>;
 
 /** Properties shared by image labels and image buttons. */
 export type ImageLabelProperties = GuiObjectProperties & {
@@ -59,16 +64,16 @@ const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
 /** Creates a non-interactive image node. */
 export function createImageLabel(
-  initialProperties: Partial<ImageLabelProperties> = {},
-  options: ImageLabelOptions = {},
+  initialProperties: ImageLabelOptions = {},
+  options: DomOptions = {},
 ): ImageLabel {
-  const tagName = options.tagName ?? 'div';
-  assertAllowedValue(tagName, imageLabelTagNames, 'ImageLabel tagName');
+  const { TagName = 'div', ...properties } = initialProperties;
+  assertAllowedValue(TagName, imageLabelTagNames, 'ImageLabel TagName');
   return createImageNode(
     'ImageLabel',
-    resolveOwnerDocument(options).createElement(tagName),
+    resolveOwnerDocument(options).createElement(TagName),
     createDefaultImageProperties(),
-    initialProperties,
+    properties,
   ) as ImageLabel;
 }
 

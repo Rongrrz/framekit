@@ -22,13 +22,13 @@ describe('DOM ownership', () => {
     const ownerDocument = iframe.contentDocument!;
     const options = { ownerDocument };
     const nodes = [
-      createFrame({}, options),
-      createTextLabel({}, options),
+      createFrame({ TagName: 'article' }, options),
+      createTextLabel({ TextTagName: 'h2' }, options),
       createTextButton({}, options),
-      createImageLabel({}, options),
+      createImageLabel({ TagName: 'figure' }, options),
       createImageButton({}, options),
       createLink({}, options),
-      createScrollingFrame({}, options),
+      createScrollingFrame({ TagName: 'main' }, options),
       createTextInput({}, options),
       createTextArea({}, options),
     ];

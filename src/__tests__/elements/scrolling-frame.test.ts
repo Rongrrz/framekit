@@ -17,10 +17,10 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('scrolling frames', () => {
   it('uses a creation-only semantic host tag', () => {
-    const main = createScrollingFrame({}, { tagName: 'main' });
+    const main = createScrollingFrame({ TagName: 'main' });
 
     expect(main.unsafeElement.tagName).toBe('MAIN');
-    expect(() => createScrollingFrame({}, { tagName: 'footer' } as never)).toThrow(/tagName/);
+    expect(() => createScrollingFrame({ TagName: 'footer' } as never)).toThrow(/TagName/);
   });
 
   it('maps scrolling direction to native overflow', () => {

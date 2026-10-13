@@ -23,7 +23,8 @@ test('copies multiline examples and renders every code block with readable synta
   const code = example.locator('pre code');
   const source = (await code.textContent())!;
   expect(source).toContain("from 'framekit';\n\n");
-  expect(source).toContain("\n    Text: 'Your profile',\n    TextSize: 24,\n");
+  expect(source).toContain("\n  Text: 'Your profile',\n  TextSize: 24,\n");
+  expect(source).toContain("TextTagName: 'h2'");
   await example.getByRole('button', { name: 'Copy elements1Code example' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-copied-example', source);
   expect(

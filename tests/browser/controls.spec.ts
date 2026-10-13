@@ -66,10 +66,11 @@ test.beforeEach(async ({ page }) => {
     bindMenu(trigger, menu, commands);
     const openDialog = createTextButton({ Text: 'Open dialog', Position: udim2FromOffset(400, 0) });
     openDialog.Parent = gui;
-    const dialog = createFrame(
-      { Size: udim2FromOffset(300, 200), Position: udim2FromOffset(300, 180) },
-      { tagName: 'dialog' },
-    );
+    const dialog = createFrame({
+      Size: udim2FromOffset(300, 200),
+      Position: udim2FromOffset(300, 180),
+      TagName: 'dialog',
+    });
     dialog.unsafeElement.setAttribute('aria-label', 'Outer dialog');
     dialog.Parent = gui;
     const input = createTextInput({ Text: 'edit me', Size: udim2FromOffset(200, 40) });
@@ -77,10 +78,11 @@ test.beforeEach(async ({ page }) => {
     input.Parent = dialog;
     const outer = bindDialog(dialog, { initialFocus: input });
     openDialog.onClick(() => outer.open(openDialog));
-    const inner = createFrame(
-      { Size: udim2FromOffset(220, 120), Position: udim2FromOffset(350, 240) },
-      { tagName: 'dialog' },
-    );
+    const inner = createFrame({
+      Size: udim2FromOffset(220, 120),
+      Position: udim2FromOffset(350, 240),
+      TagName: 'dialog',
+    });
     inner.unsafeElement.setAttribute('aria-label', 'Inner dialog');
     inner.Parent = dialog;
     const innerInput = createTextInput();
@@ -220,7 +222,7 @@ test('invalid initial dialog focus fails before opening a modal or moving focus'
 }) => {
   const result = await page.evaluate(() => {
     const { createFrame, createTextButton, createTextInput, bindDialog } = window.framekit;
-    const dialog = createFrame({}, { tagName: 'dialog' });
+    const dialog = createFrame({ TagName: 'dialog' });
     document.body.append(dialog.unsafeElement);
     const input = createTextInput();
     input.Parent = dialog;

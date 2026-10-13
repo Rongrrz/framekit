@@ -9,11 +9,12 @@ afterEach(() => vi.unstubAllGlobals());
 describe('text labels', () => {
   it('uses a creation-only semantic text tag', () => {
     const defaultLabel = createTextLabel({ Text: 'Plain' });
-    const heading = createTextLabel({ Text: 'Inventory' }, { textTagName: 'h1' });
+    const heading = createTextLabel({ Text: 'Inventory', TextTagName: 'h1' });
 
     expect(defaultLabel.unsafeElement.querySelector('[data-framekit-text]')?.tagName).toBe('SPAN');
     expect(heading.unsafeElement.querySelector('[data-framekit-text]')?.tagName).toBe('H1');
-    expect(() => createTextLabel({}, { textTagName: 'script' } as never)).toThrow(/textTagName/);
+    expect(() => createTextLabel({ TextTagName: 'script' } as never)).toThrow(/TextTagName/);
+    expect(() => heading.setProperties({ TextTagName: 'h2' } as never)).toThrow(/Unknown property/);
   });
 
   it('synchronizes text properties without replacing node children', () => {

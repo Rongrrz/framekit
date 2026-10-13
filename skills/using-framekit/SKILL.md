@@ -25,8 +25,10 @@ gui.mount('#app'); // The host page supplies <div id="app"></div>.
 // Call gui.destroy() when this application's lifetime ends.
 ```
 
-Use native button, link, input, and text-area factories for their semantics. Frames accept semantic
-creation options as the second argument, for example `{ tagName: 'main' }`. Layout modifiers are
+Use native button, link, input, and text-area factories for their semantics. Put semantic tags in
+the initial property object: `createFrame({ TagName: 'main' })` or
+`createTextLabel({ Text: 'Title', TextTagName: 'h1' })`. Tag selection is creation-only;
+the second argument contains only DOM environment options such as `ownerDocument`. Layout modifiers are
 children too. For bulk initial construction, attach the layout after creating the children.
 
 ## Keep data and lifetime explicit
@@ -93,13 +95,21 @@ write properties directly to interrupt competing motion.
 - `bindMenu(trigger, menu, items)`: caller-owned command nodes inside a native popover. The controller
   handles arrows, typeahead, disabled commands, dismissal, and focus restoration. Its `open(vector2)`
   accepts a viewport position for context menus. Use native buttons or links for commands.
-- `bindDialog(frame, { initialFocus? })`: create the frame with `{ tagName: 'dialog' }`, label it with
+- `bindDialog(frame, { initialFocus? })`: create the frame with `{ TagName: 'dialog' }`, label it with
   `aria-label` or `aria-labelledby`, and use `open(trigger)` / `close()`. Supplying the opener makes
   pointer-driven focus restoration consistent across browsers. Closing through `Visible` does not
   close a native modal. The browser supplies top-layer rendering and background inertness.
 
 Keep native text-editing shortcuts intact. Choose a surviving focus target when deleting an
 arbitrary focused view; generic keyed reconciliation cannot infer application intent.
+
+Use `createUserInputService(app)` for document-wide keyboard input. Reuse the service;
+`inputBegan.subscribe((event, processed) => ...)` and `inputEnded.subscribe(...)` return
+unsubscribe functions. Respect processed input (default-prevented or text-editing targets).
+Composition and repeated keydown events are ignored. `isKeyDown('KeyW')` uses physical
+`KeyboardEvent.code` state; blur/hidden documents clear it. Root destruction or `dispose()`
+releases the service. Local `node.on('keydown', ...)` receives focused/bubbling input,
+not hover input, and remains appropriate for individual controls.
 
 ## Diagnose and verify
 

@@ -15,6 +15,7 @@ import {
   createSignalEmitter,
   createTextButton,
   createTextLabel,
+  createUserInputService,
   createTween,
   createUIGridLayout,
   createUIScale,
@@ -43,6 +44,31 @@ import {
 
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
+  const article = createFrame({ TagName: 'article', Name: 'Profile' });
+  createTextLabel({ Text: 'Profile', TextTagName: 'h2' }).Parent = article;
+  createScrollingFrame({ TagName: 'main' });
+  // @ts-expect-error Tag selection is in the initial property object, not DOM options.
+  createFrame({}, { tagName: 'article' });
+  // @ts-expect-error Text tags are creation-only initial properties.
+  createTextLabel({}, { textTagName: 'h2' });
+  // @ts-expect-error Unsupported semantic tags are rejected.
+  createFrame({ TagName: 'button' });
+  // @ts-expect-error A creation-only tag cannot be changed on a live node.
+  article.setProperties({ TagName: 'section' });
+  const inputService = createUserInputService(article);
+  inputService.inputBegan.subscribe((event, processed) => {
+    const handled: boolean = processed;
+    void handled;
+    event.key.toUpperCase();
+  });
+  inputService.inputEnded.subscribe((event) => event.code.toUpperCase());
+  const keyDown: boolean = inputService.isKeyDown('KeyW');
+  void keyDown;
+  // @ts-expect-error Consumers cannot emit input events.
+  inputService.inputBegan.emit(new KeyboardEvent('keydown'), false);
+  // @ts-expect-error A non-DOM modifier cannot own a document input service.
+  createUserInputService(createUIScale());
+  inputService.dispose();
   const frame = createFrame();
   frame.on('keydown', (event) => event.key.toUpperCase());
   frame.on('pointerdown', (event) => frame.setPointerCapture(event.pointerId));

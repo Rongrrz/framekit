@@ -15,7 +15,7 @@ export type DialogController = Readonly<{
 export const bindDialog = (node: GuiElement, options: DialogOptions = {}): DialogController => {
   const element = node.unsafeElement;
   if (node.isDestroyed() || element.tagName !== 'DIALOG') {
-    throw new TypeError('bindDialog requires a frame created with tagName: dialog.');
+    throw new TypeError('bindDialog requires a frame created with TagName: dialog.');
   }
   const dialog = element as HTMLDialogElement;
   installFrameKitStyles({ ownerDocument: element.ownerDocument });

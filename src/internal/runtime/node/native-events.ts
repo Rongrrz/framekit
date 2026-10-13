@@ -10,7 +10,10 @@ export type GuiEventOptions = Readonly<
 
 /** Typed browser input and focus operations shared by DOM-backed nodes. */
 export type NativeGuiMethods = {
-  /** Subscribes to a native event until explicitly disposed or this node is destroyed. */
+  /**
+   * Subscribes to a native event until disposed or destroyed. Keyboard events arrive through
+   * focus and DOM bubbling; hovering does not direct keyboard input to this node.
+   */
   on<EventName extends keyof HTMLElementEventMap>(
     eventName: EventName,
     listener: (event: HTMLElementEventMap[EventName]) => void,

@@ -8,12 +8,16 @@ resetDocumentAfterEach();
 describe('frames', () => {
   it('uses a creation-only semantic host tag', () => {
     const defaultFrame = createFrame();
-    const article = createFrame({}, { tagName: 'article' });
+    const article = createFrame({ TagName: 'article' });
 
     expect(defaultFrame.unsafeElement.tagName).toBe('DIV');
     expect(article.unsafeElement.tagName).toBe('ARTICLE');
     expect(article.unsafeElement.style.margin).toBe('0px');
-    expect(() => createFrame({}, { tagName: 'button' } as never)).toThrow(/tagName/);
+    expect(() => createFrame({ TagName: 'button' } as never)).toThrow(/TagName/);
+    expect(() => article.setProperties({ TagName: 'section' } as never)).toThrow(
+      /Unknown property/,
+    );
+    expect(article.unsafeElement.tagName).toBe('ARTICLE');
   });
 
   it('updates native styles from a property patch', () => {

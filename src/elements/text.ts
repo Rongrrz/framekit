@@ -42,8 +42,13 @@ export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
 /** Semantic HTML elements that can carry a text label's content. */
 export type TextTagName = (typeof textTagNames)[number];
 
-/** Creation-only options for a text label's native text element. */
-export type TextLabelOptions = Readonly<DomOptions & { textTagName?: TextTagName }>;
+/** Initial label properties, including its creation-only semantic text tag. */
+export type TextLabelOptions = Readonly<
+  Partial<TextLabelProperties> & {
+    /** Tag of the inner text element. Defaults to span; fixed after creation. */
+    TextTagName?: TextTagName;
+  }
+>;
 
 /** A non-interactive text node. */
 export type TextLabel = GuiElement<TextLabelProperties>;
@@ -73,17 +78,17 @@ const textTagNames = [
 
 /** Creates a non-interactive text node. */
 export function createTextLabel(
-  initialProperties: Partial<TextLabelProperties> = {},
-  options: TextLabelOptions = {},
+  initialProperties: TextLabelOptions = {},
+  options: DomOptions = {},
 ): TextLabel {
-  const textTagName = options.textTagName ?? 'span';
-  assertAllowedValue(textTagName, textTagNames, 'TextLabel textTagName');
+  const { TextTagName = 'span', ...properties } = initialProperties;
+  assertAllowedValue(TextTagName, textTagNames, 'TextLabel TextTagName');
   return createTextNode(
     'TextLabel',
     resolveOwnerDocument(options).createElement('div'),
     createDefaultTextProperties(),
-    initialProperties,
-    textTagName,
+    properties,
+    TextTagName,
   );
 }
 

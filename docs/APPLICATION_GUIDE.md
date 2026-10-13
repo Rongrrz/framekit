@@ -24,6 +24,12 @@ npm install /absolute/path/to/framekit/framekit-0.1.0.tgz
 Import runtime APIs from `framekit`. Use `framekit/devtools` only for optional development tools.
 The source module paths are implementation details. Rebuild and repack after changing FrameKit.
 
+Put semantic tag choices in the first property object: `createFrame({ TagName: 'article' })`
+or `createTextLabel({ Text: 'Profile', TextTagName: 'h2' })`. ImageLabel and ScrollingFrame also
+accept `TagName`. These choices are fixed after creation; `setProperties` cannot replace the
+native element. The optional second argument selects the DOM environment, for example
+`{ ownerDocument: iframe.contentDocument }`.
+
 ## A complete dynamic interface
 
 Add `<div id="app"></div>` to the page and run this TypeScript in a browser entry point. This
@@ -199,6 +205,32 @@ Listener options are `capture`, `passive`, and `once`; the node owns the listene
 Use pointer capture for dragging across element boundaries, and handle cancellation and lost
 capture. Native buttons and links already provide keyboard activation.
 
+Local keyboard events go to the focused element and bubble through its DOM ancestors. Hovering
+alone does not send keyboard input to a button. Use local handlers for a control's own behavior,
+such as arrow navigation, and `createUserInputService(owner)` for application-wide keyboard input:
+
+```ts
+import { createUserInputService } from 'framekit';
+
+const input = createUserInputService(app);
+input.inputBegan.subscribe((event, processed) => {
+  if (processed || event.altKey || event.shiftKey) return;
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+    event.preventDefault();
+    saveProfile();
+  }
+});
+```
+
+Reuse one service per application. `inputBegan` and `inputEnded` deliver a native `KeyboardEvent`
+and a `processed` boolean: true for default-prevented events or text-editing targets (input,
+textarea, select, or editable content). Listeners run on the owner's document after local bubbling
+handlers. A handler that stops propagation prevents the service from seeing the event.
+Repeated keydown and composition events are ignored. `isKeyDown('KeyW')` reads physical
+`KeyboardEvent.code` state, including processed input. Window blur or a hidden document clears
+held keys. `dispose()` and owner destruction remove document listeners and signal subscriptions;
+detaching or unmounting the owner retains the service.
+
 - `bindTreeView(root, rows, { onSelect, onToggle })` takes visible depth-first rows with
   `{ node, level, label, selected?, expanded? }`. Start at level 1; omit collapsed descendants.
   Omit `expanded` for leaves. Selection and expansion live in application state. The helper owns
@@ -208,7 +240,7 @@ capture. Native buttons and links already provide keyboard activation.
   caller-owned content and command nodes. It handles opening, arrows, Home/End, typeahead,
   disabled commands, Tab, Escape, and outside dismissal. `controller.open(vector2(x, y))` opens
   a context menu at viewport coordinates. Use native buttons or links for commands.
-- `bindDialog(frame, { initialFocus? })` requires `createFrame(props, { tagName: 'dialog' })`.
+- `bindDialog(frame, { initialFocus? })` requires `createFrame({ TagName: 'dialog', ...props })`.
   Label the native dialog with `aria-label` or `aria-labelledby`. Call `controller.open(trigger)`
   to explicitly restore focus to a pointer-activated opener across browsers. Native modal
   behavior provides top-layer rendering, inert background content, focus containment, and

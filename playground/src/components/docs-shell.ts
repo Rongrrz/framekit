@@ -49,10 +49,11 @@ export const createDocsShell = (
     BackgroundTransparency: 1,
   });
   content.unsafeElement.classList.add('pg-docs');
-  const sidebar = createFrame(
-    { Name: `${name}Sidebar`, BackgroundTransparency: 1 },
-    { tagName: 'nav' },
-  );
+  const sidebar = createFrame({
+    Name: `${name}Sidebar`,
+    BackgroundTransparency: 1,
+    TagName: 'nav',
+  });
   sidebar.unsafeElement.classList.add('pg-docs-sidebar');
   sidebar.unsafeElement.setAttribute('aria-label', 'Documentation topics');
   const menu = createButton(theme, {
@@ -103,21 +104,20 @@ export const createDocsShell = (
     }
     link.Parent = sidebar;
   }
-  const article = createFrame(
-    {
-      Name: `${name}Article`,
-      BackgroundTransparency: 1,
-      AutomaticSize: 'Y',
-      Size: udim2(1, 0, 0, 0),
-    },
-    { tagName: 'article' },
-  );
+  const article = createFrame({
+    Name: `${name}Article`,
+    BackgroundTransparency: 1,
+    AutomaticSize: 'Y',
+    Size: udim2(1, 0, 0, 0),
+    TagName: 'article',
+  });
   article.unsafeElement.classList.add('pg-article');
   createUIListLayout({ Padding: udim(0, 12) }).Parent = article;
-  const outline = createFrame(
-    { Name: `${name}Outline`, BackgroundTransparency: 1 },
-    { tagName: 'nav' },
-  );
+  const outline = createFrame({
+    Name: `${name}Outline`,
+    BackgroundTransparency: 1,
+    TagName: 'nav',
+  });
   outline.unsafeElement.classList.add('pg-outline');
   outline.unsafeElement.setAttribute('aria-label', 'On this page');
   menu.Parent = content;
@@ -285,10 +285,11 @@ export const appendCallout = (parent: Frame, theme: ThemeValue, text: string): v
 /** Connects the reading path with native links that can also open in a new tab. */
 export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: DocsPage): void => {
   const index = documentationPages.findIndex((entry) => entry.page === page);
-  const footer = createFrame(
-    { Name: 'ArticleNavigation', BackgroundTransparency: 1 },
-    { tagName: 'nav' },
-  );
+  const footer = createFrame({
+    Name: 'ArticleNavigation',
+    BackgroundTransparency: 1,
+    TagName: 'nav',
+  });
   footer.unsafeElement.classList.add('pg-article-navigation');
   footer.unsafeElement.setAttribute('aria-label', 'Continue reading');
   for (const [label, entry] of [

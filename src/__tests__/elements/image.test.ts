@@ -7,11 +7,11 @@ resetDocumentAfterEach();
 
 describe('images', () => {
   it('uses a creation-only semantic wrapper tag', () => {
-    const figure = createImageLabel({}, { tagName: 'figure' });
+    const figure = createImageLabel({ TagName: 'figure' });
 
     expect(figure.unsafeElement.tagName).toBe('FIGURE');
     expect(figure.unsafeElement.querySelector('img')).not.toBeNull();
-    expect(() => createImageLabel({}, { tagName: 'picture' } as never)).toThrow(/tagName/);
+    expect(() => createImageLabel({ TagName: 'picture' } as never)).toThrow(/TagName/);
   });
 
   it('maps image properties to a native image element', () => {
