@@ -3,12 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   bindDocumentTheme,
-  bindThemeTransition,
+  bindThemePalette,
   resolveInitialTheme,
   themes,
   type ThemeMode,
 } from '../src/theme';
-import { installAnimationClock } from './support/animation-clock';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -18,75 +17,40 @@ afterEach(() => {
   document.querySelector('meta[name="theme-color"]')?.remove();
 });
 
-describe('animated theme palette', () => {
-  it('springs every consumer through one intermediate palette', () => {
-    const clock = installAnimationClock();
+describe('theme palette', () => {
+  it('switches both directions synchronously without intermediate palettes', () => {
     const owner = createFrame();
     const mode = createObservableValue<ThemeMode>('dark');
     const palette = createObservableValue(themes.dark);
-    bindThemeTransition(owner, mode, palette);
+    const changes = vi.fn();
+    const stop = palette.onChange(changes);
+    bindThemePalette(owner, mode, palette);
 
     mode.set('light');
-    expect(palette.get()).toEqual(themes.dark);
-
-    clock.advance();
-    expect(palette.get()).not.toEqual(themes.dark);
-    expect(palette.get()).not.toEqual(themes.light);
-
-    clock.settle();
-    expect(palette.get()).toEqual(themes.light);
+    expect(palette.get()).toBe(themes.light);
+    expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe(
+      'rgb(245 247 250 / 1)',
+    );
+    mode.set('dark');
+    expect(palette.get()).toBe(themes.dark);
+    expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe(
+      'rgb(10 13 18 / 1)',
+    );
+    expect(changes.mock.calls.map(([next]) => next)).toEqual([themes.light, themes.dark]);
+    stop();
     owner.destroy();
   });
 
-  it('retargets the retained spring when the mode changes rapidly', () => {
-    const clock = installAnimationClock();
+  it('releases its palette and document subscriptions on destruction', () => {
     const owner = createFrame();
     const mode = createObservableValue<ThemeMode>('dark');
     const palette = createObservableValue(themes.dark);
-    bindThemeTransition(owner, mode, palette);
-
+    bindThemePalette(owner, mode, palette);
     mode.set('light');
-    for (let frame = 0; frame < 8; frame += 1) {
-      clock.advance();
-    }
-    mode.set('dark');
-    clock.settle();
-
-    expect(palette.get()).toEqual(themes.dark);
     owner.destroy();
+    mode.set('dark');
+    expect(palette.get()).toBe(themes.light);
     expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe('');
-  });
-
-  it('switches immediately under reduced motion', () => {
-    const clock = installAnimationClock();
-    vi.stubGlobal('matchMedia', () => ({ matches: true }));
-    const owner = createFrame();
-    const mode = createObservableValue<ThemeMode>('dark');
-    const palette = createObservableValue(themes.dark);
-    bindThemeTransition(owner, mode, palette);
-    mode.set('light');
-    expect(palette.get()).toEqual(themes.light);
-    clock.settle();
-    expect(palette.get()).toEqual(themes.light);
-    owner.destroy();
-  });
-
-  it('stops an in-flight transition and its subscriptions on destruction', () => {
-    const clock = installAnimationClock();
-    const reportError = vi.fn();
-    vi.stubGlobal('reportError', reportError);
-    const owner = createFrame();
-    const mode = createObservableValue<ThemeMode>('dark');
-    const palette = createObservableValue(themes.dark);
-    bindThemeTransition(owner, mode, palette);
-    mode.set('light');
-    clock.advance();
-    const lastPalette = palette.get();
-    owner.destroy();
-    clock.settle();
-    mode.set('dark');
-    expect(palette.get()).toBe(lastPalette);
-    expect(reportError).not.toHaveBeenCalled();
     palette.set(themes.dark);
     expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe('');
   });

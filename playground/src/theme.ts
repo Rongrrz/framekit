@@ -2,11 +2,8 @@ import {
   watchOwnedValue,
   type Color3,
   color3FromRGB,
-  createFrame,
   type Instance,
   type InstanceProperties,
-  spring,
-  type SpringOptions,
   type ObservableValue,
 } from 'framekit';
 
@@ -93,13 +90,6 @@ const documentThemeColors = {
   light: '#f5f7fa',
 } satisfies Readonly<Record<ThemeMode, string>>;
 
-const themeSpringOptions = {
-  tension: 100,
-  friction: 18,
-  precision: 0.002,
-  restVelocity: 0.03,
-} satisfies SpringOptions;
-
 const documentPaletteProperties = [
   '--pg-canvas',
   '--pg-border',
@@ -107,7 +97,7 @@ const documentPaletteProperties = [
   '--pg-selection-text',
 ] as const;
 
-/** Applies colors from the shared animated palette for the lifetime of the instance. */
+/** Applies colors from the shared palette for the lifetime of the instance. */
 export const bindThemeColors = <Properties extends InstanceProperties>(
   instance: Instance<Properties>,
   theme: ThemeValue,
@@ -118,35 +108,17 @@ export const bindThemeColors = <Properties extends InstanceProperties>(
 
 export const themeColor = (theme: ThemeValue, token: ThemeToken): Color3 => theme.get()[token];
 
-/** Drives every theme consumer from one retained spring so colors stay synchronized. */
-export const bindThemeTransition = (
+/** Applies the selected palette synchronously so all theme consumers switch together. */
+export const bindThemePalette = (
   owner: Instance,
   mode: ObservableValue<ThemeMode>,
   palette: ThemeValue,
 ): void => {
-  const transition = createFrame({
-    Name: 'ThemeTransition',
-    Rotation: mode.get() === 'light' ? 1 : 0,
-    Visible: false,
-  });
-  const state = { initialized: false };
-
-  transition.onPropertyChanged('Rotation', (progress) => {
-    palette.set(interpolatePalette(progress));
-  });
   watchOwnedValue(owner, mode, (nextMode) => {
-    const goal = nextMode === 'light' ? 1 : 0;
-    if (!state.initialized || prefersReducedMotion()) {
-      state.initialized = true;
-      transition.Rotation = goal;
-      palette.set(themes[nextMode]);
-      return;
-    }
-    spring(transition, { Rotation: goal }, themeSpringOptions);
+    palette.set(themes[nextMode]);
   });
   watchOwnedValue(owner, palette, applyDocumentPalette);
   owner.onDestroy(() => {
-    transition.destroy();
     for (const property of documentPaletteProperties) {
       document.documentElement.style.removeProperty(property);
     }
@@ -198,38 +170,6 @@ export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeM
     }
   });
 };
-
-const prefersReducedMotion = (): boolean =>
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-const interpolatePalette = (progress: number): ThemePalette => {
-  const alpha = Math.min(1, Math.max(0, progress));
-  const color = (token: ThemeToken): Color3 =>
-    interpolateColor(themes.dark[token], themes.light[token], alpha);
-  return Object.freeze({
-    canvas: color('canvas'),
-    surface: color('surface'),
-    surfaceRaised: color('surfaceRaised'),
-    border: color('border'),
-    text: color('text'),
-    textMuted: color('textMuted'),
-    textFaint: color('textFaint'),
-    accent: color('accent'),
-    accentMuted: color('accentMuted'),
-    onAccent: color('onAccent'),
-    blue: color('blue'),
-    purple: color('purple'),
-    orange: color('orange'),
-  });
-};
-
-const interpolateColor = (from: Color3, to: Color3, progress: number): Color3 =>
-  color3FromRGB(
-    from.R + (to.R - from.R) * progress,
-    from.G + (to.G - from.G) * progress,
-    from.B + (to.B - from.B) * progress,
-  );
 
 const applyDocumentPalette = (palette: ThemePalette): void => {
   const root = document.documentElement.style;

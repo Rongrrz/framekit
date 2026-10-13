@@ -30,7 +30,7 @@ and opening another tab. Route changes update the title and move focus to the ar
 - `router.ts` owns route names, documentation navigation, and visibility. Pages retain identity.
 - `page-shell.ts` owns native scrolling. Content height comes from normal document flow.
 - `site.css` owns fluid site layout, reading widths, and responsive rails; it never styles devtools.
-- `theme.ts` owns palettes, font stacks, typography, theme persistence, and a shared palette spring.
+- `theme.ts` owns palettes, font stacks, typography, theme persistence, and immediate palette switching.
 - `components/docs-shell.ts` owns article flow, topic navigation, outline, code blocks, and reading links.
 - `components/reference-content.ts` holds the focused API chapters; `reference-page.ts` renders them.
 - `guide-page.ts`, `home.ts`, and `overlays-page.ts` own their specialized content and examples.

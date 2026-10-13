@@ -67,10 +67,7 @@ describe('playground application', () => {
     app.destroy();
   });
 
-  it('switches every themed surface from one theme value', () => {
-    vi.stubGlobal('matchMedia', (query: string) => ({
-      matches: query === '(prefers-reduced-motion: reduce)',
-    }));
+  it('switches every themed surface immediately from one theme value', () => {
     const app = createPlaygroundApp('desktop', 'dark');
     const page = app.findFirstChild('FrameKitPlaygroundPage', true) as ScrollingFrame;
     const toggle = app.findFirstChild('ThemeToggleButton', true) as TextButton;

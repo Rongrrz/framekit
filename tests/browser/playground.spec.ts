@@ -1,5 +1,46 @@
 import { expect, test } from '@playwright/test';
 
+test('switches the page and code palette immediately in both directions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => window.localStorage.setItem('framekit-playground-theme', 'dark'));
+  await page.goto('/playground/index.html#/api');
+  await expect(page.getByRole('article').locator('pre.shiki')).toBeVisible();
+  for (const mode of ['light', 'dark', 'light'] as const) {
+    const colors = await page
+      .getByRole('button', { name: `Switch to ${mode} mode` })
+      .evaluate((button) => {
+        // Read in the click's call stack: waiting for the next frame would hide a theme animation.
+        (button as HTMLButtonElement).click();
+        const main = document.querySelector('[role="main"]')!;
+        const block = [...document.querySelectorAll('article .pg-code-block')].find(
+          (element) => element.getClientRects().length > 0,
+        )!;
+        const code = block.querySelector('pre')!;
+        return {
+          mode: document.documentElement.dataset.framekitTheme,
+          page: getComputedStyle(main).backgroundColor,
+          block: getComputedStyle(block).backgroundColor,
+          code: getComputedStyle(code).backgroundColor,
+        };
+      });
+    expect(colors).toEqual(
+      mode === 'light'
+        ? {
+            mode,
+            page: 'rgb(245, 247, 250)',
+            block: 'rgb(255, 255, 255)',
+            code: 'rgb(255, 255, 255)',
+          }
+        : {
+            mode,
+            page: 'rgb(10, 13, 18)',
+            block: 'rgb(17, 22, 29)',
+            code: 'rgb(30, 30, 30)',
+          },
+    );
+  }
+});
+
 test('copies multiline examples and renders every code block with readable syntax and spacing', async ({
   page,
 }, info) => {

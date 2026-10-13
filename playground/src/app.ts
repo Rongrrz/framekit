@@ -17,7 +17,7 @@ import { createPageShell } from './page-shell';
 import { bindHashRouter, documentationPages, navigateToPage, resolveInitialPage } from './router';
 import {
   bindDocumentTheme,
-  bindThemeTransition,
+  bindThemePalette,
   resolveInitialTheme,
   themes,
   type ThemeMode,
@@ -39,7 +39,7 @@ export const createPlaygroundApp = (
     navigateToPage(route, destination);
 
   bindDocumentTheme(app, theme);
-  bindThemeTransition(app, theme, palette);
+  bindThemePalette(app, theme, palette);
   bindHashRouter(app, route);
   createHomePage(palette, route, navigate).Parent = content;
   createGuidePage(palette, route, scrollTo).Parent = content;
