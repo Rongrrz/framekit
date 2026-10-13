@@ -17,7 +17,7 @@ const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
   return index < 0 ? fallback : process.argv[index + 1];
 };
-const baselineRef = option('--baseline', '999410f');
+const baselineRef = option('--baseline', '846fd1c');
 const rounds = Number(option('--rounds', '3'));
 const repetitions = Number(option('--repetitions', '7'));
 const throttle = Number(option('--cpu-throttle', '1'));
