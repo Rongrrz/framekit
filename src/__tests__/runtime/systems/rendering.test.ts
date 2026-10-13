@@ -20,7 +20,7 @@ describe('composing base and modifier styles', () => {
   it('recomputes parent layout only when layout inputs change', () => {
     const parent = createFrame();
     const child = createFrame();
-    const resolveLayout = vi.fn(() => ({ parent: {}, children: [{}] }));
+    const resolveLayout = vi.fn(() => ({ parent: {}, child: {}, compareChildren: () => 0 }));
     const layout = createLayoutModifier(
       'TrackedLayout',
       { Name: 'TrackedLayout', Gap: 0 },

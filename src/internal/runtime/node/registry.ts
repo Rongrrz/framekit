@@ -37,7 +37,6 @@ export type GuiNodeState<Properties extends InstanceProperties = InstancePropert
     propertyNames: ReadonlySet<keyof Properties>;
     renderProperties: PropertyRenderer<Properties> | undefined;
     modifiers: Map<string, Modifier>;
-    layoutChildren: Set<GuiElement>;
   };
 
 // Handles expose the API; this registry owns their mutable properties, hierarchy, and resources.

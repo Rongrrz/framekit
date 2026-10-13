@@ -1,7 +1,6 @@
 import type { InstanceProperties } from '#internal/runtime/node/instance.js';
 import {
   createLayoutModifier,
-  type LayoutChild,
   type LayoutModifier,
   type LayoutStyles,
   type Styles,
@@ -15,7 +14,7 @@ import {
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '#values/udim.js';
 
 import {
-  resolveChildOrders,
+  resolveChildComparison,
   resolveHorizontalAlignment,
   resolveVerticalAlignment,
 } from './layout.js';
@@ -76,10 +75,7 @@ export function createUIGridLayout(
   );
 }
 
-function resolveGridLayout(
-  properties: Readonly<UIGridLayoutProperties>,
-  children: readonly LayoutChild[],
-): LayoutStyles {
+function resolveGridLayout(properties: Readonly<UIGridLayoutProperties>): LayoutStyles {
   const horizontal = properties.FillDirection === 'Horizontal';
   const cellWidth = udimToCss(properties.CellSize.X);
   const cellHeight = udimToCss(properties.CellSize.Y);
@@ -103,20 +99,17 @@ function resolveGridLayout(
         'grid-auto-columns': cellWidth,
       };
 
-  const childOrders = resolveChildOrders(children, properties.SortOrder);
   return {
     parent,
-    children: children.map(
-      (_, index): Styles => ({
-        position: 'relative',
-        left: 'auto',
-        top: 'auto',
-        transform: 'none',
-        width: '100%',
-        height: '100%',
-        order: String(childOrders[index]),
-      }),
-    ),
+    child: {
+      position: 'relative',
+      left: 'auto',
+      top: 'auto',
+      transform: 'none',
+      width: '100%',
+      height: '100%',
+    },
+    compareChildren: resolveChildComparison(properties.SortOrder),
   };
 }
 

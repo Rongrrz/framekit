@@ -81,7 +81,6 @@ export function createGuiNode<Properties extends InstanceProperties>({
     propertyNames,
     renderProperties,
     modifiers: new Map(),
-    layoutChildren: new Set(),
   });
   rendering.renderNode(node, propertyNames);
   return node;

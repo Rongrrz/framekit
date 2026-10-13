@@ -89,7 +89,9 @@ const append = (parent: Instance, child: Instance): void => {
     ) {
       rendering.renderDerivedStyles(previousParent);
     }
-    if (isModifierState(childState) || rendering.hasLayoutModifier(parent)) {
+    if (isGuiNode(child) && rendering.hasLayoutModifier(parent)) {
+      rendering.renderInsertedChild(parent, child);
+    } else if (isModifierState(childState)) {
       rendering.renderDerivedStyles(parent);
     }
   } catch (error) {

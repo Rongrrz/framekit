@@ -1,17 +1,15 @@
 import type { InstanceProperties } from '#internal/runtime/node/instance.js';
 import {
   createLayoutModifier,
-  type LayoutChild,
   type LayoutModifier,
   type LayoutStyles,
-  type Styles,
 } from '#internal/runtime/node/modifier.js';
 import { mergeProperties } from '#internal/runtime/systems/properties.js';
 import { assertAllowedValue, assertBoolean } from '#internal/validation.js';
 import { assertUDim, udim, udimToCss, type UDim } from '#values/udim.js';
 
 import {
-  resolveChildOrders,
+  resolveChildComparison,
   resolveHorizontalAlignment,
   resolveVerticalAlignment,
 } from './layout.js';
@@ -75,12 +73,8 @@ export function createUIListLayout(
   );
 }
 
-function resolveListLayout(
-  properties: Readonly<UIListLayoutProperties>,
-  children: readonly LayoutChild[],
-): LayoutStyles {
+function resolveListLayout(properties: Readonly<UIListLayoutProperties>): LayoutStyles {
   const isHorizontal = properties.FillDirection === 'Horizontal';
-  const childOrders = resolveChildOrders(children, properties.SortOrder);
   const horizontalAlignment = resolveHorizontalAlignment(properties.HorizontalAlignment);
   const verticalAlignment = resolveVerticalAlignment(properties.VerticalAlignment);
   const mainAxisAlignment = isHorizontal ? horizontalAlignment : verticalAlignment;
@@ -96,16 +90,14 @@ function resolveListLayout(
       'align-items': crossAxisAlignment,
       'align-content': crossAxisAlignment,
     },
-    children: children.map(
-      (_, index): Styles => ({
-        position: 'relative',
-        left: 'auto',
-        top: 'auto',
-        transform: 'none',
-        'flex-shrink': '0',
-        order: String(childOrders[index]),
-      }),
-    ),
+    child: {
+      position: 'relative',
+      left: 'auto',
+      top: 'auto',
+      transform: 'none',
+      'flex-shrink': '0',
+    },
+    compareChildren: resolveChildComparison(properties.SortOrder),
   };
 }
 

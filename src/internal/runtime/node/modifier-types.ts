@@ -40,12 +40,13 @@ export type LayoutChild = Readonly<{
 
 export type LayoutStyles = Readonly<{
   parent: Styles;
-  children: readonly Styles[];
+  /** Shared placement rules; the renderer assigns each child's sorted rank. */
+  child: Styles;
+  compareChildren: (left: LayoutChild, right: LayoutChild) => number;
 }>;
 
 export type ResolveLayout<Properties extends InstanceProperties> = (
   properties: Readonly<Properties>,
-  children: readonly LayoutChild[],
 ) => LayoutStyles;
 
 export type StyleModifierState<Properties extends InstanceProperties = InstanceProperties> =

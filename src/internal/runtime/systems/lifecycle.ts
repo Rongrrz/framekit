@@ -62,6 +62,7 @@ function destroyRecursively(
   }
 
   state.destroyed = true;
+  rendering.releaseLayout(node);
   for (const callback of state.cleanups) {
     try {
       callback();
