@@ -118,7 +118,14 @@ describe('packed package consumers', () => {
         const inspector = devtools.createRuntimeInspector(frame);
         const isolatedDocument = inspector.gui.unsafeElement.ownerDocument === frame.unsafeElement.ownerDocument;
         inspector.gui.destroy();
-        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: ['inspectInstance', 'createRuntimeInspector', 'bindRuntimeInspector', 'toTreeString'].some((name) => name in api), isolatedDocument, inspectorBinding: typeof devtools.bindRuntimeInspector, tree: devtools.toTreeString(frame), coreTreeMethod: 'toTreeString' in frame }));
+        const document = frame.unsafeElement.ownerDocument;
+        const binding = devtools.bindRuntimeInspector(frame, { button: false, shortcut: { key: 'F8' } });
+        const noLauncher = !document.querySelector('[aria-label="Debug"]');
+        document.dispatchEvent(new document.defaultView.KeyboardEvent('keydown', { key: 'F8' }));
+        const openedByShortcut = Boolean(document.querySelector('[data-fk-debug-panel]'));
+        binding.dispose();
+        const packagedShortcut = noLauncher && openedByShortcut && !document.querySelector('[data-fk-debug-panel]');
+        console.log(JSON.stringify({ name: snapshot.properties.Name, className: snapshot.className, exportedByMain: ['inspectInstance', 'createRuntimeInspector', 'bindRuntimeInspector', 'toTreeString'].some((name) => name in api), isolatedDocument, packagedShortcut, inspectorBinding: typeof devtools.bindRuntimeInspector, tree: devtools.toTreeString(frame), coreTreeMethod: 'toTreeString' in frame }));
         frame.destroy();
       })().catch((error) => { console.error(error); process.exitCode = 1; });
     `,
@@ -130,6 +137,7 @@ describe('packed package consumers', () => {
         className: 'Frame',
         exportedByMain: false,
         isolatedDocument: true,
+        packagedShortcut: true,
         inspectorBinding: 'function',
         tree: 'Packaged instance [Frame]',
         coreTreeMethod: false,

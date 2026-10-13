@@ -15,6 +15,7 @@ import { udim, udim2, udim2FromOffset } from '#values/udim.js';
 import { formatValue, projectHierarchy, propertyGroup, type HierarchyRow } from './model.js';
 import { inspectInstance, inspectionDocument } from './snapshot.js';
 import { colors, createDebugUI, installInspectorStyles } from './view.js';
+import { bindInspectorWindow } from './window.js';
 
 /** An independently mounted inspector. Destroying gui stops observation and picking. */
 export type RuntimeInspector = Readonly<{
@@ -51,7 +52,7 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
   panel.unsafeElement.dataset.fkDebugPanel = '';
   panel.unsafeElement.setAttribute('role', 'complementary');
   panel.unsafeElement.setAttribute('aria-label', 'FrameKit runtime inspector');
-  createUICorner({ CornerRadius: 14 }).Parent = panel;
+  createUICorner({ CornerRadius: 10 }).Parent = panel;
   const header = ui.frame(panel, { Size: udim2(1, 0, 0, 64) });
   const mark = ui.label(header, 'fk', {
     Position: udim2FromOffset(20, 16),
@@ -61,15 +62,15 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
     TextColor3: colors.accent,
   });
   mark.unsafeElement.setAttribute('aria-hidden', 'true');
-  ui.label(header, 'FrameKit', {
+  ui.label(header, 'Inspector', {
     Position: udim2FromOffset(60, 12),
     Size: udim2FromOffset(116, 24),
     TextSize: 15,
     FontWeight: 700,
   });
-  ui.label(header, 'RUNTIME INSPECTOR', {
+  ui.label(header, 'FRAMEKIT TOOLS', {
     Position: udim2FromOffset(60, 34),
-    Size: udim2FromOffset(146, 16),
+    Size: udim2FromOffset(92, 16),
     TextSize: 9,
     FontWeight: 600,
     TextColor3: colors.muted,
@@ -132,6 +133,7 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
   });
   const search = ui.input(hierarchyPanel, 'Search runtime hierarchy', 'Search name or class…');
   search.Position = udim2FromOffset(12, 46);
+  search.unsafeElement.title = 'Search name or class · / focuses search · Escape clears';
   const tree = ui.scroll(hierarchyPanel, 'Runtime hierarchy');
   tree.setProperties({ Position: udim2FromOffset(8, 94), Size: udim2(1, -16, 1, -126) });
   createUIListLayout({ Padding: udim(0, 2) }).Parent = tree;
@@ -219,26 +221,16 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
     Size: udim2(1, -40, 0, 30),
     TextColor3: colors.muted,
   });
-  const footer = ui.label(panel, '●  Live   ·   Read only', {
+  const footer = ui.label(panel, '● Live · Read only    Drag title · Resize edges', {
     Position: udim2(0, 20, 1, -32),
     Size: udim2(1, -40, 0, 24),
     TextSize: 10,
     TextColor3: colors.muted,
   });
   line(panel, udim2(0, 0, 1, -38), udim2(1, 0, 0, 1));
-  const resize = ui.frame(panel, {
-    Name: 'ResizeInspector',
-    Position: udim2FromOffset(-5, 16),
-    Size: udim2(0, 10, 1, -32),
-  });
-  resize.unsafeElement.setAttribute('role', 'separator');
-  resize.unsafeElement.setAttribute('aria-label', 'Resize runtime inspector');
-  resize.unsafeElement.setAttribute('aria-orientation', 'vertical');
-  resize.unsafeElement.tabIndex = 0;
-  resize.unsafeElement.style.cursor = 'ew-resize';
   const highlight = ui.frame(gui, { Name: 'PickedElement', Visible: false, ZIndex: 2 });
-  highlight.unsafeElement.style.border = '2px solid #248961';
-  highlight.unsafeElement.style.boxShadow = '0 0 0 3px #24896125';
+  highlight.unsafeElement.style.border = '2px solid #2563eb';
+  highlight.unsafeElement.style.boxShadow = '0 0 0 3px #2563eb25';
   const highlightLabel = ui.label(highlight, '', {
     Position: udim2FromOffset(-2, -26),
     Size: udim2FromOffset(240, 24),
@@ -251,10 +243,8 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
   let selected = root;
   let history: Instance[] = [root];
   let historyIndex = 0;
-  let width = 680;
   let compactPanel: 'hierarchy' | 'details' = 'hierarchy';
   let picking = false;
-  let drag: Readonly<{ id: number; x: number; width: number }> | undefined;
   const collapsed = new Set(
     projectHierarchy(root, new Set(), '')
       .filter((row) => row.level >= 3 && row.snapshot.children.length > 0)
@@ -272,16 +262,8 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
     return nextId;
   };
   const layout = (): void => {
-    const smallScreen = window.innerWidth < 640;
-    const margin = smallScreen ? 8 : 16;
-    const panelWidth = smallScreen
-      ? window.innerWidth - 16
-      : Math.min(width, window.innerWidth - 32);
-    const compact = smallScreen || panelWidth < 600;
-    panel.setProperties({
-      Position: udim2(1, -panelWidth - margin, 0, margin),
-      Size: udim2(0, panelWidth, 1, -margin * 2),
-    });
+    const panelWidth = panel.Size.X.Offset;
+    const compact = panelWidth < 600;
     tabs.Visible = compact;
     hierarchyPanel.unsafeElement.setAttribute('role', compact ? 'tabpanel' : 'region');
     detailPanel.unsafeElement.setAttribute('role', compact ? 'tabpanel' : 'region');
@@ -302,10 +284,6 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
       Size: udim2(0, 1, 1, -top - 38),
       Visible: !compact,
     });
-    resize.Visible = !smallScreen;
-    resize.unsafeElement.setAttribute('aria-valuemin', '420');
-    resize.unsafeElement.setAttribute('aria-valuemax', String(window.innerWidth - 32));
-    resize.unsafeElement.setAttribute('aria-valuenow', String(panelWidth));
     for (const [tab, name] of [
       [hierarchyTab, 'hierarchy'],
       [detailsTab, 'details'],
@@ -340,49 +318,7 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
     layout();
     (compactPanel === 'hierarchy' ? hierarchyTab : detailsTab).focus();
   });
-  const setWidth = (next: number): void => {
-    width = Math.max(420, Math.min(next, window.innerWidth - 32));
-    layout();
-  };
-  resize.on('pointerdown', (event) => {
-    if (event.button !== 0) {
-      return;
-    }
-    event.preventDefault();
-    resize.focus();
-    resize.setPointerCapture(event.pointerId);
-    drag = { id: event.pointerId, x: event.clientX, width: panel.Size.X.Offset };
-  });
-  resize.on('pointermove', (event) => {
-    if (drag?.id === event.pointerId) {
-      setWidth(drag.width + drag.x - event.clientX);
-    }
-  });
-  resize.on('pointerup', (event) => {
-    if (drag?.id === event.pointerId) {
-      drag = undefined;
-      resize.releasePointerCapture(event.pointerId);
-    }
-  });
-  resize.on('pointercancel', () => {
-    drag = undefined;
-  });
-  resize.on('lostpointercapture', () => {
-    drag = undefined;
-  });
-  resize.on('keydown', (event) => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-      return;
-    }
-    event.preventDefault();
-    setWidth(
-      event.key === 'Home'
-        ? 420
-        : event.key === 'End'
-          ? window.innerWidth - 32
-          : width + (event.key === 'ArrowLeft' ? 24 : -24),
-    );
-  });
+  const updateWindow = bindInspectorWindow(panel, header, layout);
 
   const hierarchy = createObservableValue<readonly HierarchyRow[]>([]);
   const treeRows = createObservableValue<readonly TreeViewItem[]>([]);
@@ -545,6 +481,7 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
         Visible: !row.heading,
         TextColor3: row.animated ? colors.accent : colors.ink,
       });
+      view.name.unsafeElement.title = row.name;
       view.value.unsafeElement.title = row.heading
         ? ''
         : (JSON.stringify(row.value) ?? String(row.value));
@@ -722,7 +659,7 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
     pick.BackgroundColor3 = colors.canvas;
     pick.unsafeElement.setAttribute('aria-pressed', 'false');
     highlight.Visible = false;
-    footer.Text = '●  Live   ·   Read only';
+    footer.Text = '● Live · Read only    Drag title · Resize edges';
   };
   pick.unsafeElement.setAttribute('aria-pressed', 'false');
   pick.onClick(() => {
@@ -822,7 +759,6 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
   document.addEventListener('pointermove', movePicker, true);
   document.addEventListener('click', clickPicker, true);
   document.addEventListener('keydown', keydown);
-  window.addEventListener('resize', layout);
   const interval = window.setInterval(refresh, 250);
   const unregisterRoot = root.onDestroy(() => gui.destroy());
   gui.onDestroy(() => {
@@ -833,11 +769,10 @@ export const createRuntimeInspector = (root: Instance): RuntimeInspector => {
     document.removeEventListener('pointermove', movePicker, true);
     document.removeEventListener('click', clickPicker, true);
     document.removeEventListener('keydown', keydown);
-    window.removeEventListener('resize', layout);
     collapsed.clear();
     history = [];
   });
-  layout();
+  updateWindow();
   refresh();
   return Object.freeze({ gui, select, refresh });
 };

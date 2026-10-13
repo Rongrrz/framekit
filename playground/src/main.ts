@@ -18,5 +18,5 @@ if (import.meta.hot) {
 }
 if (import.meta.env.DEV) {
   const { bindRuntimeInspector } = await import('framekit/devtools');
-  bindRuntimeInspector(playground);
+  bindRuntimeInspector(playground, { shortcut: { key: 'F8' } });
 }

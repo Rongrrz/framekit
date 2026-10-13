@@ -106,5 +106,5 @@ if (import.meta.hot) {
 
 if (import.meta.env.DEV) {
   const { bindRuntimeInspector } = await import('framekit/devtools');
-  bindRuntimeInspector(app);
+  bindRuntimeInspector(app, { shortcut: { key: 'F8' } });
 }

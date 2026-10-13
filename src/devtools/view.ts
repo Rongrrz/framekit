@@ -17,12 +17,12 @@ import { udim2, udim2FromOffset } from '#values/udim.js';
 
 export const colors = {
   paper: color3FromHex('#ffffff'),
-  canvas: color3FromHex('#f7f8fa'),
-  ink: color3FromHex('#202833'),
+  canvas: color3FromHex('#f3f5f8'),
+  ink: color3FromHex('#17212f'),
   muted: color3FromHex('#697480'),
   line: color3FromHex('#e7eaf0'),
-  accent: color3FromHex('#167553'),
-  selected: color3FromHex('#e9f4ee'),
+  accent: color3FromHex('#2563eb'),
+  selected: color3FromHex('#e8efff'),
 };
 
 /** Inspector-only styles affect native focus/hover and decoration, never application nodes. */
@@ -36,20 +36,25 @@ export const installInspectorStyles = (owner: GuiElement): void => {
     [data-fk-debug] button { cursor: pointer; border: 0; }
     [data-fk-debug] button:hover:not(:disabled) { filter: brightness(.96); }
     [data-fk-debug] button:disabled { cursor: default; opacity: .35; }
-    [data-fk-debug] :focus-visible { outline: 2px solid #248961; outline-offset: -2px; }
+    [data-fk-debug] :focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
     [data-fk-debug] [role=treeitem]:hover { box-shadow: inset 0 0 0 999px #20283306; }
     [data-fk-debug] [role=treeitem] { cursor: default; }
     [data-fk-debug] input { padding: 0 12px !important; }
-    [data-fk-debug] [data-debug-value] { user-select: text; }
+    [data-fk-debug] [data-debug-value], [data-fk-debug] [data-debug-value] [data-framekit-text] { user-select: text; }
+    [data-fk-resize=se]::after { content: ""; position: absolute; right: 8px; bottom: 8px; width: 7px; height: 7px; border-right: 2px solid #94a3b8; border-bottom: 2px solid #94a3b8; }
     [data-fk-debug-panel] { border: 1px solid #dfe4eb; box-shadow: 0 20px 80px #17223330, 0 2px 8px #17223312; }
-    [data-fk-debug-panel] [role=separator]:hover, [data-fk-debug-panel] [role=separator]:focus-visible { background: #24896133 !important; }
+    [data-fk-debug-panel] [role=separator]:hover, [data-fk-debug-panel] [role=separator]:focus-visible { background: #2563eb33 !important; }
   `;
   document.head.append(style);
   owner.onDestroy(() => style.remove());
 };
 
-/** The route owns its entry point so applications only need to bind devtools. */
-export const createInspectorLauncher = (document: Document, open: () => void): ScreenGui => {
+/** A conspicuous, application-independent entry point into the inspector. */
+export const createInspectorLauncher = (
+  document: Document,
+  open: () => void,
+  shortcut?: string,
+): ScreenGui => {
   const gui = createScreenGui(
     { Name: 'FrameKitDevtoolsLauncher', DisplayOrder: 9999 },
     { ownerDocument: document },
@@ -57,15 +62,26 @@ export const createInspectorLauncher = (document: Document, open: () => void): S
   gui.unsafeElement.dataset.fkDebug = '';
   gui.unsafeElement.style.pointerEvents = 'none';
   installInspectorStyles(gui);
-  const button = createDebugUI(document).button(gui, 'Debug', {
-    Name: 'OpenRuntimeInspector',
-    AccessibleLabel: 'Debug',
-    Size: udim2FromOffset(104, 36),
-    Position: udim2(1, -120, 1, -52),
-    BackgroundColor3: colors.ink,
-    TextColor3: colors.paper,
-  });
+  const button = createDebugUI(document).button(
+    gui,
+    shortcut?.match(/^F\d+$/) ? `⌘ Debug tools · ${shortcut}` : '⌘ Debug tools',
+    {
+      Name: 'OpenRuntimeInspector',
+      AccessibleLabel: 'Debug',
+      Size: udim2FromOffset(180, 44),
+      Position: udim2(1, -196, 1, -60),
+      BackgroundColor3: colors.accent,
+      TextColor3: colors.paper,
+      TextSize: 13,
+      FontWeight: 700,
+    },
+  );
   button.unsafeElement.style.pointerEvents = 'auto';
+  button.unsafeElement.title = `Open FrameKit runtime inspector${shortcut ? ` · ${shortcut}` : ''}`;
+  if (shortcut) {
+    button.unsafeElement.setAttribute('aria-keyshortcuts', shortcut);
+  }
+  button.unsafeElement.style.border = '1px solid #ffffff55';
   button.unsafeElement.style.boxShadow = '0 4px 20px #17223330';
   button.onClick(() => {
     // Safari does not focus buttons on pointer activation; keep the return target consistent.
@@ -96,7 +112,8 @@ export const createDebugUI = (ownerDocument: Document) => {
         Text,
         TextSize: 12,
         TextXAlignment: 'Left',
-        FontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+        FontFamily:
+          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
         TextColor3: colors.ink,
         BackgroundTransparency: 1,
         Size: udim2(1, 0, 0, 28),
@@ -117,7 +134,8 @@ export const createDebugUI = (ownerDocument: Document) => {
       {
         Text,
         AutoButtonColor: false,
-        FontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+        FontFamily:
+          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
         TextSize: 12,
         FontWeight: 550,
         TextColor3: colors.ink,
@@ -141,6 +159,8 @@ export const createDebugUI = (ownerDocument: Document) => {
         AccessibleLabel,
         PlaceholderText,
         InputType: 'Search',
+        FontFamily:
+          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
         TextSize: 12,
         TextXAlignment: 'Left',
         TextColor3: colors.ink,

@@ -35,6 +35,11 @@ test('opens and closes the inspector without changing the host URL or history', 
   await expect(page).toHaveURL(originalUrl);
   expect(await page.evaluate(() => window.history.length)).toBe(historyLength);
   await expect(inspector).toHaveCount(0);
+  await page.keyboard.press('F8');
+  await expect(inspector).toBeVisible();
+  await page.keyboard.press('F8');
+  await expect(inspector).toHaveCount(0);
+  await expect(page).toHaveURL(originalUrl);
   expect(errors).toEqual([]);
 });
 
@@ -93,7 +98,7 @@ test('picks elements without activating app commands and releases picking when c
   const pick = inspector.getByRole('button', { name: 'Pick an element' });
   await pick.click();
   await expect(pick).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: /GET STARTED/ }).click();
+  await page.getByRole('button', { name: /Get started/i }).click();
   await expect(pick).toHaveAttribute('aria-pressed', 'false');
   await expect(inspector).toContainText('GetStartedButton');
   // Picking must not activate the playground's navigation command.
@@ -104,7 +109,7 @@ test('picks elements without activating app commands and releases picking when c
   await pick.click();
   await inspector.getByRole('button', { name: 'Close runtime inspector' }).click();
   await expect(inspector).toHaveCount(0);
-  await page.getByRole('button', { name: /GET STARTED/ }).click();
+  await page.getByRole('button', { name: /Get started/i }).click();
   await expect(page).toHaveURL(/#\/guide$/);
 });
 
@@ -243,3 +248,88 @@ for (const [entry, root] of [
     await expect(page.getByRole('button', { name: 'Debug', exact: true })).toBeFocused();
   });
 }
+
+test('moves the floating inspector and resizes from all eight directions', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 1000 });
+  await page.goto('/playground/index.html');
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
+  const panel = inspectorFor(page);
+  const header = panel.getByRole('group', { name: 'Move runtime inspector', exact: true });
+  const beforeMove = (await panel.boundingBox())!;
+  const title = (await header.boundingBox())!;
+  await page.mouse.move(title.x + 120, title.y + 24);
+  await page.mouse.down();
+  await page.mouse.move(title.x - 180, title.y + 104, { steps: 4 });
+  await page.mouse.up();
+  const moved = (await panel.boundingBox())!;
+  expect(moved.x).toBeCloseTo(beforeMove.x - 300);
+  expect(moved.y).toBeCloseTo(beforeMove.y + 80);
+  for (const [name, dx, dy] of [
+    ['Resize runtime inspector', 32, 0],
+    ['Resize inspector right edge', -32, 0],
+    ['Resize inspector top edge', 0, 32],
+    ['Resize inspector bottom edge', 0, -32],
+    ['Resize inspector top left corner', 32, 32],
+    ['Resize inspector top right corner', -32, 32],
+    ['Resize inspector bottom left corner', 32, -32],
+    ['Resize inspector bottom right corner', -32, -32],
+  ] as const) {
+    const start = (await panel.boundingBox())!;
+    const handle = (await panel.getByRole('separator', { name, exact: true }).boundingBox())!;
+    const x = handle.x + handle.width / 2;
+    const y = handle.y + handle.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y + dy, { steps: 4 });
+    await page.mouse.up();
+    const end = (await panel.boundingBox())!;
+    if (dx) {
+      expect(end.width).toBeCloseTo(start.width - 32);
+    }
+    if (dy) {
+      expect(end.height).toBeCloseTo(start.height - 32);
+    }
+    if (name.includes('left') || name === 'Resize runtime inspector') {
+      expect(end.x + end.width).toBeCloseTo(start.x + start.width);
+    }
+    if (name.includes('top')) {
+      expect(end.y + end.height).toBeCloseTo(start.y + start.height);
+    }
+  }
+  await header.focus();
+  const beforeKey = (await panel.boundingBox())!;
+  await page.keyboard.press('Shift+ArrowLeft');
+  expect((await panel.boundingBox())!.x).toBeCloseTo(beforeKey.x - 8);
+  await page.keyboard.press('Home');
+  expect((await panel.boundingBox())!.width).toBeCloseTo(680);
+  await page.setViewportSize({ width: 390, height: 500 });
+  await expect(panel).toHaveCSS('width', '374px');
+  const compact = (await panel.boundingBox())!;
+  expect(compact.x).toBeGreaterThanOrEqual(8);
+  expect(compact.x + compact.width).toBeLessThanOrEqual(382);
+  expect(compact.y + compact.height).toBeLessThanOrEqual(492);
+});
+
+test('supports a shortcut without a launcher and removes it with the root', async ({ page }) => {
+  await page.goto('/tests/browser/index.html');
+  await page.waitForFunction(() => Boolean(window.framekitDevtools));
+  await page.evaluate(() => {
+    const root = window.framekit.createScreenGui();
+    const destroy = window.framekit.createTextButton({ Text: 'Destroy inspected root' });
+    destroy.Parent = root;
+    destroy.onClick(() => root.destroy());
+    root.mount('#root');
+    window.framekitDevtools.bindRuntimeInspector(root, {
+      button: false,
+      shortcut: { key: 'i', ctrlKey: true, shiftKey: true },
+    });
+  });
+  await expect(page.getByRole('button', { name: 'Debug', exact: true })).toHaveCount(0);
+  await page.keyboard.press('Control+Shift+I');
+  await expect(inspectorFor(page)).toBeVisible();
+  await page.keyboard.press('Control+Shift+I');
+  await expect(inspectorFor(page)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Destroy inspected root' }).click();
+  await page.keyboard.press('Control+Shift+I');
+  await expect(inspectorFor(page)).toHaveCount(0);
+});

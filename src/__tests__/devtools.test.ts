@@ -124,3 +124,61 @@ it('keeps a subtree inspector in its own document and does not navigate above it
   expect(inspector.gui.isDestroyed()).toBe(true);
   iframe.remove();
 });
+
+it('supports shortcut-only and programmatic bindings with exact modifier matching', () => {
+  const root = createFrame();
+  const binding = bindRuntimeInspector(root, {
+    button: false,
+    shortcut: { key: 'd', ctrlKey: true, shiftKey: true },
+  });
+  expect(document.querySelector('[aria-label="Debug"]')).toBeNull();
+  const press = (options: KeyboardEventInit = {}): KeyboardEvent => {
+    const event = new KeyboardEvent('keydown', {
+      key: 'D',
+      bubbles: true,
+      cancelable: true,
+      ...options,
+    });
+    document.dispatchEvent(event);
+    return event;
+  };
+  press({ ctrlKey: true });
+  expect(document.querySelector('[data-fk-debug-panel]')).toBeNull();
+  expect(press({ ctrlKey: true, shiftKey: true }).defaultPrevented).toBe(true);
+  expect(document.querySelector('[data-fk-debug-panel]')).not.toBeNull();
+  press({ ctrlKey: true, shiftKey: true, repeat: true });
+  expect(document.querySelector('[data-fk-debug-panel]')).not.toBeNull();
+  press({ ctrlKey: true, shiftKey: true });
+  expect(document.querySelector('[data-fk-debug-panel]')).toBeNull();
+  binding.open();
+  binding.close();
+  binding.dispose();
+  expect(press({ ctrlKey: true, shiftKey: true }).defaultPrevented).toBe(false);
+  root.destroy();
+});
+
+it('protects text editing and handled or composing keys while allowing a modified shortcut in search', () => {
+  const root = createFrame();
+  const binding = bindRuntimeInspector(root, { button: false, shortcut: { key: 'i' } });
+  const input = document.body.appendChild(document.createElement('input'));
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', bubbles: true }));
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', isComposing: true }));
+  const handled = new KeyboardEvent('keydown', { key: 'i', cancelable: true });
+  handled.preventDefault();
+  document.dispatchEvent(handled);
+  expect(document.querySelector('[data-fk-debug-panel]')).toBeNull();
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'i' }));
+  expect(document.querySelector('[data-fk-debug-panel]')).not.toBeNull();
+  binding.dispose();
+  const modified = bindRuntimeInspector(root, {
+    button: false,
+    shortcut: { key: 'i', altKey: true },
+  });
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', altKey: true, bubbles: true }));
+  expect(document.querySelector('[data-fk-debug-panel]')).not.toBeNull();
+  root.destroy();
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', altKey: true, bubbles: true }));
+  expect(document.querySelector('[data-fk-debug-panel]')).toBeNull();
+  modified.dispose();
+  input.remove();
+});

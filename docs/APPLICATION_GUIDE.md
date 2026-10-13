@@ -266,8 +266,11 @@ remain core application APIs. Enable the optional development UI:
 // Keep this branch behind your bundler's development constant.
 if (import.meta.env.DEV) {
   const { bindRuntimeInspector } = await import('framekit/devtools');
-  const debug = bindRuntimeInspector(app);
-  // The binding supplies a Debug launcher; commands can also call debug.open().
+  const debug = bindRuntimeInspector(app, {
+    button: true,
+    shortcut: { key: 'D', ctrlKey: true, shiftKey: true },
+  });
+  // Omit shortcut for button-only; use button: false for your own controls.
   // debug.close() exits; debug.dispose() removes the integration.
 }
 ```
@@ -277,18 +280,24 @@ counts, and animated property names. It can inspect destroyed handles. Counts re
 registrations, not individual listeners. The UI refreshes every 250 ms and releases its timer when
 closed or when the inspected root is destroyed.
 
-`bindRuntimeInspector(root)` is available to every FrameKit application. It supplies a
-floating Debug launcher and opens the inspector over the running app. Opening and closing
+`bindRuntimeInspector(root, options?)` is available to every FrameKit application. It supplies a
+floating Debug tools launcher and opens the inspector over the running app. Opening and closing
 preserve the complete URL, hash, and browser history. Closing releases the inspector's UI
-and timer; disposing the binding also removes the launcher.
+and timer; disposing the binding also removes the launcher and shortcut listener.
+The shortcut toggles the inspector, matches modifiers exactly, and ignores repeated, composing,
+or already-handled events. Unmodified shortcuts leave text editing alone, except function keys.
+Modified shortcuts also work while an inspector search field is focused.
 
-The inspector has a resizable dock, searchable hierarchy with ancestor paths, selection history,
+The inspector has a floating window, searchable hierarchy with ancestor paths, selection history,
 breadcrumb navigation, grouped property filtering, and readable color/geometry values. Pick
 selects an element from the running app without activating its commands. Escape cancels picking;
 in a search field it clears the query first, then closes the inspector. Compact screens use
-Hierarchy/Details tabs. Navigation and styling do not mutate inspected objects.
+Hierarchy/Details tabs. Drag the title bar to move the window and resize from any edge or corner.
+Focus the title bar or resize handles to use Arrow keys; Shift uses smaller steps. Home on the
+title bar or a double-click resets the window. Closing restores focus to the opener.
+Navigation and styling do not mutate inspected objects.
 
-Each playground page binds the same devtools launcher during development. The inspector has
+Each playground page binds the same devtools launcher and F8 shortcut during development. The inspector has
 no dedicated route or URL entry point. Production playground builds remove the integration.
 For custom mounting, use `createRuntimeInspector(root)` and mount its `gui` yourself.
 

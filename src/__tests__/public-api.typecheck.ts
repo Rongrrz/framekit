@@ -69,7 +69,10 @@ function verifyPublicTypeContracts(): void {
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
-  const debug = bindRuntimeInspector(frame);
+  const debug = bindRuntimeInspector(frame, {
+    button: false,
+    shortcut: { key: 'D', ctrlKey: true, shiftKey: true },
+  });
   debug.dispose();
   const inspector = createRuntimeInspector(frame);
   inspector.gui.destroy();
