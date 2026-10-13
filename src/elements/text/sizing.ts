@@ -17,14 +17,15 @@ export function renderTextSize(
   element: HTMLElement,
   properties: Readonly<TextStyleProperties>,
 ): void {
+  // Ordinary text has an explicit size. Reading geometry here would force layout after
+  // every text edit, even when no measurement is needed.
+  if (!properties.TextScaled || properties.Text.length === 0) {
+    setStyle(element, 'font-size', `${properties.TextSize}px`);
+    return;
+  }
   const availableWidth = element.clientWidth;
   const availableHeight = element.clientHeight;
-  if (
-    !properties.TextScaled ||
-    properties.Text.length === 0 ||
-    availableWidth <= 0 ||
-    availableHeight <= 0
-  ) {
+  if (availableWidth <= 0 || availableHeight <= 0) {
     setStyle(element, 'font-size', `${properties.TextSize}px`);
     return;
   }

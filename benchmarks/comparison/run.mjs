@@ -21,6 +21,7 @@ const baselineRef = option('--baseline', '999410f');
 const rounds = Number(option('--rounds', '3'));
 const repetitions = Number(option('--repetitions', '7'));
 const throttle = Number(option('--cpu-throttle', '1'));
+const requestedCases = option('--cases', '').split(',').filter(Boolean);
 const output = resolve(option('--out', join(directory, 'results.json')));
 await mkdir(dirname(output), { recursive: true });
 if (![rounds, repetitions, throttle].every((value) => Number.isInteger(value) && value > 0)) {
@@ -110,6 +111,14 @@ try {
       await page.goto(`http://127.0.0.1:${port}/${variant}/index.html`);
       await page.waitForFunction(() => Boolean(window.runComparisonCase));
       definitions = await page.evaluate(() => window.comparisonCases);
+      if (requestedCases.length > 0) {
+        for (const id of requestedCases) {
+          if (!definitions.some((definition) => definition.id === id)) {
+            throw new Error(`Unknown benchmark case: ${id}`);
+          }
+        }
+        definitions = definitions.filter((definition) => requestedCases.includes(definition.id));
+      }
       environment = await page.evaluate(() => window.comparisonEnvironment);
       audits[variant] = await page.evaluate(() => window.compatibilityAudit());
       const results = [];

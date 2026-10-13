@@ -1,4 +1,10 @@
-import { color3FromRGB, createTextLabel } from 'framekit';
+import {
+  color3FromRGB,
+  createTextArea,
+  createTextButton,
+  createTextInput,
+  createTextLabel,
+} from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resetDocumentAfterEach } from '../support/reset-document.js';
@@ -7,6 +13,45 @@ resetDocumentAfterEach();
 afterEach(() => vi.unstubAllGlobals());
 
 describe('text labels', () => {
+  it.each([createTextLabel, createTextButton, createTextInput, createTextArea])(
+    'updates fixed-size text without requiring layout measurements (%#)',
+    (createText) => {
+      const node = createText({ Text: 'Before', TextSize: 18 });
+      const text =
+        node.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]') ?? node.unsafeElement;
+      for (const property of ['clientWidth', 'clientHeight', 'scrollWidth', 'scrollHeight']) {
+        Object.defineProperty(text, property, {
+          get: () => {
+            throw new Error('Fixed-size text must not require layout.');
+          },
+        });
+      }
+
+      node.setProperties({ Text: 'After', TextSize: 24, TextWrapped: true });
+      node.FontFamily = 'monospace';
+
+      expect(node.Text).toBe('After');
+      expect(text.style.fontSize).toBe('24px');
+      expect(text.style.whiteSpace).toBe('pre-wrap');
+      node.destroy();
+    },
+  );
+
+  it('uses the configured size for empty scaled text without measuring it', () => {
+    const label = createTextLabel({ Text: '', TextScaled: true });
+    const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
+    Object.defineProperty(text, 'clientWidth', {
+      get: () => {
+        throw new Error('Empty text does not need measurement.');
+      },
+    });
+
+    label.TextSize = 24;
+
+    expect(text.style.fontSize).toBe('24px');
+    label.destroy();
+  });
+
   it('uses a creation-only semantic text tag', () => {
     const defaultLabel = createTextLabel({ Text: 'Plain' });
     const heading = createTextLabel({ Text: 'Inventory', TextTagName: 'h1' });

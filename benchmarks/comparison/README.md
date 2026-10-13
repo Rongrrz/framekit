@@ -20,6 +20,7 @@ optimizations. It must be present in local Git history. Useful options:
 ```sh
 node benchmarks/comparison/run.mjs --baseline 999410f --rounds 3 --repetitions 7
 node benchmarks/comparison/run.mjs --cpu-throttle 4 --out /tmp/comparison.json
+node benchmarks/comparison/run.mjs --cases text --baseline 846fd1c --out /tmp/text.json
 ```
 
 The reports explain the differences between React root updates and per-row state, immediate
