@@ -1,179 +1,123 @@
-import {
-  type Frame,
-  type GuiElement,
-  udim2,
-  udim2FromOffset,
-  type ObservableValue,
-} from 'framekit';
+import type { Frame, GuiElement, ObservableValue } from 'framekit';
 
-import type { PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
 import type { ThemeValue } from '../theme';
-import { createButton } from '../ui';
 import {
   appendArticleSection,
   appendArticleTitle,
   appendCallout,
   appendCodeBlock,
   appendOutline,
-  appendSidebarGroup,
+  appendPageNavigation,
   createDocsShell,
 } from './docs-shell';
 
 export const createGuidePage = (
-  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
   route: ObservableValue<SitePage>,
   scrollTo: (target: GuiElement) => void,
-  navigate: (page: SitePage) => void,
 ): Frame => {
-  const shell = createDocsShell('GuidePage', 'guide', layout, theme, route);
-  const introduction = appendArticleTitle(
+  const shell = createDocsShell('GuidePage', 'guide', theme, route);
+  appendArticleTitle(
     shell.article,
     theme,
-    'GUIDE',
+    'LEARN / 01',
     'Getting started',
-    'FrameKit gives browser interfaces an object model: create instances, assign properties, build a tree, and destroy owners when their work is done.',
+    'Build a working counter in a few minutes. You need a TypeScript browser application and a DOM mount point; no component framework is required.',
+  );
+  const install = appendArticleSection(
+    shell.article,
+    theme,
+    'Install from this checkout',
+    'FrameKit is currently a private package. Build and pack it in this repository, then install the generated archive in your application. The archive version follows package.json.',
+  );
+  appendCodeBlock(
+    shell.article,
+    theme,
+    'InstallCode',
+    [
+      { text: '# In the FrameKit repository' },
+      { text: 'npm ci' },
+      { text: 'npm run build' },
+      { text: 'npm pack' },
+      { text: '' },
+      { text: '# In your browser application' },
+      { text: 'npm install /absolute/path/to/framekit-0.1.0.tgz' },
+    ],
+    'Terminal',
   );
   appendCallout(
     shell.article,
     theme,
-    '💡 FrameKit is a TypeScript library. It does not require a component framework.',
+    'To explore this repository directly, run npm ci and npm run dev, then open the local URL printed by Vite. The Playground uses source aliases; package consumers use framekit and framekit/devtools.',
   );
-  appendArticleSection(
+  const mount = appendArticleSection(
     shell.article,
     theme,
-    'Install FrameKit',
-    'This checkout is private. Run npm ci, build, and pack in the FrameKit repository, then install its archive in your web application.',
+    'Add a mount point',
+    'Place this in the body of your HTML and load your application entry through your bundler. ScreenGui fills the viewport, regardless of the mount element’s dimensions. Create and mount it in browser code.',
   );
-  appendCodeBlock(shell.article, theme, 'InstallCode', [
-    { text: 'npm ci && npm run build && npm pack', color: 'accent' },
-    { text: '// In your browser application:' },
-    { text: 'npm install /path/to/framekit/framekit-0.1.0.tgz' },
-  ]);
-
-  const firstInterface = appendArticleSection(
+  appendCodeBlock(
     shell.article,
     theme,
-    'Create your first interface',
-    'Add a div with id app to your HTML. Create the root, make a child, assign Parent, and mount the root.',
+    'MountPoint',
+    [{ text: '<div id="app"></div>' }],
+    'index.html',
+  );
+  const counter = appendArticleSection(
+    shell.article,
+    theme,
+    'Create a working counter',
+    'Copy this into your entry module. Creation makes a real element; Parent attaches it to the ownership tree, and mount attaches the root to the document. Clicking updates the same button instance.',
   );
   appendCodeBlock(shell.article, theme, 'FirstInterfaceCode', [
-    { text: "import { createScreenGui, createTextLabel } from 'framekit';", color: 'purple' },
+    { text: 'import { createScreenGui, createTextButton,' },
+    {
+      text: "  createObservableValue, watchOwnedValue, udim2FromOffset } from 'framekit';",
+      color: 'purple',
+    },
     { text: '' },
-    { text: 'const app = createScreenGui();', color: 'blue' },
-    { text: 'const message = createTextLabel({' },
-    { text: "  Text: 'Hello, FrameKit!'," },
-    { text: '  TextScaled: true,' },
+    { text: 'const app = createScreenGui();' },
+    { text: 'const count = createObservableValue(0);' },
+    { text: 'const button = createTextButton({' },
+    { text: "  Name: 'Counter', Text: 'Clicks: 0'," },
+    { text: '  Size: udim2FromOffset(220, 44),' },
+    { text: '  Position: udim2FromOffset(24, 24),' },
     { text: '});' },
-    { text: 'message.Parent = app;', color: 'accent' },
+    { text: 'watchOwnedValue(button, count, (value) => {' },
+    { text: '  button.Text = `Clicks: ${value}`;' },
+    { text: '});' },
+    { text: 'button.onClick(() => count.set(count.get() + 1));' },
+    { text: 'button.Parent = app;', color: 'accent' },
     { text: "app.mount('#app');", color: 'blue' },
   ]);
-
-  const properties = appendArticleSection(
-    shell.article,
-    theme,
-    'Change direct properties',
-    'Instances stay alive after creation. Read a property normally, assign it normally, or validate several changes together with setProperties.',
-  );
-  appendCodeBlock(shell.article, theme, 'PropertyGuideCode', [
-    { text: "message.Text = 'Ready';", color: 'accent' },
-    { text: 'message.setProperties({' },
-    { text: '  Position: udim2FromOffset(24, 32),' },
-    { text: "  TextColor3: color3FromHex('#76edad')," },
-    { text: '});' },
-  ]);
-
-  const events = appendArticleSection(
-    shell.article,
-    theme,
-    'Listen to events',
-    'Buttons expose typed browser interactions. Every subscription returns an unsubscribe function, and owned listeners are removed when their instance is destroyed.',
-  );
-  appendCodeBlock(shell.article, theme, 'EventsGuideCode', [
-    { text: 'const button = createTextButton({' },
-    { text: "  Text: 'Save'," },
-    { text: '});' },
-    { text: '' },
-    { text: "button.onClick(() => console.log('Saved'));", color: 'blue' },
-    { text: 'button.Parent = app;' },
-    { text: "button.onMouseEnter(() => (button.Text = 'Save now'));" },
-  ]);
-
-  const values = appendArticleSection(
-    shell.article,
-    theme,
-    'Bind reactive values',
-    'An observable value stores shared state. watchOwnedValue delivers its current value immediately and unsubscribes when the owner is destroyed.',
-  );
-  appendCodeBlock(shell.article, theme, 'ValueGuideCode', [
-    { text: 'const count = createObservableValue(0);', color: 'purple' },
-    { text: '' },
-    { text: 'watchOwnedValue(message, count, (value) => {' },
-    { text: '  message.Text = `Count: ${value}`;', color: 'accent' },
-    { text: '});' },
-    { text: '' },
-    { text: 'count.set(count.get() + 1);' },
-  ]);
-
-  const responsive = appendArticleSection(
-    shell.article,
-    theme,
-    'Respond to a container',
-    'Apply layout functions when a container crosses an ordered width breakpoint. The owner controls the observer lifetime.',
-  );
-  appendCodeBlock(shell.article, theme, 'ResponsiveGuideCode', [
-    { text: 'bindResponsiveLayout(app, {' },
-    { text: '  observe: card,' },
-    { text: '  breakpoints: [' },
-    { text: '    { maxWidth: 479, apply: applyCompact },' },
-    { text: '    { maxWidth: 899, apply: applyMedium },' },
-    { text: '    { apply: applyWide },' },
-    { text: '  ],' },
-    { text: '});' },
-  ]);
-
   const cleanup = appendArticleSection(
     shell.article,
     theme,
-    'Clean up one owner',
-    'Destroy is recursive. Descendants, watchers, event listeners, modifiers, and active animations are all released with the owner.',
+    'Release the feature',
+    'Call app.destroy() when the feature is removed, for example in your framework’s unmount callback. The button, its native listener, and its value watcher are released recursively.',
   );
-  appendCodeBlock(shell.article, theme, 'CleanupGuideCode', [
-    { text: 'card.onDestroy(() => closeSocket());' },
-    { text: 'card.destroy();', color: 'orange' },
-    { text: 'card.isDestroyed(); // true', color: 'textFaint' },
+  appendCodeBlock(shell.article, theme, 'CleanupCode', [
+    { text: '// Continuing the counter example:' },
+    { text: 'app.destroy();' },
+    { text: 'console.log(app.isDestroyed()); // true' },
   ]);
   appendCallout(
     shell.article,
     theme,
-    '🧹 Prefer one clear owner for each feature. Cleanup then becomes one operation.',
+    'A blank screen usually means the root is unmounted, a child has no Parent, the mount selector is missing, or geometry is outside the viewport. Use Debug tools in this Playground to inspect the live hierarchy.',
   );
-
-  const next = createButton(theme, {
-    label: 'Explore the full API  🔎',
-    name: 'GuideNextButton',
-    position: udim2FromOffset(0, 0),
-    size: udim2(1, 0, 0, 54),
-    background: 'surface',
-    foreground: 'accent',
-  });
-  next.onClick(() => navigate('api'));
-  next.unsafeElement.style.marginTop = '12px';
-  next.Parent = shell.article;
-  const introductionItems = [
-    { label: 'Getting started', target: introduction, active: true },
-    { label: 'First interface', target: firstInterface },
-  ];
-  const essentialItems = [
-    { label: 'Direct properties', target: properties },
-    { label: 'Events', target: events },
-    { label: 'Reactive values', target: values },
-    { label: 'Responsive layout', target: responsive },
-    { label: 'Cleanup', target: cleanup },
-  ];
-  appendSidebarGroup(shell.sidebar, theme, 'INTRODUCTION', introductionItems, 0, scrollTo);
-  appendSidebarGroup(shell.sidebar, theme, 'ESSENTIALS', essentialItems, 150, scrollTo);
-  appendOutline(shell.outline, theme, [...introductionItems, ...essentialItems], scrollTo);
+  appendOutline(
+    shell.outline,
+    theme,
+    [
+      { label: 'Installation', target: install },
+      { label: 'Mount point', target: mount },
+      { label: 'Working counter', target: counter },
+      { label: 'Cleanup', target: cleanup },
+    ],
+    scrollTo,
+  );
+  appendPageNavigation(shell.article, theme, 'guide');
   return shell.page;
 };

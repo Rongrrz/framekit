@@ -1,52 +1,54 @@
-# Playground architecture
+# Playground
 
-The playground includes a FrameKit documentation site and a virtual-collection stress page. Its visual hierarchy is inspired by focused documentation sites, while the implementation remains FrameKit and plain TypeScript.
+Run `npm ci` and `npm run dev`, then open the URL printed by Vite. The documentation site and
+`collections.html` consume the same FrameKit source as applications. Production builds omit
+the inspector integration.
 
-```text
-playground/src/
-|-- app.ts                    # composition root and shared state
-|-- router.ts                 # tiny hash router and page visibility
-|-- page-shell.ts             # scrolling, scaling, and page canvas
-|-- layout.ts                 # responsive dimensions and bindings
-|-- theme.ts                  # palettes, fonts, type scale, and global styles
-|-- ui.ts                     # local visual factories
-|-- behaviors/                # reusable interaction behavior
-`-- components/
-    |-- navigation.ts         # persistent site navigation
-    |-- home.ts               # product landing page
-    |-- docs-shell.ts         # shared documentation page structure
-    |-- guide-page.ts         # learning path
-    `-- api-page.ts           # API reference
-```
+## Documentation routes
 
-## Ownership
+| Route         | What readers get                                                                |
+| ------------- | ------------------------------------------------------------------------------- |
+| `#/`          | A working counter and paths into the guide                                      |
+| `#/guide`     | Local installation, mounting, a complete counter, and cleanup                   |
+| `#/elements`  | Native controls, semantic elements, events, focus, links, and documents         |
+| `#/layout`    | Scale/offset geometry, automatic sizing, modifiers, breakpoints, scrolling      |
+| `#/state`     | Owned values, computed state, signals, keyed children, virtual lists            |
+| `#/lifecycle` | Tree ownership, detach/unmount/destroy, external cleanup, property transactions |
+| `#/animation` | Springs, tweens, playback, competing property writers, reduced motion           |
+| `#/overlays`  | Tooltip/popover ownership and interactive examples                              |
+| `#/devtools`  | Launch options, shortcuts, picking, window controls, snapshots                  |
+| `#/api`       | A short API map linking to the appropriate chapters                             |
 
-`app.ts` creates one layout value, one theme value, and one route value. Home, Guide, and API are created once and route changes only update their visibility. This preserves instance identity and avoids mounting separate applications.
+Examples have copy controls and horizontal scrolling. Each chapter states the behavior that
+matters alongside its example. Desktop navigation stays visible while reading; smaller screens
+provide a **Browse documentation** menu. Native topic links support deep links, browser history,
+and opening another tab. Route changes update the title and move focus to the article heading.
 
-`docs-shell.ts` owns the layout shared by Guide and API: left navigation, the main article, and an on-page outline. Each page owns only its content. `page-shell.ts` owns scrolling and scaling for every route.
+## Structure and ownership
 
-`theme.ts` is the single source of truth for color and typography. One retained spring drives a shared palette, so every FrameKit surface and DOM-only color retargets together without overlapping animations. Components use semantic colors and a shared type scale. Interface and reading text use the same system sans stack; code uses the shared monospace stack.
+- `app.ts` composes one persistent tree and the shared layout, palette, and route values.
+- `router.ts` owns route names, documentation navigation, and visibility. Pages retain identity.
+- `page-shell.ts` owns native scrolling. Content height comes from normal document flow.
+- `site.css` owns fluid site layout, reading widths, and responsive rails; it never styles devtools.
+- `theme.ts` owns palettes, font stacks, typography, theme persistence, and a shared palette spring.
+- `components/docs-shell.ts` owns article flow, topic navigation, outline, code blocks, and reading links.
+- `components/reference-content.ts` holds the focused API chapters; `reference-page.ts` renders them.
+- `guide-page.ts`, `home.ts`, and `overlays-page.ts` own their specialized content and examples.
 
-## Conventions
+The site uses Avenir Next when available, with Avenir and system sans fallbacks; code uses a
+system monospace stack. No font download is required. The layout reflows rather than scaling
+text into a fixed canvas. Desktop/mobile and light/dark transitions reuse existing instances.
 
-- The playground consumes FrameKit; it does not add public package APIs.
-- Factories start with `create`; behavior bindings start with `bind`.
-- Desktop and mobile reuse the same instances.
-- Light and dark mode update existing instances in place.
-- Navigation uses local hash routes and remains usable without a framework router.
-- Motion is used only when it helps explain an API or interaction.
+## Inspector and collections
 
-## Interactive examples
+**Debug tools** or **F8** opens the shared `framekit/devtools` inspector. It lives outside the
+application tree and has independent system typography and blue controls. Move it by the title
+bar, resize from any edge/corner, or use the focusable keyboard controls. Search, picking,
+selection history, ancestor navigation, and property filtering inspect the live application.
+Closing restores focus; destroying the root removes the binding and its resources.
 
-`/` demonstrates persistent routed pages, native inputs and overlays, responsive layout, and
-shared theme state. In development, each page binds the shared Debug launcher from
-`framekit/devtools`. Click it to open the runtime inspector. Its searchable
-hierarchy, breadcrumbs/history, grouped properties, element picker, and resizable dock all
-belong to devtools. Opening and closing preserve the current URL and live application.
-There is no dedicated debug route. Production builds remove the integration.
+`collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top
+to try scroll anchoring, or use End to select the last row without mounting every view.
 
-`/collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top
-to see scroll anchoring, or use End to navigate to the last row without mounting every view.
-
-Both pages are included in production builds. Browser tests cover their workflows across
-Chromium, Firefox, and WebKit.
+Both entries are included in production builds. Keep local validation focused on affected unit
+and Chromium cases; CI runs the complete browser matrix.

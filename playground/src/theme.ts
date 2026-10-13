@@ -65,9 +65,9 @@ export const themes = {
 } satisfies Readonly<Record<ThemeMode, ThemePalette>>;
 
 export const fonts = {
-  sans: 'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  sans: '"Avenir Next", Avenir, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   display:
-    'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    '"Avenir Next", Avenir, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   mono: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
 } as const;
 

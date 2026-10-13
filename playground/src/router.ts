@@ -7,25 +7,25 @@ import {
   type ObservableValue,
 } from 'framekit';
 
-import { bindLayoutProperties, pageHeight, type PlaygroundLayout } from './layout';
+/** Each documentation topic has a stable, linkable route. */
+export const documentationPages = [
+  { page: 'guide', label: 'Getting started', group: 'Learn' },
+  { page: 'elements', label: 'Elements & input', group: 'Learn' },
+  { page: 'layout', label: 'Layout & styling', group: 'Learn' },
+  { page: 'state', label: 'State & collections', group: 'Learn' },
+  { page: 'lifecycle', label: 'Ownership & cleanup', group: 'Learn' },
+  { page: 'animation', label: 'Animation', group: 'Build' },
+  { page: 'overlays', label: 'Tooltips & popovers', group: 'Build' },
+  { page: 'devtools', label: 'Runtime inspector', group: 'Build' },
+  { page: 'api', label: 'API overview', group: 'Reference' },
+] as const;
+export type DocsPage = (typeof documentationPages)[number]['page'];
+export type SitePage = 'home' | DocsPage;
 
-export type SitePage = 'home' | 'guide' | 'api';
+export const pageHash = (page: SitePage): string => (page === 'home' ? '#/' : `#/${page}`);
 
-const pageHashes = {
-  home: '#/',
-  guide: '#/guide',
-  api: '#/api',
-} satisfies Readonly<Record<SitePage, string>>;
-
-export const resolveInitialPage = (): SitePage => {
-  if (window.location.hash === pageHashes.guide) {
-    return 'guide';
-  }
-  if (window.location.hash === pageHashes.api) {
-    return 'api';
-  }
-  return 'home';
-};
+export const resolveInitialPage = (): SitePage =>
+  documentationPages.find(({ page }) => pageHash(page) === window.location.hash)?.page ?? 'home';
 
 export const bindHashRouter = (owner: Instance, route: ObservableValue<SitePage>): void => {
   const listenerController = new AbortController();
@@ -37,7 +37,7 @@ export const bindHashRouter = (owner: Instance, route: ObservableValue<SitePage>
 
 export const navigateToPage = (route: ObservableValue<SitePage>, page: SitePage): void => {
   route.set(page);
-  const hash = pageHashes[page];
+  const hash = pageHash(page);
   if (window.location.hash !== hash) {
     window.location.hash = hash;
   }
@@ -46,16 +46,23 @@ export const navigateToPage = (route: ObservableValue<SitePage>, page: SitePage)
 export const createRoutedPage = (
   name: string,
   page: SitePage,
-  layout: ObservableValue<PlaygroundLayout>,
   route: ObservableValue<SitePage>,
 ): Frame => {
   const frame = createFrame({ Name: name, BackgroundTransparency: 1 });
-  bindLayoutProperties(frame, layout, frame, {
-    desktop: { Size: udim2(1, 0, 0, pageHeight.desktop[page]) },
-    mobile: { Size: udim2(1, 0, 0, pageHeight.mobile[page]) },
-  });
+  frame.Size = udim2(1, 0, 0, 0);
+  frame.AutomaticSize = 'Y';
+  frame.unsafeElement.classList.add('pg-route');
   watchOwnedValue(frame, route, (currentPage) => {
     frame.Visible = currentPage === page;
+    if (frame.Visible && frame.unsafeElement.isConnected) {
+      const heading = frame.unsafeElement.querySelector<HTMLElement>(
+        '[role=heading][aria-level="1"]',
+      );
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+    }
   });
   return frame;
 };

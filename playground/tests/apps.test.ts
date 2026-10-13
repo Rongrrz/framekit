@@ -4,7 +4,6 @@ import {
   type ScrollingFrame,
   type TextButton,
   type TextLabel,
-  udim2FromOffset,
 } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -46,7 +45,7 @@ describe('playground application', () => {
     expect((app.findFirstChild('HomePage', true) as Frame).Visible).toBe(true);
     expect((app.findFirstChild('GuidePage', true) as Frame).Visible).toBe(false);
     expect((app.findFirstChild('ApiPage', true) as Frame).Visible).toBe(false);
-    expect((app.findFirstChild('HomeProductName', true) as TextLabel).TextScaled).toBe(true);
+    expect(app.unsafeElement.querySelector('[role=heading][aria-level="1"]')).not.toBeNull();
     const page = app.findFirstChild('FrameKitPlaygroundPage', true) as ScrollingFrame;
     expect(page.ScrollBarThickness).toBe(12);
     expect(page.ScrollBarImageColor3).toEqual(color3FromRGB(105, 120, 137));
@@ -91,7 +90,7 @@ describe('playground application', () => {
     vi.stubGlobal('innerWidth', 640);
     window.dispatchEvent(new Event('resize'));
     expect(app.findFirstChild('HomeCodeVisual', true)).toBe(visual);
-    expect(visual.Size).toEqual(udim2FromOffset(358, 370));
+    expect(visual.unsafeElement.classList.contains('pg-home-code')).toBe(true);
     expect((app.findFirstChild('BrandName', true) as TextLabel).Visible).toBe(false);
     app.destroy();
   });

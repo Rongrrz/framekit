@@ -30,6 +30,8 @@ export const createNavigation = (
     BackgroundTransparency: 0.05,
     ZIndex: 100,
   });
+  navigation.unsafeElement.setAttribute('role', 'navigation');
+  navigation.unsafeElement.setAttribute('aria-label', 'Primary');
   bindThemeColors(navigation, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
 
   const mark = createButton(theme, {
@@ -47,26 +49,26 @@ export const createNavigation = (
     size: udim2FromOffset(110, 36),
     position: udim2FromOffset(66, 14),
     textSize: typeScale.body,
-    weight: 850,
+    weight: 700,
   });
   mark.onClick(() => navigate('home'));
   mark.Parent = navigation;
   brand.Parent = navigation;
 
   const guide = createButton(theme, {
-    label: 'Guide',
+    label: 'Docs',
     name: 'GuideNavButton',
     size: udim2FromOffset(74, 36),
-    position: udim2(1, -360, 0, 14),
+    position: udim2(1, -382, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
   });
   const api = createButton(theme, {
-    label: 'API',
+    label: 'Reference',
     name: 'ApiNavButton',
-    size: udim2FromOffset(66, 36),
-    position: udim2(1, -280, 0, 14),
+    size: udim2FromOffset(90, 36),
+    position: udim2(1, -302, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
@@ -75,7 +77,7 @@ export const createNavigation = (
     label: 'GitHub',
     name: 'SourceNavButton',
     size: udim2FromOffset(78, 36),
-    position: udim2(1, -208, 0, 14),
+    position: udim2(1, -202, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
@@ -88,7 +90,7 @@ export const createNavigation = (
   source.Parent = navigation;
 
   const themeToggle = createButton(theme, {
-    label: '🌞  Light',
+    label: '☀  Light',
     name: 'ThemeToggleButton',
     size: udim2FromOffset(104, 36),
     position: udim2(1, -122, 0, 14),
@@ -132,12 +134,13 @@ export const createNavigation = (
 
   const updateNavigation = (): void => {
     const palette = theme.get();
-    guide.TextColor3 = route.get() === 'guide' ? palette.accent : palette.textMuted;
+    guide.TextColor3 =
+      route.get() !== 'home' && route.get() !== 'api' ? palette.accent : palette.textMuted;
     api.TextColor3 = route.get() === 'api' ? palette.accent : palette.textMuted;
   };
   watchOwnedValue(navigation, route, updateNavigation);
   watchOwnedValue(navigation, mode, (currentMode) => {
-    themeToggle.Text = currentMode === 'dark' ? '🌞  Light' : '🌙  Dark';
+    themeToggle.Text = currentMode === 'dark' ? '☀  Light' : '◐  Dark';
     themeToggle.AccessibleLabel = `Switch to ${currentMode === 'dark' ? 'light' : 'dark'} mode`;
   });
   watchOwnedValue(navigation, theme, updateNavigation);
@@ -146,12 +149,12 @@ export const createNavigation = (
     mobile: { Visible: false },
   });
   bindLayoutProperties(navigation, layout, guide, {
-    desktop: { Position: udim2(1, -360, 0, 14), Size: udim2FromOffset(74, 36) },
-    mobile: { Position: udim2FromOffset(70, 14), Size: udim2FromOffset(68, 36) },
+    desktop: { Position: udim2(1, -382, 0, 14), Size: udim2FromOffset(74, 36) },
+    mobile: { Position: udim2FromOffset(60, 14), Size: udim2FromOffset(62, 36) },
   });
   bindLayoutProperties(navigation, layout, api, {
-    desktop: { Position: udim2(1, -280, 0, 14), Size: udim2FromOffset(66, 36) },
-    mobile: { Position: udim2FromOffset(142, 14), Size: udim2FromOffset(58, 36) },
+    desktop: { Position: udim2(1, -302, 0, 14), Size: udim2FromOffset(90, 36) },
+    mobile: { Position: udim2FromOffset(126, 14), Size: udim2FromOffset(90, 36) },
   });
   bindLayoutProperties(navigation, layout, source, {
     desktop: { Visible: true },
@@ -159,7 +162,7 @@ export const createNavigation = (
   });
   bindLayoutProperties(navigation, layout, themeToggle, {
     desktop: { Position: udim2(1, -122, 0, 14), Size: udim2FromOffset(104, 36) },
-    mobile: { Position: udim2(1, -116, 0, 14), Size: udim2FromOffset(104, 36) },
+    mobile: { Position: udim2(1, -92, 0, 14), Size: udim2FromOffset(80, 36) },
   });
   return navigation;
 };

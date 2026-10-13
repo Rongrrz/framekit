@@ -2,17 +2,14 @@ import {
   createFrame,
   createTextLabel,
   createObservableValue,
-  type Frame,
-  udim2,
   udim2FromOffset,
   vector2,
 } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { pageHeight, type PlaygroundLayout } from '../src/layout';
 import { createPageShell } from '../src/page-shell';
 import type { SitePage } from '../src/router';
-import { scrollbarThickness, themes } from '../src/theme';
+import { themes } from '../src/theme';
 import { installAnimationClock } from './support/animation-clock';
 
 afterEach(() => {
@@ -21,27 +18,17 @@ afterEach(() => {
 });
 
 describe('playground page shell', () => {
-  it('sizes the scroll canvas from the active page as its content changes', () => {
-    vi.stubGlobal('innerWidth', 1292);
-    const route = createObservableValue<SitePage>('guide');
+  it('uses natural content height without a scaling canvas', () => {
     const shell = createPageShell(
-      createObservableValue('desktop'),
       createObservableValue(themes.dark),
-      route,
+      createObservableValue<SitePage>('guide'),
     );
-    const guide = createFrame({ Size: udim2(1, 0, 0, 1400) });
-    const api = createFrame({ Size: udim2(1, 0, 0, 2400) });
-    shell.addPage('guide', guide);
-    shell.addPage('api', api);
-    expect(shell.content.Size.Y.Offset).toBe(1400);
-    guide.Size = udim2(1, 0, 0, 1600);
-    expect(shell.content.Size.Y.Offset).toBe(1600);
-    route.set('api');
-    expect(shell.content.Size.Y.Offset).toBe(2400);
-    guide.Size = udim2(1, 0, 0, 1800);
-    expect(shell.content.Size.Y.Offset).toBe(2400);
-    expect(shell.content.Parent?.isA('Frame')).toBe(true);
-    expect((shell.content.Parent as Frame).Size.Y.Offset).toBe(2400);
+    const guide = createFrame({ AutomaticSize: 'Y' });
+    guide.Parent = shell.content;
+    expect(guide.Parent).toBe(shell.content);
+    expect(shell.content.AutomaticSize).toBe('Y');
+    expect(shell.content.getChildren().some((node) => node.isA('UIScale'))).toBe(false);
+    expect(shell.page.unsafeElement.getAttribute('role')).toBe('main');
     shell.app.destroy();
   });
 
@@ -49,7 +36,6 @@ describe('playground page shell', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('innerWidth', 1292);
     const shell = createPageShell(
-      createObservableValue('desktop'),
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );
@@ -76,7 +62,6 @@ describe('playground page shell', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('innerWidth', 1292);
     const shell = createPageShell(
-      createObservableValue('desktop'),
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );
@@ -97,11 +82,7 @@ describe('playground page shell', () => {
   it('resets scrolling and cancels in-flight section navigation when the route changes', () => {
     const clock = installAnimationClock();
     const route = createObservableValue<SitePage>('guide');
-    const shell = createPageShell(
-      createObservableValue('desktop'),
-      createObservableValue(themes.dark),
-      route,
-    );
+    const shell = createPageShell(createObservableValue(themes.dark), route);
     const heading = createTextLabel();
     heading.Parent = shell.content;
     vi.spyOn(heading.unsafeElement, 'getBoundingClientRect').mockReturnValue(
@@ -113,34 +94,6 @@ describe('playground page shell', () => {
     route.set('api');
     clock.settle();
     expect(shell.page.CanvasPosition).toEqual(vector2(0, 0));
-    expect(shell.content.Size.Y.Offset).toBe(pageHeight.desktop.api);
-    shell.app.destroy();
-  });
-
-  it.each([
-    ['desktop', 1292, 1],
-    ['desktop', 652, 0.5],
-    ['mobile', 402, 1],
-    ['mobile', 207, 0.5],
-  ] as const)('scales the %s canvas at viewport width %s', (initialLayout, width, scale) => {
-    vi.stubGlobal('innerWidth', width);
-    const layout = createObservableValue<PlaygroundLayout>(initialLayout);
-    const shell = createPageShell(
-      layout,
-      createObservableValue(themes.dark),
-      createObservableValue('home'),
-    );
-    const contentScale = shell.content.getChildren().find((node) => node.isA('UIScale'));
-    const scrollSizer = shell.content.Parent;
-    if (!contentScale?.isA('UIScale') || !scrollSizer?.isA('Frame')) {
-      throw new Error('Missing canvas sizing nodes.');
-    }
-    expect(contentScale.Scale).toBe(scale);
-    expect(scrollSizer.Size.Y.Offset).toBe(pageHeight[initialLayout].home * scale);
-    vi.stubGlobal('innerWidth', 1600);
-    window.dispatchEvent(new Event('resize'));
-    expect(contentScale.Scale).toBe(1);
-    expect(shell.content.Size.X.Offset).toBe(1600 - scrollbarThickness);
     shell.app.destroy();
   });
 
@@ -148,7 +101,6 @@ describe('playground page shell', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     const shell = createPageShell(
-      createObservableValue('desktop'),
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );

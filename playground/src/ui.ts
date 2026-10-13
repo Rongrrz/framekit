@@ -77,7 +77,7 @@ export const createText = (theme: ThemeValue, options: TextOptions): TextLabel =
     TextXAlignment: options.xAlignment ?? 'Left',
     TextYAlignment: options.yAlignment ?? 'Center',
     FontFamily: options.font ?? fonts.sans,
-    FontWeight: options.weight ?? 500,
+    FontWeight: options.weight ?? 450,
   });
   if (usesThemeColor) {
     bindThemeColors(label, theme, (palette) => ({ TextColor3: palette[color] }));
@@ -125,7 +125,7 @@ export const createButton = (theme: ThemeValue, options: ButtonOptions): TextBut
     TextSize: options.textSize ?? typeScale.small,
     TextScaled: options.scaled ?? false,
     FontFamily: options.font ?? fonts.sans,
-    FontWeight: 750,
+    FontWeight: 650,
   });
   bindThemeColors(button, theme, (palette) => ({
     BackgroundColor3: palette[background],

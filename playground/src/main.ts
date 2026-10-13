@@ -1,3 +1,4 @@
+import './site.css';
 import { createPlaygroundApp } from './app';
 import type { PlaygroundLayout } from './layout';
 import { installPlaygroundStyles } from './theme';

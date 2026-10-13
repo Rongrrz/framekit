@@ -50,9 +50,9 @@ describe('documentation spacing', () => {
     const block = parent.findFirstChild('Example') as Frame;
     const first = block.findFirstChild('CodeLine1', true) as TextLabel;
     const last = block.findFirstChild(`CodeLine${lineCount}`, true) as TextLabel;
-    const bottomPadding = block.Size.Y.Offset - last.Position.Y.Offset - last.Size.Y.Offset;
+    const bottomPadding = block.Size.Y.Offset - 40 - last.Position.Y.Offset - last.Size.Y.Offset;
     expect(bottomPadding).toBe(first.Position.Y.Offset);
-    expect(block.Size.Y.Offset).toBe(32 + lineCount * 22);
+    expect(block.Size.Y.Offset).toBe(72 + lineCount * 22);
     parent.destroy();
   });
 
@@ -91,42 +91,17 @@ describe('documentation spacing', () => {
     parent.destroy();
   });
 
-  it('tracks wrapped article height and releases its observer with the page', () => {
-    const resize = { notify: () => undefined as void };
-    const disconnect = vi.fn();
-    const observe = vi.fn();
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        constructor(callback: () => void) {
-          resize.notify = callback;
-        }
-        observe = observe;
-        disconnect = disconnect;
-      },
-    );
-    const layout = createObservableValue<PlaygroundLayout>('desktop');
+  it('uses semantic document regions and content-driven height', () => {
     const shell = createDocsShell(
       'GuidePage',
       'guide',
-      layout,
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );
-    const height = vi
-      .spyOn(shell.article.unsafeElement, 'offsetHeight', 'get')
-      .mockReturnValue(1200);
-    resize.notify();
-    expect(shell.page.Size.Y.Offset).toBe(44 + 1200 + 64);
-    layout.set('mobile');
-    height.mockReturnValue(1800);
-    resize.notify();
-    expect(shell.page.Size.Y.Offset).toBe(42 + 1800 + 64);
-    height.mockReturnValue(0);
-    resize.notify();
-    expect(shell.page.Size.Y.Offset).toBe(42 + 1800 + 64);
-    expect(observe).toHaveBeenCalledWith(shell.article.unsafeElement);
+    expect(shell.article.unsafeElement.tagName).toBe('ARTICLE');
+    expect(shell.page.AutomaticSize).toBe('Y');
+    expect(shell.article.AutomaticSize).toBe('Y');
+    expect(shell.sidebar.unsafeElement.getAttribute('aria-label')).toBe('Documentation topics');
     shell.page.destroy();
-    expect(disconnect).toHaveBeenCalledOnce();
   });
 });

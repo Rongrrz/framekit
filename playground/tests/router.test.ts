@@ -13,6 +13,9 @@ describe('playground router', () => {
     ['#/', 'home'],
     ['#/guide', 'guide'],
     ['#/api', 'api'],
+    ['#/devtools', 'devtools'],
+    ['#/layout', 'layout'],
+    ['#/overlays', 'overlays'],
     ['#/unknown', 'home'],
   ] as const)('resolves %s to %s', (hash, page) => {
     window.history.replaceState(null, '', window.location.pathname + hash);
@@ -21,7 +24,7 @@ describe('playground router', () => {
 
   it('updates route state and the address together', () => {
     const owner = createFrame();
-    const route = createObservableValue<'home' | 'guide' | 'api'>('home');
+    const route = createObservableValue<SitePage>('home');
     bindHashRouter(owner, route);
 
     navigateToPage(route, 'api');

@@ -1,5 +1,6 @@
 import {
   createFrame,
+  createLink,
   createScrollingFrame,
   createUIListLayout,
   type Frame,
@@ -10,11 +11,17 @@ import {
   udim2FromOffset,
   udim2FromScale,
   type ObservableValue,
-  vector2,
 } from 'framekit';
 
-import { bindLayoutProperties, contentWidth, pageHeight, type PlaygroundLayout } from '../layout';
-import { createRoutedPage, type SitePage } from '../router';
+import { copyCommand } from '../behaviors/copy-button';
+import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
+import {
+  createRoutedPage,
+  documentationPages,
+  pageHash,
+  type DocsPage,
+  type SitePage,
+} from '../router';
 import {
   bindThemeColors,
   fonts,
@@ -35,118 +42,103 @@ export type DocsShell = Readonly<{
 export type NavigationItem = Readonly<{
   label: string;
   target: GuiElement;
-  active?: boolean;
 }>;
 
 export const createDocsShell = (
   name: string,
   pageName: Exclude<SitePage, 'home'>,
-  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
   route: ObservableValue<SitePage>,
 ): DocsShell => {
-  const page = createRoutedPage(name, pageName, layout, route);
+  const page = createRoutedPage(name, pageName, route);
   const content = createFrame({
     Name: `${name}Content`,
-    AnchorPoint: vector2(0.5, 0),
-    BackgroundTransparency: 1,
-  });
-  bindLayoutProperties(page, layout, content, {
-    desktop: {
-      Size: udim2FromOffset(contentWidth.desktop, pageHeight.desktop[pageName]),
-      Position: udim2FromScale(0.5, 0),
-    },
-    mobile: {
-      Size: udim2FromOffset(contentWidth.mobile, pageHeight.mobile[pageName]),
-      Position: udim2FromScale(0.5, 0),
-    },
-  });
-
-  const sidebarRail = createFrame({
-    Name: `${name}SidebarRail`,
-    Size: udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
-    BackgroundTransparency: 1,
-  });
-  createRailDivider(theme, 'Right').Parent = sidebarRail;
-  const sidebar = createFrame({
-    Name: `${name}Sidebar`,
-    Size: udim2FromOffset(243, 600),
-    Position: udim2FromOffset(0, 42),
-    BackgroundTransparency: 1,
-  });
-  const article = createFrame({
-    Name: `${name}Article`,
-    Size: udim2FromOffset(680, 0),
-    Position: udim2FromOffset(292, 44),
-    BackgroundTransparency: 1,
+    Size: udim2(1, 0, 0, 0),
     AutomaticSize: 'Y',
-  });
-  createUIListLayout({ Padding: udim(0, 12) }).Parent = article;
-  const outlineRail = createFrame({
-    Name: `${name}OutlineRail`,
-    Size: udim2FromOffset(196, pageHeight.desktop[pageName] - 80),
-    Position: udim2FromOffset(1020, 0),
     BackgroundTransparency: 1,
   });
-  createRailDivider(theme, 'Left').Parent = outlineRail;
-  const outline = createFrame({
-    Name: `${name}Outline`,
-    Size: udim2FromOffset(196, 520),
-    Position: udim2FromOffset(0, 52),
-    BackgroundTransparency: 1,
+  content.unsafeElement.classList.add('pg-docs');
+  const sidebar = createFrame(
+    { Name: `${name}Sidebar`, BackgroundTransparency: 1 },
+    { tagName: 'nav' },
+  );
+  sidebar.unsafeElement.classList.add('pg-docs-sidebar');
+  sidebar.unsafeElement.setAttribute('aria-label', 'Documentation topics');
+  const menu = createButton(theme, {
+    label: 'Browse documentation  ↓',
+    name: `${name}Browse`,
+    size: udim2(1, 0, 0, 44),
+    position: udim2FromOffset(0, 0),
+    textSize: 14,
   });
-
-  bindLayoutProperties(page, layout, outlineRail, {
-    desktop: {
-      Size: udim2FromOffset(196, pageHeight.desktop[pageName] - 80),
-      Visible: true,
-    },
-    mobile: { Visible: false },
+  menu.unsafeElement.classList.add('pg-docs-menu');
+  const sidebarId = `pg-topics-${pageName}`;
+  sidebar.unsafeElement.id = sidebarId;
+  menu.unsafeElement.setAttribute('aria-controls', sidebarId);
+  menu.unsafeElement.setAttribute('aria-expanded', 'false');
+  menu.onClick(() => {
+    const expanded = menu.unsafeElement.getAttribute('aria-expanded') !== 'true';
+    menu.unsafeElement.setAttribute('aria-expanded', String(expanded));
+    content.unsafeElement.classList.toggle('pg-menu-open', expanded);
   });
-  bindLayoutProperties(page, layout, article, {
-    desktop: {
-      Size: udim2FromOffset(680, 0),
-      Position: udim2FromOffset(292, 44),
-    },
-    mobile: {
-      Size: udim2FromOffset(358, 0),
-      Position: udim2FromOffset(0, 42),
-    },
-  });
-  bindLayoutProperties(page, layout, sidebarRail, {
-    desktop: {
-      Size: udim2FromOffset(244, pageHeight.desktop[pageName] - 80),
-      Visible: true,
-    },
-    mobile: { Visible: false },
-  });
-
-  sidebar.Parent = sidebarRail;
-  outline.Parent = outlineRail;
-  sidebarRail.Parent = content;
-  article.Parent = content;
-  outlineRail.Parent = content;
-  sidebar.unsafeElement.style.position = 'sticky';
-  outline.unsafeElement.style.position = 'sticky';
-  content.Parent = page;
-  const observer = new ResizeObserver(() => {
-    const articleHeight = article.unsafeElement.offsetHeight;
-    if (articleHeight === 0) {
-      return;
+  let group = '';
+  for (const entry of documentationPages) {
+    if (entry.group !== group) {
+      group = entry.group;
+      const heading = createText(theme, {
+        text: group.toUpperCase(),
+        size: udim2(1, 0, 0, 32),
+        color: 'textFaint',
+        textSize: 11,
+        weight: 700,
+      });
+      heading.unsafeElement.classList.add('pg-nav-group');
+      heading.Parent = sidebar;
     }
-    const height = article.Position.Y.Offset + articleHeight + 64;
-    content.Size = udim2FromOffset(content.Size.X.Offset, height);
-    page.Size = udim2(1, 0, 0, height);
-    sidebarRail.Size = udim2FromOffset(244, height - 80);
-    outlineRail.Size = udim2FromOffset(196, height - 80);
-  });
-  observer.observe(article.unsafeElement);
-  page.onDestroy(() => observer.disconnect());
+    const link = createLink({
+      Text: entry.label,
+      Href: pageHash(entry.page),
+      FontFamily: fonts.sans,
+      TextSize: 14,
+      TextXAlignment: 'Left',
+      BackgroundTransparency: 1,
+    });
+    link.unsafeElement.classList.add('pg-topic-link');
+    bindThemeColors(link, theme, (palette) => ({
+      TextColor3: entry.page === pageName ? palette.accent : palette.textMuted,
+    }));
+    if (entry.page === pageName) {
+      link.unsafeElement.setAttribute('aria-current', 'page');
+    }
+    link.Parent = sidebar;
+  }
+  const article = createFrame(
+    {
+      Name: `${name}Article`,
+      BackgroundTransparency: 1,
+      AutomaticSize: 'Y',
+      Size: udim2(1, 0, 0, 0),
+    },
+    { tagName: 'article' },
+  );
+  article.unsafeElement.classList.add('pg-article');
+  createUIListLayout({ Padding: udim(0, 12) }).Parent = article;
+  const outline = createFrame(
+    { Name: `${name}Outline`, BackgroundTransparency: 1 },
+    { tagName: 'nav' },
+  );
+  outline.unsafeElement.classList.add('pg-outline');
+  outline.unsafeElement.setAttribute('aria-label', 'On this page');
+  menu.Parent = content;
+  sidebar.Parent = content;
+  article.Parent = content;
+  outline.Parent = content;
+  content.Parent = page;
   return Object.freeze({ page, sidebar, article, outline });
 };
 
 /** Lets wrapped documentation text contribute its actual height to the article flow. */
-const appendFlowText = (
+export const appendFlowText = (
   parent: Frame,
   theme: ThemeValue,
   options: Parameters<typeof createText>[1],
@@ -177,50 +169,9 @@ export const createExampleRow = (
     mobile: { FillDirection: 'Vertical' },
   });
   list.Parent = row;
+  row.unsafeElement.classList.add('pg-examples');
   row.Parent = parent;
   return row;
-};
-
-const createRailDivider = (theme: ThemeValue, edge: 'Left' | 'Right'): Frame => {
-  const divider = createFrame({
-    Name: `${edge}RailDivider`,
-    Size: udim2(0, 1, 1, 0),
-    Position: edge === 'Right' ? udim2(1, -1, 0, 0) : udim2FromOffset(0, 0),
-    BackgroundColor3: themeColor(theme, 'border'),
-  });
-  bindThemeColors(divider, theme, (palette) => ({ BackgroundColor3: palette.border }));
-  return divider;
-};
-
-export const appendSidebarGroup = (
-  parent: Frame,
-  theme: ThemeValue,
-  title: string,
-  items: readonly NavigationItem[],
-  startY: number,
-  onNavigate: (target: GuiElement) => void,
-): void => {
-  createText(theme, {
-    text: title,
-    size: udim2(1, -28, 0, 28),
-    position: udim2FromOffset(0, startY),
-    textSize: typeScale.caption,
-    weight: 800,
-  }).Parent = parent;
-  for (const [index, item] of items.entries()) {
-    const link = createButton(theme, {
-      label: item.label,
-      name: `${item.label.replaceAll(/\s+/g, '')}SidebarButton`,
-      size: udim2(1, -28, 0, 32),
-      position: udim2FromOffset(0, startY + 34 + index * 36),
-      background: 'canvas',
-      foreground: item.active === true ? 'accent' : 'textMuted',
-      textSize: typeScale.small,
-    });
-    link.TextXAlignment = 'Left';
-    link.onClick(() => onNavigate(item.target));
-    link.Parent = parent;
-  }
 };
 
 export const appendOutline = (
@@ -234,7 +185,7 @@ export const appendOutline = (
     size: udim2(1, -28, 0, 28),
     position: udim2FromOffset(20, 0),
     textSize: typeScale.caption,
-    weight: 800,
+    weight: 650,
   }).Parent = parent;
   for (const [index, item] of items.entries()) {
     const link = createButton(theme, {
@@ -246,6 +197,7 @@ export const appendOutline = (
       foreground: 'textMuted',
       textSize: typeScale.caption,
     });
+    link.FontWeight = 550;
     link.TextXAlignment = 'Left';
     link.onClick(() => onNavigate(item.target));
     link.Parent = parent;
@@ -265,7 +217,7 @@ export const appendArticleTitle = (
     color: 'accent',
     textSize: typeScale.caption,
     font: fonts.mono,
-    weight: 800,
+    weight: 650,
   });
   const heading = appendFlowText(
     parent,
@@ -274,7 +226,7 @@ export const appendArticleTitle = (
       text: title,
       size: udim2FromScale(1, 0),
       textSize: typeScale.page,
-      weight: 900,
+      weight: 700,
     },
     1.2,
   );
@@ -284,6 +236,8 @@ export const appendArticleTitle = (
     color: 'textMuted',
     textSize: typeScale.body,
   });
+  heading.unsafeElement.setAttribute('role', 'heading');
+  heading.unsafeElement.setAttribute('aria-level', '1');
   return heading;
 };
 
@@ -300,11 +254,13 @@ export const appendArticleSection = (
       text: title,
       size: udim2FromScale(1, 0),
       textSize: typeScale.section,
-      weight: 850,
+      weight: 650,
     },
     1.25,
   );
-  heading.unsafeElement.style.marginTop = '32px';
+  heading.unsafeElement.style.marginTop = '28px';
+  heading.unsafeElement.setAttribute('role', 'heading');
+  heading.unsafeElement.setAttribute('aria-level', '2');
   appendFlowText(parent, theme, {
     text: body,
     size: udim2FromScale(1, 0),
@@ -319,16 +275,37 @@ export const appendCodeBlock = (
   theme: ThemeValue,
   name: string,
   lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
+  filename = 'example.ts',
 ): void => {
   const block = createSurface(theme, {
     name,
-    size: udim2(1, 0, 0, 32 + lines.length * 22),
+    size: udim2(1, 0, 0, 72 + lines.length * 22),
     background: 'surface',
     radius: 12,
   });
+  const title = createText(theme, {
+    text: filename,
+    size: udim2(1, -100, 0, 36),
+    position: udim2FromOffset(16, 2),
+    font: fonts.mono,
+    textSize: 11,
+    color: 'textFaint',
+  });
+  title.Parent = block;
+  const copy = createButton(theme, {
+    label: 'Copy',
+    name: `${name}Copy`,
+    size: udim2FromOffset(62, 28),
+    position: udim2(1, -74, 0, 6),
+    textSize: 11,
+  });
+  copy.AccessibleLabel = `Copy ${name} example`;
+  copy.onClick(() => void copyCommand(copy, lines.map((line) => line.text).join('\n'), 'Copy'));
+  copy.Parent = block;
   const scroll = createScrollingFrame({
     Name: `${name}Scroll`,
-    Size: udim2FromScale(1, 1),
+    Size: udim2(1, 0, 1, -40),
+    Position: udim2FromOffset(0, 40),
     BackgroundTransparency: 1,
     ScrollingDirection: 'X',
     ScrollBarThickness: 8,
@@ -365,4 +342,35 @@ export const appendCallout = (parent: Frame, theme: ThemeValue, text: string): v
     textSize: typeScale.small,
   });
   callout.Parent = parent;
+};
+
+/** Connects the reading path with native links that can also open in a new tab. */
+export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: DocsPage): void => {
+  const index = documentationPages.findIndex((entry) => entry.page === page);
+  const footer = createFrame(
+    { Name: 'ArticleNavigation', BackgroundTransparency: 1 },
+    { tagName: 'nav' },
+  );
+  footer.unsafeElement.classList.add('pg-article-navigation');
+  footer.unsafeElement.setAttribute('aria-label', 'Continue reading');
+  for (const [label, entry] of [
+    ['Previous', documentationPages[index - 1]],
+    ['Next', documentationPages[index + 1]],
+  ] as const) {
+    if (!entry) {
+      continue;
+    }
+    const link = createLink({
+      Text: `${label} / ${entry.label} →`,
+      Href: pageHash(entry.page),
+      FontFamily: fonts.sans,
+      TextSize: 14,
+      TextXAlignment: 'Left',
+      BackgroundTransparency: 1,
+    });
+    link.unsafeElement.classList.add('pg-reading-link');
+    bindThemeColors(link, theme, (palette) => ({ TextColor3: palette.accent }));
+    link.Parent = footer;
+  }
+  footer.Parent = parent;
 };

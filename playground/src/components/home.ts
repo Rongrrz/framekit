@@ -1,327 +1,165 @@
 import {
-  color3FromHex,
-  color3FromRGB,
-  colorSequence,
   createFrame,
-  createUIGradient,
-  createUIShadow,
-  createUITextStroke,
+  createLink,
+  createObservableValue,
   type Frame,
+  type ObservableValue,
   udim2,
   udim2FromOffset,
-  udim2FromScale,
-  type ObservableValue,
-  vector2,
+  watchOwnedValue,
 } from 'framekit';
 
-import { copyCommand } from '../behaviors/copy-button';
-import { bindLayoutProperties, contentWidth, type PlaygroundLayout } from '../layout';
-import { repositoryUrl } from '../links';
-import { createRoutedPage, type SitePage } from '../router';
-import {
-  bindThemeColors,
-  fonts,
-  themeColor,
-  typeScale,
-  type ThemeToken,
-  type ThemeValue,
-} from '../theme';
-import { appendCodeLines, createButton, createSurface, createText } from '../ui';
+import { createRoutedPage, pageHash, type SitePage } from '../router';
+import { bindThemeColors, fonts, type ThemeValue } from '../theme';
+import { createButton } from '../ui';
+import { appendArticleTitle, appendCodeBlock, appendFlowText } from './docs-shell';
 
-const features = [
-  [
-    '🌳',
-    'Explicit tree',
-    'The UI you inspect is the same tree that owns rendering and cleanup.',
-    'accent',
-  ],
-  ['🎛️', 'Direct properties', 'Assignments validate and reach the browser immediately.', 'blue'],
-  ['🧹', 'Owned cleanup', 'Destroy one owner to release its descendants and behavior.', 'purple'],
-  ['🧩', 'Optional extras', 'Values, helpers, and motion stay separate from the core.', 'orange'],
-] as const satisfies readonly (readonly [string, string, string, ThemeToken])[];
-
+/** The landing page is a working example and a short path into the documentation. */
 export const createHomePage = (
-  layout: ObservableValue<PlaygroundLayout>,
   theme: ThemeValue,
   route: ObservableValue<SitePage>,
   navigate: (page: SitePage) => void,
 ): Frame => {
-  const page = createRoutedPage('HomePage', 'home', layout, route);
-  const content = createFrame({
-    Name: 'HomeContent',
-    AnchorPoint: vector2(0.5, 0),
-    BackgroundTransparency: 1,
+  const page = createRoutedPage('HomePage', 'home', route);
+  const content = createFrame({ Name: 'HomeContent', BackgroundTransparency: 1 });
+  content.unsafeElement.classList.add('pg-home');
+  const hero = createFrame({ Name: 'HomeHero', BackgroundTransparency: 1 });
+  hero.unsafeElement.classList.add('pg-home-hero');
+  const heading = appendArticleTitle(
+    hero,
+    theme,
+    'THE BROWSER. AN OBJECT TREE.',
+    'UI you can hold onto.',
+    'Typed objects. Direct properties. One clear owner. Build browser interfaces with the same tree you use to inspect and clean them up.',
+  );
+  heading.unsafeElement.classList.add('pg-hero-title');
+  const actions = createFrame({ Name: 'HomeActions', BackgroundTransparency: 1 });
+  actions.unsafeElement.classList.add('pg-home-actions');
+  for (const [label, name, destination, primary] of [
+    ['Get started  →', 'GetStartedButton', 'guide', true],
+    ['Explore the API', 'ApiReferenceButton', 'api', false],
+  ] as const) {
+    const button = createButton(theme, {
+      label,
+      name,
+      size: udim2FromOffset(168, 46),
+      position: udim2FromOffset(0, 0),
+      background: primary ? 'accent' : 'surfaceRaised',
+      foreground: primary ? 'onAccent' : 'text',
+    });
+    button.onClick(() => navigate(destination));
+    button.Parent = actions;
+  }
+  actions.Parent = hero;
+  appendFlowText(hero, theme, {
+    text: 'TypeScript · Native DOM · No component framework required',
+    size: udim2(1, 0, 0, 0),
+    textSize: 12,
+    color: 'textFaint',
   });
-  bindLayoutProperties(page, layout, content, {
-    desktop: {
-      Size: udim2FromOffset(contentWidth.desktop, 1),
-      Position: udim2FromScale(0.5, 0),
-    },
-    mobile: {
-      Size: udim2FromOffset(contentWidth.mobile, 1),
-      Position: udim2FromScale(0.5, 0),
-    },
-  });
+  hero.Parent = content;
 
-  const product = createText(theme, {
-    name: 'HomeProductName',
-    text: 'FrameKit',
-    size: udim2FromOffset(620, 94),
-    textSize: typeScale.product,
-    scaled: true,
-    weight: 950,
-    color: color3FromRGB(255, 255, 255),
+  const visual = createFrame({ Name: 'HomeCodeVisual', BackgroundTransparency: 1 });
+  visual.unsafeElement.classList.add('pg-home-code');
+  appendCodeBlock(visual, theme, 'CounterCode', [
+    { text: 'import { createScreenGui, createTextButton,' },
+    { text: "  udim2FromOffset } from 'framekit';", color: 'purple' },
+    { text: '' },
+    { text: 'const app = createScreenGui();', color: 'blue' },
+    { text: 'const button = createTextButton({' },
+    { text: "  Text: 'Clicks: 0'," },
+    { text: '  Size: udim2FromOffset(220, 44),' },
+    { text: '});' },
+    { text: 'let count = 0;' },
+    { text: 'button.onClick(() => {' },
+    { text: '  button.Text = `Clicks: ${++count}`;' },
+    { text: '});' },
+    { text: 'button.Parent = app;', color: 'accent' },
+    { text: "app.mount('#app');", color: 'blue' },
+  ]);
+  const preview = createFrame({ Name: 'HomeResult', BackgroundTransparency: 1 });
+  preview.unsafeElement.classList.add('pg-home-preview');
+  appendFlowText(preview, theme, {
+    text: 'LIVE RESULT',
+    size: udim2(1, 0, 0, 0),
+    font: fonts.mono,
+    textSize: 10,
+    color: 'textFaint',
   });
-  bindLayoutProperties(page, layout, product, {
-    desktop: { Size: udim2FromOffset(620, 94), Position: udim2FromOffset(0, 86) },
-    mobile: { Size: udim2FromOffset(358, 70), Position: udim2FromOffset(0, 58) },
-  });
-  createUIGradient({
-    ApplyTo: 'Text',
-    Color: colorSequence(
-      { Time: 0, Value: color3FromHex('#76edad') },
-      { Time: 0.45, Value: color3FromHex('#70b2ff') },
-      { Time: 0.85, Value: color3FromHex('#af8eff') },
-      { Time: 1, Value: color3FromHex('#af8eff') },
-    ),
-    Rotation: 10,
-  }).Parent = product;
-  const productStroke = createUITextStroke({
-    Color: themeColor(theme, 'border'),
-    Transparency: 0,
-    Thickness: 5,
-  });
-  bindThemeColors(productStroke, theme, (palette) => ({ Color: palette.border }));
-  productStroke.Parent = product;
-  const title = createText(theme, {
-    text: 'Typed UI objects\nfor the web',
-    size: udim2FromOffset(650, 150),
-    textSize: typeScale.hero,
-    scaled: true,
-    wrapped: true,
-    weight: 850,
-    yAlignment: 'Top',
-  });
-  bindLayoutProperties(page, layout, title, {
-    desktop: { Size: udim2FromOffset(650, 150), Position: udim2FromOffset(0, 170) },
-    mobile: { Size: udim2FromOffset(358, 120), Position: udim2FromOffset(0, 136) },
-  });
-  const body = createText(theme, {
-    text: 'Build interfaces as persistent objects with direct properties, explicit ownership, and optional animation.',
-    size: udim2FromOffset(610, 80),
-    color: 'textMuted',
-    textSize: typeScale.lead,
-    wrapped: true,
-    yAlignment: 'Top',
-  });
-  bindLayoutProperties(page, layout, body, {
-    desktop: { Size: udim2FromOffset(610, 80), Position: udim2FromOffset(0, 338) },
-    mobile: { Size: udim2FromOffset(358, 104), Position: udim2FromOffset(0, 278) },
-  });
-  const start = createButton(theme, {
-    label: 'GET STARTED  📚',
-    name: 'GetStartedButton',
-    size: udim2FromOffset(174, 48),
+  const count = createObservableValue(0);
+  const counter = createButton(theme, {
+    label: 'Clicks: 0',
+    name: 'LiveCounter',
+    size: udim2FromOffset(220, 44),
     position: udim2FromOffset(0, 0),
     background: 'accent',
     foreground: 'onAccent',
   });
-  bindLayoutProperties(page, layout, start, {
-    desktop: { Size: udim2FromOffset(174, 48), Position: udim2FromOffset(0, 446) },
-    mobile: { Size: udim2FromOffset(358, 48), Position: udim2FromOffset(0, 402) },
+  counter.onClick(() => count.set(count.get() + 1));
+  watchOwnedValue(counter, count, (value) => {
+    counter.Text = `Clicks: ${value}`;
   });
-  const api = createButton(theme, {
-    label: 'API REFERENCE  🔎',
-    name: 'ApiReferenceButton',
-    size: udim2FromOffset(188, 48),
-    position: udim2FromOffset(0, 0),
-    background: 'surfaceRaised',
-    foreground: 'text',
-  });
-  bindLayoutProperties(page, layout, api, {
-    desktop: { Size: udim2FromOffset(188, 48), Position: udim2FromOffset(188, 446) },
-    mobile: { Size: udim2FromOffset(358, 48), Position: udim2FromOffset(0, 462) },
-  });
-  const install = createButton(theme, {
-    label: 'COPY  build + pack',
-    name: 'HomeInstallButton',
-    size: udim2FromOffset(208, 48),
-    position: udim2FromOffset(0, 0),
-    background: 'surfaceRaised',
-    foreground: 'textMuted',
-    font: fonts.mono,
-    textSize: typeScale.code,
-  });
-  bindLayoutProperties(page, layout, install, {
-    desktop: { Size: udim2FromOffset(208, 48), Position: udim2FromOffset(390, 446) },
-    mobile: { Size: udim2FromOffset(358, 38), Position: udim2FromOffset(0, 522) },
-  });
-  start.onClick(() => navigate('guide'));
-  api.onClick(() => navigate('api'));
-  install.onClick(
-    () => void copyCommand(install, 'npm run build && npm pack', 'COPY  build + pack'),
-  );
-  for (const child of [product, title, body, start, api, install]) {
-    child.Parent = content;
-  }
-  createHomeVisual(layout, theme).Parent = content;
+  counter.Parent = preview;
+  preview.Parent = visual;
+  visual.Parent = content;
 
-  for (const [index, [icon, title, description, accent]] of features.entries()) {
-    const card = createFeatureCard(theme, icon, title, description, accent);
-    bindLayoutProperties(page, layout, card, {
-      desktop: {
-        Size: udim2FromOffset(286, 260),
-        Position: udim2FromOffset(index * 310, 690),
-      },
-      mobile: {
-        Size: udim2FromOffset(171, 276),
-        Position: udim2FromOffset((index % 2) * 187, 974 + Math.floor(index / 2) * 294),
-      },
+  const learning = createFrame({ Name: 'LearningPaths', BackgroundTransparency: 1 });
+  learning.unsafeElement.classList.add('pg-learning');
+  appendFlowText(learning, theme, {
+    text: 'A small runtime. A complete guide.',
+    size: udim2(1, 0, 0, 0),
+    textSize: 28,
+    weight: 700,
+  });
+  appendFlowText(learning, theme, {
+    text: 'Start with a working interface, then learn the contracts behind it.',
+    size: udim2(1, 0, 0, 0),
+    textSize: 16,
+    color: 'textMuted',
+  });
+  const cards = createFrame({ Name: 'LearningCards', BackgroundTransparency: 1 });
+  cards.unsafeElement.classList.add('pg-learning-cards');
+  for (const [number, title, description, destination] of [
+    [
+      '01',
+      'Create & compose',
+      'Choose native controls, set geometry, and arrange children.',
+      'elements',
+    ],
+    ['02', 'Connect your state', 'Own subscriptions and keep keyed collections stable.', 'state'],
+    [
+      '03',
+      'Understand ownership',
+      'Reparent, detach, unmount, and destroy with confidence.',
+      'lifecycle',
+    ],
+    [
+      '04',
+      'Inspect the real thing',
+      'Find instances, follow properties, and inspect live motion.',
+      'devtools',
+    ],
+  ] as const) {
+    const link = createLink({
+      Name: `Learn${destination}`,
+      Text: `${number}  /  ${title}\n\n${description}\n\nRead the guide →`,
+      Href: pageHash(destination),
+      FontFamily: fonts.sans,
+      TextSize: 15,
+      TextWrapped: true,
+      TextXAlignment: 'Left',
+      TextYAlignment: 'Top',
+      BackgroundTransparency: 1,
     });
-    card.Parent = content;
+    link.unsafeElement.classList.add('pg-learning-card');
+    bindThemeColors(link, theme, (palette) => ({
+      TextColor3: palette.text,
+      BackgroundColor3: palette.surface,
+    }));
+    link.Parent = cards;
   }
-  const source = createButton(theme, {
-    label: 'SOURCE  🔗',
-    name: 'HomeSourceButton',
-    size: udim2FromOffset(132, 38),
-    position: udim2FromOffset(0, 0),
-    background: 'canvas',
-    foreground: 'textMuted',
-    font: fonts.mono,
-    textSize: typeScale.caption,
-  });
-  source.onClick(() => window.open(repositoryUrl, '_blank', 'noopener,noreferrer'));
-  bindLayoutProperties(page, layout, source, {
-    desktop: { Position: udim2FromOffset(0, 1040) },
-    mobile: { Position: udim2FromOffset(0, 1570) },
-  });
-  source.Parent = content;
+  cards.Parent = learning;
+  learning.Parent = content;
   content.Parent = page;
   return page;
-};
-
-const createHomeVisual = (layout: ObservableValue<PlaygroundLayout>, theme: ThemeValue): Frame => {
-  const visual = createSurface(theme, {
-    name: 'HomeCodeVisual',
-    background: 'surface',
-    radius: 28,
-    clipsDescendants: true,
-  });
-  const glow = createUIShadow({
-    Color: themeColor(theme, 'blue'),
-    Transparency: 0.86,
-    Offset: vector2(0, 24),
-    BlurRadius: 90,
-  });
-  bindThemeColors(glow, theme, (palette) => ({ Color: palette.blue }));
-  glow.Parent = visual;
-  bindLayoutProperties(visual, layout, visual, {
-    desktop: { Size: udim2FromOffset(440, 430), Position: udim2FromOffset(776, 88) },
-    mobile: { Size: udim2FromOffset(358, 370), Position: udim2FromOffset(0, 568) },
-  });
-  createText(theme, {
-    text: 'APP.TS',
-    size: udim2FromOffset(120, 26),
-    position: udim2FromOffset(22, 18),
-    color: 'textFaint',
-    textSize: typeScale.caption,
-    font: fonts.mono,
-    weight: 800,
-  }).Parent = visual;
-  const codeLines = appendCodeLines(
-    visual,
-    theme,
-    [
-      {
-        text: "import { createFrame, createScreenGui, udim2FromOffset } from 'framekit';",
-        color: 'purple',
-      },
-      { text: '' },
-      { text: 'const app = createScreenGui();', color: 'blue' },
-      { text: 'const card = createFrame({' },
-      { text: '  Size: udim2FromOffset(320, 180),' },
-      { text: '});' },
-      { text: '' },
-      { text: 'card.Parent = app;', color: 'accent' },
-    ],
-    64,
-    30,
-  );
-  for (const [index, line] of codeLines.entries()) {
-    bindLayoutProperties(visual, layout, line, {
-      desktop: {
-        Size: udim2FromOffset(line.Size.X.Offset, 30),
-        Position: udim2FromOffset(20, 64 + index * 30),
-      },
-      mobile: {
-        Size: udim2FromOffset(line.Size.X.Offset, 26),
-        Position: udim2FromOffset(20, 64 + index * 26),
-      },
-    });
-  }
-  const result = createSurface(theme, {
-    name: 'HomeResult',
-    size: udim2(1, -44, 0, 90),
-    position: udim2FromOffset(22, 318),
-    background: 'surfaceRaised',
-    radius: 16,
-  });
-  bindLayoutProperties(visual, layout, result, {
-    desktop: { Size: udim2(1, -44, 0, 90), Position: udim2FromOffset(22, 318) },
-    mobile: { Size: udim2(1, -44, 0, 68), Position: udim2FromOffset(22, 284) },
-  });
-  createText(theme, {
-    text: '🌳  ScreenGui  /  Card',
-    size: udim2(1, -28, 1, -20),
-    position: udim2FromOffset(14, 10),
-    color: 'accent',
-    textSize: typeScale.code,
-    scaled: true,
-    font: fonts.mono,
-    weight: 800,
-    xAlignment: 'Center',
-  }).Parent = result;
-  result.Parent = visual;
-  return visual;
-};
-
-const createFeatureCard = (
-  theme: ThemeValue,
-  icon: string,
-  title: string,
-  body: string,
-  accent: ThemeToken,
-): Frame => {
-  const card = createSurface(theme, {
-    name: `${title.replaceAll(/\s+/g, '')}Feature`,
-    background: 'surface',
-    radius: 16,
-  });
-  createText(theme, {
-    text: icon,
-    size: udim2FromOffset(44, 44),
-    position: udim2FromOffset(20, 18),
-    textSize: 24,
-    xAlignment: 'Center',
-  }).Parent = card;
-  createText(theme, {
-    text: title,
-    size: udim2(1, -40, 0, 60),
-    position: udim2FromOffset(20, 78),
-    color: accent,
-    textSize: typeScale.subsection,
-    wrapped: true,
-    yAlignment: 'Top',
-    weight: 800,
-  }).Parent = card;
-  createText(theme, {
-    text: body,
-    size: udim2(1, -40, 0, 92),
-    position: udim2FromOffset(20, 148),
-    color: 'textMuted',
-    textSize: typeScale.small,
-    wrapped: true,
-    yAlignment: 'Top',
-  }).Parent = card;
-  return card;
 };

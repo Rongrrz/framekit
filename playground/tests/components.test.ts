@@ -1,114 +1,64 @@
-import {
-  createObservableValue,
-  type Frame,
-  type TextButton,
-  type TextLabel,
-  udim2,
-  udim2FromOffset,
-} from 'framekit';
+import { createObservableValue, type TextButton, type TextLabel } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createApiPage } from '../src/components/api-page';
 import { createGuidePage } from '../src/components/guide-page';
 import { createHomePage } from '../src/components/home';
+import { createReferencePage } from '../src/components/reference-page';
 import type { PlaygroundLayout } from '../src/layout';
-import type { SitePage } from '../src/router';
+import { documentationPages, type SitePage } from '../src/router';
 import { themes } from '../src/theme';
 
-const createState = (page: SitePage) => ({
+const stateFor = (page: SitePage) => ({
   layout: createObservableValue<PlaygroundLayout>('desktop'),
   theme: createObservableValue(themes.dark),
   route: createObservableValue<SitePage>(page),
 });
 
-describe('playground pages', () => {
-  it('separates landing-page code from its preview and restores desktop action widths', () => {
-    const state = createState('home');
-    const home = createHomePage(state.layout, state.theme, state.route, () => undefined);
-    const names = ['GetStartedButton', 'ApiReferenceButton', 'HomeInstallButton'];
-    const buttons = names.map((name) => home.findFirstChild(name, true) as TextButton);
-    const visual = home.findFirstChild('HomeCodeVisual', true) as Frame;
-    const lastLine = visual.findFirstChild('CodeLine8') as TextLabel;
-    const result = visual.findFirstChild('HomeResult') as Frame;
-    for (const currentLayout of ['desktop', 'mobile', 'desktop'] as const) {
-      state.layout.set(currentLayout);
-      expect(lastLine.Position.Y.Offset + lastLine.Size.Y.Offset).toBeLessThan(
-        result.Position.Y.Offset,
-      );
-      if (currentLayout === 'mobile') {
-        expect(buttons.map((button) => button.Size.X.Offset)).toEqual([358, 358, 358]);
-      } else {
-        expect(buttons.map((button) => button.Size.X.Offset)).toEqual([174, 188, 208]);
-        expect(buttons[0]!.Position.X.Offset + buttons[0]!.Size.X.Offset).toBeLessThan(
-          buttons[1]!.Position.X.Offset,
-        );
-        expect(buttons[1]!.Position.X.Offset + buttons[1]!.Size.X.Offset).toBeLessThan(
-          buttons[2]!.Position.X.Offset,
-        );
-      }
-    }
-    home.destroy();
+describe('playground reading experience', () => {
+  it('offers a working landing example and routes into the guide', () => {
+    const state = stateFor('home');
+    const navigate = vi.fn();
+    const page = createHomePage(state.theme, state.route, navigate);
+    const counter = page.findFirstChild('LiveCounter', true) as TextButton;
+    counter.unsafeElement.click();
+    expect(counter.Text).toBe('Clicks: 1');
+    (page.findFirstChild('GetStartedButton', true) as TextButton).unsafeElement.click();
+    expect(navigate).toHaveBeenCalledWith('guide');
+    expect(page.unsafeElement.querySelectorAll('a')).toHaveLength(4);
+    page.destroy();
   });
 
-  it('presents a focused guide with local navigation', () => {
-    const state = createState('guide');
+  it('provides a concise guide, all topic links, and an accessible mobile menu', () => {
+    const state = stateFor('guide');
+    const page = createGuidePage(state.theme, state.route, vi.fn());
+    const topics = page.unsafeElement.querySelector('[aria-label="Documentation topics"]')!;
+    expect(topics.querySelectorAll('a')).toHaveLength(documentationPages.length);
+    expect(topics.querySelector('[aria-current="page"]')?.textContent).toBe('Getting started');
+    const browse = page.findFirstChild('GuidePageBrowse', true) as TextButton;
+    expect(browse.unsafeElement.getAttribute('aria-expanded')).toBe('false');
+    browse.unsafeElement.click();
+    expect(browse.unsafeElement.getAttribute('aria-expanded')).toBe('true');
+    expect(
+      documentationPages.every(({ page: route }) => topics.querySelector(`a[href="#/${route}"]`)),
+    ).toBe(true);
+    expect(
+      page.unsafeElement.querySelector('[aria-label="Continue reading"] a')?.getAttribute('href'),
+    ).toBe('#/elements');
+    page.destroy();
+  });
+
+  it('keeps outline navigation tied to the actual section instance', () => {
+    const state = stateFor('animation');
     const scrollTo = vi.fn();
-    const navigate = vi.fn();
-    const guide = createGuidePage(state.layout, state.theme, state.route, scrollTo, navigate);
-    const sidebar = guide.findFirstChild('GuidePageSidebar', true) as Frame;
-    expect(sidebar.unsafeElement.style.position).toBe('sticky');
-    const next = guide.findFirstChild('GuideNextButton', true);
-    if (!next?.isA('TextButton')) {
-      throw new Error('Missing guide next button.');
-    }
-    next.unsafeElement.click();
-    expect(navigate).toHaveBeenCalledWith('api');
-    const outline = guide.findFirstChild('CleanupOutlineButton', true);
-    if (!outline?.isA('TextButton')) {
-      throw new Error('Missing cleanup outline button.');
-    }
-    const heading = guide
+    const page = createReferencePage('animation', state.theme, state.route, scrollTo);
+    const outline = page.findFirstChild('RetargetaspringOutlineButton', true) as TextButton;
+    const heading = page
       .getDescendants()
-      .find((node) => node.isA('TextLabel') && node.Text === 'Clean up one owner');
-    if (!heading?.isA('TextLabel')) {
-      throw new Error('Missing cleanup heading.');
-    }
+      .find((node) => node.isA('TextLabel') && node.Text === 'Retarget a spring') as TextLabel;
+    state.layout.set('mobile');
     outline.unsafeElement.click();
     expect(scrollTo).toHaveBeenCalledWith(heading);
-    state.layout.set('mobile');
-    expect((guide.findFirstChild('GuidePageSidebarRail', true) as Frame).Visible).toBe(false);
-    expect((guide.findFirstChild('GuidePageOutlineRail', true) as Frame).Visible).toBe(false);
-    guide.destroy();
-  });
-
-  it('keeps API cards usable in the mobile layout', () => {
-    const state = createState('api');
-    const api = createApiPage(state.layout, state.theme, state.route, () => undefined);
-    state.layout.set('mobile');
-    const cornerCard = api.findFirstChild('UICornerReferenceCard', true) as Frame;
-    const cornerTitle = cornerCard.findFirstChild('Text') as TextLabel;
-    expect(cornerTitle.Size).toEqual(udim2(1, -28, 0, 20));
-    api.destroy();
-  });
-
-  it('navigates to the actual API heading after its layout changes', () => {
-    const state = createState('api');
-    const scrollTo = vi.fn();
-    const api = createApiPage(state.layout, state.theme, state.route, scrollTo);
-    const animation = api
-      .getDescendants()
-      .find((node) => node.isA('TextLabel') && node.Text === 'Animation');
-    expect(animation?.isA('TextLabel')).toBe(true);
-    if (!animation?.isA('TextLabel')) {
-      throw new Error('Missing Animation heading.');
-    }
-    animation.Position = udim2FromOffset(0, 4400);
-    const outline = api.findFirstChild('AnimationOutlineButton', true);
-    if (!outline?.isA('TextButton')) {
-      throw new Error('Missing Animation outline link.');
-    }
-    outline.unsafeElement.click();
-    expect(scrollTo).toHaveBeenCalledWith(animation);
-    api.destroy();
+    expect(heading.unsafeElement.getAttribute('aria-level')).toBe('2');
+    page.destroy();
   });
 });

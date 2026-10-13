@@ -117,8 +117,27 @@ consumer contracts. The commit hook checks formatting and lint.
 
 For agent-assisted application work, start with [SKILLS.md](SKILLS.md).
 
-During development, the shared devtools **Debug** button opens a searchable runtime hierarchy,
-element picker, grouped properties, and resizable inspector without changing the current URL.
-The integration is available to any application through `bindRuntimeInspector` from
-`framekit/devtools`.
-The binding owns the launcher and debugging UI; the playground only binds it to each application root.
+During development, **Debug tools** opens a searchable runtime hierarchy, element picker,
+and grouped live properties without changing the current URL. Drag the inspector by its title
+bar and resize it from any edge or corner. Keyboard equivalents are available on the title
+bar and resize handles; Home on the title bar resets the window.
+
+```ts
+import { bindRuntimeInspector } from 'framekit/devtools';
+
+const debug = bindRuntimeInspector(app, {
+  button: true, // Default. Set false for a shortcut or your own controls.
+  shortcut: { key: 'D', ctrlKey: true, shiftKey: true }, // Optional; toggles open/closed.
+});
+// debug.open(); debug.close(); debug.dispose();
+```
+
+Omit `shortcut` for button-only use. Set `button: false` and omit `shortcut` for programmatic
+controls. Modifiers match exactly; omitted modifiers mean false. Unmodified shortcuts leave
+text editing alone, except function keys. Modified shortcuts also work in inspector search.
+The binding owns the launcher, shortcut listener, and open inspector; destroying the supplied
+root releases them. Keep this integration behind your bundler's development flag.
+
+The Playground uses the button and **F8**. Its documentation has separate chapters for
+elements, layout, state and collections, ownership, animation, overlays, and devtools, with
+an API overview at `#/api`. See [Playground architecture](playground/README.md).
