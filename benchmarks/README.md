@@ -1,5 +1,8 @@
 # Browser performance diagnostics
 
+For the expanded production React comparison, including sparse updates, subscribed lifetimes,
+and live-layout changes, see [comparison/README.md](comparison/README.md).
+
 Run `npx playwright install chromium`, then `npm run benchmark`. This launches a local server,
 uses one headless Chromium worker, and replaces `benchmarks/baseline.json` with measured results.
 The report records the browser version, CPU, platform, timestamp, and repository revision. The
