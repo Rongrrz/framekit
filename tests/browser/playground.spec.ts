@@ -1,5 +1,71 @@
 import { expect, test } from '@playwright/test';
 
+test('copies multiline examples and renders every code block with readable syntax and spacing', async ({
+  page,
+}, info) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: async (text: string): Promise<void> => {
+          document.documentElement.dataset.copiedExample = text;
+        },
+      },
+    });
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/playground/index.html#/elements');
+  const blocks = page.locator('.pg-code-block');
+  const blockCount = await blocks.count();
+  expect(blockCount).toBeGreaterThan(30);
+  // All routes are persistent: this covers formatting and highlighting in every chapter and home.
+  await expect(page.locator('.pg-code-block pre.shiki')).toHaveCount(blockCount);
+  const example = page.getByRole('article').locator('.pg-code-block').first();
+  const code = example.locator('pre code');
+  const source = (await code.textContent())!;
+  expect(source).toContain("from 'framekit';\n\n");
+  expect(source).toContain("\n    Text: 'Your profile',\n    TextSize: 24,\n");
+  await example.getByRole('button', { name: 'Copy elements1Code example' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-copied-example', source);
+  expect(
+    await code.evaluate((element) => {
+      const selection = window.getSelection()!;
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      const selected = selection.toString();
+      selection.removeAllRanges();
+      return selected;
+    }),
+  ).toBe(source);
+  await expect(code).toHaveCSS('white-space', 'pre');
+  await expect(code).toHaveCSS('line-height', '22px');
+  for (const mode of ['light', 'dark'] as const) {
+    if ((await page.locator('html').getAttribute('data-framekit-theme')) !== mode) {
+      await page.getByRole('button', { name: `Switch to ${mode} mode` }).click();
+    }
+    await expect(example.locator('pre')).toHaveCSS(
+      'background-color',
+      mode === 'dark' ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)',
+    );
+    const colors = await code
+      .locator('span[style]')
+      .evaluateAll((tokens) => new Set(tokens.map((token) => getComputedStyle(token).color)).size);
+    expect(colors).toBeGreaterThan(3);
+    await example.screenshot({ path: info.outputPath(`code-${mode}.png`) });
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+  const scroll = example.getByLabel('elements1Code code example');
+  await scroll.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(() => scroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+  const main = page.getByRole('main');
+  expect(await main.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(
+    true,
+  );
+  await example.screenshot({ path: info.outputPath('code-mobile.png') });
+});
+
 test('offers a working landing page and readable, linkable documentation at different widths', async ({
   page,
 }, info) => {

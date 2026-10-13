@@ -12,7 +12,8 @@ import {
 import { createRoutedPage, pageHash, type SitePage } from '../router';
 import { bindThemeColors, fonts, type ThemeValue } from '../theme';
 import { createButton } from '../ui';
-import { appendArticleTitle, appendCodeBlock, appendFlowText } from './docs-shell';
+import { createCodeBlock } from './code-block';
+import { appendArticleTitle, appendFlowText } from './docs-shell';
 
 /** The landing page is a working example and a short path into the documentation. */
 export const createHomePage = (
@@ -61,22 +62,22 @@ export const createHomePage = (
 
   const visual = createFrame({ Name: 'HomeCodeVisual', BackgroundTransparency: 1 });
   visual.unsafeElement.classList.add('pg-home-code');
-  appendCodeBlock(visual, theme, 'CounterCode', [
-    { text: 'import { createScreenGui, createTextButton,' },
-    { text: "  udim2FromOffset } from 'framekit';", color: 'purple' },
-    { text: '' },
-    { text: 'const app = createScreenGui();', color: 'blue' },
-    { text: 'const button = createTextButton({' },
-    { text: "  Text: 'Clicks: 0'," },
-    { text: '  Size: udim2FromOffset(220, 44),' },
-    { text: '});' },
-    { text: 'let count = 0;' },
-    { text: 'button.onClick(() => {' },
-    { text: '  button.Text = `Clicks: ${++count}`;' },
-    { text: '});' },
-    { text: 'button.Parent = app;', color: 'accent' },
-    { text: "app.mount('#app');", color: 'blue' },
-  ]);
+  createCodeBlock(theme, 'CounterCode', [
+    'import { createScreenGui, createTextButton,',
+    "  udim2FromOffset } from 'framekit';",
+    '',
+    'const app = createScreenGui();',
+    'const button = createTextButton({',
+    "  Text: 'Clicks: 0',",
+    '  Size: udim2FromOffset(220, 44),',
+    '});',
+    'let count = 0;',
+    'button.onClick(() => {',
+    '  button.Text = `Clicks: ${++count}`;',
+    '});',
+    'button.Parent = app;',
+    "app.mount('#app');",
+  ]).Parent = visual;
   const preview = createFrame({ Name: 'HomeResult', BackgroundTransparency: 1 });
   preview.unsafeElement.classList.add('pg-home-preview');
   appendFlowText(preview, theme, {

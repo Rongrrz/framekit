@@ -2,11 +2,11 @@ import type { Frame, GuiElement, ObservableValue } from 'framekit';
 
 import type { SitePage } from '../router';
 import type { ThemeValue } from '../theme';
+import { createCodeBlock } from './code-block';
 import {
   appendArticleSection,
   appendArticleTitle,
   appendCallout,
-  appendCodeBlock,
   appendOutline,
   appendPageNavigation,
   createDocsShell,
@@ -31,21 +31,20 @@ export const createGuidePage = (
     'Install from this checkout',
     'FrameKit is currently a private package. Build and pack it in this repository, then install the generated archive in your application. The archive version follows package.json.',
   );
-  appendCodeBlock(
-    shell.article,
+  createCodeBlock(
     theme,
     'InstallCode',
     [
-      { text: '# In the FrameKit repository' },
-      { text: 'npm ci' },
-      { text: 'npm run build' },
-      { text: 'npm pack' },
-      { text: '' },
-      { text: '# In your browser application' },
-      { text: 'npm install /absolute/path/to/framekit-0.1.0.tgz' },
+      '# In the FrameKit repository',
+      'npm ci',
+      'npm run build',
+      'npm pack',
+      '',
+      '# In your browser application',
+      'npm install /absolute/path/to/framekit-0.1.0.tgz',
     ],
     'Terminal',
-  );
+  ).Parent = shell.article;
   appendCallout(
     shell.article,
     theme,
@@ -57,51 +56,43 @@ export const createGuidePage = (
     'Add a mount point',
     'Place this in the body of your HTML and load your application entry through your bundler. ScreenGui fills the viewport, regardless of the mount element’s dimensions. Create and mount it in browser code.',
   );
-  appendCodeBlock(
-    shell.article,
-    theme,
-    'MountPoint',
-    [{ text: '<div id="app"></div>' }],
-    'index.html',
-  );
+  createCodeBlock(theme, 'MountPoint', ['<div id="app"></div>'], 'index.html').Parent =
+    shell.article;
   const counter = appendArticleSection(
     shell.article,
     theme,
     'Create a working counter',
     'Copy this into your entry module. Creation makes a real element; Parent attaches it to the ownership tree, and mount attaches the root to the document. Clicking updates the same button instance.',
   );
-  appendCodeBlock(shell.article, theme, 'FirstInterfaceCode', [
-    { text: 'import { createScreenGui, createTextButton,' },
-    {
-      text: "  createObservableValue, watchOwnedValue, udim2FromOffset } from 'framekit';",
-      color: 'purple',
-    },
-    { text: '' },
-    { text: 'const app = createScreenGui();' },
-    { text: 'const count = createObservableValue(0);' },
-    { text: 'const button = createTextButton({' },
-    { text: "  Name: 'Counter', Text: 'Clicks: 0'," },
-    { text: '  Size: udim2FromOffset(220, 44),' },
-    { text: '  Position: udim2FromOffset(24, 24),' },
-    { text: '});' },
-    { text: 'watchOwnedValue(button, count, (value) => {' },
-    { text: '  button.Text = `Clicks: ${value}`;' },
-    { text: '});' },
-    { text: 'button.onClick(() => count.set(count.get() + 1));' },
-    { text: 'button.Parent = app;', color: 'accent' },
-    { text: "app.mount('#app');", color: 'blue' },
-  ]);
+  createCodeBlock(theme, 'FirstInterfaceCode', [
+    'import { createScreenGui, createTextButton,',
+    "  createObservableValue, watchOwnedValue, udim2FromOffset } from 'framekit';",
+    '',
+    'const app = createScreenGui();',
+    'const count = createObservableValue(0);',
+    'const button = createTextButton({',
+    "  Name: 'Counter', Text: 'Clicks: 0',",
+    '  Size: udim2FromOffset(220, 44),',
+    '  Position: udim2FromOffset(24, 24),',
+    '});',
+    'watchOwnedValue(button, count, (value) => {',
+    '  button.Text = `Clicks: ${value}`;',
+    '});',
+    'button.onClick(() => count.set(count.get() + 1));',
+    'button.Parent = app;',
+    "app.mount('#app');",
+  ]).Parent = shell.article;
   const cleanup = appendArticleSection(
     shell.article,
     theme,
     'Release the feature',
     'Call app.destroy() when the feature is removed, for example in your framework’s unmount callback. The button, its native listener, and its value watcher are released recursively.',
   );
-  appendCodeBlock(shell.article, theme, 'CleanupCode', [
-    { text: '// Continuing the counter example:' },
-    { text: 'app.destroy();' },
-    { text: 'console.log(app.isDestroyed()); // true' },
-  ]);
+  createCodeBlock(theme, 'CleanupCode', [
+    '// Continuing the counter example:',
+    'app.destroy();',
+    'console.log(app.isDestroyed()); // true',
+  ]).Parent = shell.article;
   appendCallout(
     shell.article,
     theme,

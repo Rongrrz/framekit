@@ -37,7 +37,7 @@ describe('copy command feedback', () => {
       if (result !== 'unavailable') {
         expect(writeText).toHaveBeenCalledWith('npm install framekit');
       }
-      expect(button.Text).toBe(result === 'success' ? 'COPIED  ✅' : 'npm install framekit');
+      expect(button.Text).toBe(result === 'success' ? 'COPIED  ✅' : 'Copy failed');
       expect(button.BackgroundColor3).toEqual(color3FromRGB(1, 2, 3));
       vi.advanceTimersByTime(1599);
       expect(button.Text).not.toBe('Copy');

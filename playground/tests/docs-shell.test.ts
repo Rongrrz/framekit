@@ -1,17 +1,8 @@
-import {
-  createFrame,
-  createTextButton,
-  createUIListLayout,
-  createObservableValue,
-  type Frame,
-  type ScrollingFrame,
-  type TextLabel,
-} from 'framekit';
+import { createFrame, createTextButton, createUIListLayout, createObservableValue } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   appendArticleSection,
-  appendCodeBlock,
   createDocsShell,
   createExampleRow,
 } from '../src/components/docs-shell';
@@ -24,38 +15,6 @@ afterEach(() => {
 });
 
 describe('documentation spacing', () => {
-  it('uses the shared axis-aware scrolling behavior for code examples', () => {
-    const parent = createFrame();
-    appendCodeBlock(parent, createObservableValue(themes.dark), 'Example', [
-      { text: 'message.Text = "Ready";' },
-    ]);
-    const scroll = parent.findFirstChild('ExampleScroll', true) as ScrollingFrame;
-
-    expect(scroll.unsafeElement.style.overscrollBehaviorX).toBe('none');
-    expect(scroll.unsafeElement.style.overscrollBehaviorY).toBe('auto');
-    expect(scroll.unsafeElement.style.overflowX).toBe('auto');
-    expect(scroll.unsafeElement.style.overflowY).toBe('hidden');
-    expect(scroll.unsafeElement.tabIndex).toBe(0);
-    parent.destroy();
-  });
-
-  it.each([1, 8])('sizes a %s-line code example with balanced vertical padding', (lineCount) => {
-    const parent = createFrame();
-    appendCodeBlock(
-      parent,
-      createObservableValue(themes.dark),
-      'Example',
-      Array.from({ length: lineCount }, () => ({ text: 'const example = true;' })),
-    );
-    const block = parent.findFirstChild('Example') as Frame;
-    const first = block.findFirstChild('CodeLine1', true) as TextLabel;
-    const last = block.findFirstChild(`CodeLine${lineCount}`, true) as TextLabel;
-    const bottomPadding = block.Size.Y.Offset - 40 - last.Position.Y.Offset - last.Size.Y.Offset;
-    expect(bottomPadding).toBe(first.Position.Y.Offset);
-    expect(block.Size.Y.Offset).toBe(72 + lineCount * 22);
-    parent.destroy();
-  });
-
   it('uses natural paragraph height and fixed heading typography', () => {
     const parent = createFrame();
     const heading = appendArticleSection(

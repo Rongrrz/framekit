@@ -158,38 +158,3 @@ export const createPill = (
   addRoundedBorder(theme, pill, 999, color);
   return pill;
 };
-
-export const appendCodeLines = (
-  parent: GuiElement,
-  theme: ThemeValue,
-  lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
-  startY: number,
-  lineHeight = 28,
-): readonly TextLabel[] => {
-  const context = parent.unsafeElement.ownerDocument.createElement('canvas').getContext('2d');
-  if (context) {
-    context.font = `500 ${typeScale.code}px ${fonts.mono}`;
-  }
-  // Intrinsic line widths let a scrolling parent expose the entire example.
-  const width = Math.ceil(
-    Math.max(
-      0,
-      ...lines.map(
-        (line) => context?.measureText(line.text).width ?? line.text.length * typeScale.code,
-      ),
-    ),
-  );
-  return lines.map((line, index) => {
-    const label = createText(theme, {
-      text: line.text,
-      size: udim2FromOffset(width, lineHeight),
-      position: udim2FromOffset(20, startY + index * lineHeight),
-      color: line.color ?? 'textMuted',
-      textSize: typeScale.code,
-      font: fonts.mono,
-      name: `CodeLine${index + 1}`,
-    });
-    label.Parent = parent;
-    return label;
-  });
-};

@@ -2,11 +2,11 @@ import type { Frame, GuiElement, ObservableValue } from 'framekit';
 
 import type { SitePage } from '../router';
 import type { ThemeValue } from '../theme';
+import { createCodeBlock } from './code-block';
 import {
   appendArticleSection,
   appendArticleTitle,
   appendCallout,
-  appendCodeBlock,
   appendOutline,
   appendPageNavigation,
   createDocsShell,
@@ -32,13 +32,8 @@ export const createReferencePage = (
   const outline = chapter.sections.map((section, index) => {
     const target = appendArticleSection(shell.article, theme, section.title, section.body);
     if ('code' in section) {
-      appendCodeBlock(
-        shell.article,
-        theme,
-        `${page}${index + 1}Code`,
-        section.code.map((text) => ({ text })),
-        `${page}.ts`,
-      );
+      createCodeBlock(theme, `${page}${index + 1}Code`, section.code, `${page}.ts`).Parent =
+        shell.article;
     }
     if ('note' in section) {
       appendCallout(shell.article, theme, section.note);

@@ -12,7 +12,8 @@ import {
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { typeScale, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
-import { appendArticleSection, appendCodeBlock, createExampleRow } from './docs-shell';
+import { createCodeBlock } from './code-block';
+import { appendArticleSection, createExampleRow } from './docs-shell';
 
 /** Owns the interactive dropdown examples and their caller-owned content. */
 export const appendPopoverExamples = (
@@ -99,19 +100,19 @@ export const appendPopoverExamples = (
     trigger.onDestroy(() => panel.destroy());
   }
   status.Parent = article;
-  appendCodeBlock(article, theme, 'PopoverHooksCode', [
-    { text: 'const dispose = bindPopover(button, dropdown, {', color: 'accent' },
-    { text: "  openOn: 'hover', placement: 'bottom'," },
-    { text: '  onShow: ({ content, signal }) =>' },
-    { text: '    animateIn(content, signal),' },
-    { text: '  onHide: ({ content, signal }) =>' },
-    { text: '    animateOut(content, signal),' },
-    { text: '});' },
-    { text: '// Return a promise to finish hiding after your animation.' },
-    { text: '// Honor signal to cancel on re-entry or disposal.' },
-    { text: '// The same hooks work with bindTooltip().' },
-    { text: '// Omit hooks for the built-in spring and reduced-motion support.' },
-  ]);
+  createCodeBlock(theme, 'PopoverHooksCode', [
+    'const dispose = bindPopover(button, dropdown, {',
+    "  openOn: 'hover', placement: 'bottom',",
+    '  onShow: ({ content, signal }) =>',
+    '    animateIn(content, signal),',
+    '  onHide: ({ content, signal }) =>',
+    '    animateOut(content, signal),',
+    '});',
+    '// Return a promise to finish hiding after your animation.',
+    '// Honor signal to cancel on re-entry or disposal.',
+    '// The same hooks work with bindTooltip().',
+    '// Omit hooks for the built-in spring and reduced-motion support.',
+  ]).Parent = article;
   return heading;
 };
 

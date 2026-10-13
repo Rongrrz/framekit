@@ -21,7 +21,7 @@ export const copyCommand = async (
     return;
   }
 
-  button.Text = copied ? 'COPIED  ✅' : command;
+  button.Text = copied ? 'COPIED  ✅' : 'Copy failed';
   const previousFeedback = feedbackTimers.get(button);
   if (previousFeedback) {
     window.clearTimeout(previousFeedback.timer);

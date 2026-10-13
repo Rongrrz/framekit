@@ -85,8 +85,30 @@
 .pg-article > [data-framekit='TextLabel'] {
   user-select: text !important;
 }
-.pg-article [data-framekit='ScrollingFrame'] [data-framekit-text] {
+.pg-code-source pre {
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  padding: 16px 20px;
+  font:
+    400 13px / 22px 'SFMono-Regular',
+    Consolas,
+    'Liberation Mono',
+    Menlo,
+    monospace;
+  tab-size: 2;
+  white-space: pre;
   user-select: text;
+}
+.pg-code-source code {
+  font: inherit;
+  white-space: inherit;
+}
+html[data-framekit-theme='dark'] .pg-code-source .shiki,
+html[data-framekit-theme='dark'] .pg-code-source .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
 }
 .pg-outline > * {
   position: relative !important;

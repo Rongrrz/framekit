@@ -10,10 +10,10 @@ import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
 import { typeScale, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
+import { createCodeBlock } from './code-block';
 import {
   appendArticleTitle,
   appendArticleSection,
-  appendCodeBlock,
   appendCallout,
   appendOutline,
   createDocsShell,
@@ -42,14 +42,14 @@ export const createOverlaysPage = (
     'Explain with a tooltip',
     'bindTooltip(target, textOrFrame, options?) opens on hover or focus. Choose placement, gap, delay, followCursor, or style. Escape dismisses the tooltip; keyboard focus keeps cursor-following tooltips anchored.',
   );
-  appendCodeBlock(shell.article, theme, 'TooltipCode', [
-    { text: "import { createTextButton, bindTooltip } from 'framekit';" },
-    { text: "const button = createTextButton({ Text: 'Save' });" },
-    { text: "const dispose = bindTooltip(button, 'Save your changes', {" },
-    { text: "  placement: 'top', gap: 8, delay: 200," },
-    { text: '});' },
-    { text: '// dispose(); // Or destroy the target to release the binding.' },
-  ]);
+  createCodeBlock(theme, 'TooltipCode', [
+    "import { createTextButton, bindTooltip } from 'framekit';",
+    "const button = createTextButton({ Text: 'Save' });",
+    "const dispose = bindTooltip(button, 'Save your changes', {",
+    "  placement: 'top', gap: 8, delay: 200,",
+    '});',
+    '// dispose(); // Or destroy the target to release the binding.',
+  ]).Parent = shell.article;
   appendTooltipExamples(shell.article, layout, theme);
   const popover = appendArticleSection(
     shell.article,
@@ -57,15 +57,15 @@ export const createOverlaysPage = (
     'Make a popover interactive',
     'Pass a live, detached Frame as content. openOn defaults to click; hover mode also supports focus and activation. Tab reaches controls in the panel. Escape or an outside click dismisses it.',
   );
-  appendCodeBlock(shell.article, theme, 'PopoverCode', [
-    { text: 'import { createFrame, createTextButton, bindPopover,' },
-    { text: "  udim2FromOffset } from 'framekit';" },
-    { text: "const trigger = createTextButton({ Text: 'Actions' });" },
-    { text: 'const panel = createFrame({ Size: udim2FromOffset(240, 60) });' },
-    { text: "createTextButton({ Text: 'Save', Size: udim2FromOffset(240, 44) }).Parent = panel;" },
-    { text: "bindPopover(trigger, panel, { placement: 'bottom', gap: 8 });" },
-    { text: 'trigger.onDestroy(() => panel.destroy());' },
-  ]);
+  createCodeBlock(theme, 'PopoverCode', [
+    'import { createFrame, createTextButton, bindPopover,',
+    "  udim2FromOffset } from 'framekit';",
+    "const trigger = createTextButton({ Text: 'Actions' });",
+    'const panel = createFrame({ Size: udim2FromOffset(240, 60) });',
+    "createTextButton({ Text: 'Save', Size: udim2FromOffset(240, 44) }).Parent = panel;",
+    "bindPopover(trigger, panel, { placement: 'bottom', gap: 8 });",
+    'trigger.onDestroy(() => panel.destroy());',
+  ]).Parent = shell.article;
   appendCallout(
     shell.article,
     theme,

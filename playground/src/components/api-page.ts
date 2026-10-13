@@ -2,11 +2,11 @@ import { createLink, type Frame, type ObservableValue, udim2 } from 'framekit';
 
 import { documentationPages, pageHash, type SitePage } from '../router';
 import { bindThemeColors, fonts, type ThemeValue } from '../theme';
+import { createCodeBlock } from './code-block';
 import {
   appendArticleTitle,
   appendArticleSection,
   appendCallout,
-  appendCodeBlock,
   createDocsShell,
   appendPageNavigation,
 } from './docs-shell';
@@ -27,10 +27,10 @@ export const createApiPage = (theme: ThemeValue, route: ObservableValue<SitePage
     'Two entry points',
     'Import runtime elements, values, modifiers, and helpers from framekit. Import inspection tools from framekit/devtools. Internal source modules are implementation details.',
   );
-  appendCodeBlock(shell.article, theme, 'ImportsCode', [
-    { text: "import { createFrame, spring, watchOwnedValue } from 'framekit';" },
-    { text: "import { bindRuntimeInspector } from 'framekit/devtools';" },
-  ]);
+  createCodeBlock(theme, 'ImportsCode', [
+    "import { createFrame, spring, watchOwnedValue } from 'framekit';",
+    "import { bindRuntimeInspector } from 'framekit/devtools';",
+  ]).Parent = shell.article;
   const descriptions = {
     guide: 'Installation, mounting, and a complete counter.',
     elements: 'Factories, native inputs, typed events, links, and focus.',

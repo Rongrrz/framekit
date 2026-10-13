@@ -1,7 +1,6 @@
 import {
   createFrame,
   createLink,
-  createScrollingFrame,
   createUIListLayout,
   type Frame,
   type GuiElement,
@@ -13,7 +12,6 @@ import {
   type ObservableValue,
 } from 'framekit';
 
-import { copyCommand } from '../behaviors/copy-button';
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import {
   createRoutedPage,
@@ -22,15 +20,8 @@ import {
   type DocsPage,
   type SitePage,
 } from '../router';
-import {
-  bindThemeColors,
-  fonts,
-  themeColor,
-  typeScale,
-  type ThemeToken,
-  type ThemeValue,
-} from '../theme';
-import { appendCodeLines, createButton, createSurface, createText } from '../ui';
+import { bindThemeColors, fonts, typeScale, type ThemeValue } from '../theme';
+import { createButton, createSurface, createText } from '../ui';
 
 export type DocsShell = Readonly<{
   page: Frame;
@@ -268,59 +259,6 @@ export const appendArticleSection = (
     textSize: typeScale.body,
   });
   return heading;
-};
-
-export const appendCodeBlock = (
-  parent: Frame,
-  theme: ThemeValue,
-  name: string,
-  lines: readonly Readonly<{ text: string; color?: ThemeToken }>[],
-  filename = 'example.ts',
-): void => {
-  const block = createSurface(theme, {
-    name,
-    size: udim2(1, 0, 0, 72 + lines.length * 22),
-    background: 'surface',
-    radius: 12,
-  });
-  const title = createText(theme, {
-    text: filename,
-    size: udim2(1, -100, 0, 36),
-    position: udim2FromOffset(16, 2),
-    font: fonts.mono,
-    textSize: 11,
-    color: 'textFaint',
-  });
-  title.Parent = block;
-  const copy = createButton(theme, {
-    label: 'Copy',
-    name: `${name}Copy`,
-    size: udim2FromOffset(62, 28),
-    position: udim2(1, -74, 0, 6),
-    textSize: 11,
-  });
-  copy.AccessibleLabel = `Copy ${name} example`;
-  copy.onClick(() => void copyCommand(copy, lines.map((line) => line.text).join('\n'), 'Copy'));
-  copy.Parent = block;
-  const scroll = createScrollingFrame({
-    Name: `${name}Scroll`,
-    Size: udim2(1, 0, 1, -40),
-    Position: udim2FromOffset(0, 40),
-    BackgroundTransparency: 1,
-    ScrollingDirection: 'X',
-    ScrollBarThickness: 8,
-    ScrollBarImageColor3: themeColor(theme, 'textFaint'),
-  });
-  scroll.unsafeElement.setAttribute('aria-label', `${name} code example`);
-  bindThemeColors(scroll, theme, (palette) => ({ ScrollBarImageColor3: palette.textFaint }));
-  const labels = appendCodeLines(scroll, theme, lines, 16, 22);
-  scroll.CanvasSize = udim2FromOffset(
-    Math.max(0, ...labels.map((label) => label.Size.X.Offset)) + 40,
-    0,
-  );
-  scroll.Parent = block;
-  block.unsafeElement.style.marginTop = '4px';
-  block.Parent = parent;
 };
 
 export const appendCallout = (parent: Frame, theme: ThemeValue, text: string): void => {
