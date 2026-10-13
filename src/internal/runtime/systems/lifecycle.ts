@@ -6,6 +6,7 @@ import {
   getActiveNodeState,
   getChildren,
   getNodeState,
+  isGuiNode,
   isModifierState,
 } from '../node/registry.js';
 import { unlinkNodeFromParent } from './hierarchy/mutation.js';
@@ -54,7 +55,11 @@ function destroyRecursively(
     const previousParent = unlinkNodeFromParent(node, state)!;
     if (isModifierState(state) || rendering.hasLayoutModifier(previousParent)) {
       try {
-        rendering.renderDerivedStyles(previousParent);
+        if (isGuiNode(node)) {
+          rendering.renderRemovedChild(previousParent, node);
+        } else {
+          rendering.renderDerivedStyles(previousParent);
+        }
       } catch (error) {
         errors.push(error);
       }

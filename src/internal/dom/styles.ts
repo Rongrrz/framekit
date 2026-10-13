@@ -52,6 +52,19 @@ export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: S
   }
 }
 
+/** Updates one derived declaration without replacing the layer's other placement rules. */
+export function setStyleLayerProperty(
+  element: HTMLElement,
+  layer: StyleLayer,
+  property: string,
+  value: string,
+): void {
+  const state = getStyleState(element);
+  captureFallback(element, state, property);
+  state[layer][property] = value;
+  renderResolvedProperty(element, state, property);
+}
+
 function getStyleState(element: HTMLElement): ElementStyleState {
   const existing = stylesByElement.get(element);
   if (existing) {

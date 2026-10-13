@@ -6,8 +6,101 @@ import { resetDocumentAfterEach } from '../support/reset-document.js';
 resetDocumentAfterEach();
 
 describe.each([createUIListLayout, createUIGridLayout])(
-  'active layout insertion (%#)',
+  'active layout mutations (%#)',
   (createLayout) => {
+    it('restores detached placement and keeps ranks correct through reparenting and destruction', () => {
+      const parent = createFrame();
+      const destination = createFrame();
+      createLayout().Parent = parent;
+      createLayout().Parent = destination;
+      const first = createFrame({
+        LayoutOrder: 0,
+        Position: udim2FromOffset(12, 15),
+        Size: udim2FromOffset(140, 60),
+      });
+      const middle = createFrame({ LayoutOrder: 1 });
+      const last = createFrame({ LayoutOrder: 2 });
+      createUIListLayout().Parent = first;
+      for (const child of [first, middle, last]) {
+        child.Parent = parent;
+      }
+      first.Parent = undefined;
+
+      expect(first.unsafeElement.style.position).toBe('absolute');
+      expect(first.unsafeElement.style.left).toBe('12px');
+      expect(first.unsafeElement.style.width).toBe('140px');
+      expect(first.unsafeElement.style.display).toBe('flex');
+      expect([middle, last].map((child) => child.unsafeElement.style.order)).toEqual(['0', '1']);
+      middle.Parent = destination;
+      first.Parent = destination;
+
+      expect([...destination.unsafeElement.children]).toEqual([
+        first.unsafeElement,
+        middle.unsafeElement,
+      ]);
+      expect(last.unsafeElement.style.order).toBe('0');
+      first.destroy();
+      expect(middle.unsafeElement.style.order).toBe('0');
+      const appended = createFrame({ LayoutOrder: 3 });
+      appended.Parent = destination;
+      expect(appended.unsafeElement.style.order).toBe('1');
+      parent.destroy();
+      destination.destroy();
+    });
+
+    it('commits removal before cleanup callbacks mutate the layout, even when cleanup fails', () => {
+      const parent = createFrame();
+      createLayout().Parent = parent;
+      const first = createFrame({ LayoutOrder: 0 });
+      const last = createFrame({ LayoutOrder: 2 });
+      first.Parent = parent;
+      last.Parent = parent;
+      const inserted = createFrame({ LayoutOrder: 1 });
+      first.onDestroy(() => {
+        expect(parent.getChildren().includes(first)).toBe(false);
+        expect(last.unsafeElement.style.order).toBe('0');
+        inserted.Parent = parent;
+        throw new Error('Cleanup failed');
+      });
+
+      expect(() => first.destroy()).toThrow(/Cleanup failed/);
+      expect(first.isDestroyed()).toBe(true);
+      expect([...parent.unsafeElement.children]).toEqual([
+        inserted.unsafeElement,
+        last.unsafeElement,
+      ]);
+      expect([inserted, last].map((child) => child.unsafeElement.style.order)).toEqual(['0', '1']);
+      parent.destroy();
+    });
+
+    it('restores hierarchy, DOM order, and ranks if removing a placement layer fails', () => {
+      const parent = createFrame();
+      createLayout().Parent = parent;
+      const first = createFrame();
+      const last = createFrame();
+      first.Parent = parent;
+      last.Parent = parent;
+      const setProperty = first.unsafeElement.style.setProperty.bind(first.unsafeElement.style);
+      const failure = vi
+        .spyOn(first.unsafeElement.style, 'setProperty')
+        .mockImplementation((property, value, priority) => {
+          if (property === 'position' && value === 'absolute') {
+            throw new Error('Placement reset failed');
+          }
+          setProperty(property, value, priority);
+        });
+
+      expect(() => {
+        first.Parent = undefined;
+      }).toThrow(/Placement reset failed/);
+      expect(first.Parent).toBe(parent);
+      expect([...parent.unsafeElement.children]).toEqual([first.unsafeElement, last.unsafeElement]);
+      expect(first.unsafeElement.style.position).toBe('relative');
+      expect([first, last].map((child) => child.unsafeElement.style.order)).toEqual(['0', '1']);
+      failure.mockRestore();
+      parent.destroy();
+    });
+
     it('inserts by rank and preserves equal-key hierarchy order after explicit reorder', () => {
       const parent = createFrame();
       const layout = createLayout();

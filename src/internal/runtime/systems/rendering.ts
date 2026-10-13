@@ -1,5 +1,5 @@
 import { placeElement, placeElements } from '#internal/dom/placement.js';
-import { setStyleLayer } from '#internal/dom/styles.js';
+import { setStyleLayer, setStyleLayerProperty } from '#internal/dom/styles.js';
 
 import type { GuiElement } from '../node/gui-node.js';
 import type { Instance, InstanceProperties } from '../node/instance.js';
@@ -195,17 +195,37 @@ export function renderInsertedChild(parent: Instance, child: GuiElement): void {
   }
   // Record the child before touching DOM so normal hierarchy rollback can clear its layer.
   layout.children.splice(start, 0, child);
-  for (let index = start; index < layout.children.length; index += 1) {
-    setStyleLayer(layout.children[index]!.unsafeElement, 'parent-layout', {
-      ...layout.child,
-      order: String(index),
-    });
-  }
+  setStyleLayer(child.unsafeElement, 'parent-layout', { ...layout.child, order: String(start) });
+  renderChildOrders(layout, start + 1);
   placeElement(
     (parent as GuiElement).unsafeElement,
     child.unsafeElement,
     layout.children[start + 1]?.unsafeElement ?? null,
   );
+}
+
+/** Drops a departed child and updates only the ranks after its former position. */
+export function renderRemovedChild(parent: Instance, child: GuiElement): void {
+  const layout = layoutsByNode.get(parent);
+  const index = layout?.children.indexOf(child) ?? -1;
+  if (!layout || index < 0) {
+    renderDerivedStyles(parent);
+    return;
+  }
+  layout.children.splice(index, 1);
+  setStyleLayer(child.unsafeElement, 'parent-layout', {});
+  renderChildOrders(layout, index);
+}
+
+function renderChildOrders(layout: RenderedLayout, start: number): void {
+  for (let index = start; index < layout.children.length; index += 1) {
+    setStyleLayerProperty(
+      layout.children[index]!.unsafeElement,
+      'parent-layout',
+      'order',
+      String(index),
+    );
+  }
 }
 
 function getLayoutChildProperties(child: GuiElement): LayoutChild {

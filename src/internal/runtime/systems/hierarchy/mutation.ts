@@ -83,10 +83,9 @@ const append = (parent: Instance, child: Instance): void => {
     unlinkNodeFromParent(child, childState);
     const insertionIndex = linkNodeToParent(parent, parentState, child, childState);
     placeChildElement(parent, parentState, child, insertionIndex);
-    if (
-      previousParent &&
-      (isModifierState(childState) || rendering.hasLayoutModifier(previousParent))
-    ) {
+    if (previousParent && isGuiNode(child) && rendering.hasLayoutModifier(previousParent)) {
+      rendering.renderRemovedChild(previousParent, child);
+    } else if (previousParent && isModifierState(childState)) {
       rendering.renderDerivedStyles(previousParent);
     }
     if (isGuiNode(child) && rendering.hasLayoutModifier(parent)) {
@@ -142,7 +141,9 @@ const detach = (node: Instance): void => {
     if (isGuiNode(node)) {
       node.unsafeElement.remove();
     }
-    if (isModifierState(state) || rendering.hasLayoutModifier(previousParent)) {
+    if (isGuiNode(node) && rendering.hasLayoutModifier(previousParent)) {
+      rendering.renderRemovedChild(previousParent, node);
+    } else if (isModifierState(state)) {
       rendering.renderDerivedStyles(previousParent);
     }
   } catch (error) {
