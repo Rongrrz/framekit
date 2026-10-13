@@ -17,22 +17,24 @@ args = parser.parse_args()
 report = json.loads(args.results.read_text())
 rows = report["summary"]
 series = [
-    ("before", "Before text/layout fixes", "#9a9ca4", "o", -0.24),
+    ("before", "Before DOM-order fix", "#9a9ca4", "o", -0.24),
     ("current", "Current FrameKit", "#1766b5", "s", -0.08),
     ("reactRoot", "React root update", "#be651e", "^", 0.08),
     ("reactLocal", "React local state", "#7d409a", "D", 0.24),
 ]
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "svg.fonttype": "none"})
 fig, ax = plt.subplots(figsize=(14, max(12, len(rows) * 0.5 + 1.5)))
+all_ratios = []
 for key, label, color, marker, offset in series:
     ratios = [row[key]["medianMs"] / row["reactRoot"]["medianMs"] for row in rows]
+    all_ratios.extend(ratios)
     ax.scatter(ratios, [index + offset for index in range(len(rows))], color=color,
                marker=marker, s=40, label=label, zorder=3)
 ax.set_xscale("log")
 ax.axvline(1, color="#40434a", linewidth=1)
 ax.set_yticks(range(len(rows)), [row["label"] for row in rows])
 ax.invert_yaxis()
-ax.set_xlim(0.035, 180)
+ax.set_xlim(min(0.035, min(all_ratios) * 0.75), max(3, max(all_ratios) * 1.25))
 ax.xaxis.set_major_locator(LogLocator(base=10, subs=(1, 3)))
 ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}×"))
 ax.grid(axis="x", color="#e2e3e7", linewidth=0.7)

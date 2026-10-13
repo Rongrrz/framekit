@@ -14,13 +14,13 @@ node benchmarks/comparison/run.mjs
 
 The runner builds both versions in production mode, serves them on an ephemeral local port,
 checks geometry/identity/notifications/cleanup, and writes [results.json](results.json) and
-[results.md](results.md). The default baseline is `846fd1c`, immediately before the text and incremental-layout
-optimizations. It must be present in local Git history. Useful options:
+[results.md](results.md). The default baseline is `13bbf6d`, immediately before the DOM-order optimization. It already
+includes the earlier text and incremental-layout optimizations. It must be present in local Git history. Useful options:
 
 ```sh
-node benchmarks/comparison/run.mjs --baseline 846fd1c --rounds 5 --repetitions 11
+node benchmarks/comparison/run.mjs --baseline 13bbf6d --rounds 5 --repetitions 11
 node benchmarks/comparison/run.mjs --cpu-throttle 4 --out /tmp/comparison.json
-node benchmarks/comparison/run.mjs --cases text --baseline 846fd1c --out /tmp/text.json
+node benchmarks/comparison/run.mjs --cases prepend-100,remove-front-100 --out /tmp/front-edits.json
 ```
 
 The reports explain the differences between React root updates and per-row state, immediate
@@ -39,7 +39,9 @@ python3 benchmarks/comparison/plot.py benchmarks/comparison/results.json \
 
 The matrix intentionally retains unfavorable cases and measures edits at both ends of a list.
 Prepending gives new FrameKit rows LayoutOrder -1 ahead of existing rows at 0; React prepends the
-keyed rows in one commit. FrameKit synchronously updates following CSS ranks after each insertion
-or removal, while React uses keyed DOM order. Changes to sorting, layout settings, or explicit child
-order rebuild FrameKit layout output. Construction, text rendering, and repeated lifetimes
+keyed rows in one commit. Both now use sorted DOM order for placement. FrameKit keeps arranged
+children at CSS order 0 and leaves surviving row attributes unchanged during insertion/removal.
+Its edits remain synchronous and still splice hierarchy/render-order arrays; they are not
+constant-time operations. Changes to sorting, layout settings, or explicit child order rebuild
+FrameKit layout output. Construction, text rendering, and repeated lifetimes
 still include FrameKit feature overhead. See the report for measured differences and limitations.

@@ -313,7 +313,14 @@ export function compatibilityAudit() {
   };
   first.Size = udim2FromOffset(200, 100);
   result.independentSizeAfterAssignment = second.Size.X.Offset === 100;
-  first.destroy();
-  second.destroy();
+  const parent = createFrame();
+  first.LayoutOrder = 2;
+  second.LayoutOrder = 1;
+  first.Parent = parent;
+  second.Parent = parent;
+  createUIListLayout().Parent = parent;
+  result.layoutCssOrders = [first.unsafeElement.style.order, second.unsafeElement.style.order];
+  result.sortedDomOrder = parent.unsafeElement.firstElementChild === second.unsafeElement;
+  parent.destroy();
   return result;
 }

@@ -53,11 +53,13 @@ ${rows.join('\n')}
 
 ## Main optimizations and compatibility
 
-1. **Fixed-size text skips measurement.** Text that is unscaled or empty uses its configured font size before reading geometry. Nonempty scaled text still measures and responds to resize. This removes layout thrashing during ordinary label/control edits.
-2. **Incremental insertion.** List/grid layouts produce shared placement styles and a sorting comparison. The renderer retains sorted child order, finds an inserted child's position by binary search, and applies only its styles and following ranks. Existing DOM nodes retain identity and focus.
-3. **Incremental removal.** Detach, reparent, and individual destruction remove the child from rendered order, restore its own positioning, and update only following order declarations. Remaining layout is current before destruction callbacks run. Derived references are released on destruction.
+The default baseline already includes the earlier text-sizing and incremental-layout optimizations. This change removes the remaining duplicate CSS-rank work:
 
-Property writes and hierarchy edits remain synchronous. Layout settings, sort-key changes, explicit reorders, and rollback rebuild output. No batching API or deferred layout behavior is introduced. Focused tests cover immediate geometry, equal-key ordering, nested/composed layouts, failed placement, reentrant/failing cleanup, and surviving text selection.
+1. **Sorted DOM owns placement.** List/grid layouts already sorted DOM nodes for reading and tab order. Arranged children now share neutral CSS order 0, letting that same DOM order determine visual placement.
+2. **Edits leave survivors untouched.** Insertion applies placement rules only to the new child and moves it to the sorted DOM position. Removal restores only the departing child's own styles. The renderer no longer renumbers following siblings or allocates rank strings.
+3. **Layer restoration remains intact.** Neutral CSS order overrides lower style owners while a layout is active; detaching the layout restores their values. LayoutOrder and Name still determine sorting, with explicit hierarchy order breaking ties.
+
+Property writes and hierarchy edits remain synchronous. Layout settings, sort-key changes, explicit reorders, and rollback rebuild output. No batching API or deferred layout behavior is introduced. Focused tests cover immediate geometry, equal-key ordering, nested/composed layouts, failed placement, reentrant/failing cleanup, and surviving text selection in Chromium, Firefox, and WebKit. Focused cases also verify that front edits do not mutate surviving row attributes.
 
 The compatibility audit records the requested baseline's behavior:
 
@@ -68,14 +70,18 @@ The compatibility audit records the requested baseline's behavior:
 | Size and its axes are frozen | ${report.audits.before.frozenSize} | ${report.audits.current.frozenSize} |
 | Assigning one Frame's Size leaves the other unchanged | ${report.audits.before.independentSizeAfterAssignment} | ${report.audits.current.independentSizeAfterAssignment} |
 | Raw mouseenter listener registered before typed hover callback | ${report.audits.before.hoverOrderWhenRawSubscribedFirst.join(' → ')} | ${report.audits.current.hoverOrderWhenRawSubscribedFirst.join(' → ')} |
+| Inline CSS orders for a later/earlier pair | ${report.audits.before.layoutCssOrders?.join(', ') ?? 'not recorded'} | ${report.audits.current.layoutCssOrders?.join(', ') ?? 'not recorded'} |
+| Earlier child is first in sorted DOM order | ${report.audits.before.sortedDomOrder ?? 'not recorded'} | ${report.audits.current.sortedDomOrder ?? 'not recorded'} |
 
-Default sharing and hover registration are unaffected by these three optimizations. Earlier allocation optimizations shared frozen defaults and made hover listeners lazy; choosing an older baseline can expose identity and raw/typed listener-order differences in the audit above.
+Inline CSS order is an observable implementation change: consumers inspecting unsafeElement now see 0 instead of a sequential rank. Public LayoutOrder values, visual/DOM/tab sorting, and synchronous geometry are preserved. Native scroll anchoring remains enabled; focused content can stay stationary as the browser adjusts its scroll position.
+
+Default sharing and hover registration are unaffected by this optimization. Earlier allocation optimizations shared frozen defaults and made hover listeners lazy; choosing an older baseline can expose identity and raw/typed listener-order differences in the audit above.
 
 ## What the wider matrix reveals
 
 - Sparse updates and keyed reversal are useful FrameKit cases. Construction, text-host rendering, and repeated subscribed lifetimes still have measurable overhead.
 - **Text:** ordinary updates no longer force geometry reads. Scaled/wrapped fitting remains a separate, more expensive path that this ordinary-label case does not measure.
-- **Live-layout edits:** the matrix measures both ends. Tail removal destroys the final 100 rows in forward order; front removal destroys the first 100 in forward order. Prepending assigns new FrameKit rows LayoutOrder -1 ahead of the existing rows at 0; React prepends keyed DOM rows in one commit. FrameKit synchronously renumbers following CSS ranks after each individual edit, while the React fixture uses keyed DOM order. That difference is included in the costs, and fast tail edits do not imply constant-time arbitrary insertion/removal.
+- **Live-layout edits:** the matrix measures both ends. Tail removal destroys the final 100 rows in forward order; front removal destroys the first 100 in forward order. Prepending assigns new FrameKit rows LayoutOrder -1 ahead of the existing rows at 0; React prepends keyed DOM rows in one commit. FrameKit and React now both rely on sorted DOM order for placement. FrameKit still commits individual edits immediately and splices its hierarchy and rendered-order arrays, while React batches the operation. These cases do not imply constant-time arbitrary insertion/removal.
 - **Transaction semantics:** React batches each requested operation into one commit; FrameKit commits each individual edit immediately. No-op writes also differ: FrameKit validates and publishes its internal write event, allowing assignment to interrupt an animation. React same-state local updates can bail out without rendering.
 
 ## Scope and reproduction
