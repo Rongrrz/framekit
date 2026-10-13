@@ -139,8 +139,9 @@ When behavior is surprising:
 ## Dynamic collections and browser ordering
 
 `reorderChildren()` validates an exact permutation of all direct children before updating the
-hierarchy. Layout ranks determine both CSS placement and DOM reading order; the logical
-hierarchy keeps explicit order and resolves equal-rank ties. Removing a layout restores DOM
+hierarchy. Layout sorting determines DOM, visual, and tab order; arranged children use neutral
+CSS `order: 0`, not a sequential rank. The logical hierarchy keeps explicit order and resolves
+equal-key ties. Removing a layout restores DOM
 order from the hierarchy. Moves use native state-preserving placement when available and
 restore connected focus and input selection in the fallback.
 

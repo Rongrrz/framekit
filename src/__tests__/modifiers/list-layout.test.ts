@@ -67,14 +67,12 @@ describe('UI list layouts', () => {
     expect(frame.unsafeElement.style.gap).toBe('8px');
     expect(first.unsafeElement.style.position).toBe('relative');
     expect(first.unsafeElement.style.left).toBe('auto');
-    expect(first.unsafeElement.style.order).toBe('1');
-    expect(second.unsafeElement.style.order).toBe('0');
+    expect([...frame.unsafeElement.children]).toEqual([second.unsafeElement, first.unsafeElement]);
 
     first.setProperties({ Position: udim2FromOffset(25, 30), LayoutOrder: 0 });
 
     expect(first.unsafeElement.style.left).toBe('auto');
-    expect(first.unsafeElement.style.order).toBe('0');
-    expect(second.unsafeElement.style.order).toBe('1');
+    expect([...frame.unsafeElement.children]).toEqual([first.unsafeElement, second.unsafeElement]);
 
     layout.Parent = undefined;
 
@@ -95,8 +93,7 @@ describe('UI list layouts', () => {
     layout.Parent = frame;
 
     expect(frame.unsafeElement.style.display).toBe('none');
-    expect(zebra.unsafeElement.style.order).toBe('1');
-    expect(alpha.unsafeElement.style.order).toBe('0');
+    expect([...frame.unsafeElement.children]).toEqual([alpha.unsafeElement, zebra.unsafeElement]);
 
     frame.setProperties({ Visible: true });
     layout.setProperties({
@@ -115,8 +112,7 @@ describe('UI list layouts', () => {
 
     zebra.setProperties({ Name: 'Aardvark' });
 
-    expect(zebra.unsafeElement.style.order).toBe('0');
-    expect(alpha.unsafeElement.style.order).toBe('1');
+    expect([...frame.unsafeElement.children]).toEqual([zebra.unsafeElement, alpha.unsafeElement]);
   });
 
   it('preserves layout positioning when a child modifier updates', () => {

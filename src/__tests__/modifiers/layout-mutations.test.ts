@@ -1,6 +1,8 @@
 import { createFrame, createUIGridLayout, createUIListLayout, udim2FromOffset } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createStyleModifier } from '#internal/runtime/node/modifier.js';
+
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();
@@ -8,7 +10,55 @@ resetDocumentAfterEach();
 describe.each([createUIListLayout, createUIGridLayout])(
   'active layout mutations (%#)',
   (createLayout) => {
-    it('restores detached placement and keeps ranks correct through reparenting and destruction', () => {
+    it('keeps lower style orders from overriding layout and restores them on detachment', () => {
+      const parent = createFrame();
+      const first = createFrame({ LayoutOrder: 0 });
+      const last = createFrame({ LayoutOrder: 1 });
+      createStyleModifier('CustomOrder', { Name: 'CustomOrder' }, () => ({ order: '7' })).Parent =
+        first;
+      createStyleModifier('CustomOrder', { Name: 'CustomOrder' }, () => ({ order: '-5' })).Parent =
+        last;
+      first.Parent = parent;
+      last.Parent = parent;
+      const layout = createLayout();
+      layout.Parent = parent;
+
+      expect([...parent.unsafeElement.children]).toEqual([first.unsafeElement, last.unsafeElement]);
+      expect(first.unsafeElement.style.order).toBe('0');
+      expect(last.unsafeElement.style.order).toBe('0');
+      layout.Parent = undefined;
+      expect(first.unsafeElement.style.order).toBe('7');
+      expect(last.unsafeElement.style.order).toBe('-5');
+      layout.destroy();
+      parent.destroy();
+    });
+
+    it('prepends and removes a row without mutating surviving row attributes', () => {
+      const parent = createFrame();
+      createLayout().Parent = parent;
+      const rows = [createFrame(), createFrame()];
+      for (const row of rows) {
+        row.Parent = parent;
+      }
+      const observer = new MutationObserver(() => undefined);
+      for (const row of rows) {
+        observer.observe(row.unsafeElement, { attributes: true });
+      }
+      const first = createFrame({ LayoutOrder: -1 });
+      first.Parent = parent;
+      expect([...parent.unsafeElement.children]).toEqual([
+        first.unsafeElement,
+        ...rows.map((row) => row.unsafeElement),
+      ]);
+      expect(observer.takeRecords()).toHaveLength(0);
+      first.destroy();
+      expect([...parent.unsafeElement.children]).toEqual(rows.map((row) => row.unsafeElement));
+      expect(observer.takeRecords()).toHaveLength(0);
+      observer.disconnect();
+      parent.destroy();
+    });
+
+    it('restores detached placement and keeps order correct through reparenting and destruction', () => {
       const parent = createFrame();
       const destination = createFrame();
       createLayout().Parent = parent;
@@ -30,7 +80,10 @@ describe.each([createUIListLayout, createUIGridLayout])(
       expect(first.unsafeElement.style.left).toBe('12px');
       expect(first.unsafeElement.style.width).toBe('140px');
       expect(first.unsafeElement.style.display).toBe('flex');
-      expect([middle, last].map((child) => child.unsafeElement.style.order)).toEqual(['0', '1']);
+      expect([...parent.unsafeElement.children]).toEqual([
+        middle.unsafeElement,
+        last.unsafeElement,
+      ]);
       middle.Parent = destination;
       first.Parent = destination;
 
@@ -38,12 +91,15 @@ describe.each([createUIListLayout, createUIGridLayout])(
         first.unsafeElement,
         middle.unsafeElement,
       ]);
-      expect(last.unsafeElement.style.order).toBe('0');
+      expect(parent.unsafeElement.firstElementChild).toBe(last.unsafeElement);
       first.destroy();
-      expect(middle.unsafeElement.style.order).toBe('0');
+      expect(destination.unsafeElement.firstElementChild).toBe(middle.unsafeElement);
       const appended = createFrame({ LayoutOrder: 3 });
       appended.Parent = destination;
-      expect(appended.unsafeElement.style.order).toBe('1');
+      expect([...destination.unsafeElement.children]).toEqual([
+        middle.unsafeElement,
+        appended.unsafeElement,
+      ]);
       parent.destroy();
       destination.destroy();
     });
@@ -58,7 +114,7 @@ describe.each([createUIListLayout, createUIGridLayout])(
       const inserted = createFrame({ LayoutOrder: 1 });
       first.onDestroy(() => {
         expect(parent.getChildren().includes(first)).toBe(false);
-        expect(last.unsafeElement.style.order).toBe('0');
+        expect(last.unsafeElement.style.position).toBe('relative');
         inserted.Parent = parent;
         throw new Error('Cleanup failed');
       });
@@ -69,11 +125,11 @@ describe.each([createUIListLayout, createUIGridLayout])(
         inserted.unsafeElement,
         last.unsafeElement,
       ]);
-      expect([inserted, last].map((child) => child.unsafeElement.style.order)).toEqual(['0', '1']);
+      expect(parent.getChildren()).toContain(inserted);
       parent.destroy();
     });
 
-    it('restores hierarchy, DOM order, and ranks if removing a placement layer fails', () => {
+    it('restores hierarchy, DOM order, and positioning if removing a placement layer fails', () => {
       const parent = createFrame();
       createLayout().Parent = parent;
       const first = createFrame();
@@ -96,12 +152,11 @@ describe.each([createUIListLayout, createUIGridLayout])(
       expect(first.Parent).toBe(parent);
       expect([...parent.unsafeElement.children]).toEqual([first.unsafeElement, last.unsafeElement]);
       expect(first.unsafeElement.style.position).toBe('relative');
-      expect([first, last].map((child) => child.unsafeElement.style.order)).toEqual(['0', '1']);
       failure.mockRestore();
       parent.destroy();
     });
 
-    it('inserts by rank and preserves equal-key hierarchy order after explicit reorder', () => {
+    it('inserts by sort key and preserves equal-key hierarchy order after explicit reorder', () => {
       const parent = createFrame();
       const layout = createLayout();
       layout.Parent = parent;
@@ -123,12 +178,6 @@ describe.each([createUIListLayout, createUIGridLayout])(
       expect([...parent.unsafeElement.children]).toEqual(
         expected.map((child) => child.unsafeElement),
       );
-      expect(expected.map((child) => child.unsafeElement.style.order)).toEqual([
-        '0',
-        '1',
-        '2',
-        '3',
-      ]);
       expect(parent.getChildren()).toEqual([layout, later, equal, first, appended]);
       parent.destroy();
     });
@@ -176,7 +225,7 @@ describe.each([createUIListLayout, createUIGridLayout])(
       expect(child.unsafeElement.style.position).toBe('absolute');
       expect(child.unsafeElement.style.left).toBe('12px');
       expect(child.unsafeElement.style.width).toBe('100px');
-      expect(existing.unsafeElement.style.order).toBe('0');
+      expect(parent.unsafeElement.firstElementChild).toBe(existing.unsafeElement);
       expect(parent.getChildren()).not.toContain(child);
       child.destroy();
       parent.destroy();

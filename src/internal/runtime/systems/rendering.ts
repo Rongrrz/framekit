@@ -1,5 +1,5 @@
 import { placeElement, placeElements } from '#internal/dom/placement.js';
-import { setStyleLayer, setStyleLayerProperty } from '#internal/dom/styles.js';
+import { setStyleLayer } from '#internal/dom/styles.js';
 
 import type { GuiElement } from '../node/gui-node.js';
 import type { Instance, InstanceProperties } from '../node/instance.js';
@@ -145,6 +145,9 @@ function renderLayouts(node: Instance): void {
     ordered.sort((left, right) =>
       compare(propertiesByChild.get(left)!, propertiesByChild.get(right)!),
     );
+    // DOM order already matches visual, reading, and tab order. A neutral CSS order also
+    // overrides any lower style layer without renumbering siblings after every edit.
+    childStyles = { ...childStyles, order: '0' };
     layoutsByNode.set(node, { child: childStyles, compareChildren: compare, children: ordered });
   } else {
     layoutsByNode.delete(node);
@@ -156,8 +159,8 @@ function renderLayouts(node: Instance): void {
     }
   }
   if (compare) {
-    for (const [index, child] of ordered.entries()) {
-      setStyleLayer(child.unsafeElement, 'parent-layout', { ...childStyles, order: String(index) });
+    for (const child of ordered) {
+      setStyleLayer(child.unsafeElement, 'parent-layout', childStyles);
     }
   }
   // Layout sorting affects reading and tab order as well as visual placement. The logical
@@ -195,8 +198,7 @@ export function renderInsertedChild(parent: Instance, child: GuiElement): void {
   }
   // Record the child before touching DOM so normal hierarchy rollback can clear its layer.
   layout.children.splice(start, 0, child);
-  setStyleLayer(child.unsafeElement, 'parent-layout', { ...layout.child, order: String(start) });
-  renderChildOrders(layout, start + 1);
+  setStyleLayer(child.unsafeElement, 'parent-layout', layout.child);
   placeElement(
     (parent as GuiElement).unsafeElement,
     child.unsafeElement,
@@ -204,7 +206,7 @@ export function renderInsertedChild(parent: Instance, child: GuiElement): void {
   );
 }
 
-/** Drops a departed child and updates only the ranks after its former position. */
+/** Drops a departed child and restores its positioning without rewriting survivors. */
 export function renderRemovedChild(parent: Instance, child: GuiElement): void {
   const layout = layoutsByNode.get(parent);
   const index = layout?.children.indexOf(child) ?? -1;
@@ -214,18 +216,6 @@ export function renderRemovedChild(parent: Instance, child: GuiElement): void {
   }
   layout.children.splice(index, 1);
   setStyleLayer(child.unsafeElement, 'parent-layout', {});
-  renderChildOrders(layout, index);
-}
-
-function renderChildOrders(layout: RenderedLayout, start: number): void {
-  for (let index = start; index < layout.children.length; index += 1) {
-    setStyleLayerProperty(
-      layout.children[index]!.unsafeElement,
-      'parent-layout',
-      'order',
-      String(index),
-    );
-  }
 }
 
 function getLayoutChildProperties(child: GuiElement): LayoutChild {

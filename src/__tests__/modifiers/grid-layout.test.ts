@@ -34,13 +34,11 @@ describe('UI grid layouts', () => {
     expect(later.unsafeElement.style.position).toBe('relative');
     expect(later.unsafeElement.style.width).toBe('100%');
     expect(later.unsafeElement.style.height).toBe('100%');
-    expect(later.unsafeElement.style.order).toBe('1');
-    expect(earlier.unsafeElement.style.order).toBe('0');
+    expect([...frame.unsafeElement.children]).toEqual([earlier.unsafeElement, later.unsafeElement]);
 
     later.LayoutOrder = 0;
 
-    expect(later.unsafeElement.style.order).toBe('0');
-    expect(earlier.unsafeElement.style.order).toBe('1');
+    expect([...frame.unsafeElement.children]).toEqual([later.unsafeElement, earlier.unsafeElement]);
 
     layout.Parent = undefined;
 
