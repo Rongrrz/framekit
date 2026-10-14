@@ -33,6 +33,15 @@ export function createSignalEmitter<Arguments extends unknown[] = []>(): SignalE
       };
     },
     emit: (...args) => {
+      if (listeners.size === 0) {
+        return;
+      }
+      if (listeners.size === 1) {
+        // Capture before calling: additions and removals still affect only later emissions.
+        const listener = listeners.values().next().value!;
+        listener(...args);
+        return;
+      }
       const errors: unknown[] = [];
       for (const listener of Array.from(listeners)) {
         try {
