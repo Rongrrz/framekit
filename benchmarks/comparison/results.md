@@ -1,35 +1,35 @@
 # Expanded FrameKit / React performance profile
 
-Library source: f88f95af7eef91c54b7d3371c7846cdc548a4406. Baseline: 13bbf6d06b85775bcd4dc3d937c7f8d827b8842d.
-Measured: 2026-10-13T19:39:40.027Z. Apple M5, Chromium 156.0.8078.4, React 19.3.0; production builds; CPU throttle 1×.
+Library source: cc5bfd1e8a36c4778a1ba41fe07e33bb0d77e0c5. Baseline: 13bbf6d06b85775bcd4dc3d937c7f8d827b8842d.
+Measured: 2026-10-13T22:25:13.442Z. Apple M5, Chromium 156.0.8078.4, React 19.3.0; production builds; CPU throttle 1×.
 
-This run covers 23 scenarios. All values below are **milliseconds; lower is better**. They are medians of 5 round medians, each with 11 measured repetitions after two warmups. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
+This run covers 23 scenarios. All values below are **milliseconds; lower is better**. They are medians of 5 round medians, each with 11 measured repetitions after two warmups. Runtime isolation: fresh page per version/runtime/round. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
 
 | Scenario                                      | Before FK | Optimized FK | React root update | React local state |
 | --------------------------------------------- | --------: | -----------: | ----------------: | ----------------: |
-| Create 1,000 rows                             |       7.6 |          7.8 |               4.3 |               4.8 |
-| Create 5,000 rows                             |      35.7 |         33.4 |              31.7 |              33.1 |
-| Rotate 1 of 5,000 rows                        |       0.2 |          0.2 |               2.9 |               0.7 |
-| Rotate 10 of 5,000 rows                       |       0.3 |          0.3 |               3.2 |               0.7 |
-| Rotate 500 of 5,000 rows                      |       1.3 |          1.2 |               3.5 |               1.6 |
-| Rotate 5,000 of 5,000 rows                    |       6.7 |          6.5 |               6.5 |               7.5 |
-| 5,000 no-op writes                            |       0.8 |          0.9 |               2.8 |               0.5 |
-| Three-property patch × 1,000                  |       3.6 |          3.6 |               2.9 |               3.1 |
-| Three direct setters × 1,000                  |       3.5 |          3.5 |               2.6 |               3.1 |
+| Create 1,000 rows                             |       7.7 |          7.6 |               4.2 |               4.5 |
+| Create 5,000 rows                             |      35.5 |         34.3 |              31.7 |              33.2 |
+| Rotate 1 of 5,000 rows                        |       0.2 |          0.2 |               2.8 |               0.6 |
+| Rotate 10 of 5,000 rows                       |       0.3 |          0.2 |               3.2 |               0.7 |
+| Rotate 500 of 5,000 rows                      |       1.3 |          1.1 |               3.3 |               1.9 |
+| Rotate 5,000 of 5,000 rows                    |       6.9 |          6.8 |               6.8 |               7.7 |
+| 5,000 no-op writes                            |       0.8 |          0.8 |               2.8 |               0.4 |
+| Three-property patch × 1,000                  |       3.6 |          3.5 |               2.9 |               3.3 |
+| Three direct setters × 1,000                  |       3.4 |          3.4 |               2.7 |               3.2 |
 | Update 1,000 text labels                      |       5.3 |          5.2 |               3.4 |               3.7 |
-| Update 1,000 corner modifiers                 |       2.3 |          2.5 |               2.6 |               3.1 |
-| 1,000 writes + committed-DOM observers        |       2.5 |          2.5 |               3.0 |               2.8 |
-| Reverse 5,000 keyed rows                      |      11.1 |          7.3 |              27.1 |              29.2 |
-| Append 10 to a live 1,000-row layout          |       0.4 |          0.3 |               0.8 |               1.1 |
-| Append 100 to a live 1,000-row layout         |       1.0 |          0.9 |               1.1 |               1.4 |
+| Update 1,000 corner modifiers                 |       2.3 |          2.3 |               2.5 |               2.7 |
+| 1,000 writes + committed-DOM observers        |       2.7 |          2.6 |               2.8 |               2.6 |
+| Reverse 5,000 keyed rows                      |      11.0 |          7.2 |              26.4 |              30.2 |
+| Append 10 to a live 1,000-row layout          |       0.4 |          0.3 |               0.8 |               1.0 |
+| Append 100 to a live 1,000-row layout         |       1.0 |          1.0 |               1.1 |               1.4 |
 | Prepend 100 to a live 1,000-row layout        |      17.9 |          1.0 |               1.2 |               1.4 |
-| Remove 100 from a live 1,100-row layout       |       1.2 |          0.4 |               0.8 |               1.0 |
-| Remove first 100 from a live 1,100-row layout |      18.1 |          0.4 |               0.8 |               1.1 |
-| Subscribe 1,000 hover targets                 |       0.4 |          0.5 |               0.5 |               0.7 |
-| Deliver 1,000 hover events                    |       1.6 |          2.0 |               4.9 |               4.7 |
-| Destroy 5,000 plain rows                      |       1.7 |          1.3 |               0.9 |               1.2 |
+| Remove 100 from a live 1,100-row layout       |       1.1 |          0.4 |               0.8 |               1.0 |
+| Remove first 100 from a live 1,100-row layout |      17.9 |          0.4 |               0.9 |               1.1 |
+| Subscribe 1,000 hover targets                 |       0.5 |          0.5 |               0.5 |               0.7 |
+| Deliver 1,000 hover events                    |       1.6 |          1.5 |               4.3 |               4.5 |
+| Destroy 5,000 plain rows                      |       1.5 |          1.4 |               0.9 |               1.3 |
 | Destroy 1,000 subscribed hover targets        |       0.7 |          0.6 |               0.3 |               0.3 |
-| 20 lifetimes × 100 subscribed rows            |      17.8 |         16.7 |               8.6 |               8.8 |
+| 20 lifetimes × 100 subscribed rows            |      17.2 |         16.8 |               8.9 |               9.1 |
 
 ## Main optimizations and compatibility
 
@@ -66,7 +66,7 @@ Default sharing and hover registration are unaffected by this optimization. Earl
 
 ## Scope and reproduction
 
-Run npm ci --prefix benchmarks/comparison, then node benchmarks/comparison/run.mjs. Use --cases <comma-separated-case-ids> for focused runs, --baseline <local-git-ref>, --rounds <n>, --repetitions <n>, --cpu-throttle <integer>, and --out <path.json> to vary the run. The baseline must exist locally. The runner builds the same benchmark against an exported Git source tree and the current source, alternates version/runtime order, checks observable results, and removes temporary builds after completion.
+Run npm ci --prefix benchmarks/comparison, then node benchmarks/comparison/run.mjs. Use --cases <comma-separated-case-ids> for focused runs, --baseline <local-git-ref>, --rounds <n>, --repetitions <n>, --cpu-throttle <integer>, and --out <path.json> to vary the run. The baseline must exist locally. The runner builds the same benchmark against an exported Git source tree and the current source, alternates version order and rotates runtime scheduling, checks observable results, and removes temporary builds after completion. Each runtime gets a fresh page per round so React activity cannot change FrameKit's page history. Only the FrameKit pages run the compatibility audit, identically for both versions. Process scheduling and system load can still affect timings.
 
 React root cases use keyed plain rows with one flushSync per complete operation. Local cases use per-row state. The observer and resource cases require per-row effects in both React variants. Text compares FrameKit TextLabel against an equivalent div/span rendering, not a recreation of all FrameKit text features. Hover delivery is programmatic native/synthetic event dispatch, not real pointer-to-paint latency. The manual three-setter case performs three synchronous FrameKit transactions; the React operation stays batched.
 

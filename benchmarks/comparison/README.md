@@ -13,6 +13,7 @@ node benchmarks/comparison/run.mjs
 ```
 
 The runner builds both versions in production mode, serves them on an ephemeral local port,
+uses a fresh page per version/runtime/round to keep FrameKit's page history matched,
 checks geometry/identity/notifications/cleanup, and writes [results.json](results.json) and
 [results.md](results.md). The default baseline is `13bbf6d`, immediately before the DOM-order optimization. It already
 includes the earlier text and incremental-layout optimizations. It must be present in local Git history. Useful options:
@@ -45,3 +46,6 @@ Its edits remain synchronous and still splice hierarchy/render-order arrays; the
 constant-time operations. Changes to sorting, layout settings, or explicit child order rebuild
 FrameKit layout output. Construction, text rendering, and repeated lifetimes
 still include FrameKit feature overhead. See the report for measured differences and limitations.
+
+See [the regression audit](regression.md) for all before/after median and p95 changes,
+the identical-source controls, and the investigation of the earlier mixed-runtime results.
