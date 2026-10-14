@@ -1,4 +1,12 @@
-import { color3FromRGB, createFrame, udim2, udim2FromScale, vector2 } from 'framekit';
+import {
+  color3FromRGB,
+  createFrame,
+  createUIGridLayout,
+  udim2,
+  udim2FromOffset,
+  udim2FromScale,
+  vector2,
+} from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
 import { resetDocumentAfterEach } from '../support/reset-document.js';
@@ -6,6 +14,40 @@ import { resetDocumentAfterEach } from '../support/reset-document.js';
 resetDocumentAfterEach();
 
 describe('frames', () => {
+  it('keeps prepared defaults independent across instances, documents, tags, and destruction', () => {
+    const firstDocument = document.implementation.createHTMLDocument();
+    const secondDocument = document.implementation.createHTMLDocument();
+    const first = createFrame(
+      { TagName: 'article', Size: udim2FromOffset(240, 80), Rotation: 45, Visible: false },
+      { ownerDocument: firstDocument },
+    );
+    const parent = createFrame({}, { ownerDocument: firstDocument });
+    createUIGridLayout({ CellSize: udim2FromOffset(75, 30) }).Parent = parent;
+    first.Parent = parent;
+    expect(first.unsafeElement.style.width).toBe('100%');
+    first.Parent = undefined;
+    expect(first.unsafeElement.style.width).toBe('240px');
+    first.destroy();
+    parent.destroy();
+
+    const second = createFrame({ TagName: 'article' }, { ownerDocument: firstDocument });
+    const third = createFrame({}, { ownerDocument: secondDocument });
+    expect(second.unsafeElement.ownerDocument).toBe(firstDocument);
+    expect(second.unsafeElement.tagName).toBe('ARTICLE');
+    expect(third.unsafeElement.ownerDocument).toBe(secondDocument);
+    expect(third.unsafeElement.tagName).toBe('DIV');
+    expect(second.unsafeElement).not.toBe(third.unsafeElement);
+    for (const frame of [second, third]) {
+      expect(frame.unsafeElement.style.width).toBe('100px');
+      expect(frame.unsafeElement.style.height).toBe('100px');
+      expect(frame.unsafeElement.style.getPropertyValue('rotate')).toBe('0deg');
+      expect(frame.unsafeElement.style.display).toBe('');
+      expect(frame.Parent).toBeUndefined();
+      expect(frame.isDestroyed()).toBe(false);
+      frame.destroy();
+    }
+  });
+
   it('uses a creation-only semantic host tag', () => {
     const defaultFrame = createFrame();
     const article = createFrame({ TagName: 'article' });

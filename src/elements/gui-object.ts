@@ -99,7 +99,9 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
   capabilities,
 }: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
   element.dataset.framekit = className;
-  Object.assign(element.style, { position: 'absolute', boxSizing: 'border-box', margin: '0' });
+  setStyle(element, 'position', 'absolute');
+  setStyle(element, 'box-sizing', 'border-box');
+  setStyle(element, 'margin', '0');
 
   return createGuiNode({
     className,

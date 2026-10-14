@@ -1,4 +1,5 @@
 import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
+import { createStyledElementFactory } from '#internal/dom/styles.js';
 import type { GuiElement } from '#internal/runtime/node/gui-node.js';
 import { assertAllowedValue } from '#internal/validation.js';
 
@@ -43,6 +44,28 @@ const defaultFrameProperties: Readonly<FrameProperties> = Object.freeze({
   ...createDefaultGuiObjectProperties(),
   Name: 'Frame',
 });
+const frameTemplates = new WeakMap<Document, Map<FrameTagName, () => HTMLElement>>();
+
+function createFrameElement(ownerDocument: Document, tagName: FrameTagName): HTMLElement {
+  let templates = frameTemplates.get(ownerDocument);
+  if (!templates) {
+    templates = new Map();
+    frameTemplates.set(ownerDocument, templates);
+  }
+  let createElement = templates.get(tagName);
+  if (!createElement) {
+    const node = createGuiObjectNode({
+      className: 'Frame',
+      element: ownerDocument.createElement(tagName),
+      defaultProperties: defaultFrameProperties,
+      initialProperties: {},
+    });
+    createElement = createStyledElementFactory(node.unsafeElement);
+    node.destroy();
+    templates.set(tagName, createElement);
+  }
+  return createElement();
+}
 
 /** Creates a rectangular GUI container. */
 export function createFrame(initialProperties: FrameOptions = {}, options: DomOptions = {}): Frame {
@@ -50,7 +73,7 @@ export function createFrame(initialProperties: FrameOptions = {}, options: DomOp
   assertAllowedValue(TagName, frameTagNames, 'Frame TagName');
   return createGuiObjectNode({
     className: 'Frame',
-    element: resolveOwnerDocument(options).createElement(TagName),
+    element: createFrameElement(resolveOwnerDocument(options), TagName),
     defaultProperties: defaultFrameProperties,
     initialProperties: properties,
   }) as Frame;

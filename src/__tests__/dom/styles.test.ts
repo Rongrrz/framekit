@@ -1,6 +1,66 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
-import { removeStyle, setStyle, setStyleLayer } from '#internal/dom/styles.js';
+import {
+  createStyledElementFactory,
+  removeStyle,
+  setStyle,
+  setStyleLayer,
+} from '#internal/dom/styles.js';
+
+it('captures default styles independently and lets instances remove inherited owners', () => {
+  const template = document.createElement('div');
+  template.style.paddingLeft = '7px';
+  setStyle(template, 'width', '10px');
+  setStyleLayer(template, 'modifier', { width: '30px', 'padding-left': '12px' });
+  const createElement = createStyledElementFactory(template);
+  setStyle(template, 'width', '40px');
+  setStyleLayer(template, 'modifier', {});
+  const first = createElement();
+  const second = createElement();
+  expect(first.style.width).toBe('30px');
+  expect(first.style.paddingLeft).toBe('12px');
+  setStyle(first, 'width', '20px');
+  setStyleLayer(first, 'modifier', {});
+  expect(first.style.width).toBe('20px');
+  expect(first.style.paddingLeft).toBe('7px');
+  expect(second.style.width).toBe('30px');
+  removeStyle(first, 'width');
+  expect(first.style.width).toBe('');
+  setStyleLayer(first, 'layout', { width: '50px' });
+  setStyleLayer(first, 'layout', {});
+  expect(first.style.width).toBe('');
+  setStyle(first, 'width', '10px');
+  expect(first.style.width).toBe('10px');
+  expect(template.style.width).toBe('40px');
+  expect(createElement().style.width).toBe('30px');
+});
+
+it('retries a failed base write without confusing inherited rendered defaults', () => {
+  const template = document.createElement('div');
+  setStyle(template, 'width', '10px');
+  const element = createStyledElementFactory(template)();
+  const failure = vi.spyOn(element.style, 'setProperty').mockImplementationOnce(() => {
+    throw new Error('Write failed');
+  });
+  expect(() => setStyle(element, 'width', '20px')).toThrow('Write failed');
+  setStyle(element, 'width', '20px');
+  expect(element.style.width).toBe('20px');
+  failure.mockRestore();
+});
+
+it('captures inherited style defaults when preparing another generation of elements', () => {
+  const template = document.createElement('div');
+  setStyle(template, 'width', '10px');
+  const first = createStyledElementFactory(template)();
+  setStyle(first, 'height', '20px');
+  removeStyle(first, 'width');
+  const second = createStyledElementFactory(first)();
+  setStyleLayer(second, 'layout', { height: '30px', width: '40px' });
+  setStyleLayer(second, 'layout', {});
+  expect(second.style.width).toBe('');
+  expect(second.style.height).toBe('20px');
+  expect(first.style.height).toBe('20px');
+});
 
 it('keeps initially empty owners independent across elements and repeated removal', () => {
   const first = document.createElement('div');

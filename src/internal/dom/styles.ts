@@ -1,30 +1,77 @@
 export type StyleLayer = 'modifier' | 'layout' | 'parent-layout';
 export type StyleValues = Readonly<{ [property: string]: string | undefined }>;
+type StyleRecord = Record<string, string | undefined>;
 
 type ElementStyleState = {
-  base: Record<string, string>;
+  base: StyleRecord;
   modifier: StyleValues;
   layout: StyleValues;
   'parent-layout': StyleValues;
-  fallback: Record<string, string>;
-  rendered: Record<string, string>;
+  fallback: StyleRecord;
+  rendered: StyleRecord;
 };
 
 const stylesByElement = new WeakMap<HTMLElement, ElementStyleState>();
 // Derived layers are replaced as a whole, so unused layers can share one immutable record.
 const emptyStyles: StyleValues = Object.freeze(Object.create(null) as Record<string, string>);
 
+/** Captures detached default styles, then creates elements with independent override records. */
+export function createStyledElementFactory<Element extends HTMLElement>(
+  template: Element,
+): () => Element {
+  const prototype = template.cloneNode(false) as Element;
+  const state = stylesByElement.get(template);
+  // These private snapshots are never written. Writable descriptors let instance records
+  // shadow inherited defaults by normal assignment without per-property defineProperty calls.
+  const defaults = state && {
+    ...state,
+    base: copyStyleRecord(state.base),
+    fallback: copyStyleRecord(state.fallback),
+    rendered: copyStyleRecord(state.rendered),
+  };
+  return () => {
+    const element = prototype.cloneNode(false) as Element;
+    if (defaults) {
+      stylesByElement.set(element, {
+        ...defaults,
+        base: Object.create(defaults.base) as StyleRecord,
+        fallback: Object.create(defaults.fallback) as StyleRecord,
+        rendered: Object.create(defaults.rendered) as StyleRecord,
+      });
+    }
+    return element;
+  };
+}
+
+function copyStyleRecord(values: StyleRecord): StyleRecord {
+  const copy = Object.create(null) as StyleRecord;
+  for (const property in values) {
+    copy[property] = values[property];
+  }
+  return copy;
+}
+
+function clearStyleValue(values: StyleRecord, property: string): void {
+  delete values[property];
+  // Removing an inherited default needs an explicit shadow, or it would become visible again.
+  if (values[property] !== undefined) {
+    values[property] = undefined;
+  }
+}
+
 /** Updates one base style while preserving any active modifier or layout override. */
 export function setStyle(element: HTMLElement, property: string, value: string): void {
   const state = getStyleState(element);
-  state.base[property] = value;
+  if (state.base[property] !== value) {
+    state.base[property] = value;
+  }
   renderResolvedProperty(element, state, property);
 }
 
 /** Removes one base style and reveals the next owned layer or original inline value. */
 export function removeStyle(element: HTMLElement, property: string): void {
   const state = getStyleState(element);
-  delete state.base[property];
+  clearStyleValue(state.base, property);
   renderResolvedProperty(element, state, property);
 }
 
@@ -94,7 +141,7 @@ function renderResolvedProperty(
       return;
     }
     element.style.removeProperty(property);
-    delete state.rendered[property];
+    clearStyleValue(state.rendered, property);
     return;
   }
   if (state.rendered[property] === value) {

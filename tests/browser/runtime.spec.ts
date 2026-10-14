@@ -7,6 +7,69 @@ test.beforeEach(async ({ page }) => {
   await page.waitForFunction(() => Boolean(window.framekit));
 });
 
+test('prepared Frame defaults remain independent through layout, updates, and destruction', async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    const { createScreenGui, createFrame, createUIGridLayout, udim2FromOffset } = window.framekit;
+    const gui = createScreenGui();
+    const parent = createFrame({ Size: udim2FromOffset(300, 200) });
+    parent.Parent = gui;
+    createUIGridLayout({ CellSize: udim2FromOffset(75, 30) }).Parent = parent;
+    const first = createFrame({
+      TagName: 'article',
+      Size: udim2FromOffset(240, 80),
+      Position: udim2FromOffset(20, 30),
+    });
+    first.Parent = parent;
+    gui.mount('#root');
+    const arranged = first.AbsoluteSize;
+    first.Parent = gui;
+    const restored = first.AbsoluteSize;
+    const restoredPosition = first.AbsolutePosition;
+    let calls = 0;
+    first.onMouseEnter(() => {
+      calls += 1;
+    });
+    first.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
+    first.setProperties({ Size: udim2FromOffset(400, 90), Visible: false, Rotation: 45 });
+    first.destroy();
+    first.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
+    const second = createFrame({ TagName: 'article' });
+    second.Parent = gui;
+    second.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
+    const third = createFrame({ TagName: 'article', Size: udim2FromOffset(50, 40) });
+    third.Parent = gui;
+    third.Size = udim2FromOffset(60, 45);
+    const result = {
+      arranged,
+      restored,
+      restoredPosition,
+      calls,
+      defaults: second.AbsoluteSize,
+      updated: third.AbsoluteSize,
+      visible: second.Visible,
+      rotation: second.unsafeElement.style.rotate,
+      tag: second.unsafeElement.tagName,
+      separateElements: second.unsafeElement !== third.unsafeElement,
+    };
+    gui.destroy();
+    return result;
+  });
+  expect(result).toEqual({
+    arranged: { X: 75, Y: 30 },
+    restored: { X: 240, Y: 80 },
+    restoredPosition: { X: 20, Y: 30 },
+    calls: 1,
+    defaults: { X: 100, Y: 100 },
+    updated: { X: 60, Y: 45 },
+    visible: true,
+    rotation: '0deg',
+    tag: 'ARTICLE',
+    separateElements: true,
+  });
+});
+
 test('lays out real children and synchronizes native scroll position', async ({ page }) => {
   const result = await page.evaluate(() => {
     const {
