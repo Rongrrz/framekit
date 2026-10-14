@@ -1,8 +1,9 @@
 # Expanded production comparison
 
-The latest [follow-up results](followup-results.md) and [chart](followup-comparison.png) compare
-the text/style improvements with `a48fd64`, the starting point for that work. They include the
-profiling findings, rejected experiments, all 23 cases, and changes in median and p95 timings.
+The latest [construction results](construction-results.md) and [chart](construction-comparison.png)
+compare prepared Frame styles with `b1f67fe`. They include all 23 cases, median/p95 changes,
+first-use costs, rejected variants, and the regression investigation.
+The earlier [text/style results](followup-results.md) retain their profiling findings and measurements.
 The earlier DOM-order [regression audit](regression.md) remains a separate historical report.
 
 This isolated package compares FrameKit with pinned React 19.3.0 without adding React to the
@@ -41,7 +42,7 @@ python3 benchmarks/comparison/plot.py benchmarks/comparison/results.json \
   --output benchmarks/comparison/comparison
 ```
 
-![Expanded benchmark comparison](comparison.png)
+![Expanded benchmark comparison](construction-comparison.png)
 
 The matrix intentionally retains unfavorable cases and measures edits at both ends of a list.
 Prepending gives new FrameKit rows LayoutOrder -1 ahead of existing rows at 0; React prepends the
