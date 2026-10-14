@@ -30,14 +30,11 @@ export function syncTextStrokeHost(
   renderedFontSize: string,
 ): void {
   host.dataset.framekitTextContent = properties.Text;
-  host.style.fontFamily = properties.FontFamily;
-  host.style.fontWeight = String(properties.FontWeight);
-  host.style.fontSize = renderedFontSize;
-  host.style.whiteSpace = properties.TextWrapped ? 'pre-wrap' : 'pre';
-  host.style.textAlign = properties.TextXAlignment.toLowerCase();
-  host.style.setProperty(
-    textStrokeJustifyProperty,
-    horizontalFlexAlignment[properties.TextXAlignment],
-  );
-  host.style.setProperty(textStrokeAlignProperty, verticalFlexAlignment[properties.TextYAlignment]);
+  setStyle(host, 'font-family', properties.FontFamily);
+  setStyle(host, 'font-weight', String(properties.FontWeight));
+  setStyle(host, 'font-size', renderedFontSize);
+  setStyle(host, 'white-space', properties.TextWrapped ? 'pre-wrap' : 'pre');
+  setStyle(host, 'text-align', properties.TextXAlignment.toLowerCase());
+  setStyle(host, textStrokeJustifyProperty, horizontalFlexAlignment[properties.TextXAlignment]);
+  setStyle(host, textStrokeAlignProperty, verticalFlexAlignment[properties.TextYAlignment]);
 }

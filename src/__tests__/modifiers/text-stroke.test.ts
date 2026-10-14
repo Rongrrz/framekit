@@ -7,11 +7,31 @@ import {
 } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
+import { createStyleModifier } from '#internal/runtime/node/modifier.js';
+
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();
 
 describe('text strokes', () => {
+  it('preserves typography style owners during text edits and restores the current base', () => {
+    const label = createTextLabel({ Text: 'Before', TextSize: 18 });
+    const font = createStyleModifier('HostFont', { Name: 'HostFont' }, () => ({
+      'font-size': '30px',
+      'font-family': 'serif',
+    }));
+    font.Parent = label;
+
+    label.setProperties({ Text: 'After', TextSize: 24, FontFamily: 'monospace' });
+
+    expect(label.unsafeElement.style.fontSize).toBe('30px');
+    expect(label.unsafeElement.style.fontFamily).toBe('serif');
+    font.destroy();
+    expect(label.unsafeElement.style.fontSize).toBe('24px');
+    expect(label.unsafeElement.style.fontFamily).toBe('monospace');
+    label.destroy();
+  });
+
   it.each([createTextLabel, createTextButton])(
     'keeps the outline active through text and typography edits (%#)',
     (createText) => {
