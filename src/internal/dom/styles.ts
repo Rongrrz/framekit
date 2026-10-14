@@ -3,14 +3,16 @@ export type StyleValues = Readonly<{ [property: string]: string | undefined }>;
 
 type ElementStyleState = {
   base: Record<string, string>;
-  modifier: Record<string, string>;
-  layout: Record<string, string>;
-  'parent-layout': Record<string, string>;
+  modifier: StyleValues;
+  layout: StyleValues;
+  'parent-layout': StyleValues;
   fallback: Record<string, string>;
   rendered: Record<string, string>;
 };
 
 const stylesByElement = new WeakMap<HTMLElement, ElementStyleState>();
+// Derived layers are replaced as a whole, so unused layers can share one immutable record.
+const emptyStyles: StyleValues = Object.freeze(Object.create(null) as Record<string, string>);
 
 /** Updates one base style while preserving any active modifier or layout override. */
 export function setStyle(element: HTMLElement, property: string, value: string): void {
@@ -31,15 +33,18 @@ export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: S
   const state = getStyleState(element);
   const previousStyles = state[layer];
   const properties = Object.keys(styles);
-  const nextStyles = Object.create(null) as Record<string, string>;
-
-  for (const property of properties) {
-    const value = styles[property];
-    if (value === undefined) {
-      continue;
+  let nextStyles = emptyStyles;
+  if (properties.length > 0) {
+    const definedStyles = Object.create(null) as Record<string, string>;
+    for (const property of properties) {
+      const value = styles[property];
+      if (value === undefined) {
+        continue;
+      }
+      captureFallback(element, state, property);
+      definedStyles[property] = value;
     }
-    captureFallback(element, state, property);
-    nextStyles[property] = value;
+    nextStyles = definedStyles;
   }
   state[layer] = nextStyles;
   for (const property of Object.keys(previousStyles)) {
@@ -59,9 +64,9 @@ function getStyleState(element: HTMLElement): ElementStyleState {
   }
   const created: ElementStyleState = {
     base: Object.create(null) as Record<string, string>,
-    modifier: Object.create(null) as Record<string, string>,
-    layout: Object.create(null) as Record<string, string>,
-    'parent-layout': Object.create(null) as Record<string, string>,
+    modifier: emptyStyles,
+    layout: emptyStyles,
+    'parent-layout': emptyStyles,
     fallback: Object.create(null) as Record<string, string>,
     rendered: Object.create(null) as Record<string, string>,
   };

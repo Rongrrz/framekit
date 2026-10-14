@@ -2,6 +2,25 @@ import { expect, it } from 'vitest';
 
 import { removeStyle, setStyle, setStyleLayer } from '#internal/dom/styles.js';
 
+it('keeps initially empty owners independent across elements and repeated removal', () => {
+  const first = document.createElement('div');
+  const second = document.createElement('div');
+  setStyle(first, 'width', '10px');
+  setStyle(second, 'width', '20px');
+  for (const layer of ['modifier', 'layout', 'parent-layout'] as const) {
+    setStyleLayer(first, layer, { width: '30px' });
+    expect(first.style.width).toBe('30px');
+    expect(second.style.width).toBe('20px');
+    setStyleLayer(second, layer, { width: '40px' });
+    setStyleLayer(first, layer, {});
+    setStyleLayer(first, layer, {});
+    expect(first.style.width).toBe('10px');
+    expect(second.style.width).toBe('40px');
+    setStyleLayer(second, layer, {});
+    expect(second.style.width).toBe('20px');
+  }
+});
+
 it('restores the next style owner and original inline values as layers are removed', () => {
   const element = document.createElement('div');
   element.style.paddingLeft = '7px';
