@@ -20,10 +20,10 @@ export function createStyledElementFactory<Element extends HTMLElement>(
   template: Element,
 ): () => Element {
   const prototype = template.cloneNode(false) as Element;
-  const state = stylesByElement.get(template);
+  const state = getStyleState(template);
   // These private snapshots are never written. Writable descriptors let instance records
   // shadow inherited defaults by normal assignment without per-property defineProperty calls.
-  const defaults = state && {
+  const defaults = {
     ...state,
     base: copyStyleRecord(state.base),
     fallback: copyStyleRecord(state.fallback),
@@ -31,14 +31,12 @@ export function createStyledElementFactory<Element extends HTMLElement>(
   };
   return () => {
     const element = prototype.cloneNode(false) as Element;
-    if (defaults) {
-      stylesByElement.set(element, {
-        ...defaults,
-        base: Object.create(defaults.base) as StyleRecord,
-        fallback: Object.create(defaults.fallback) as StyleRecord,
-        rendered: Object.create(defaults.rendered) as StyleRecord,
-      });
-    }
+    stylesByElement.set(element, {
+      ...defaults,
+      base: Object.create(defaults.base) as StyleRecord,
+      fallback: Object.create(defaults.fallback) as StyleRecord,
+      rendered: Object.create(defaults.rendered) as StyleRecord,
+    });
     return element;
   };
 }

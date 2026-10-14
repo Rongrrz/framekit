@@ -7,6 +7,17 @@ import {
   setStyleLayer,
 } from '#internal/dom/styles.js';
 
+it('preserves unmanaged inline defaults through cloned layout overrides', () => {
+  const template = document.createElement('div');
+  template.style.width = '10px';
+  const createElement = createStyledElementFactory(template);
+  const first = createElement();
+  setStyleLayer(first, 'layout', { width: '20px' });
+  setStyleLayer(first, 'layout', {});
+  expect(first.style.width).toBe('10px');
+  expect(createElement().style.width).toBe('10px');
+});
+
 it('captures default styles independently and lets instances remove inherited owners', () => {
   const template = document.createElement('div');
   template.style.paddingLeft = '7px';
