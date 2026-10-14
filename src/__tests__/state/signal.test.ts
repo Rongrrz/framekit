@@ -2,6 +2,25 @@ import { createSignalEmitter } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('signals', () => {
+  it.each([{ failure: undefined }, { failure: null }, { failure: false }, { failure: 0 }])(
+    'preserves a thrown $failure value while notifying later listeners',
+    ({ failure }) => {
+      expect.assertions(2);
+      const event = createSignalEmitter();
+      const later = vi.fn();
+      event.subscribe(() => {
+        throw failure;
+      });
+      event.subscribe(later);
+      try {
+        event.emit();
+      } catch (error) {
+        expect(error).toBe(failure);
+      }
+      expect(later).toHaveBeenCalledOnce();
+    },
+  );
+
   it('preserves nested emissions when a sole listener replaces itself', () => {
     const event = createSignalEmitter<[number]>();
     const received: string[] = [];
