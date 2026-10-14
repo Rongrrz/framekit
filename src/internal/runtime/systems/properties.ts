@@ -121,7 +121,11 @@ function preparePropertyPatch<Properties extends InstanceProperties>(
   requestedProperties: readonly (keyof Properties)[] = Object.keys(patch) as (keyof Properties)[],
 ): Properties {
   validatePropertyPatch(state.properties, patch, requestedProperties);
-  const nextProperties = { ...state.properties, ...patch };
+  const nextProperties = requestedProperties.every((property) =>
+    Object.is(state.properties[property], patch[property]),
+  )
+    ? state.properties
+    : { ...state.properties, ...patch };
   state.validateProperties?.(nextProperties, requestedProperties);
   validateModifierRelationships(state, nextProperties);
   return nextProperties;
@@ -186,6 +190,10 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   const nextProperties = preparePropertyPatch(state, patch, requestedProperties);
 
   const previousProperties = state.properties;
+  // Validation still runs for unchanged writes; their write events can cancel animations.
+  if (nextProperties === previousProperties) {
+    return;
+  }
   const changedProperties = new Set(
     requestedProperties.filter(
       (property) => !Object.is(previousProperties[property], patch[property]),

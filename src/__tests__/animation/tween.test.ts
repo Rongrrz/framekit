@@ -15,6 +15,31 @@ const { advance } = setupAnimationClock();
 const trackNode = destroyNodesAfterEach();
 
 describe('tweens', () => {
+  it.each(['setter', 'patch'])(
+    'lets an unchanged %s write cancel playback without a change event',
+    (mode) => {
+      const frame = trackNode(createFrame({ Rotation: 0 }));
+      const tween = createTween(frame, { Duration: 1 }, { Rotation: 90 });
+      const changed = vi.fn();
+      const completed = vi.fn();
+      frame.onPropertyChanged('Rotation', changed);
+      tween.completed.subscribe(completed);
+      tween.play();
+      frame.setProperties({});
+      expect(tween.playbackState()).toBe('Playing');
+      if (mode === 'setter') {
+        frame.Rotation = 0;
+      } else {
+        frame.setProperties({ Rotation: 0 });
+      }
+      expect(tween.playbackState()).toBe('Cancelled');
+      expect(completed).toHaveBeenCalledExactlyOnceWith('Cancelled');
+      expect(changed).not.toHaveBeenCalled();
+      advance(1000);
+      expect(frame.Rotation).toBe(0);
+    },
+  );
+
   it('rejects discrete goals at runtime and snapshots structured goals at creation', () => {
     const frame = trackNode(createFrame());
     const position = { X: { Scale: 0, Offset: 100 }, Y: { Scale: 0, Offset: 40 } };

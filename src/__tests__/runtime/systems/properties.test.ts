@@ -4,6 +4,32 @@ import { describe, expect, it, vi } from 'vitest';
 import { createStyleModifier } from '#internal/runtime/node/modifier.js';
 
 describe('node properties', () => {
+  it('still validates attached modifiers when a patch keeps the current values', () => {
+    const frame = createFrame();
+    let acceptsTarget = true;
+    const modifier = createStyleModifier(
+      'Guard',
+      { Name: 'Guard' },
+      () => ({ 'border-radius': '4px' }),
+      undefined,
+      () => {
+        if (!acceptsTarget) {
+          throw new Error('Target rejected');
+        }
+      },
+    );
+    modifier.Parent = frame;
+    acceptsTarget = false;
+    const changed = vi.fn();
+    frame.onPropertyChanged('Rotation', changed);
+    expect(() => (frame.Rotation = 0)).toThrow('Target rejected');
+    expect(() => frame.setProperties({ Rotation: 0 })).toThrow('Target rejected');
+    expect(frame.Rotation).toBe(0);
+    expect(frame.unsafeElement.style.borderRadius).toBe('4px');
+    expect(changed).not.toHaveBeenCalled();
+    frame.destroy();
+  });
+
   it('commits and renders an entire patch before notifying property observers', () => {
     const frame = createFrame({ Rotation: 0, Visible: true });
     const observedStates: unknown[] = [];
