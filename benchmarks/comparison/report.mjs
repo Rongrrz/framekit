@@ -45,7 +45,7 @@ export async function writeReport(report, path) {
 Library source: ${report.currentRevision}. Baseline: ${report.baselineRevision}.
 Measured: ${report.measuredAt}. ${report.environment.cpu}, Chromium ${report.environment.browser}, React ${report.environment.reactVersion}; production builds; CPU throttle ${report.environment.cpuThrottle}×.
 
-This run covers ${report.cases.length} scenarios. All values below are **milliseconds; lower is better**. They are medians of ${report.methodology.rounds} round medians, each with ${report.methodology.repetitions} measured repetitions after two warmups. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
+This run covers ${report.cases.length} scenarios. All values below are **milliseconds; lower is better**. They are medians of ${report.methodology.rounds} round medians, each with ${report.methodology.repetitions} measured repetitions after two warmups. Runtime isolation: ${report.methodology.runtimeIsolation ?? 'runtimes interleaved within each version page'}. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
 
 | Scenario | Before FK | Optimized FK | React root update | React local state |
 | --- | ---: | ---: | ---: | ---: |
@@ -86,7 +86,7 @@ Default sharing and hover registration are unaffected by this optimization. Earl
 
 ## Scope and reproduction
 
-Run npm ci --prefix benchmarks/comparison, then node benchmarks/comparison/run.mjs. Use --cases <comma-separated-case-ids> for focused runs, --baseline <local-git-ref>, --rounds <n>, --repetitions <n>, --cpu-throttle <integer>, and --out <path.json> to vary the run. The baseline must exist locally. The runner builds the same benchmark against an exported Git source tree and the current source, alternates version/runtime order, checks observable results, and removes temporary builds after completion.
+Run npm ci --prefix benchmarks/comparison, then node benchmarks/comparison/run.mjs. Use --cases <comma-separated-case-ids> for focused runs, --baseline <local-git-ref>, --rounds <n>, --repetitions <n>, --cpu-throttle <integer>, and --out <path.json> to vary the run. The baseline must exist locally. The runner builds the same benchmark against an exported Git source tree and the current source, alternates version order and rotates runtime scheduling, checks observable results, and removes temporary builds after completion. Each runtime gets a fresh page per round so React activity cannot change FrameKit's page history. Only the FrameKit pages run the compatibility audit, identically for both versions. Process scheduling and system load can still affect timings.
 
 React root cases use keyed plain rows with one flushSync per complete operation. Local cases use per-row state. The observer and resource cases require per-row effects in both React variants. Text compares FrameKit TextLabel against an equivalent div/span rendering, not a recreation of all FrameKit text features. Hover delivery is programmatic native/synthetic event dispatch, not real pointer-to-paint latency. The manual three-setter case performs three synchronous FrameKit transactions; the React operation stays batched.
 

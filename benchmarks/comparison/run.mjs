@@ -39,7 +39,9 @@ const temporary = await mkdtemp(join(tmpdir(), 'framekit-comparison-'));
 const oldSource = join(temporary, 'source');
 await mkdir(oldSource);
 execFileSync('tar', ['-x', '-C', oldSource], {
-  input: execFileSync('git', ['archive', baselineRevision, 'src'], { cwd: repository }),
+  input: execFileSync('git', ['archive', baselineRevision, 'src'], {
+    cwd: repository,
+  }),
 });
 const directories = {};
 for (const [variant, source] of [
@@ -82,8 +84,11 @@ const server = createServer(async (request, response) => {
     response
       .writeHead(200, {
         'content-type':
-          { '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css' }[extname(path)] ??
-          'application/octet-stream',
+          {
+            '.js': 'text/javascript',
+            '.html': 'text/html',
+            '.css': 'text/css',
+          }[extname(path)] ?? 'application/octet-stream',
         'cache-control': 'no-store',
       })
       .end(content);
@@ -101,50 +106,54 @@ const audits = {};
 try {
   for (let round = 0; round < rounds; round += 1) {
     for (const variant of round % 2 ? ['current', 'before'] : ['before', 'current']) {
-      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-      const errors = [];
-      page.on('pageerror', (error) => errors.push(error.message));
-      if (throttle !== 1) {
-        const client = await page.context().newCDPSession(page);
-        await client.send('Emulation.setCPUThrottlingRate', { rate: throttle });
-      }
-      await page.goto(`http://127.0.0.1:${port}/${variant}/index.html`);
-      await page.waitForFunction(() => Boolean(window.runComparisonCase));
-      definitions = await page.evaluate(() => window.comparisonCases);
-      if (requestedCases.length > 0) {
-        for (const id of requestedCases) {
-          if (!definitions.some((definition) => definition.id === id)) {
-            throw new Error(`Unknown benchmark case: ${id}`);
-          }
-        }
-        definitions = definitions.filter((definition) => requestedCases.includes(definition.id));
-      }
-      environment = await page.evaluate(() => window.comparisonEnvironment);
-      audits[variant] = await page.evaluate(() => window.compatibilityAudit());
       const results = [];
-      for (const definition of definitions) {
-        const runtimes =
-          variant === 'before' ? ['framekit'] : ['framekit', 'react-root', 'react-local'];
-        // Rotate runtime order to avoid consistently giving one implementation a warmer heap.
-        if (variant === 'current') {
-          runtimes.push(...runtimes.splice(0, round % runtimes.length));
+      const runtimes =
+        variant === 'before' ? ['framekit'] : ['framekit', 'react-root', 'react-local'];
+      // Balance scheduling while giving both FrameKit versions the same page history.
+      runtimes.push(...runtimes.splice(0, round % runtimes.length));
+      for (const runtime of runtimes) {
+        const page = await browser.newPage({
+          viewport: { width: 1440, height: 900 },
+        });
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+        if (throttle !== 1) {
+          const client = await page.context().newCDPSession(page);
+          await client.send('Emulation.setCPUThrottlingRate', {
+            rate: throttle,
+          });
         }
-        const row = [];
-        for (const runtime of runtimes) {
+        await page.goto(`http://127.0.0.1:${port}/${variant}/index.html`);
+        await page.waitForFunction(() => Boolean(window.runComparisonCase));
+        definitions = await page.evaluate(() => window.comparisonCases);
+        if (requestedCases.length > 0) {
+          for (const id of requestedCases) {
+            if (!definitions.some((definition) => definition.id === id)) {
+              throw new Error(`Unknown benchmark case: ${id}`);
+            }
+          }
+          definitions = definitions.filter((definition) => requestedCases.includes(definition.id));
+        }
+        environment = await page.evaluate(() => window.comparisonEnvironment);
+        if (runtime === 'framekit') {
+          audits[variant] = await page.evaluate(() => window.compatibilityAudit());
+        }
+        for (const definition of definitions) {
           const result = await page.evaluate(
             ({ id, runtime, repetitions }) => window.runComparisonCase(id, runtime, repetitions),
             { id: definition.id, runtime, repetitions },
           );
           results.push(result);
-          row.push(`${runtime}: ${result.medianMs} ms`);
+          console.log(
+            `${round + 1}/${rounds} ${variant} ${definition.id} | ${runtime}: ${result.medianMs} ms`,
+          );
         }
-        console.log(`${round + 1}/${rounds} ${variant} ${definition.id} | ${row.join(' | ')}`);
-      }
-      if (errors.length) {
-        throw new Error(errors.join('\n'));
+        if (errors.length) {
+          throw new Error(errors.join('\n'));
+        }
+        await page.close();
       }
       runs.push({ round: round + 1, variant, results });
-      await page.close();
     }
   }
   const benchmarkHash = createHash('sha256');
@@ -174,6 +183,7 @@ try {
       includesPaint: false,
       reactCommit: 'one flushSync per complete operation',
       reactCompiler: false,
+      runtimeIsolation: 'fresh page per version/runtime/round',
     },
     cases: definitions,
     audits,
