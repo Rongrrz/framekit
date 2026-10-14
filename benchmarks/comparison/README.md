@@ -1,8 +1,10 @@
 # Expanded production comparison
 
-The latest [construction results](construction-results.md) and [chart](construction-comparison.png)
-compare prepared Frame styles with `b1f67fe`. They include all 23 cases, median/p95 changes,
-first-use costs, rejected variants, and the regression investigation.
+The latest [runtime audit](runtime-audit.md), [generated timings](runtime-audit-results.md), and
+[chart](runtime-audit-comparison.png) compare allocation/clarity changes with `2620a6a`.
+They include all 23 cases, retained-heap and collectibility checks, rejected experiments,
+and full identical-source controls. The [construction results](construction-results.md)
+retain the earlier template measurements and first-use costs.
 The earlier [text/style results](followup-results.md) retain their profiling findings and measurements.
 The earlier DOM-order [regression audit](regression.md) remains a separate historical report.
 
@@ -21,7 +23,10 @@ node benchmarks/comparison/run.mjs
 The runner builds both versions in production mode, serves them on an ephemeral local port,
 uses a fresh page per version/runtime/round to keep FrameKit's page history matched,
 checks geometry/identity/notifications/cleanup, and writes [results.json](results.json) and
-[results.md](results.md). The default baseline is `13bbf6d`, immediately before the DOM-order optimization. It already
+[results.md](results.md). It captures the working library source before building, records source
+content hashes, and fingerprints the fixtures, runner, and statistical report policy.
+Generated reports contain measured facts; change-specific interpretation belongs in a separate audit.
+The default baseline is `13bbf6d`, immediately before the DOM-order optimization. It already
 includes the earlier text and incremental-layout optimizations. It must be present in local Git history. Useful options:
 
 ```sh
@@ -42,7 +47,7 @@ python3 benchmarks/comparison/plot.py benchmarks/comparison/results.json \
   --output benchmarks/comparison/comparison
 ```
 
-![Expanded benchmark comparison](construction-comparison.png)
+![Expanded benchmark comparison](runtime-audit-comparison.png)
 
 The matrix intentionally retains unfavorable cases and measures edits at both ends of a list.
 Prepending gives new FrameKit rows LayoutOrder -1 ahead of existing rows at 0; React prepends the
