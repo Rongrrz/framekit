@@ -34,7 +34,6 @@ export type GuiNodeState<Properties extends InstanceProperties = InstancePropert
     children: Instance[];
     canContainGuiChildren: boolean;
     capabilities: GuiCapabilities;
-    propertyNames: ReadonlySet<keyof Properties>;
     renderProperties: PropertyRenderer<Properties> | undefined;
     modifiers: Map<string, Modifier>;
   };

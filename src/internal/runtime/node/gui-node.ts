@@ -78,7 +78,6 @@ export function createGuiNode<Properties extends InstanceProperties>({
     children: [],
     canContainGuiChildren,
     capabilities: Object.freeze({ guiObject: false, displayText: false, ...capabilities }),
-    propertyNames,
     renderProperties,
     modifiers: new Map(),
   });
