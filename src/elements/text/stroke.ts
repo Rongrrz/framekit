@@ -1,3 +1,4 @@
+import { setStyle } from '#internal/dom/styles.js';
 import { installFrameKitStyles } from '#internal/dom/stylesheet.js';
 
 import {
@@ -17,13 +18,9 @@ const textStrokeJustifyProperty = '--framekit-text-stroke-justify';
 export function initializeTextStrokeHost(host: HTMLElement): void {
   installFrameKitStyles({ ownerDocument: host.ownerDocument });
   host.dataset.framekitTextStrokeHost = '';
-}
-
-/** Resets inherited stroke values before attached modifiers are rendered. */
-export function resetTextStrokeHost(host: HTMLElement): void {
-  host.style.setProperty(textStrokeColorProperty, 'transparent');
-  host.style.setProperty(textStrokeContentProperty, 'none');
-  host.style.setProperty(textStrokeWidthProperty, '0px');
+  setStyle(host, textStrokeColorProperty, 'transparent');
+  setStyle(host, textStrokeContentProperty, 'none');
+  setStyle(host, textStrokeWidthProperty, '0px');
 }
 
 /** Keeps the generated outline on the same font geometry as the visible text. */

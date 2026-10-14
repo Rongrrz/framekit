@@ -2,6 +2,53 @@ import { expect, test } from '@playwright/test';
 
 import type {} from './harness.js';
 
+test('text paint and outline survive edits and restore their defaults when removed', async ({
+  page,
+}) => {
+  await page.goto('/tests/browser/index.html');
+  await page.waitForFunction(() => Boolean(window.framekit));
+  const result = await page.evaluate(() => {
+    const { createScreenGui, createTextLabel, createUIGradient, createUITextStroke } =
+      window.framekit;
+    const gui = createScreenGui();
+    const label = createTextLabel({ Text: 'Before' });
+    label.Parent = gui;
+    const gradient = createUIGradient({ ApplyTo: 'Text' });
+    const stroke = createUITextStroke({ Thickness: 2 });
+    gradient.Parent = label;
+    stroke.Parent = label;
+    gui.mount('#root');
+    label.setProperties({ Text: 'After', TextSize: 24, FontFamily: 'monospace' });
+    const host = label.unsafeElement;
+    const text = host.querySelector<HTMLElement>('[data-framekit-text]')!;
+    const outline = getComputedStyle(host, '::before');
+    const active = {
+      text: text.textContent,
+      fill: getComputedStyle(text).webkitTextFillColor,
+      gradient: getComputedStyle(text).backgroundImage,
+      outline: outline.content,
+      width: outline.webkitTextStrokeWidth,
+      font: outline.fontSize,
+    };
+    gradient.destroy();
+    stroke.destroy();
+    const removed = {
+      fill: getComputedStyle(text).webkitTextFillColor,
+      gradient: getComputedStyle(text).backgroundImage,
+      outline: getComputedStyle(host, '::before').content,
+    };
+    gui.destroy();
+    return { active, removed };
+  });
+  expect(result.active.text).toBe('After');
+  expect(result.active.fill).toBe('rgba(0, 0, 0, 0)');
+  expect(result.active.gradient).toContain('linear-gradient');
+  expect(result.active.outline).toContain('After');
+  expect(result.active.width).toBe('2px');
+  expect(result.active.font).toBe('24px');
+  expect(result.removed).toEqual({ fill: 'rgb(0, 0, 0)', gradient: 'none', outline: 'none' });
+});
+
 test('scaled text still fits after resize and restores its explicit size when disabled', async ({
   page,
 }) => {

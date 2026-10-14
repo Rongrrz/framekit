@@ -17,13 +17,9 @@ import {
   createGuiObjectNode,
   type GuiObjectProperties,
 } from './gui-object.js';
-import { initializeTextGradient, resetTextGradientHost } from './text/gradient.js';
+import { initializeTextGradient } from './text/gradient.js';
 import { bindTextScaleResize } from './text/sizing.js';
-import {
-  initializeTextStrokeHost,
-  resetTextStrokeHost,
-  syncTextStrokeHost,
-} from './text/stroke.js';
+import { initializeTextStrokeHost, syncTextStrokeHost } from './text/stroke.js';
 import {
   createDefaultTextStyleProperties,
   hasTextStyleChange,
@@ -158,7 +154,7 @@ export function createTextNode<Properties extends TextLabelProperties>(
     margin: '0',
   });
   element.prepend(text);
-  initializeTextGradient(text);
+  initializeTextGradient(element, text);
   initializeTextStrokeHost(element);
 
   const node = createGuiObjectNode({
@@ -167,16 +163,11 @@ export function createTextNode<Properties extends TextLabelProperties>(
     defaultProperties,
     initialProperties,
     renderProperties: (properties, changedProperties) => {
-      const textChanged = hasTextStyleChange(changedProperties);
-      if (textChanged) {
-        resetTextGradientHost(element);
-        resetTextStrokeHost(element);
-      }
       if (changedProperties.has('Text')) {
         text.textContent = properties.Text;
       }
       renderTextStyle(text, properties, changedProperties);
-      if (textChanged) {
+      if (hasTextStyleChange(changedProperties)) {
         syncTextStrokeHost(element, properties, text.style.fontSize);
       }
       if (changedProperties.has('TextXAlignment')) {

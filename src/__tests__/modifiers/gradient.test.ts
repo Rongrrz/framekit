@@ -2,6 +2,7 @@ import {
   color3FromRGB,
   colorSequence,
   createFrame,
+  createTextButton,
   createTextLabel,
   createUIGradient,
   numberSequence,
@@ -16,6 +17,34 @@ import { resetDocumentAfterEach } from '../support/reset-document.js';
 resetDocumentAfterEach();
 
 describe('gradients', () => {
+  it.each([createTextLabel, createTextButton])(
+    'keeps text gradients active through text and paint edits (%#)',
+    (createText) => {
+      const label = createText({ Text: 'Before', TextColor3: color3FromRGB(255, 255, 255) });
+      const gradient = createUIGradient({
+        ApplyTo: 'Text',
+        Color: colorSequence(color3FromRGB(255, 0, 0), color3FromRGB(0, 0, 255)),
+      });
+      gradient.Parent = label;
+      const host = label.unsafeElement;
+      const initialImage = host.style.getPropertyValue('--framekit-text-gradient-image');
+
+      label.Text = 'After';
+      expect(host.style.getPropertyValue('--framekit-text-gradient-image')).toBe(initialImage);
+      expect(host.style.getPropertyValue('--framekit-text-gradient-fill')).toBe('transparent');
+
+      label.setProperties({ TextTransparency: 0.5, TextSize: 24 });
+      expect(host.style.getPropertyValue('--framekit-text-gradient-image')).toContain(
+        'rgb(255 0 0 / 0.5)',
+      );
+      expect(host.style.getPropertyValue('--framekit-text-gradient-fill')).toBe('transparent');
+      gradient.destroy();
+      expect(host.style.getPropertyValue('--framekit-text-gradient-image')).toBe('none');
+      expect(host.style.getPropertyValue('--framekit-text-gradient-fill')).toBe('currentcolor');
+      label.destroy();
+    },
+  );
+
   it('applies color and transparency sequences through UIGradient', () => {
     const frame = createFrame({ BackgroundColor3: color3FromRGB(255, 255, 255) });
     const gradient = createUIGradient({
