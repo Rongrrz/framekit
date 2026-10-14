@@ -2,13 +2,7 @@ import { throwCollectedErrors } from '#internal/errors.js';
 
 import type { GuiElement } from '../node/gui-node.js';
 import type { Instance } from '../node/instance.js';
-import {
-  getActiveNodeState,
-  getChildren,
-  getNodeState,
-  isGuiNode,
-  isModifierState,
-} from '../node/registry.js';
+import { getActiveNodeState, getChildren, getNodeState } from '../node/registry.js';
 import { unlinkNodeFromParent } from './hierarchy/mutation.js';
 import * as rendering from './rendering.js';
 
@@ -53,16 +47,10 @@ function destroyRecursively(
 
   if (state.parent) {
     const previousParent = unlinkNodeFromParent(node, state)!;
-    if (isModifierState(state) || rendering.hasLayoutModifier(previousParent)) {
-      try {
-        if (isGuiNode(node)) {
-          rendering.renderRemovedChild(previousParent, node);
-        } else {
-          rendering.renderDerivedStyles(previousParent);
-        }
-      } catch (error) {
-        errors.push(error);
-      }
+    try {
+      rendering.renderRemovedChild(previousParent, node);
+    } catch (error) {
+      errors.push(error);
     }
   }
 

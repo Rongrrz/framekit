@@ -83,16 +83,10 @@ const append = (parent: Instance, child: Instance): void => {
     unlinkNodeFromParent(child, childState);
     const insertionIndex = linkNodeToParent(parent, parentState, child, childState);
     placeChildElement(parent, parentState, child, insertionIndex);
-    if (previousParent && isGuiNode(child) && rendering.hasLayoutModifier(previousParent)) {
+    if (previousParent) {
       rendering.renderRemovedChild(previousParent, child);
-    } else if (previousParent && isModifierState(childState)) {
-      rendering.renderDerivedStyles(previousParent);
     }
-    if (isGuiNode(child) && rendering.hasLayoutModifier(parent)) {
-      rendering.renderInsertedChild(parent, child);
-    } else if (isModifierState(childState)) {
-      rendering.renderDerivedStyles(parent);
-    }
+    rendering.renderInsertedChild(parent, child);
   } catch (error) {
     if (childState.parent === parent) {
       unlinkNodeFromParent(child, childState);
@@ -141,11 +135,7 @@ const detach = (node: Instance): void => {
     if (isGuiNode(node)) {
       node.unsafeElement.remove();
     }
-    if (isGuiNode(node) && rendering.hasLayoutModifier(previousParent)) {
-      rendering.renderRemovedChild(previousParent, node);
-    } else if (isModifierState(state)) {
-      rendering.renderDerivedStyles(previousParent);
-    }
+    rendering.renderRemovedChild(previousParent, node);
   } catch (error) {
     if (state.parent !== previousParent) {
       const restoredIndex = linkNodeToParent(

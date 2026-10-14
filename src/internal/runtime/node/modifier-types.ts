@@ -40,7 +40,7 @@ export type LayoutChild = Readonly<{
 
 export type LayoutStyles = Readonly<{
   parent: Styles;
-  /** Shared placement rules; the renderer assigns each child's sorted rank. */
+  /** Shared placement rules; the renderer places children in sorted DOM order. */
   child: Styles;
   compareChildren: (left: LayoutChild, right: LayoutChild) => number;
 }>;

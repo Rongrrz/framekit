@@ -11,22 +11,9 @@ type RenderedLayout = Pick<LayoutStyles, 'child' | 'compareChildren'> & {
   children: GuiElement[];
 };
 
-// Derived layout output belongs to the renderer. Hierarchy and property changes rebuild it;
-// inserting one child can reuse it without resolving or rewriting every sibling.
+// An entry exists while a GUI node has a resolved layout. Only this renderer owns the cache;
+// modifiers, sort-key changes, reorders, and rollback rebuild it before later child edits.
 const layoutsByNode = new WeakMap<Instance, RenderedLayout>();
-
-export function hasLayoutModifier(node: Instance): boolean {
-  const state = getNodeState(node);
-  if (state.kind !== 'gui') {
-    return false;
-  }
-  for (const modifier of state.modifiers.values()) {
-    if (getNodeState(modifier).kind === 'layout') {
-      return true;
-    }
-  }
-  return false;
-}
 
 /** Renders the node surfaces affected by a committed property change. */
 export function renderPropertyChanges<Properties extends InstanceProperties>(
@@ -51,7 +38,7 @@ export function renderPropertyChanges<Properties extends InstanceProperties>(
   if (state.kind === 'gui') {
     renderNode(node, changedProperties);
   }
-  if (state.parent && affectsParentLayout(changedProperties) && hasLayoutModifier(state.parent)) {
+  if (state.parent && affectsParentLayout(changedProperties) && layoutsByNode.has(state.parent)) {
     renderLayouts(state.parent);
   }
 }
@@ -176,11 +163,14 @@ export function releaseLayout(node: Instance): void {
   layoutsByNode.delete(node);
 }
 
-/** Places an appended GUI child synchronously, preserving stable equal-key ordering. */
-export function renderInsertedChild(parent: Instance, child: GuiElement): void {
+/** Reconciles an attached modifier or inserts a GUI child into the resolved layout. */
+export function renderInsertedChild(parent: Instance, child: Instance): void {
+  if (!isGuiNode(child)) {
+    renderDerivedStyles(parent);
+    return;
+  }
   const layout = layoutsByNode.get(parent);
   if (!layout) {
-    renderDerivedStyles(parent);
     return;
   }
   const properties = getLayoutChildProperties(child);
@@ -206,11 +196,18 @@ export function renderInsertedChild(parent: Instance, child: GuiElement): void {
   );
 }
 
-/** Drops a departed child and restores its positioning without rewriting survivors. */
-export function renderRemovedChild(parent: Instance, child: GuiElement): void {
+/** Reconciles a departed modifier or restores a GUI child's own placement rules. */
+export function renderRemovedChild(parent: Instance, child: Instance): void {
+  if (!isGuiNode(child)) {
+    renderDerivedStyles(parent);
+    return;
+  }
   const layout = layoutsByNode.get(parent);
-  const index = layout?.children.indexOf(child) ?? -1;
-  if (!layout || index < 0) {
+  if (!layout) {
+    return;
+  }
+  const index = layout.children.indexOf(child);
+  if (index < 0) {
     renderDerivedStyles(parent);
     return;
   }

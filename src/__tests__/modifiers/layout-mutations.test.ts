@@ -10,6 +10,54 @@ resetDocumentAfterEach();
 describe.each([createUIListLayout, createUIGridLayout])(
   'active layout mutations (%#)',
   (createLayout) => {
+    it('keeps placement current when the last layout moves between parents or is destroyed', () => {
+      const source = createFrame();
+      const destination = createFrame();
+      const sourceLast = createFrame({ LayoutOrder: 2 });
+      const sourceFirst = createFrame({ LayoutOrder: 0 });
+      sourceLast.Parent = source;
+      sourceFirst.Parent = source;
+      const destinationLast = createFrame({ LayoutOrder: 3 });
+      const destinationFirst = createFrame({ LayoutOrder: 1 });
+      destinationLast.Parent = destination;
+      destinationFirst.Parent = destination;
+      const layout = createLayout();
+      layout.Parent = source;
+
+      layout.Parent = destination;
+
+      expect([...source.unsafeElement.children]).toEqual([
+        sourceLast.unsafeElement,
+        sourceFirst.unsafeElement,
+      ]);
+      expect(sourceFirst.unsafeElement.style.position).toBe('absolute');
+      const plain = createFrame({ LayoutOrder: -1 });
+      plain.Parent = source;
+      expect(source.unsafeElement.lastElementChild).toBe(plain.unsafeElement);
+      expect(plain.unsafeElement.style.position).toBe('absolute');
+
+      const arranged = createFrame({ LayoutOrder: 2 });
+      arranged.Parent = destination;
+      sourceFirst.Parent = destination;
+      expect([...destination.unsafeElement.children]).toEqual(
+        [sourceFirst, destinationFirst, arranged, destinationLast].map((row) => row.unsafeElement),
+      );
+      expect(sourceFirst.unsafeElement.style.position).toBe('relative');
+
+      layout.destroy();
+      sourceLast.Parent = destination;
+      expect([...destination.unsafeElement.children]).toEqual(
+        [destinationLast, destinationFirst, arranged, sourceFirst, sourceLast].map(
+          (row) => row.unsafeElement,
+        ),
+      );
+      for (const row of [destinationLast, destinationFirst, arranged, sourceFirst, sourceLast]) {
+        expect(row.unsafeElement.style.position).toBe('absolute');
+      }
+      source.destroy();
+      destination.destroy();
+    });
+
     it('keeps lower style orders from overriding layout and restores them on detachment', () => {
       const parent = createFrame();
       const first = createFrame({ LayoutOrder: 0 });
