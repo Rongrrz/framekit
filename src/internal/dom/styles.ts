@@ -62,9 +62,7 @@ function clearStyleValue(values: StyleRecord, property: string): void {
 /** Updates one base style while preserving any active modifier or layout override. */
 export function setStyle(element: HTMLElement, property: string, value: string): void {
   const state = getStyleState(element);
-  if (state.base[property] !== value) {
-    state.base[property] = value;
-  }
+  state.base[property] = value;
   renderResolvedProperty(element, state, property);
 }
 
