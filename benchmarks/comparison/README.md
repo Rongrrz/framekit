@@ -1,5 +1,10 @@
 # Expanded production comparison
 
+The latest [follow-up results](followup-results.md) and [chart](followup-comparison.png) compare
+the text/style improvements with `a48fd64`, the starting point for that work. They include the
+profiling findings, rejected experiments, all 23 cases, and changes in median and p95 timings.
+The earlier DOM-order [regression audit](regression.md) remains a separate historical report.
+
 This isolated package compares FrameKit with pinned React 19.3.0 without adding React to the
 library or Playground dependencies. It measures 23 scenarios: bulk creation, sparse/dense/no-op
 writes, grouped patches, text, modifiers, observers, keyed reversal, live-layout insertion/removal at both ends,

@@ -17,7 +17,7 @@ args = parser.parse_args()
 report = json.loads(args.results.read_text())
 rows = report["summary"]
 series = [
-    ("before", "Before DOM-order fix", "#9a9ca4", "o", -0.24),
+    ("before", "Baseline FrameKit", "#9a9ca4", "o", -0.24),
     ("current", "Current FrameKit", "#1766b5", "s", -0.08),
     ("reactRoot", "React root update", "#be651e", "^", 0.08),
     ("reactLocal", "React local state", "#7d409a", "D", 0.24),
@@ -48,7 +48,8 @@ ax.set_xlabel("Time relative to React root update (1×) · logarithmic scale · 
 ax.legend(loc="lower left", bbox_to_anchor=(0, 1.015), ncol=2, frameon=False)
 fig.suptitle("FrameKit / React: the expanded performance profile", x=0.03, ha="left", y=0.99, fontsize=17)
 fig.text(0.03, 0.945, f"{report['environment']['cpu']} · production Chromium · React {report['environment']['reactVersion']} · medians of {report['methodology']['rounds']} rounds", color="#555a62")
-fig.text(0.03, 0.025, "Relative times compare the same scenario only. Both front and tail layout edits are measured; see results.md.\nNative/synthetic hover, local-state bailouts, and immediate layout contracts differ; see results.md.", color="#555a62", fontsize=9)
+report_name = args.results.with_suffix(".md").name
+fig.text(0.03, 0.025, f"Relative times compare the same scenario only. Both front and tail layout edits are measured; see {report_name}.\nNative/synthetic hover, local-state bailouts, and immediate layout contracts differ; see {report_name}.", color="#555a62", fontsize=9)
 fig.subplots_adjust(left=0.34, right=0.98, top=0.87, bottom=0.1)
 args.output.parent.mkdir(parents=True, exist_ok=True)
 fig.savefig(args.output.with_suffix(".png"), dpi=160, facecolor="white")
