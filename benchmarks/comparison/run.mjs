@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdtemp, mkdir, rm } from 'node:fs/promises';
+import { cp, readFile, writeFile, mkdtemp, mkdir, readdir, rm, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { arch, cpus, platform, tmpdir } from 'node:os';
 import { dirname, extname, join, resolve, sep } from 'node:path';
@@ -35,6 +35,7 @@ const baselineRevision = git(
   `${baselineRef}^{commit}`,
 );
 const currentRevision = git('rev-parse', 'HEAD');
+const libraryWorkingTree = git('status', '--porcelain', '--', 'src');
 const temporary = await mkdtemp(join(tmpdir(), 'framekit-comparison-'));
 const oldSource = join(temporary, 'source');
 await mkdir(oldSource);
@@ -43,10 +44,35 @@ execFileSync('tar', ['-x', '-C', oldSource], {
     cwd: repository,
   }),
 });
+// Build the captured working source, so later edits cannot change an in-flight comparison.
+const currentSource = join(temporary, 'current-source');
+await cp(join(repository, 'src'), join(currentSource, 'src'), { recursive: true });
+const sourceSha256 = Object.fromEntries(
+  await Promise.all(
+    [
+      ['before', oldSource],
+      ['current', currentSource],
+    ].map(async ([variant, source]) => {
+      const root = join(source, 'src');
+      const hash = createHash('sha256');
+      for (const file of (await readdir(root, { recursive: true })).sort()) {
+        const path = join(root, file);
+        if ((await stat(path)).isFile()) {
+          hash
+            .update(file)
+            .update('\0')
+            .update(await readFile(path))
+            .update('\0');
+        }
+      }
+      return [variant, hash.digest('hex')];
+    }),
+  ),
+);
 const directories = {};
 for (const [variant, source] of [
   ['before', oldSource],
-  ['current', repository],
+  ['current', currentSource],
 ]) {
   directories[variant] = join(temporary, variant);
   await build({
@@ -157,14 +183,15 @@ try {
     }
   }
   const benchmarkHash = createHash('sha256');
-  for (const file of ['fixtures.js', 'suite.js', 'run.mjs']) {
+  for (const file of ['fixtures.js', 'suite.js', 'run.mjs', 'report.mjs']) {
     benchmarkHash.update(await readFile(join(directory, file)));
   }
   const report = {
     measuredAt: new Date().toISOString(),
     baselineRevision,
     currentRevision,
-    libraryWorkingTree: git('status', '--porcelain', '--', 'src'),
+    libraryWorkingTree,
+    sourceSha256,
     benchmarkSha256: benchmarkHash.digest('hex'),
     environment: {
       ...environment,

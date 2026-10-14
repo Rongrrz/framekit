@@ -1,4 +1,5 @@
 import { writeFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 
 const median = (values) =>
   [...values].sort((left, right) => left - right)[Math.floor(values.length / 2)];
@@ -31,66 +32,76 @@ export function summarize(report) {
   });
 }
 
+/** Reports only measured facts; interpretation of a particular change belongs in its audit. */
 export async function writeReport(report, path) {
   const summary = report.summary ?? summarize(report);
   const number = (value) => value.toFixed(1);
-  const rows = summary.map(
-    (entry) =>
-      `| ${entry.label} | ${number(entry.before.medianMs)} | ${number(entry.current.medianMs)} | ${number(entry.reactRoot.medianMs)} | ${number(entry.reactLocal.medianMs)} |`,
-  );
+  const rows = summary.map((entry) => {
+    const change =
+      entry.before.medianMs > 0
+        ? rounded(100 * (entry.current.medianMs / entry.before.medianMs - 1))
+        : undefined;
+    const percentage = change === undefined ? '—' : `${change >= 0 ? '+' : ''}${number(change)}%`;
+    return `| ${entry.label} | ${number(entry.before.medianMs)} | ${number(entry.current.medianMs)} | ${percentage} | ${number(entry.before.p95Ms)} → ${number(entry.current.p95Ms)} | ${number(entry.reactRoot.medianMs)} | ${number(entry.reactLocal.medianMs)} |`;
+  });
+  const samplesFile = basename(path.replace(/\.md$/, '.json'));
+  const sourceState = report.libraryWorkingTree
+    ? `Uncommitted library changes were included:\n\n\`\`\`text\n${report.libraryWorkingTree}\n\`\`\``
+    : 'The library source tree was clean.';
   await writeFile(
     path,
-    `# Expanded FrameKit / React performance profile
+    `# FrameKit / React performance comparison
 
-Library source: ${report.currentRevision}. Baseline: ${report.baselineRevision}.
-Measured: ${report.measuredAt}. ${report.environment.cpu}, Chromium ${report.environment.browser}, React ${report.environment.reactVersion}; production builds; CPU throttle ${report.environment.cpuThrottle}×.
+Current source HEAD: \`${report.currentRevision}\`. Baseline: \`${report.baselineRevision}\`.
+${sourceState}
 
-This run covers ${report.cases.length} scenarios. All values below are **milliseconds; lower is better**. They are medians of ${report.methodology.rounds} round medians, each with ${report.methodology.repetitions} measured repetitions after two warmups. Runtime isolation: ${report.methodology.runtimeIsolation ?? 'runtimes interleaved within each version page'}. Raw samples and pooled p95 values are in the JSON report. Sub-millisecond values are coarse diagnostics, not precise speed ratios.
+Captured source SHA-256: before ${report.sourceSha256?.before ?? 'not recorded'}; current ${report.sourceSha256?.current ?? 'not recorded'}.
 
-| Scenario | Before FK | Optimized FK | React root update | React local state |
-| --- | ---: | ---: | ---: | ---: |
+Measured ${report.measuredAt}. ${report.environment.cpu}, production Chromium ${report.environment.browser}, React ${report.environment.reactVersion}; CPU throttle ${report.environment.cpuThrottle}×.
+
+## Timings
+
+This run covers ${report.cases.length} scenarios. Milliseconds, lower is better. Medians are the median of ${report.methodology.rounds} round medians, each with ${report.methodology.repetitions} measured repetitions after ${report.methodology.warmups} warmups. p95 pools the measured samples. Negative changes mean less elapsed time, not increased throughput. Small timings and tails are noisy diagnostics, not confidence intervals or full-application rankings.
+
+| Scenario | Before FK | Current FK | Median change | p95 before → current | React root | React local |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
 ${rows.join('\n')}
 
-## Main optimizations and compatibility
+## Observed compatibility
 
-The default baseline already includes the earlier text-sizing and incremental-layout optimizations. This change removes the remaining duplicate CSS-rank work:
+These observations come from the fixture audit. They compare the requested versions and do not establish complete API compatibility.
 
-1. **Sorted DOM owns placement.** List/grid layouts already sorted DOM nodes for reading and tab order. Arranged children now share neutral CSS order 0, letting that same DOM order determine visual placement.
-2. **Edits leave survivors untouched.** Insertion applies placement rules only to the new child and moves it to the sorted DOM position. Removal restores only the departing child's own styles. The renderer no longer renumbers following siblings or allocates rank strings.
-3. **Layer restoration remains intact.** Neutral CSS order overrides lower style owners while a layout is active; detaching the layout restores their values. LayoutOrder and Name still determine sorting, with explicit hierarchy order breaking ties.
-
-Property writes and hierarchy edits remain synchronous. Layout settings, sort-key changes, explicit reorders, and rollback rebuild output. No batching API or deferred layout behavior is introduced. Focused tests cover immediate geometry, equal-key ordering, nested/composed layouts, failed placement, reentrant/failing cleanup, and surviving text selection in Chromium, Firefox, and WebKit. Focused cases also verify that front edits do not mutate surviving row attributes.
-
-The compatibility audit records the requested baseline's behavior:
-
-| Observation | Before | Optimized |
+| Observation | Before | Current |
 | --- | --- | --- |
-| Two untouched Frames share Size identity | ${report.audits.before.sharedDefaultSize} | ${report.audits.current.sharedDefaultSize} |
-| Two untouched Frames share Position identity | ${report.audits.before.sharedDefaultPosition} | ${report.audits.current.sharedDefaultPosition} |
+| Untouched Frames share Size identity | ${report.audits.before.sharedDefaultSize} | ${report.audits.current.sharedDefaultSize} |
+| Untouched Frames share Position identity | ${report.audits.before.sharedDefaultPosition} | ${report.audits.current.sharedDefaultPosition} |
 | Size and its axes are frozen | ${report.audits.before.frozenSize} | ${report.audits.current.frozenSize} |
-| Assigning one Frame's Size leaves the other unchanged | ${report.audits.before.independentSizeAfterAssignment} | ${report.audits.current.independentSizeAfterAssignment} |
-| Raw mouseenter listener registered before typed hover callback | ${report.audits.before.hoverOrderWhenRawSubscribedFirst.join(' → ')} | ${report.audits.current.hoverOrderWhenRawSubscribedFirst.join(' → ')} |
-| Inline CSS orders for a later/earlier pair | ${report.audits.before.layoutCssOrders?.join(', ') ?? 'not recorded'} | ${report.audits.current.layoutCssOrders?.join(', ') ?? 'not recorded'} |
+| Assigning one Size leaves the other unchanged | ${report.audits.before.independentSizeAfterAssignment} | ${report.audits.current.independentSizeAfterAssignment} |
+| Hover listener order when raw subscription comes first | ${report.audits.before.hoverOrderWhenRawSubscribedFirst.join(' → ')} | ${report.audits.current.hoverOrderWhenRawSubscribedFirst.join(' → ')} |
+| Inline CSS order for a later/earlier pair | ${report.audits.before.layoutCssOrders?.join(', ') ?? 'not recorded'} | ${report.audits.current.layoutCssOrders?.join(', ') ?? 'not recorded'} |
 | Earlier child is first in sorted DOM order | ${report.audits.before.sortedDomOrder ?? 'not recorded'} | ${report.audits.current.sortedDomOrder ?? 'not recorded'} |
 
-Inline CSS order is an observable implementation change: consumers inspecting unsafeElement now see 0 instead of a sequential rank. Public LayoutOrder values, visual/DOM/tab sorting, and synchronous geometry are preserved. Native scroll anchoring remains enabled; focused content can stay stationary as the browser adjusts its scroll position.
+## Measurement contracts
 
-Default sharing and hover registration are unaffected by this optimization. Earlier allocation optimizations shared frozen defaults and made hover listeners lazy; choosing an older baseline can expose identity and raw/typed listener-order differences in the audit above.
+- Runtime isolation: ${report.methodology.runtimeIsolation}. Version order alternates and runtime scheduling rotates. Process scheduling and system load still affect timing.
+- React root renders keyed rows from root state; React local uses per-row state. React receives ${report.methodology.reactCommit}. Observer/resource cases use per-row effects in both variants. FrameKit commits each property or hierarchy edit synchronously.
+- FrameKit no-op writes still validate and publish write events, allowing same-value assignments to interrupt animations. React local same-state updates can bail out without rendering.
+- Ordinary text compares FrameKit TextLabel with an equivalent div/span. Scaled/wrapped fitting and all text features are not reproduced.
+- Prepending places keyed rows before existing rows; FrameKit assigns the new rows LayoutOrder -1. Front and tail removal destroy the respective 100 rows in forward order. Immediate FrameKit edits still splice hierarchy/render-order arrays; these timings do not imply constant-time edits.
+- Hover compares programmatic native/synthetic event dispatch, not real pointer-to-paint latency.
+- ${report.methodology.layout} Includes paint: ${report.methodology.includesPaint}. React Compiler: ${report.methodology.reactCompiler}.
 
-## What the wider matrix reveals
+Hydration, network, retained-memory leaks, mobile hardware, and full application responsiveness are outside this matrix. No hardware-dependent timing thresholds run in CI. Raw samples, environment, revisions, audits, and the harness fingerprint are in [${samplesFile}](${samplesFile}).
 
-- Sparse updates and keyed reversal are useful FrameKit cases. Construction, text-host rendering, and repeated subscribed lifetimes still have measurable overhead.
-- **Text:** ordinary updates no longer force geometry reads. Scaled/wrapped fitting remains a separate, more expensive path that this ordinary-label case does not measure.
-- **Live-layout edits:** the matrix measures both ends. Tail removal destroys the final 100 rows in forward order; front removal destroys the first 100 in forward order. Prepending assigns new FrameKit rows LayoutOrder -1 ahead of the existing rows at 0; React prepends keyed DOM rows in one commit. FrameKit and React now both rely on sorted DOM order for placement. FrameKit still commits individual edits immediately and splices its hierarchy and rendered-order arrays, while React batches the operation. These cases do not imply constant-time arbitrary insertion/removal.
-- **Transaction semantics:** React batches each requested operation into one commit; FrameKit commits each individual edit immediately. No-op writes also differ: FrameKit validates and publishes its internal write event, allowing assignment to interrupt an animation. React same-state local updates can bail out without rendering.
+## Reproduction
 
-## Scope and reproduction
+From the repository root, with the benchmark dependencies and Playwright Chromium installed:
 
-Run npm ci --prefix benchmarks/comparison, then node benchmarks/comparison/run.mjs. Use --cases <comma-separated-case-ids> for focused runs, --baseline <local-git-ref>, --rounds <n>, --repetitions <n>, --cpu-throttle <integer>, and --out <path.json> to vary the run. The baseline must exist locally. The runner builds the same benchmark against an exported Git source tree and the current source, alternates version order and rotates runtime scheduling, checks observable results, and removes temporary builds after completion. Each runtime gets a fresh page per round so React activity cannot change FrameKit's page history. Only the FrameKit pages run the compatibility audit, identically for both versions. Process scheduling and system load can still affect timings.
+\`\`\`sh
+node benchmarks/comparison/run.mjs --baseline ${report.baselineRevision} --rounds ${report.methodology.rounds} --repetitions ${report.methodology.repetitions} --cpu-throttle ${report.environment.cpuThrottle} --cases ${report.cases.map((entry) => entry.id).join(',')} --out /tmp/comparison.json
+\`\`\`
 
-React root cases use keyed plain rows with one flushSync per complete operation. Local cases use per-row state. The observer and resource cases require per-row effects in both React variants. Text compares FrameKit TextLabel against an equivalent div/span rendering, not a recreation of all FrameKit text features. Hover delivery is programmatic native/synthetic event dispatch, not real pointer-to-paint latency. The manual three-setter case performs three synchronous FrameKit transactions; the React operation stays batched.
-
-Geometry-changing cases force layout; hover cases measure subscription or dispatch work. Painting, hydration, network load, retained-memory leaks, mobile hardware, long-running animation, and full application responsiveness are outside this matrix. React Compiler is disabled. There are no hardware-dependent timing assertions in CI.
+To repeat the same current source, check out its recorded revision and restore any recorded uncommitted changes. Use --cases for a comma-separated subset and --cpu-throttle for a positive integer throttle. The baseline must exist locally. The runner builds both sources in production mode, checks observable fixture results, and removes temporary builds when finished. This report does not attribute each timing difference to a particular code change.
 `,
   );
 }
