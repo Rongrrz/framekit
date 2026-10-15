@@ -1,11 +1,9 @@
-import { createRealmAbortController } from '#internal/dom/environment.js';
-import { setStyle } from '#internal/dom/styles.js';
 import { udim2FromOffset } from '#values/udim.js';
 import { vector2, type Vector2 } from '#values/vector2.js';
 
+import { createPanelMotion } from './motion.js';
 import { panelPosition } from './placement.js';
 import type { FloatingPanelPortal } from './portal.js';
-import { springPanel } from './transition.js';
 import type { PanelOptions } from './types.js';
 
 export type FloatingPanelController = Readonly<{
@@ -34,7 +32,7 @@ export const createFloatingPanelController = (
   portal: FloatingPanelPortal,
   options: PanelOptions,
 ): FloatingPanelController => {
-  const { target, content, document, window, panel, layerElement } = portal;
+  const { target, content, document, window, panel } = portal;
   const popover = options.kind === 'popover';
   const followCursor = options.kind === 'tooltip' && options.followCursor;
   const hoverEnabled = !popover || options.openOn === 'hover';
@@ -51,8 +49,7 @@ export const createFloatingPanelController = (
   let pointer: Vector2 | undefined;
   let timer: number | undefined;
   let frame: number | undefined;
-  let transition: Readonly<{ controller: AbortController; showing: boolean }> | undefined;
-  const springMotion = { value: 0, velocity: 0 };
+  const motion = createPanelMotion(portal, options, () => hideImmediately());
 
   // Pointer clicks may leave DOM focus behind. Only focus-visible keeps a tooltip open.
   const hasFocus = (): boolean =>
@@ -63,12 +60,6 @@ export const createFloatingPanelController = (
         document.activeElement?.matches(':focus-visible') === true;
   const active = (): boolean => pinned || (hoverEnabled && (hovered || panelHovered || hasFocus()));
 
-  const stopTransition = (): void => {
-    const previous = transition;
-    transition = undefined;
-    previous?.controller.abort();
-  };
-
   const hideImmediately = (): void => {
     window.clearTimeout(timer);
     timer = undefined;
@@ -76,7 +67,7 @@ export const createFloatingPanelController = (
       window.cancelAnimationFrame(frame);
     }
     frame = undefined;
-    stopTransition();
+    motion.cancel();
     portal.hide();
     panelHovered = false;
     portal.setExpanded(false);
@@ -119,51 +110,10 @@ export const createFloatingPanelController = (
       return;
     }
     // A closing cursor panel fades at its last position rather than jumping back to the trigger.
-    if (!position(transition?.showing !== false)) {
+    if (!position(motion.showing !== false)) {
       return;
     }
     frame = window.requestAnimationFrame(track);
-  };
-
-  const runTransition = (showing: boolean): void => {
-    if (transition?.showing === showing) {
-      return;
-    }
-    stopTransition();
-    const current = { controller: createRealmAbortController(target), showing };
-    transition = current;
-    const hook = showing ? options.onShow : options.onHide;
-    const finish = (): void => {
-      if (disposed || transition !== current || current.controller.signal.aborted) {
-        return;
-      }
-      if (!showing) {
-        hideImmediately();
-      }
-    };
-    const fail = (error: unknown): void => {
-      if (current.controller.signal.aborted || transition !== current) {
-        return;
-      }
-      finish();
-      window.console.error('Floating panel animation hook failed.', error);
-    };
-    try {
-      if (hook) {
-        springMotion.velocity = 0;
-        setStyle(layerElement, 'opacity', '1');
-      }
-      const result = hook
-        ? hook({ content, signal: current.controller.signal })
-        : springPanel(layerElement, showing, current.controller.signal, window, springMotion);
-      if (!result) {
-        finish();
-      } else {
-        void result.then(finish, fail);
-      }
-    } catch (error) {
-      fail(error);
-    }
   };
 
   const show = (): void => {
@@ -173,8 +123,7 @@ export const createFloatingPanelController = (
     }
     content.Visible = true;
     if (!portal.isVisible()) {
-      springMotion.velocity = 0;
-      setStyle(layerElement, 'opacity', options.onShow ? '1' : '0');
+      motion.prepare();
       portal.show();
     }
     portal.setExpanded(true);
@@ -184,7 +133,7 @@ export const createFloatingPanelController = (
     if (frame === undefined) {
       frame = window.requestAnimationFrame(track);
     }
-    runTransition(true);
+    motion.run(true);
   };
 
   const hide = (): void => {
@@ -193,7 +142,7 @@ export const createFloatingPanelController = (
       return;
     }
     portal.setExpanded(false);
-    runTransition(false);
+    motion.run(false);
   };
 
   const update = (): void => {
@@ -201,7 +150,7 @@ export const createFloatingPanelController = (
     timer = undefined;
     if (active() && !dismissed) {
       if (portal.isVisible()) {
-        if (transition?.showing === false) {
+        if (motion.showing === false) {
           show();
         } else {
           position();
