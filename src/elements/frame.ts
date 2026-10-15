@@ -76,5 +76,6 @@ export function createFrame(initialProperties: FrameOptions = {}, options: DomOp
     element: createFrameElement(resolveOwnerDocument(options), TagName),
     defaultProperties: defaultFrameProperties,
     initialProperties: properties,
+    initialRenderProperties: Object.keys(properties) as (keyof FrameProperties)[],
   }) as Frame;
 }

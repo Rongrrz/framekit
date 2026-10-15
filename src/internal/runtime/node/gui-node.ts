@@ -54,6 +54,7 @@ type GuiNodeOptions<Properties extends InstanceProperties> = {
   canHaveParent?: boolean;
   canContainGuiChildren?: boolean;
   capabilities?: Partial<GuiCapabilities>;
+  initialRenderProperties?: readonly (keyof Properties)[] | undefined;
 };
 
 /** Creates the handle, registers its validated state, then performs the initial render. */
@@ -67,8 +68,11 @@ export function createGuiNode<Properties extends InstanceProperties>({
   canHaveParent = true,
   canContainGuiChildren = true,
   capabilities = {},
+  initialRenderProperties,
 }: GuiNodeOptions<Properties>): GuiElement<Properties> {
-  const propertyNames = new Set(Object.keys(properties) as (keyof Properties)[]);
+  const propertyNames = new Set(
+    initialRenderProperties ?? (Object.keys(properties) as (keyof Properties)[]),
+  );
   const node = createNodeHandle(properties, getGuiMethodTable(methods), {
     unsafeElement: element,
   }) as GuiElement<Properties>;

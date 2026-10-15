@@ -84,6 +84,8 @@ type GuiObjectNodeOptions<Properties extends GuiObjectProperties> = {
   validateProperties?: PropertyValidator<Properties> | undefined;
   canContainGuiChildren?: boolean;
   capabilities?: Partial<GuiCapabilities>;
+  /** Prepared DOM and style state already contain every property outside this list. */
+  initialRenderProperties?: readonly (keyof Properties)[] | undefined;
 };
 
 /** Combines shared GUI behavior with an element's own rendering and validation. */
@@ -97,11 +99,14 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
   validateProperties,
   canContainGuiChildren = true,
   capabilities,
+  initialRenderProperties,
 }: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
-  element.dataset.framekit = className;
-  setStyle(element, 'position', 'absolute');
-  setStyle(element, 'box-sizing', 'border-box');
-  setStyle(element, 'margin', '0');
+  if (initialRenderProperties === undefined) {
+    element.dataset.framekit = className;
+    setStyle(element, 'position', 'absolute');
+    setStyle(element, 'box-sizing', 'border-box');
+    setStyle(element, 'margin', '0');
+  }
 
   return createGuiNode({
     className,
@@ -118,6 +123,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
     methods,
     canContainGuiChildren,
     capabilities: { guiObject: true, ...capabilities },
+    initialRenderProperties,
   });
 }
 
