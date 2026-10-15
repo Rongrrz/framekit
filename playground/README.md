@@ -1,7 +1,7 @@
 # Playground
 
-Run `npm ci` and `npm run dev`, then open the URL printed by Vite. The documentation site and
-`collections.html` consume the same FrameKit source as applications. Production builds omit
+Run `npm ci` and `npm run dev`, then open the URL printed by Vite. The documentation site,
+`collections.html`, and `inbox.html` consume the same FrameKit source as applications. Production builds omit
 the inspector integration.
 
 ## Documentation routes
@@ -15,6 +15,7 @@ the inspector integration.
 | `#/state`     | Owned values, computed state, signals, keyed children, virtual lists            |
 | `#/lifecycle` | Tree ownership, detach/unmount/destroy, external cleanup, property transactions |
 | `#/animation` | Springs, tweens, playback, competing property writers, reduced motion           |
+| `#/controls`  | Command menus, native dialogs, tree navigation, and binding disposal            |
 | `#/overlays`  | Tooltip/popover ownership and interactive examples                              |
 | `#/devtools`  | Launch options, shortcuts, picking, window controls, snapshots                  |
 | `#/api`       | A short API map linking to the appropriate chapters                             |
@@ -31,8 +32,10 @@ and opening another tab. Route changes update the title and move focus to the ar
 - `page-shell.ts` owns native scrolling. Content height comes from normal document flow.
 - `site.css` owns fluid site layout, reading widths, and responsive rails; it never styles devtools.
 - `theme.ts` owns palettes, font stacks, typography, theme persistence, and immediate palette switching.
-- `components/docs-shell.ts` owns article flow, topic navigation, outline, code blocks, and reading links.
-- `components/reference-content.ts` holds the focused API chapters; `reference-page.ts` renders them.
+- `components/docs-shell.ts` owns the page rails and topic navigation.
+- `components/docs-article.ts` owns article flow, sections, examples, outlines, and reading links.
+- `components/reference/` holds one API chapter per topic; `reference-content.ts` registers them
+  and `reference-page.ts` renders them.
 - `guide-page.ts`, `home.ts`, and `overlays-page.ts` own their specialized content and examples.
 
 The site uses Avenir Next when available, with Avenir and system sans fallbacks; code uses a
@@ -50,7 +53,7 @@ Closing restores focus; destroying the root removes the binding and its resource
 `collections.html` renders 100,000 data rows with a bounded virtual window. Insert at the top
 to try scroll anchoring, or use End to select the last row without mounting every view.
 
-Both entries are included in production builds. Keep local validation focused on affected unit
+All three entries are included in production builds. Keep local validation focused on affected unit
 and Chromium cases; CI runs the complete browser matrix.
 
 The `#/controls` chapter demonstrates command menus, native modal dialogs, tree keyboard
