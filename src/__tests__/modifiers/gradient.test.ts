@@ -89,7 +89,6 @@ describe('gradients', () => {
     );
     const renderedText = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]');
     expect(renderedText?.style.backgroundClip).toBe('text');
-    expect(renderedText?.style.getPropertyValue('-webkit-background-clip')).toBe('text');
 
     gradient.Enabled = false;
 

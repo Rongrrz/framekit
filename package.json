@@ -63,19 +63,19 @@
     "check:all": "npm run check && npm run test:all && npm run build:all && npm run test:package"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.0.0",
-    "@commitlint/config-conventional": "^21.0.0",
-    "@playwright/test": "^1.64.0",
-    "@types/node": "^24.12.2",
-    "happy-dom": "^20.11.6",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "happy-dom": "^20.14.6",
     "husky": "^9.1.7",
-    "oxfmt": "^0.50.0",
-    "oxlint": "^1.65.0",
+    "oxfmt": "^0.73.0",
+    "oxlint": "^1.88.0",
     "prettier": "^3.9.10",
     "shiki": "^4.5.0",
-    "typescript": "~6.0.2",
-    "vite": "^8.2.2",
-    "vitest": "^3.2.4"
+    "typescript": "~6.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
   },
   "commitlint": {
     "extends": [

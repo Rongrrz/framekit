@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 24]
+        node-version: [22, 24]
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -71,3 +71,14 @@ jobs:
           name: browser-test-results
           path: test-results/
           retention-days: 7
+
+  security:
+    name: Dependency advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm audit --audit-level=high
+      - run: npm audit --audit-level=high --prefix benchmarks/comparison

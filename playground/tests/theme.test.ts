@@ -74,7 +74,7 @@ describe('document theme', () => {
   );
 
   it('falls back to system preference when storage reads fail and to dark without matchMedia', () => {
-    vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('denied');
     });
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
@@ -110,7 +110,7 @@ describe('document theme', () => {
   );
 
   it('keeps switching usable when storage writes fail', () => {
-    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('denied');
     });
     const owner = createFrame();
