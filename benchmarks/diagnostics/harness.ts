@@ -1,5 +1,11 @@
 import { lifetimeSummary, runLifetime, sampleDocuments } from './lifecycle.js';
 import { createSearchApplication } from './responsiveness.js';
+import {
+  prepareRuntimeProfile,
+  runRuntimeProfile,
+  verifyRuntimeProfile,
+  disposeRuntimeProfile,
+} from './runtime.js';
 
 type InputTiming = Readonly<{
   kind: 'filter' | 'scroll';
@@ -82,6 +88,10 @@ const resetResponsiveness = (): void => {
   longTasks.length = 0;
 };
 const diagnostics = {
+  prepareRuntimeProfile,
+  runRuntimeProfile,
+  verifyRuntimeProfile,
+  disposeRuntimeProfile,
   runLifetime,
   sampleDocuments,
   lifetimeSummary,

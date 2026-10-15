@@ -93,6 +93,19 @@ for (const [variant, source] of [
     build: { outDir: directories[variant], emptyOutDir: true, minify: true },
   });
 }
+const builtJavaScriptSha256 = Object.fromEntries(
+  await Promise.all(
+    Object.entries(directories).map(async ([variant, root]) => {
+      const hash = createHash('sha256');
+      for (const file of (await readdir(root, { recursive: true })).sort()) {
+        if (file.endsWith('.js')) {
+          hash.update(await readFile(join(root, file)));
+        }
+      }
+      return [variant, hash.digest('hex')];
+    }),
+  ),
+);
 const server = createServer(async (request, response) => {
   try {
     const [, variant, ...parts] = new URL(request.url, 'http://localhost').pathname.split('/');
@@ -192,6 +205,7 @@ try {
     currentRevision,
     libraryWorkingTree,
     sourceSha256,
+    builtJavaScriptSha256,
     benchmarkSha256: benchmarkHash.digest('hex'),
     environment: {
       ...environment,

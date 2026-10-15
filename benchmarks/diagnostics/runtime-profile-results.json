@@ -1,0 +1,838 @@
+{
+  "mode": "runtime",
+  "measuredAt": "2026-10-15T23:17:52.101Z",
+  "revision": "2dac13b92f7cb6a3c640327eb6bbbdf275d7d980",
+  "workingTree": "M benchmarks/diagnostics/harness.ts\n M benchmarks/diagnostics/run.mjs\n M src/helpers/virtual-list.ts\n?? benchmarks/diagnostics/runtime.ts",
+  "sourceSha256": "70ad4414db59cb26ec7be801138bd195c3c2812317047041cfd45a2f617333e9",
+  "environment": {
+    "browser": "156.0.8078.4",
+    "cpu": "Apple M5",
+    "platform": "darwin",
+    "cpuThrottle": 1
+  },
+  "methodology": {
+    "production": true,
+    "minified": false,
+    "profiling": "Unminified production code, 100 microsecond CPU sampling; setup, verification, and GC outside recording. Timings include profiler overhead. Sample counts are not weighted CPU percentages.",
+    "repetitions": 3,
+    "warmupLifetimes": 0,
+    "eventTiming": "Native keyboard/pointer PerformanceEventTiming: browser next-paint duration, quantized and thresholded at 16 ms; not an INP score.",
+    "presentationEstimate": "Event timestamp to second requestAnimationFrame; includes a rendering opportunity, not a precise paint timestamp.",
+    "memory": "Chromium JS heap and DOM/listener counters after two external full GCs. Weak references test sampled objects only; native/process memory is excluded.",
+    "timingThresholds": false
+  },
+  "results": {
+    "cases": [
+      {
+        "kind": "patch",
+        "round": 1,
+        "count": 1000,
+        "elapsedMs": 96.59999999403954,
+        "operations": 31000,
+        "totalSamples": 767,
+        "topSamples": [
+          {
+            "function": "getBoundingClientRect",
+            "line": 0,
+            "samples": 277
+          },
+          {
+            "function": "setProperty",
+            "line": 0,
+            "samples": 76
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 55
+          },
+          {
+            "function": "isImmutableSnapshot",
+            "line": 157,
+            "samples": 47
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 40
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 30
+          },
+          {
+            "function": "renderGuiObject",
+            "line": 1830,
+            "samples": 25
+          },
+          {
+            "function": "applyPropertyPatch",
+            "line": 541,
+            "samples": 19
+          },
+          {
+            "function": "renderResolvedProperty",
+            "line": 349,
+            "samples": 19
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 18
+          },
+          {
+            "function": "setNodeProperties",
+            "line": 533,
+            "samples": 14
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 12
+          },
+          {
+            "function": "setStyle",
+            "line": 304,
+            "samples": 11
+          },
+          {
+            "function": "runRuntimeProfile",
+            "line": 5756,
+            "samples": 10
+          },
+          {
+            "function": "getStyleState",
+            "line": 329,
+            "samples": 9
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 8
+          },
+          {
+            "function": "setProperty",
+            "line": 0,
+            "samples": 8
+          },
+          {
+            "function": "isImmutableSnapshot",
+            "line": 157,
+            "samples": 7
+          },
+          {
+            "function": "renderProperties",
+            "line": 1813,
+            "samples": 7
+          },
+          {
+            "function": "preparePropertyPatch",
+            "line": 572,
+            "samples": 6
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/patch-1.cpuprofile"
+      },
+      {
+        "kind": "patch",
+        "round": 2,
+        "count": 1000,
+        "elapsedMs": 95,
+        "operations": 31000,
+        "totalSamples": 745,
+        "topSamples": [
+          {
+            "function": "getBoundingClientRect",
+            "line": 0,
+            "samples": 274
+          },
+          {
+            "function": "setProperty",
+            "line": 0,
+            "samples": 60
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 49
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 38
+          },
+          {
+            "function": "isImmutableSnapshot",
+            "line": 157,
+            "samples": 29
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 28
+          },
+          {
+            "function": "setProperty",
+            "line": 0,
+            "samples": 24
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 22
+          },
+          {
+            "function": "runRuntimeProfile",
+            "line": 5756,
+            "samples": 21
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 19
+          },
+          {
+            "function": "isImmutableSnapshot",
+            "line": 157,
+            "samples": 17
+          },
+          {
+            "function": "renderProperties",
+            "line": 1813,
+            "samples": 15
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 13
+          },
+          {
+            "function": "renderResolvedProperty",
+            "line": 349,
+            "samples": 11
+          },
+          {
+            "function": "preparePropertyPatch",
+            "line": 572,
+            "samples": 11
+          },
+          {
+            "function": "renderGuiObject",
+            "line": 1830,
+            "samples": 10
+          },
+          {
+            "function": "udim",
+            "line": 700,
+            "samples": 10
+          },
+          {
+            "function": "preparePropertyPatch",
+            "line": 572,
+            "samples": 8
+          },
+          {
+            "function": "applyPropertyPatch",
+            "line": 541,
+            "samples": 7
+          },
+          {
+            "function": "validatePropertyPatch",
+            "line": 602,
+            "samples": 7
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/patch-2.cpuprofile"
+      },
+      {
+        "kind": "patch",
+        "round": 3,
+        "count": 1000,
+        "elapsedMs": 92.20000000298023,
+        "operations": 31000,
+        "totalSamples": 726,
+        "topSamples": [
+          {
+            "function": "getBoundingClientRect",
+            "line": 0,
+            "samples": 275
+          },
+          {
+            "function": "setProperty",
+            "line": 0,
+            "samples": 90
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 62
+          },
+          {
+            "function": "snapshotValue",
+            "line": 133,
+            "samples": 54
+          },
+          {
+            "function": "isImmutableSnapshot",
+            "line": 157,
+            "samples": 38
+          },
+          {
+            "function": "renderGuiObject",
+            "line": 1830,
+            "samples": 35
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 25
+          },
+          {
+            "function": "renderProperties",
+            "line": 1813,
+            "samples": 20
+          },
+          {
+            "function": "renderResolvedProperty",
+            "line": 349,
+            "samples": 19
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 15
+          },
+          {
+            "function": "preparePropertyPatch",
+            "line": 572,
+            "samples": 15
+          },
+          {
+            "function": "commitPropertyPatch",
+            "line": 611,
+            "samples": 13
+          },
+          {
+            "function": "setNodeProperties",
+            "line": 533,
+            "samples": 11
+          },
+          {
+            "function": "applyPropertyPatch",
+            "line": 541,
+            "samples": 10
+          },
+          {
+            "function": "setStyle",
+            "line": 304,
+            "samples": 5
+          },
+          {
+            "function": "(anonymous)",
+            "line": 616,
+            "samples": 5
+          },
+          {
+            "function": "udim",
+            "line": 700,
+            "samples": 5
+          },
+          {
+            "function": "emitPropertyChanges",
+            "line": 651,
+            "samples": 4
+          },
+          {
+            "function": "udim2",
+            "line": 709,
+            "samples": 4
+          },
+          {
+            "function": "validatePropertyPatch",
+            "line": 602,
+            "samples": 3
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/patch-3.cpuprofile"
+      },
+      {
+        "kind": "destroy",
+        "round": 1,
+        "count": 50000,
+        "elapsedMs": 14.599999994039536,
+        "operations": 50000,
+        "totalSamples": 122,
+        "topSamples": [
+          {
+            "function": "remove",
+            "line": 0,
+            "samples": 46
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 33
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 10
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 9
+          },
+          {
+            "function": "(idle)",
+            "line": 0,
+            "samples": 6
+          },
+          {
+            "function": "contains",
+            "line": 0,
+            "samples": 6
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 4
+          },
+          {
+            "function": "releaseLayout",
+            "line": 478,
+            "samples": 3
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 3
+          },
+          {
+            "function": "evaluate",
+            "line": 364,
+            "samples": 1
+          },
+          {
+            "function": "getBoundingClientRect",
+            "line": 0,
+            "samples": 1
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/destroy-1.cpuprofile"
+      },
+      {
+        "kind": "destroy",
+        "round": 2,
+        "count": 50000,
+        "elapsedMs": 13.299999997019768,
+        "operations": 50000,
+        "totalSamples": 112,
+        "topSamples": [
+          {
+            "function": "remove",
+            "line": 0,
+            "samples": 44
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 27
+          },
+          {
+            "function": "releaseLayout",
+            "line": 478,
+            "samples": 11
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 10
+          },
+          {
+            "function": "(idle)",
+            "line": 0,
+            "samples": 5
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 5
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 4
+          },
+          {
+            "function": "contains",
+            "line": 0,
+            "samples": 2
+          },
+          {
+            "function": "evaluate",
+            "line": 364,
+            "samples": 1
+          },
+          {
+            "function": "getNodeState",
+            "line": 50,
+            "samples": 1
+          },
+          {
+            "function": "serialize",
+            "line": 203,
+            "samples": 1
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 1
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/destroy-2.cpuprofile"
+      },
+      {
+        "kind": "destroy",
+        "round": 3,
+        "count": 50000,
+        "elapsedMs": 13,
+        "operations": 50000,
+        "totalSamples": 109,
+        "topSamples": [
+          {
+            "function": "remove",
+            "line": 0,
+            "samples": 42
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 29
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 13
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 6
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 5
+          },
+          {
+            "function": "(idle)",
+            "line": 0,
+            "samples": 5
+          },
+          {
+            "function": "releaseLayout",
+            "line": 478,
+            "samples": 4
+          },
+          {
+            "function": "contains",
+            "line": 0,
+            "samples": 1
+          },
+          {
+            "function": "getNodeState",
+            "line": 50,
+            "samples": 1
+          },
+          {
+            "function": "getNodeState",
+            "line": 50,
+            "samples": 1
+          },
+          {
+            "function": "querySelector",
+            "line": 0,
+            "samples": 1
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 1
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/destroy-3.cpuprofile"
+      },
+      {
+        "kind": "destroy-resources",
+        "round": 1,
+        "count": 50000,
+        "elapsedMs": 34.29999999701977,
+        "operations": 50000,
+        "totalSamples": 275,
+        "topSamples": [
+          {
+            "function": "clear",
+            "line": 110,
+            "samples": 55
+          },
+          {
+            "function": "remove",
+            "line": 0,
+            "samples": 46
+          },
+          {
+            "function": "removeEventListener",
+            "line": 0,
+            "samples": 42
+          },
+          {
+            "function": "(anonymous)",
+            "line": 211,
+            "samples": 37
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 33
+          },
+          {
+            "function": "dispose",
+            "line": 1696,
+            "samples": 17
+          },
+          {
+            "function": "releaseLayout",
+            "line": 478,
+            "samples": 11
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 8
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 8
+          },
+          {
+            "function": "(idle)",
+            "line": 0,
+            "samples": 5
+          },
+          {
+            "function": "contains",
+            "line": 0,
+            "samples": 4
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 2
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 2
+          },
+          {
+            "function": "runRuntimeProfile",
+            "line": 5756,
+            "samples": 1
+          },
+          {
+            "function": "(anonymous)",
+            "line": 211,
+            "samples": 1
+          },
+          {
+            "function": "getNodeState",
+            "line": 50,
+            "samples": 1
+          },
+          {
+            "function": "(anonymous)",
+            "line": 211,
+            "samples": 1
+          },
+          {
+            "function": "dispose",
+            "line": 1696,
+            "samples": 1
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/destroy-resources-1.cpuprofile"
+      },
+      {
+        "kind": "destroy-resources",
+        "round": 2,
+        "count": 50000,
+        "elapsedMs": 31.099999994039536,
+        "operations": 50000,
+        "totalSamples": 264,
+        "topSamples": [
+          {
+            "function": "clear",
+            "line": 110,
+            "samples": 68
+          },
+          {
+            "function": "remove",
+            "line": 0,
+            "samples": 49
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 39
+          },
+          {
+            "function": "removeEventListener",
+            "line": 0,
+            "samples": 22
+          },
+          {
+            "function": "(idle)",
+            "line": 0,
+            "samples": 20
+          },
+          {
+            "function": "(anonymous)",
+            "line": 211,
+            "samples": 19
+          },
+          {
+            "function": "dispose",
+            "line": 1696,
+            "samples": 11
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 9
+          },
+          {
+            "function": "releaseLayout",
+            "line": 478,
+            "samples": 9
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 6
+          },
+          {
+            "function": "contains",
+            "line": 0,
+            "samples": 4
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 3
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 3
+          },
+          {
+            "function": "destroy",
+            "line": 999,
+            "samples": 1
+          },
+          {
+            "function": "getNodeState",
+            "line": 50,
+            "samples": 1
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/destroy-resources-2.cpuprofile"
+      },
+      {
+        "kind": "destroy-resources",
+        "round": 3,
+        "count": 50000,
+        "elapsedMs": 36,
+        "operations": 50000,
+        "totalSamples": 288,
+        "topSamples": [
+          {
+            "function": "remove",
+            "line": 0,
+            "samples": 61
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 58
+          },
+          {
+            "function": "clear",
+            "line": 110,
+            "samples": 50
+          },
+          {
+            "function": "removeEventListener",
+            "line": 0,
+            "samples": 33
+          },
+          {
+            "function": "(anonymous)",
+            "line": 211,
+            "samples": 26
+          },
+          {
+            "function": "contains",
+            "line": 0,
+            "samples": 12
+          },
+          {
+            "function": "dispose",
+            "line": 1696,
+            "samples": 10
+          },
+          {
+            "function": "releaseLayout",
+            "line": 478,
+            "samples": 9
+          },
+          {
+            "function": "(program)",
+            "line": 0,
+            "samples": 6
+          },
+          {
+            "function": "(idle)",
+            "line": 0,
+            "samples": 6
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 6
+          },
+          {
+            "function": "(garbage collector)",
+            "line": 0,
+            "samples": 6
+          },
+          {
+            "function": "destroyRecursively",
+            "line": 1013,
+            "samples": 3
+          },
+          {
+            "function": "(anonymous)",
+            "line": 5737,
+            "samples": 2
+          }
+        ],
+        "profile": "/tmp/framekit-runtime-profile-profiles/destroy-resources-3.cpuprofile"
+      }
+    ],
+    "passed": true
+  }
+}

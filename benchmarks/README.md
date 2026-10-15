@@ -87,3 +87,19 @@ zero latency. Use repeated isolated runs when comparing changes; concurrent work
 Both reports record browser, CPU, platform, throttle, source revision, working-tree status, and a
 content hash of library and diagnostic sources. Source changes during the production build abort
 the run. Temporary build/server/browser resources are released when the command finishes.
+
+## Property and teardown CPU profiles
+
+```sh
+npm run benchmark:runtime -- --repetitions 3 --out /tmp/framekit-runtime.json
+```
+
+This builds unminified production code for readable function names, warms each workload, and
+records 100-microsecond Chromium CPU samples around only the requested operation and its layout
+flush. Setup, GC, verification, and cleanup of profiling fixtures stay outside recording. Patch
+profiles perform 31 three-property transactions on 1,000 rows; teardown profiles destroy 50,000
+plain or subscribed rows to obtain useful samples. Instrumented durations are not comparable to
+the minified timing matrix. The JSON keeps sample counts and the most frequently sampled frames;
+complete `.cpuprofile` files sit beside it in a `-profiles` directory. Counts are sample counts,
+not time-weighted CPU percentages. Use the existing production comparison with
+`--cases patch,separate,destroy,destroy-resources,cycles` for timing comparisons.
