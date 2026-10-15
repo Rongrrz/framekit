@@ -44,18 +44,18 @@ function snapshotValue(value: unknown, copies: WeakMap<object, object>): unknown
 }
 
 function isSnapshotContainer(value: unknown): value is object {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-  if (Array.isArray(value)) {
-    return true;
-  }
-  const tag = Object.prototype.toString.call(value);
-  return tag === '[object Object]';
+  // Properties contain data, not live native objects. A caller-controlled toStringTag must
+  // not let an otherwise valid structured value bypass copying and retain mutable state.
+  return typeof value === 'object' && value !== null;
 }
 
 function isImmutableSnapshot(value: object, checked: WeakSet<object>): boolean {
   if (!Object.isFrozen(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== null && prototype !== Object.prototype && prototype !== Array.prototype) {
+    // Freezing an object does not freeze data or getters inherited from a custom prototype.
     return false;
   }
   if (checked.has(value)) {

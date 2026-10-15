@@ -4,6 +4,34 @@ import { describe, expect, it, vi } from 'vitest';
 import { createStyleModifier } from '#internal/runtime/node/modifier.js';
 
 describe('node properties', () => {
+  it('snapshots structured data even when it spoofs a native object tag', () => {
+    const axis = { Scale: 0, Offset: 25, [Symbol.toStringTag]: 'Date' };
+    const frame = createFrame({ Size: { X: axis, Y: axis } });
+    axis.Offset = Infinity;
+    expect(frame.Size.X.Offset).toBe(25);
+    expect(Object.isFrozen(frame.Size.X)).toBe(true);
+    frame.destroy();
+  });
+
+  it('rejects frozen structured values whose required data comes from a mutable prototype', () => {
+    const axis = Object.freeze(Object.create({ Scale: 0, Offset: 25 }));
+    const frame = createFrame();
+    const original = frame.Size;
+    expect(() => frame.setProperties({ Size: { X: axis, Y: axis } })).toThrow(/Scale and Offset/);
+    expect(frame.Size).toBe(original);
+    frame.destroy();
+  });
+
+  it('rejects JSON prototype keys without changing properties or polluting object prototypes', () => {
+    const frame = createFrame();
+    const patch = JSON.parse('{"Rotation":45,"__proto__":{"injected":true}}');
+    expect(() => frame.setProperties(patch)).toThrow(/Unknown property/);
+    expect(() => createFrame(patch)).toThrow(/Unknown property/);
+    expect(frame.Rotation).toBe(0);
+    expect(Object.prototype).not.toHaveProperty('injected');
+    frame.destroy();
+  });
+
   it('still validates attached modifiers when a patch keeps the current values', () => {
     const frame = createFrame();
     let acceptsTarget = true;

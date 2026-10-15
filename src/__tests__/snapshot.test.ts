@@ -3,6 +3,28 @@ import { describe, expect, it } from 'vitest';
 import { snapshotPropertyValue } from '#internal/snapshot.js';
 
 describe('immutable property snapshots', () => {
+  it('copies frozen objects with mutable custom prototypes instead of retaining inherited data', () => {
+    const prototype = { inherited: 'before' };
+    const source = Object.freeze(Object.assign(Object.create(prototype), { own: 'value' }));
+    const snapshot = snapshotPropertyValue(source);
+    prototype.inherited = 'after';
+    expect(snapshot).not.toBe(source);
+    expect(snapshot.own).toBe('value');
+    expect(snapshot.inherited).toBeUndefined();
+    expect(Object.isFrozen(snapshot)).toBe(true);
+  });
+
+  it('copies JSON prototype keys as inert own data without changing either prototype', () => {
+    const source = JSON.parse(
+      '{"__proto__":{"injected":true},"constructor":{"prototype":{"injected":true}}}',
+    );
+    const snapshot = snapshotPropertyValue(source);
+    expect(Object.getPrototypeOf(snapshot)).toBe(Object.prototype);
+    expect(Object.hasOwn(snapshot, '__proto__')).toBe(true);
+    expect(snapshot.__proto__).toEqual({ injected: true });
+    expect(Object.prototype).not.toHaveProperty('injected');
+  });
+
   it('reuses fully frozen data while copying mutable children on each call', () => {
     const frozen = Object.freeze({ point: Object.freeze({ x: 1 }) });
     expect(snapshotPropertyValue(frozen)).toBe(frozen);

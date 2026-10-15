@@ -1,4 +1,4 @@
-import { createFrame, createTextButton, spring } from 'framekit';
+import { createFrame, createTextButton, createTextInput, spring } from 'framekit';
 import {
   bindRuntimeInspector,
   createRuntimeInspector,
@@ -67,6 +67,22 @@ it('returns readonly snapshots and reports animation claims through destruction'
   frame.destroy();
   expect(inspectInstance(child).destroyed).toBe(true);
   expect(inspectInstance(child).cleanupRegistrations).toBe(0);
+});
+
+it('redacts password text in snapshots and inspector output without changing the input', () => {
+  const password = createTextInput({ InputType: 'Password', Text: 'private-password' });
+  const inspector = createRuntimeInspector(password);
+  inspector.select(password);
+
+  expect(inspectInstance(password).properties.Text).toBe('[redacted]');
+  expect(inspector.gui.unsafeElement.textContent).not.toContain('private-password');
+  expect(inspector.gui.unsafeElement.textContent).toContain('[redacted]');
+  expect(password.Text).toBe('private-password');
+  expect(password.unsafeElement.value).toBe('private-password');
+  password.Text = 'replacement-password';
+  expect(inspectInstance(password).properties.Text).toBe('[redacted]');
+  password.destroy();
+  expect(inspectInstance(password).properties.Text).toBe('[redacted]');
 });
 
 it('owns the inspector lifetime without adding it to the inspected tree', () => {

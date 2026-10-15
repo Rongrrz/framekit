@@ -14,15 +14,19 @@ export type InstanceSnapshot = Readonly<{
   animatedProperties: readonly string[];
 }>;
 
-/** Reads live or destroyed handles without exposing mutable runtime state. */
+/** Reads live or destroyed handles, redacting password text from diagnostic output. */
 export const inspectInstance = (node: Instance): InstanceSnapshot => {
   const state = getNodeState(node);
+  const properties: Record<string, unknown> = { ...state.properties };
+  if (state.className === 'TextInput' && properties.InputType === 'Password') {
+    properties.Text = '[redacted]';
+  }
   return Object.freeze({
     className: state.className,
     destroyed: state.destroyed,
     parent: state.parent,
     children: Object.freeze([...getChildren(state)]),
-    properties: Object.freeze({ ...state.properties }),
+    properties: Object.freeze(properties),
     cleanupRegistrations: state.cleanups.size,
     animatedProperties: Object.freeze(getAnimatedProperties(node).map(String)),
   });
