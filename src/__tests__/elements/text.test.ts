@@ -13,6 +13,29 @@ resetDocumentAfterEach();
 afterEach(() => vi.unstubAllGlobals());
 
 describe('text labels', () => {
+  it.each([
+    { Text: 42 },
+    { TextColor3: { R: -1, G: 0, B: 0 } },
+    { TextTransparency: 1.1 },
+    { TextSize: -1 },
+    { TextScaled: 'yes' },
+    { TextWrapped: 'yes' },
+    { TextXAlignment: 'sideways' },
+    { TextYAlignment: 'sideways' },
+    { FontFamily: 42 },
+    { FontWeight: -1 },
+  ])('rejects invalid typography in constructors and atomic updates: %j', (patch) => {
+    const message = new RegExp(Object.keys(patch)[0]!);
+    for (const createText of [createTextLabel, createTextButton, createTextInput, createTextArea]) {
+      expect(() => createText(patch as never)).toThrow(message);
+      const node = createText({ Text: 'Before' });
+      expect(() => node.setProperties({ ...patch, Rotation: 45 } as never)).toThrow(message);
+      expect(node.Text).toBe('Before');
+      expect(node.Rotation).toBe(0);
+      node.destroy();
+    }
+  });
+
   it.each([createTextLabel, createTextButton, createTextInput, createTextArea])(
     'updates fixed-size text without requiring layout measurements (%#)',
     (createText) => {
