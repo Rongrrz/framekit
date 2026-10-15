@@ -92,3 +92,56 @@ it('rejects caller-owned rows without mutating or destroying them', () => {
   viewport.destroy();
   parent.destroy();
 });
+
+it('accepts measured-row estimates and preserves caller height and automatic sizing', () => {
+  const viewport = createScrollingFrame();
+  Object.defineProperty(viewport.unsafeElement, 'clientHeight', { value: 160 });
+  const row = createTextLabel({ AutomaticSize: 'Y' });
+  const binding = bindVirtualList(viewport, createObservableValue([1]), {
+    itemHeight: { estimate: 48 },
+    key: (id) => id,
+    selection: createObservableValue<string | number | undefined>(undefined),
+    create: () => row,
+  });
+  expect(row.AutomaticSize).toBe('Y');
+  expect(row.Size.X.Scale).toBe(1);
+  expect(viewport.CanvasSize.Y.Offset).toBe(48);
+  expect(viewport.unsafeElement.style.getPropertyValue('overflow-anchor')).toBe('none');
+  binding.dispose();
+  expect(viewport.unsafeElement.style.getPropertyValue('overflow-anchor')).toBe('');
+  viewport.destroy();
+});
+
+it('rejects invalid measured estimates before changing the viewport', () => {
+  const viewport = createScrollingFrame();
+  for (const estimate of [0, -1, NaN, Infinity]) {
+    expect(() =>
+      bindVirtualList(viewport, createObservableValue([1]), {
+        itemHeight: { estimate },
+        key: (id) => id,
+        selection: createObservableValue<string | number | undefined>(undefined),
+        create: () => createTextLabel(),
+      }),
+    ).toThrow();
+  }
+  expect(viewport.getChildren()).toEqual([]);
+  expect(viewport.unsafeElement.hasAttribute('role')).toBe(false);
+  viewport.destroy();
+});
+
+it('preserves fractional scroll offsets when earlier rows are inserted', () => {
+  const viewport = createScrollingFrame();
+  Object.defineProperty(viewport.unsafeElement, 'clientHeight', { value: 160 });
+  const source = createObservableValue(Array.from({ length: 100 }, (_, id) => id));
+  const binding = bindVirtualList(viewport, source, {
+    itemHeight: 32,
+    key: (id) => id,
+    selection: createObservableValue<string | number | undefined>(undefined),
+    create: () => createTextLabel(),
+  });
+  viewport.unsafeElement.scrollTop = 31.5;
+  source.set([-1, ...source.get()]);
+  expect(viewport.unsafeElement.scrollTop).toBe(63.5);
+  binding.dispose();
+  viewport.destroy();
+});

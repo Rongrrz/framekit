@@ -201,3 +201,14 @@ describe('text labels', () => {
     expect(text.style.fontSize).toBe('18px');
   });
 });
+
+it('lets automatic text participate in intrinsic layout and restores the fixed-size surface', () => {
+  const label = createTextLabel({ Text: 'Wrapped content', TextWrapped: true, AutomaticSize: 'Y' });
+  const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
+  expect(text.style.position).toBe('relative');
+  expect(label.unsafeElement.style.height).toBe('auto');
+  label.AutomaticSize = 'None';
+  expect(text.style.position).toBe('absolute');
+  expect(label.unsafeElement.style.height).toBe('100px');
+  label.destroy();
+});

@@ -163,6 +163,10 @@ export function createTextNode<Properties extends TextLabelProperties>(
     defaultProperties,
     initialProperties,
     renderProperties: (properties, changedProperties) => {
+      if (changedProperties.has('AutomaticSize')) {
+        // Intrinsic text must participate in layout for the host to follow wrapped content.
+        text.style.position = properties.AutomaticSize === 'None' ? 'absolute' : 'relative';
+      }
       if (changedProperties.has('Text')) {
         text.textContent = properties.Text;
       }

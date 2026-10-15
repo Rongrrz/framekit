@@ -28,7 +28,7 @@ Runtime APIs are available from `framekit`. Optional inspection tools use `frame
 | Hierarchy   | `Parent`, `isA`, `getChildren`, `getDescendants`, `findFirstChild`                     |
 | Lifecycle   | `mount`, `unmount`, `destroy`, `onDestroy`                                             |
 | State       | Direct properties, property observers, observable and computed values, owned watchers  |
-| Collections | Keyed children and fixed-height virtual lists                                          |
+| Collections | Keyed children and fixed or measured-height virtual lists                              |
 | Motion      | `spring`, `createTween`                                                                |
 | Helpers     | Tooltips, popovers, hover scale, and responsive layouts                                |
 | Values      | `Color3`, `UDim`, `UDim2`, `Vector2`, and sequences                                    |

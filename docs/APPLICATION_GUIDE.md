@@ -252,7 +252,7 @@ checks do not replace a manual assistive-technology review for the finished appl
 ## Large collections
 
 `bindVirtualList(viewport, source, options)` owns a content frame and the viewport's canvas
-geometry. Supply a dedicated `ScrollingFrame`, positive fixed `itemHeight`, stable keys,
+geometry. Supply a dedicated `ScrollingFrame`, positive `itemHeight`, stable keys,
 `create`/`update` callbacks, and an observable `selection` containing a key or `undefined`.
 Optional `overscan` is a nonnegative integer, defaulting to 2.
 
@@ -280,7 +280,39 @@ Source changes preserve the first visible key and its pixel offset when possible
 removed, the next surviving neighbor anchors the viewport. Removing a selected item chooses its
 next surviving neighbor, falling back to the previous one. Explicit
 disposal destroys generated content, disconnects observation, and restores viewport settings.
-Variable-height rows and grids are outside the current contract.
+For variable-height rows, opt into the measured-height prototype with `itemHeight: { estimate: 48 }`.
+The estimate is a positive pixel height used until a row is mounted and measured. The binding owns
+row width and position; your factory/update callback owns row height. Wrapped labels can use
+`AutomaticSize: 'Y'`, `TextWrapped: true`, and a fixed `TextSize`. Frames can use an automatic
+height with an in-flow list layout, or an explicit height that changes when expanded.
+
+```ts
+const controller = bindVirtualList(viewport, items, {
+  itemHeight: { estimate: 48 },
+  key: (item) => item.id,
+  selection,
+  create: () =>
+    createTextLabel({
+      AutomaticSize: 'Y',
+      TextWrapped: true,
+      TextSize: 16,
+      TextXAlignment: 'Left',
+    }),
+  update: (row, item) => {
+    row.Text = item.expanded ? item.details : item.label;
+  },
+});
+```
+
+A border-box `ResizeObserver` coalesces measurements into the next animation frame and keeps the first visible key and
+pixel offset stable as rows grow, shrink, or wrap. Width changes invalidate cached measurements;
+offscreen rows use estimates until mounted again. Heights and offset lookups update in logarithmic
+time; source replacement and width invalidation rebuild the index. `scrollToKey` initially uses
+estimates for unseen rows, so distant positions and the scrollbar may adjust as measurements arrive.
+Use positive row heights, untransformed rows, and height independent of the total canvas height;
+scaled text and percentage heights can create circular sizing. Page Up/Down move by the estimated
+pixel distance of a viewport. Virtual grids remain outside this contract. Try
+`/collections.html?heights=variable` for wrapped and expandable rows.
 
 ## Motion and diagnostics
 

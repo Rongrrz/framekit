@@ -95,6 +95,19 @@ function verifyPublicTypeContracts(): void {
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
+  bindVirtualList(viewport, items, {
+    itemHeight: { estimate: 48 },
+    key: (item) => item.id,
+    selection: createObservableValue<string | number | undefined>(undefined),
+    create: () => createTextLabel({ AutomaticSize: 'Y', TextWrapped: true }),
+  });
+  bindVirtualList(viewport, items, {
+    // @ts-expect-error Measured rows require a numeric estimate.
+    itemHeight: { estimate: 'auto' },
+    key: (item) => item.id,
+    selection: createObservableValue<string | number | undefined>(undefined),
+    create: () => createTextLabel(),
+  });
   const debug = bindRuntimeInspector(frame, {
     button: false,
     shortcut: { key: 'D', ctrlKey: true, shiftKey: true },
