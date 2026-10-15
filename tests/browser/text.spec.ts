@@ -2,6 +2,46 @@ import { expect, test } from '@playwright/test';
 
 import type {} from './harness.js';
 
+test('font fitting stays bounded when host CSS overrides the measured font', async ({ page }) => {
+  await page.goto('/tests/browser/index.html');
+  await page.waitForFunction(() => Boolean(window.framekit));
+  const result = await page.evaluate(() => {
+    const { createScreenGui, createTextLabel, udim2FromOffset } = window.framekit;
+    const style = document.createElement('style');
+    style.textContent = '[data-framekit-text] { font-size: 1px !important; }';
+    document.head.append(style);
+    const gui = createScreenGui();
+    const label = createTextLabel({ Text: 'Overridden font', Size: udim2FromOffset(4000, 4000) });
+    label.Parent = gui;
+    gui.mount('#root');
+    const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
+    const scrollWidth = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollWidth')!.get!;
+    let measurements = 0;
+    Object.defineProperty(text, 'scrollWidth', {
+      get: () => {
+        if (++measurements > 128) {
+          throw new Error('Font fitting exceeded its measurement budget.');
+        }
+        return scrollWidth.call(text);
+      },
+    });
+    try {
+      label.TextScaled = true;
+      return {
+        measurements,
+        declaredSize: text.style.fontSize,
+        computedSize: getComputedStyle(text).fontSize,
+      };
+    } finally {
+      gui.destroy();
+      style.remove();
+    }
+  });
+  expect(result.declaredSize).toBe('4000px');
+  expect(result.computedSize).toBe('1px');
+  expect(result.measurements).toBeLessThan(128);
+});
+
 test('text paint and outline survive edits and restore their defaults when removed', async ({
   page,
 }) => {

@@ -13,6 +13,41 @@ resetDocumentAfterEach();
 afterEach(() => vi.unstubAllGlobals());
 
 describe('text labels', () => {
+  it.each([1234, 10_000_000])(
+    'bounds font-fitting work when the estimate is far from the fitting size %i',
+    (maximumFit) => {
+      const ownerDocument = document.implementation.createHTMLDocument();
+      const canvas = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+        font: '',
+        measureText: () => ({ width: 100 }),
+      } as unknown as CanvasRenderingContext2D);
+      const label = createTextLabel({ Text: 'Estimate mismatch' }, { ownerDocument });
+      const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
+      let measurements = 0;
+      Object.defineProperties(text, {
+        clientWidth: { value: 10_000_000 },
+        clientHeight: { value: 10_000_000 },
+        scrollHeight: { value: 1 },
+        scrollWidth: {
+          get: () => {
+            if (++measurements > 128) {
+              throw new Error('Font fitting exceeded its measurement budget.');
+            }
+            return Number.parseInt(text.style.fontSize, 10) <= maximumFit ? 1 : 20_000_000;
+          },
+        },
+      });
+      try {
+        expect(() => (label.TextScaled = true)).not.toThrow();
+        expect(text.style.fontSize).toBe(`${maximumFit}px`);
+        expect(measurements).toBeLessThan(128);
+      } finally {
+        label.destroy();
+        canvas.mockRestore();
+      }
+    },
+  );
+
   it.each([
     { Text: 42 },
     { TextColor3: { R: -1, G: 0, B: 0 } },

@@ -43,23 +43,7 @@ export function renderTextSize(
       return;
     }
   }
-  let smallestCandidate = 1;
-  let largestCandidate = maximumSize;
-  let fittedSize = 1;
-
-  while (smallestCandidate <= largestCandidate) {
-    const candidate = Math.floor((smallestCandidate + largestCandidate) / 2);
-    setStyle(element, 'font-size', `${candidate}px`);
-
-    if (textFits(element)) {
-      fittedSize = candidate;
-      smallestCandidate = candidate + 1;
-    } else {
-      largestCandidate = candidate - 1;
-    }
-  }
-
-  setStyle(element, 'font-size', `${fittedSize}px`);
+  fitTextSize(element, 1, maximumSize, 1);
 }
 
 /** Recalculates scaled text when browser layout changes without adding work to ordinary text. */
@@ -138,17 +122,38 @@ function renderEstimatedTextSize(
 ): void {
   let fittedSize = Math.max(1, estimatedSize);
   setStyle(element, 'font-size', `${fittedSize}px`);
-
-  while (fittedSize > 1 && !textFits(element)) {
-    fittedSize -= 1;
-    setStyle(element, 'font-size', `${fittedSize}px`);
+  if (!textFits(element)) {
+    fitTextSize(element, 1, fittedSize - 1, 1);
+    return;
   }
-  while (fittedSize < maximumSize) {
+  if (fittedSize < maximumSize) {
     setStyle(element, 'font-size', `${fittedSize + 1}px`);
     if (!textFits(element)) {
-      break;
+      setStyle(element, 'font-size', `${fittedSize}px`);
+      return;
     }
     fittedSize += 1;
+  }
+  // Estimates can diverge from DOM metrics (including browser font-size clamping).
+  // Never refine pixel by pixel: layout work must grow logarithmically with the bounds.
+  fitTextSize(element, fittedSize + 1, maximumSize, fittedSize);
+}
+
+function fitTextSize(
+  element: HTMLElement,
+  smallestCandidate: number,
+  largestCandidate: number,
+  fittedSize: number,
+): void {
+  while (smallestCandidate <= largestCandidate) {
+    const candidate = Math.floor((smallestCandidate + largestCandidate) / 2);
+    setStyle(element, 'font-size', `${candidate}px`);
+    if (textFits(element)) {
+      fittedSize = candidate;
+      smallestCandidate = candidate + 1;
+    } else {
+      largestCandidate = candidate - 1;
+    }
   }
   setStyle(element, 'font-size', `${fittedSize}px`);
 }

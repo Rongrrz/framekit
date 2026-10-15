@@ -6,6 +6,12 @@ build, and test tools.
 
 ## Fixed findings
 
+- **Excessive work in scaled text:** estimate refinement could walk one pixel at a time,
+  forcing thousands of layout measurements when host CSS or browser font limits disagreed
+  with canvas metrics. Refinement now uses the existing binary fitter, retaining the quick
+  accurate-estimate path. Tests cover extreme simulated metrics and real CSS overrides.
+  This bounds measurement count logarithmically in the available font-size range.
+
 - **Password disclosure in diagnostics:** `inspectInstance` copied password `Text` into the
   inspector and diagnostic snapshots. Password TextInputs now return `[redacted]` there,
   including after destruction. The live input value and normal application reads are unchanged.
