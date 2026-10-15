@@ -198,3 +198,71 @@ test('lets a caller scroll override an estimated keyboard jump before measuremen
   expect(await list.evaluate((element) => element.scrollTop)).toBe(0);
   await expect(list).not.toHaveAttribute('aria-activedescendant');
 });
+
+test('does not accumulate scroll drift while earlier rows resize by fractional pixels', async ({
+  page,
+}) => {
+  await page.goto('/tests/browser/index.html');
+  await page.waitForFunction(() => Boolean(window.framekit));
+  await page.evaluate(() => {
+    const {
+      createScrollingFrame,
+      createObservableValue,
+      createFrame,
+      createTextButton,
+      bindVirtualList,
+      udim2FromOffset,
+      vector2,
+    } = window.framekit;
+    const viewport = createScrollingFrame({
+      Size: udim2FromOffset(300, 160),
+      Position: udim2FromOffset(0, 60),
+    });
+    viewport.unsafeElement.setAttribute('aria-label', 'Fractional rows');
+    document.body.append(viewport.unsafeElement);
+    const rows = new Map<number, ReturnType<typeof createFrame>>();
+    const list = bindVirtualList(
+      viewport,
+      createObservableValue(Array.from({ length: 100 }, (_, id) => id)),
+      {
+        itemHeight: { estimate: 32.25 },
+        key: (id) => id,
+        selection: createObservableValue<string | number | undefined>(undefined),
+        create: (id) => {
+          const row = createFrame({ Size: udim2FromOffset(300, 32.25) });
+          row.unsafeElement.dataset.row = String(id);
+          rows.set(id, row);
+          row.onDestroy(() => rows.delete(id));
+          return row;
+        },
+      },
+    );
+    list.scrollToKey(10);
+    viewport.CanvasPosition = vector2(0, 10 * 32.25 + 7);
+    const grow = createTextButton({ Text: 'Fractional growth' });
+    document.body.append(grow.unsafeElement);
+    grow.onClick(() => {
+      const row = rows.get(9)!;
+      row.Size = udim2FromOffset(300, row.Size.Y.Offset + 0.4);
+    });
+  });
+  const row = page.getByRole('listbox', { name: 'Fractional rows' }).locator('[data-row="10"]');
+  await expect(row).toBeInViewport();
+  const offset = () =>
+    row.evaluate(
+      (element) =>
+        element.getBoundingClientRect().top -
+        element.closest('[role="listbox"]')!.getBoundingClientRect().top,
+    );
+  const before = await offset();
+  for (let index = 0; index < 20; index += 1) {
+    await page.getByRole('button', { name: 'Fractional growth' }).click();
+    await page.evaluate(
+      () =>
+        new Promise((done) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(done))),
+        ),
+    );
+  }
+  expect(Math.abs((await offset()) - before)).toBeLessThan(1);
+});

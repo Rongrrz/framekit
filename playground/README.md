@@ -56,3 +56,9 @@ and Chromium cases; CI runs the complete browser matrix.
 The `#/controls` chapter demonstrates command menus, native modal dialogs, tree keyboard
 navigation, and explicit binding disposal. Open `/collections.html?heights=variable` for
 the measured-height prototype with wrapped text and expandable rows.
+
+`/inbox.html` is the application validation screen: 2,000 variable-height messages, filtering,
+selection, expansion, late image attachments, and a delayed local FontFace load. The font button
+uses Arial, Liberation Sans, DejaVu Sans, or Helvetica when available. It changes actual font
+metrics without contacting a font service; the attachment remains a separate HTTP asset so tests
+can control network completion. Destroying the screen removes its font and pending work.

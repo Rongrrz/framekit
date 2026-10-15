@@ -81,6 +81,7 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
   let indices = new Map<string | number, number>();
   let disposed = false;
   let pendingScroll: Readonly<{ key: string | number; top: number }> | undefined;
+  let scrollCorrection: Readonly<{ actual: number; desired: number }> | undefined;
   const heights = new Map<string | number, number>();
   let geometry = createRowGeometry([]);
   let width = element.clientWidth;
@@ -98,14 +99,17 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     viewport.CanvasSize = udim2(1, 0, 0, height);
   };
   const readAnchor = (): Readonly<{ index: number; offset: number }> => {
-    const index = indexAt(element.scrollTop);
-    return { index, offset: element.scrollTop - offsetAt(index) };
+    const top =
+      scrollCorrection?.actual === element.scrollTop ? scrollCorrection.desired : element.scrollTop;
+    const index = indexAt(top);
+    return { index, offset: top - offsetAt(index) };
   };
   const restoreAnchor = (index: number, offset: number): void => {
-    viewport.CanvasPosition = vector2(
-      0,
-      Math.max(0, offsetAt(index) + Math.min(offset, heightAt(index))),
-    );
+    const desired = Math.max(0, offsetAt(index) + Math.min(offset, heightAt(index)));
+    viewport.CanvasPosition = vector2(0, desired);
+    const actual = element.scrollTop;
+    // Preserve fractional intent across browser-rounded writes, but accept real range clamping.
+    scrollCorrection = Math.abs(desired - actual) <= 1 ? { actual, desired } : undefined;
   };
   const ResizeObserverConstructor =
     element.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
@@ -113,8 +117,12 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     if (disposed || viewport.isDestroyed()) {
       return;
     }
-    // Only complete an estimated jump while the caller has kept the requested scroll position.
-    const request = pendingScroll?.top === element.scrollTop ? pendingScroll : undefined;
+    // Late images and fonts can invalidate cached heights too. Keep a requested row visible
+    // until the caller scrolls elsewhere or changes the collection, selection, or viewport width.
+    const request =
+      width === element.clientWidth && pendingScroll?.top === element.scrollTop
+        ? pendingScroll
+        : undefined;
     pendingScroll = undefined;
     const previous = readAnchor();
     let changed = false;
@@ -256,6 +264,7 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
       throw new Error('Virtual list binding has been disposed.');
     }
     pendingScroll = undefined;
+    scrollCorrection = undefined;
     const index = indices.get(key);
     if (index === undefined) {
       return;
@@ -271,7 +280,7 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
       );
     }
     render();
-    if (measured && !heights.has(key)) {
+    if (measured) {
       pendingScroll = { key, top: element.scrollTop };
     }
   };
@@ -320,6 +329,7 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     }
     disposed = true;
     pendingScroll = undefined;
+    scrollCorrection = undefined;
     unregisterDestroy();
     stops.forEach((stop) => stop());
     resize.disconnect();
@@ -358,7 +368,14 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
   const unregisterDestroy = viewport.onDestroy(dispose);
   try {
     stops.push(watchOwnedValue(viewport, source, updateSource));
-    stops.push(watchOwnedValue(viewport, options.selection, render));
+    stops.push(
+      watchOwnedValue(viewport, options.selection, (selected) => {
+        if (pendingScroll && pendingScroll.key !== selected) {
+          pendingScroll = undefined;
+        }
+        render();
+      }),
+    );
     stops.push(viewport.onPropertyChanged('CanvasPosition', render));
     stops.push(viewport.on('scroll', render));
     stops.push(
