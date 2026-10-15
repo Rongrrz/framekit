@@ -30,6 +30,12 @@ uses a fresh page per version/runtime/round to keep FrameKit's page history matc
 checks geometry/identity/notifications/cleanup, and writes [results.json](results.json) and
 [results.md](results.md). It captures the working library source before building, records source
 content hashes, and fingerprints the fixtures, runner, and statistical report policy.
+Workloads live in `cases/`, grouped by construction, updates, hierarchy, and lifetime.
+`fixture-framekit.js` and `fixture-react.js` own runtime setup and mutations; `fixture-styles.js`
+keeps their matching visual templates together. The fingerprint includes every workload module.
+The fixture split removes unused cross-runtime setup bookkeeping. Compare results produced with
+the same harness fingerprint; differences from older harnesses do not establish library speedups.
+
 Generated reports contain measured facts; change-specific interpretation belongs in a separate audit.
 The default baseline is `13bbf6d`, immediately before the DOM-order optimization. It already
 includes the earlier text and incremental-layout optimizations. It must be present in local Git history. Useful options:

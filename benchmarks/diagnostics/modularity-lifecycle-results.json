@@ -1,0 +1,121 @@
+{
+  "mode": "lifecycle",
+  "measuredAt": "2026-10-15T23:49:38.504Z",
+  "revision": "606e98974a8e24f6daf79f8184b4f223db48ed4c",
+  "workingTree": "M benchmarks/diagnostics/run.mjs\n M src/devtools/inspector.ts\n M src/helpers/floating-panel/controller.ts\n M src/helpers/virtual-list.ts\n?? benchmarks/diagnostics/lifecycle-run.mjs\n?? benchmarks/diagnostics/responsiveness-run.mjs\n?? benchmarks/diagnostics/runtime-run.mjs\n?? src/devtools/details-view.ts\n?? src/devtools/hierarchy-view.ts\n?? src/devtools/picker.ts\n?? src/devtools/workspace.ts\n?? src/helpers/floating-panel/motion.ts\n?? src/helpers/virtual-list-keyboard.ts\n?? src/helpers/virtual-list-measurement.ts\n?? src/helpers/virtual-list-model.ts\n?? src/helpers/virtual-list-rows.ts",
+  "sourceSha256": "53657de6774d572659a8c84ac8086fe346ad2b5586c22b1eb08fc6bb7afb65e9",
+  "environment": {
+    "browser": "156.0.8078.4",
+    "cpu": "Apple M5",
+    "platform": "darwin",
+    "cpuThrottle": 1
+  },
+  "methodology": {
+    "production": true,
+    "minified": true,
+    "profiling": null,
+    "repetitions": 5,
+    "warmupLifetimes": 1,
+    "eventTiming": "Native keyboard/pointer PerformanceEventTiming: browser next-paint duration, quantized and thresholded at 16 ms; not an INP score.",
+    "presentationEstimate": "Event timestamp to second requestAnimationFrame; includes a rendering opportunity, not a precise paint timestamp.",
+    "memory": "Chromium JS heap and DOM/listener counters after two external full GCs. Weak references test sampled objects only; native/process memory is excluded.",
+    "timingThresholds": false
+  },
+  "results": {
+    "collection": {
+      "groups": {
+        "temporary-document": {
+          "sampled": 10,
+          "retained": 0
+        },
+        "root:handle": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "root:element": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "subscribed-row:handle": {
+          "sampled": 500,
+          "retained": 0
+        },
+        "subscribed-row:element": {
+          "sampled": 500,
+          "retained": 0
+        },
+        "popover:handle": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "popover:element": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "menu:handle": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "menu:element": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "dialog:handle": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "dialog:element": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "virtual-row:handle": {
+          "sampled": 40,
+          "retained": 0
+        },
+        "virtual-row:element": {
+          "sampled": 40,
+          "retained": 0
+        },
+        "viewport:handle": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "viewport:element": {
+          "sampled": 5,
+          "retained": 0
+        },
+        "inspector-or-tooltip": {
+          "sampled": 10,
+          "retained": 0
+        }
+      },
+      "sampled": 1150,
+      "retained": 0
+    },
+    "before": {
+      "documents": 1,
+      "nodes": 21,
+      "jsEventListeners": 13,
+      "heap": {
+        "usedSize": 2083532,
+        "totalSize": 2703360,
+        "embedderHeapUsedSize": 677232,
+        "backingStorageSize": 115241
+      }
+    },
+    "after": {
+      "documents": 1,
+      "nodes": 21,
+      "jsEventListeners": 13,
+      "heap": {
+        "usedSize": 2756832,
+        "totalSize": 3489792,
+        "embedderHeapUsedSize": 773176,
+        "backingStorageSize": 115324
+      }
+    },
+    "listenerDelta": 0,
+    "heapDeltaBytes": 673300,
+    "passed": true
+  }
+}

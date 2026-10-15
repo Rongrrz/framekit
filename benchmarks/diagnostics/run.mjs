@@ -9,10 +9,20 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 import { build, preview } from 'vite';
 
+import { runLifecycleDiagnostic } from './lifecycle-run.mjs';
+import { runResponsivenessDiagnostic } from './responsiveness-run.mjs';
+import { runRuntimeDiagnostic } from './runtime-run.mjs';
+
+const workloads = {
+  lifecycle: runLifecycleDiagnostic,
+  runtime: runRuntimeDiagnostic,
+  responsiveness: runResponsivenessDiagnostic,
+};
+
 const directory = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(directory, '../..');
 const mode = process.argv[2];
-if (!['lifecycle', 'responsiveness', 'runtime'].includes(mode)) {
+if (!Object.hasOwn(workloads, mode)) {
   throw new Error(
     'Usage: node benchmarks/diagnostics/run.mjs lifecycle|responsiveness|runtime [--out path] [--cpu-throttle 4] [--repetitions 5]',
   );
@@ -84,173 +94,7 @@ try {
   await client.send('Emulation.setCPUThrottlingRate', { rate: throttle });
   await page.goto(server.resolvedUrls.local[0]);
   await page.waitForFunction(() => Boolean(window.framekitDiagnostics));
-  const collect = async () => {
-    // Do not dereference WeakRefs in the job that asks V8 to collect their targets.
-    await page.evaluate(() => new Promise((resolveTask) => setTimeout(resolveTask, 0)));
-    await client.send('HeapProfiler.collectGarbage');
-    await client.send('HeapProfiler.collectGarbage');
-  };
-  const counters = async () => ({
-    ...(await client.send('Memory.getDOMCounters')),
-    heap: await client.send('Runtime.getHeapUsage'),
-  });
-  let results;
-  if (mode === 'lifecycle') {
-    await page.evaluate(() => window.framekitDiagnostics.runLifetime(false));
-    await collect();
-    const before = await counters();
-    await page.evaluate(() => window.framekitDiagnostics.sampleDocuments());
-    for (let index = 0; index < repetitions; index += 1) {
-      await page.evaluate(() => window.framekitDiagnostics.runLifetime(true));
-      console.log(`Lifetime ${index + 1}/${repetitions} destroyed`);
-    }
-    await collect();
-    let collection = await page.evaluate(() => window.framekitDiagnostics.lifetimeSummary());
-    for (let attempt = 0; attempt < 2 && collection.retained > 0; attempt += 1) {
-      await collect();
-      collection = await page.evaluate(() => window.framekitDiagnostics.lifetimeSummary());
-    }
-    const after = await counters();
-    results = {
-      collection,
-      before,
-      after,
-      listenerDelta: after.jsEventListeners - before.jsEventListeners,
-      heapDeltaBytes: after.heap.usedSize - before.heap.usedSize,
-      passed: collection.retained === 0 && after.jsEventListeners <= before.jsEventListeners,
-    };
-  } else if (mode === 'runtime') {
-    const profileDirectory = `${output.replace(/\.json$/, '')}-profiles`;
-    await mkdir(profileDirectory, { recursive: true });
-    const cases = [];
-    await client.send('Profiler.enable');
-    await client.send('Profiler.setSamplingInterval', { interval: 100 });
-    for (const kind of ['patch', 'destroy', 'destroy-resources']) {
-      await page.evaluate((kind) => {
-        window.framekitDiagnostics.prepareRuntimeProfile(kind, 1000);
-        window.framekitDiagnostics.runRuntimeProfile();
-        window.framekitDiagnostics.verifyRuntimeProfile();
-        window.framekitDiagnostics.disposeRuntimeProfile();
-      }, kind);
-      for (let index = 0; index < repetitions; index += 1) {
-        const count = kind === 'patch' ? 1000 : 50_000;
-        await page.evaluate(
-          ({ kind, count }) => window.framekitDiagnostics.prepareRuntimeProfile(kind, count),
-          { kind, count },
-        );
-        await client.send('HeapProfiler.collectGarbage');
-        await client.send('Profiler.start');
-        const timing = await page.evaluate(() => window.framekitDiagnostics.runRuntimeProfile());
-        const { profile } = await client.send('Profiler.stop');
-        await page.evaluate(() => {
-          window.framekitDiagnostics.verifyRuntimeProfile();
-          window.framekitDiagnostics.disposeRuntimeProfile();
-        });
-        const path = join(profileDirectory, `${kind}-${index + 1}.cpuprofile`);
-        await writeFile(path, JSON.stringify(profile));
-        const sampled = new Map();
-        for (const id of profile.samples ?? []) {
-          sampled.set(id, (sampled.get(id) ?? 0) + 1);
-        }
-        const topSamples = profile.nodes
-          .map((node) => ({
-            function: node.callFrame.functionName || '(anonymous)',
-            line: node.callFrame.lineNumber + 1,
-            samples: sampled.get(node.id) ?? 0,
-          }))
-          .filter((node) => node.samples > 0)
-          .sort((left, right) => right.samples - left.samples)
-          .slice(0, 20);
-        cases.push({
-          kind,
-          round: index + 1,
-          count,
-          ...timing,
-          totalSamples: profile.samples?.length ?? 0,
-          topSamples,
-          profile: path,
-        });
-        console.log(
-          `${kind} ${index + 1}/${repetitions}: ${timing.elapsedMs.toFixed(2)} ms (instrumented)`,
-        );
-      }
-    }
-    results = { cases, passed: true };
-  } else {
-    await page.evaluate(() => window.framekitDiagnostics.startResponsiveness());
-    const search = page.getByRole('textbox', { name: 'Filter records' });
-    const list = page.getByRole('listbox', { name: 'Search results' });
-    await search.focus();
-    // Warm the same filtering and scrolling paths before retaining samples.
-    await page.keyboard.type('amber');
-    await page.getByRole('status').filter({ hasText: '50000 results' }).waitFor();
-    await page.keyboard.press('ControlOrMeta+A');
-    await page.keyboard.press('Backspace');
-    const settle = () =>
-      page.evaluate(
-        () =>
-          new Promise((done) =>
-            requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(done, 50))),
-          ),
-      );
-    await settle();
-    await page.evaluate(() => window.framekitDiagnostics.resetResponsiveness());
-    const runs = [];
-    for (let index = 0; index < repetitions; index += 1) {
-      await search.focus();
-      await page.keyboard.type('amber');
-      await page.getByRole('status').filter({ hasText: '50000 results' }).waitFor();
-      await list.hover();
-      await page.mouse.wheel(0, 640);
-      await page.waitForFunction(() => document.querySelector('[role="listbox"]').scrollTop > 0);
-      await settle();
-      await search.focus();
-      await page.keyboard.press('ControlOrMeta+A');
-      await page.keyboard.press('Backspace');
-      await page.getByRole('status').filter({ hasText: '100000 results' }).waitFor();
-      await settle();
-      const sample = await page.evaluate(() => window.framekitDiagnostics.responsivenessSummary());
-      assert.ok(sample.mountedViews <= 32, 'Virtualization exceeded the bounded DOM contract.');
-      assert.ok(
-        sample.samples.some((entry) => entry.kind === 'filter') &&
-          sample.samples.some((entry) => entry.kind === 'scroll'),
-        'Missing native input or scroll samples.',
-      );
-      runs.push(sample);
-      await page.evaluate(() => window.framekitDiagnostics.resetResponsiveness());
-      console.log(`Filter + scroll ${index + 1}/${repetitions} measured`);
-    }
-    const summary = (values) => {
-      const sorted = values.toSorted((a, b) => a - b);
-      return {
-        count: sorted.length,
-        medianMs: sorted[Math.floor(sorted.length / 2)] ?? null,
-        p95Ms: sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)] ?? null,
-      };
-    };
-    const samples = runs.flatMap((run) => run.samples);
-    results = {
-      runs,
-      filteringPresentationEstimate: summary(
-        samples
-          .filter((sample) => sample.kind === 'filter')
-          .map((sample) => sample.presentationEstimateMs),
-      ),
-      scrollingPresentationEstimate: summary(
-        samples
-          .filter((sample) => sample.kind === 'scroll')
-          .map((sample) => sample.presentationEstimateMs),
-      ),
-      browserEventDuration: summary(
-        runs
-          .flatMap((run) => run.eventTimings)
-          .filter((entry) => entry.interactionId > 0)
-          .map((entry) => entry.duration),
-      ),
-      longTasks: summary(runs.flatMap((run) => run.longTasks)),
-      passed: true,
-    };
-  }
+  const results = await workloads[mode]({ page, client, repetitions, output });
   assert.deepEqual(errors, [], 'Browser reported errors.');
   await mkdir(dirname(output), { recursive: true });
   await writeFile(

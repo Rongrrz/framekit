@@ -72,3 +72,33 @@ These figures describe Apple M5 / Chromium 156 at 1× CPU throttle and exclude p
 comparison. CPU recordings include instrumentation overhead. The real inbox tests verify browser
 behavior and late content, not hardware-independent speed budgets. No timing threshold was added
 to CI.
+
+## Verification after modularization
+
+The inspector now separates workspace construction, hierarchy rendering, property details,
+and picking from its controller. Virtual lists separate keyed geometry, native measurement
+scheduling, mounted rows, and keyboard interaction from scroll coordination. Floating panels
+keep transition cancellation and hooks in one motion module. Playground documentation separates
+chapters and article rendering from navigation; comparison workloads and runtime fixtures have
+independent modules. Public entry points remain compatible. Cohesive test suites remain grouped
+by the behavior they protect.
+
+Focused unit checks passed for inspector state, virtual lists and geometry, tooltip/popover
+behavior, playground rendering, and dependency boundaries. Inspector, inbox, and measured-list
+browser cases passed Chromium, Firefox, and WebKit; fixed lists, overlays, and documentation
+cases passed Chromium. Type checking, library/playground production builds, and all eight
+packaged-consumer checks passed. A rebuilt production inbox also passed attachment/font loading,
+last-row visibility, destruction, and console checks.
+
+All 23 comparison scenarios passed a one-round, three-repetition harness smoke check against
+`606e989`. Each of the lifecycle, responsiveness, and runtime diagnostic commands also completed.
+The [final production lifecycle report](../benchmarks/diagnostics/modularity-lifecycle-results.json) sampled 1,150 objects across five lifetimes: none remained
+after collection, with 21 DOM nodes and 13 native listeners both before and after. Heap usage
+increased by 673,300 bytes; diagnostic bookkeeping and runtime caches are included, so the
+sampled collectibility and listener results do not imply zero total memory growth.
+
+The timing/profile evidence above predates the modularization. The short final harness run
+validates workload contracts and command execution; it is not a statistical performance
+comparison. The comparison harness now fingerprints its extracted modules and removes unused
+cross-runtime setup bookkeeping, so older harness timings cannot establish a refactor speedup.
+Measured row heights remain opt-in and use estimates until rows have been observed.

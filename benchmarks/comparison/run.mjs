@@ -196,7 +196,15 @@ try {
     }
   }
   const benchmarkHash = createHash('sha256');
-  for (const file of ['fixtures.js', 'suite.js', 'run.mjs', 'report.mjs']) {
+  const benchmarkFiles = [
+    ...(await readdir(directory)).filter((file) =>
+      ['.js', '.mjs', '.html'].includes(extname(file)),
+    ),
+    ...(await readdir(join(directory, 'cases')))
+      .filter((file) => file.endsWith('.js'))
+      .map((file) => `cases/${file}`),
+  ].sort();
+  for (const file of benchmarkFiles) {
     benchmarkHash.update(await readFile(join(directory, file)));
   }
   const report = {

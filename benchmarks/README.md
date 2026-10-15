@@ -103,3 +103,8 @@ the minified timing matrix. The JSON keeps sample counts and the most frequently
 complete `.cpuprofile` files sit beside it in a `-profiles` directory. Counts are sample counts,
 not time-weighted CPU percentages. Use the existing production comparison with
 `--cases patch,separate,destroy,destroy-resources,cycles` for timing comparisons.
+
+The diagnostic runner owns production builds, source metadata, browser setup, and cleanup.
+`lifecycle-run.mjs`, `responsiveness-run.mjs`, and `runtime-run.mjs` own their respective browser
+protocols and reports; the typed fixtures remain in `lifecycle.ts`, `responsiveness.ts`, and
+`runtime.ts`.
