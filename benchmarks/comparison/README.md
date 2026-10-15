@@ -1,6 +1,11 @@
 # Expanded production comparison
 
-The latest [runtime audit](runtime-audit.md), [generated timings](runtime-audit-results.md), and
+The latest [release review](release-audit.md), [generated timings](release-audit-results.md), and
+[chart](release-audit-comparison.png) cover security hardening and prepared-Frame creation.
+They include the 20% React target, all 23 scenarios, identical-source controls, current live
+heap comparisons, dependency audits, and rejected experiments.
+
+The previous [runtime audit](runtime-audit.md), [generated timings](runtime-audit-results.md), and
 [chart](runtime-audit-comparison.png) compare allocation/clarity changes with `2620a6a`.
 They include all 23 cases, retained-heap and collectibility checks, rejected experiments,
 and full identical-source controls. The [construction results](construction-results.md)
@@ -47,7 +52,7 @@ python3 benchmarks/comparison/plot.py benchmarks/comparison/results.json \
   --output benchmarks/comparison/comparison
 ```
 
-![Expanded benchmark comparison](runtime-audit-comparison.png)
+![Expanded benchmark comparison](release-audit-comparison.png)
 
 The matrix intentionally retains unfavorable cases and measures edits at both ends of a list.
 Prepending gives new FrameKit rows LayoutOrder -1 ahead of existing rows at 0; React prepends the
