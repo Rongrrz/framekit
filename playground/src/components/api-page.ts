@@ -39,6 +39,7 @@ export const createApiPage = (theme: ThemeValue, route: ObservableValue<SitePage
     lifecycle: 'Tree traversal, transactions, detach, unmount, and destroy.',
     animation: 'Springs, tweens, playback, and property ownership.',
     overlays: 'Tooltip and popover contracts with live examples.',
+    controls: 'Command menus, native modal dialogs, and caller-owned tree state.',
     devtools: 'Launch controls, shortcuts, picking, and snapshots.',
     api: '',
   };

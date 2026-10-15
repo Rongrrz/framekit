@@ -6,6 +6,7 @@ import {
 } from 'framekit';
 
 import { createApiPage } from './components/api-page';
+import { createControlsPage } from './components/controls-page';
 import { createGuidePage } from './components/guide-page';
 import { createHomePage } from './components/home';
 import { createNavigation } from './components/navigation';
@@ -48,6 +49,7 @@ export const createPlaygroundApp = (
     createReferencePage(chapter, palette, route, scrollTo).Parent = content;
   }
   createOverlaysPage(layout, palette, route, scrollTo).Parent = content;
+  createControlsPage(palette, route, scrollTo).Parent = content;
   createNavigation(page, route, navigate, layout, theme, palette).Parent = app;
 
   const previousTitle = document.title;

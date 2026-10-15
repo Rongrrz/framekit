@@ -358,3 +358,11 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
     height: 166px !important;
   }
 }
+
+.pg-example-dialog {
+  position: fixed !important;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: 0 24px 80px #0004;
+}

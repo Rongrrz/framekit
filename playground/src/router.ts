@@ -16,6 +16,7 @@ export const documentationPages = [
   { page: 'lifecycle', label: 'Ownership & cleanup', group: 'Learn' },
   { page: 'animation', label: 'Animation', group: 'Build' },
   { page: 'overlays', label: 'Tooltips & popovers', group: 'Build' },
+  { page: 'controls', label: 'Menus, dialogs & trees', group: 'Build' },
   { page: 'devtools', label: 'Runtime inspector', group: 'Build' },
   { page: 'api', label: 'API overview', group: 'Reference' },
 ] as const;

@@ -144,5 +144,5 @@ The binding owns the launcher, shortcut listener, and open inspector; destroying
 root releases them. Keep this integration behind your bundler's development flag.
 
 The Playground uses the button and **F8**. Its documentation has separate chapters for
-elements, layout, state and collections, ownership, animation, overlays, and devtools, with
+elements, layout, state and collections, ownership, animation, overlays, menus/dialogs/trees, and devtools, with
 an API overview at `#/api`. See [Playground architecture](playground/README.md).

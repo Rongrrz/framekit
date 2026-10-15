@@ -52,3 +52,7 @@ to try scroll anchoring, or use End to select the last row without mounting ever
 
 Both entries are included in production builds. Keep local validation focused on affected unit
 and Chromium cases; CI runs the complete browser matrix.
+
+The `#/controls` chapter demonstrates command menus, native modal dialogs, tree keyboard
+navigation, and explicit binding disposal. Open `/collections.html?heights=variable` for
+the measured-height prototype with wrapped text and expandable rows.
