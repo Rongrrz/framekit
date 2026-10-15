@@ -85,7 +85,12 @@ Caller text is never treated as HTML. Image protocols and property values are va
 
 FrameKit installs one shared stylesheet per document. For a nonce-based Content Security Policy, call `installFrameKitStyles({ nonce })` before creating nodes.
 
+Inspector snapshots redact password-input text. The [security and stack review](docs/security-and-stack-audit.md)
+describes the checked boundaries, dependency maintenance, and responsibilities of host applications.
+
 ## Development
+
+Use the patched Node 24 LTS version in `.nvmrc` (`nvm install && nvm use`), then `npm ci`.
 
 The playground includes a documentation site and a 100,000-item virtual collection (`/collections.html`), built with FrameKit. See [playground/README.md](playground/README.md) for its architecture.
 
