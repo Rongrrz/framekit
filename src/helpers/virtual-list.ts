@@ -1,26 +1,27 @@
 import { createFrame } from '#elements/frame.js';
 import type { GuiObject } from '#elements/gui-object.js';
 import type { ScrollingFrame } from '#elements/scrolling-frame.js';
-import {
-  assertNonNegativeFinite,
-  assertPositiveFinite,
-  assertInteger,
-} from '#internal/validation.js';
-import { createSignalEmitter } from '#state/signal.js';
+import { assertNonNegativeFinite, assertInteger } from '#internal/validation.js';
 import type { ObservableValue, ReadonlyObservableValue } from '#state/value.js';
 import { udim2 } from '#values/udim.js';
 import { vector2 } from '#values/vector2.js';
 
-import { isTextEntry } from './composite-keyboard.js';
-import { bindKeyedChildren, type KeyedChildrenOptions } from './keyed-children.js';
+import type { KeyedChildrenOptions } from './keyed-children.js';
 import { watchOwnedValue } from './owned-value.js';
-import { createRowGeometry } from './virtual-list-geometry.js';
+import { bindVirtualListKeyboard } from './virtual-list-keyboard.js';
+import { observeVirtualRows, type RowMeasurement } from './virtual-list-measurement.js';
+import {
+  createVirtualListModel,
+  type VirtualItemHeight,
+  type VirtualListEntry,
+} from './virtual-list-model.js';
+import { bindVirtualRows } from './virtual-list-rows.js';
 
 /** Data selection persists independently of mounted views; heights can be fixed or measured. */
 export type VirtualListOptions<Item, Node extends GuiObject> = KeyedChildrenOptions<Item, Node> &
   Readonly<{
     /** A fixed pixel height, or a positive estimate for measured rows whose heights are owned by the caller. */
-    itemHeight: number | Readonly<{ estimate: number }>;
+    itemHeight: VirtualItemHeight;
     overscan?: number;
     selection: ObservableValue<string | number | undefined>;
   }>;
@@ -30,9 +31,6 @@ export type VirtualListController = Readonly<{
   scrollToKey(key: string | number): void;
   dispose(): void;
 }>;
-
-type Entry<Item> = Readonly<{ item: Item; index: number; key: string | number }>;
-let nextRowId = 0;
 
 /**
  * Virtualizes a dedicated scrolling frame with listbox keyboard selection. Retained visible
@@ -46,14 +44,12 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
   source: ReadonlyObservableValue<readonly Item[]>,
   options: VirtualListOptions<Item, Node>,
 ): VirtualListController => {
-  const measured = typeof options.itemHeight !== 'number';
-  const estimatedHeight =
-    typeof options.itemHeight === 'number' ? options.itemHeight : options.itemHeight.estimate;
-  assertPositiveFinite(estimatedHeight, 'Virtual list itemHeight');
+  const element = viewport.unsafeElement;
+  const model = createVirtualListModel(options.key, options.itemHeight, element.clientWidth);
+  const { measured, estimatedHeight, offset: offsetAt, height: heightAt, indexAt } = model;
   const overscan = options.overscan ?? 2;
   assertNonNegativeFinite(overscan, 'Virtual list overscan');
   assertInteger(overscan, 'Virtual list overscan');
-  const element = viewport.unsafeElement;
   const saved = {
     CanvasSize: viewport.CanvasSize,
     CanvasPosition: viewport.CanvasPosition,
@@ -74,27 +70,11 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
   element.setAttribute('role', 'listbox');
   element.tabIndex = 0;
   viewport.setProperties({ AutomaticCanvasSize: 'None', ScrollingDirection: 'Y' });
-  let visible: readonly Entry<Item>[] = [];
-  const visibleChanged = createSignalEmitter<[readonly Entry<Item>[]]>();
-  const views = new Map<string | number, Node>();
-  let entries: readonly Entry<Item>[] = [];
-  let indices = new Map<string | number, number>();
   let disposed = false;
   let pendingScroll: Readonly<{ key: string | number; top: number }> | undefined;
   let scrollCorrection: Readonly<{ actual: number; desired: number }> | undefined;
-  const heights = new Map<string | number, number>();
-  let geometry = createRowGeometry([]);
-  let width = element.clientWidth;
-  const window = element.ownerDocument.defaultView ?? globalThis;
-  let resizeFrame: number | undefined;
-  let pendingMeasurements: ResizeObserverEntry[] = [];
-  const offsetAt = (index: number): number =>
-    measured ? geometry.offset(index) : index * estimatedHeight;
-  const heightAt = (index: number): number => (measured ? geometry.height(index) : estimatedHeight);
-  const indexAt = (offset: number): number =>
-    measured ? geometry.indexAt(offset) : Math.floor(offset / estimatedHeight);
   const setCanvasSize = (): void => {
-    const height = offsetAt(entries.length);
+    const height = offsetAt(model.entries.length);
     content.Size = udim2(1, 0, 0, height);
     viewport.CanvasSize = udim2(1, 0, 0, height);
   };
@@ -111,41 +91,18 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     // Preserve fractional intent across browser-rounded writes, but accept real range clamping.
     scrollCorrection = Math.abs(desired - actual) <= 1 ? { actual, desired } : undefined;
   };
-  const ResizeObserverConstructor =
-    element.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
-  const applyMeasurements = (changes: readonly ResizeObserverEntry[]): void => {
+  const applyMeasurements = (changes: readonly RowMeasurement[]): void => {
     if (disposed || viewport.isDestroyed()) {
       return;
     }
-    // Late images and fonts can invalidate cached heights too. Keep a requested row visible
-    // until the caller scrolls elsewhere or changes the collection, selection, or viewport width.
-    const request =
-      width === element.clientWidth && pendingScroll?.top === element.scrollTop
-        ? pendingScroll
-        : undefined;
-    pendingScroll = undefined;
     const previous = readAnchor();
-    let changed = false;
-    if (measured && width !== element.clientWidth) {
-      width = element.clientWidth;
-      heights.clear();
-      geometry = createRowGeometry(entries.map(() => estimatedHeight));
-      changed = true;
-    }
-    if (measured) {
-      for (const change of changes) {
-        const key = [...views].find(([, view]) => view.unsafeElement === change.target)?.[0];
-        const index = key === undefined ? undefined : indices.get(key);
-        const height =
-          change.borderBoxSize?.[0]?.blockSize ?? (change.target as HTMLElement).offsetHeight;
-        if (index !== undefined && Number.isFinite(height) && height > 0) {
-          heights.set(key!, height);
-          if (height !== geometry.height(index)) {
-            geometry.set(index, height);
-            changed = true;
-          }
-        }
-      }
+    const resized = model.resize(element.clientWidth);
+    const request =
+      !resized && pendingScroll?.top === element.scrollTop ? pendingScroll : undefined;
+    pendingScroll = undefined;
+    let changed = resized;
+    for (const { key, height } of changes) {
+      changed = model.measure(key, height) || changed;
     }
     if (changed) {
       setCanvasSize();
@@ -157,70 +114,12 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
       render();
     }
   };
-  const resize = new ResizeObserverConstructor((changes) => {
-    if (!measured) {
-      render();
-      return;
-    }
-    pendingMeasurements.push(...changes);
-    // Updating an observed ancestor inside delivery causes ResizeObserver loop errors in WebKit.
-    resizeFrame ??= window.requestAnimationFrame(() => {
-      resizeFrame = undefined;
-      const batch = pendingMeasurements;
-      pendingMeasurements = [];
-      applyMeasurements(batch);
-    });
-  });
-  bindKeyedChildren(
-    content,
-    { get: () => visible, onChange: visibleChanged.subscribe },
-    {
-      key: (entry) => entry.key,
-      create: (entry) => {
-        const node = options.create(entry.item);
-        if (
-          node.isDestroyed() ||
-          node.Parent ||
-          node.unsafeElement === element ||
-          [...views.values()].includes(node)
-        ) {
-          throw new TypeError('A virtual row factory must return a unique, live, unattached view.');
-        }
-        if (!node.unsafeElement.id) {
-          nextRowId += 1;
-          node.unsafeElement.id = `framekit-option-${nextRowId}`;
-        }
-        node.unsafeElement.setAttribute('role', 'option');
-        node.unsafeElement.tabIndex = -1;
-        node.on('click', (event) => {
-          if (!isTextEntry(event.target)) {
-            options.selection.set(entry.key);
-            viewport.focus({ preventScroll: true });
-          }
-        });
-        views.set(entry.key, node);
-        if (measured) {
-          resize.observe(node.unsafeElement, { box: 'border-box' });
-        }
-        node.onDestroy(() => {
-          resize.unobserve(node.unsafeElement);
-          views.delete(entry.key);
-        });
-        return node;
-      },
-      update: (node, entry) => {
-        options.update?.(node, entry.item, entry.index);
-        node.setProperties({
-          Position: udim2(0, 0, 0, offsetAt(entry.index)),
-          Size: measured
-            ? udim2(1, 0, node.Size.Y.Scale, node.Size.Y.Offset)
-            : udim2(1, 0, 0, estimatedHeight),
-        });
-        node.unsafeElement.setAttribute('aria-posinset', String(entry.index + 1));
-        node.unsafeElement.setAttribute('aria-setsize', String(entries.length));
-      },
-    },
+  const observation = observeVirtualRows(
+    element,
+    measured,
+    measured ? applyMeasurements : () => render(),
   );
+  const renderRows = bindVirtualRows(viewport, content, model, options, observation);
   const render = (): void => {
     if (disposed || viewport.isDestroyed()) {
       return;
@@ -229,35 +128,13 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     const height = Math.max(estimatedHeight, element.clientHeight);
     const start = Math.max(0, indexAt(top) - overscan);
     const end = Math.min(
-      entries.length,
+      model.entries.length,
       measured
         ? indexAt(top + height) + 1 + overscan
         : Math.ceil((top + height) / estimatedHeight) + overscan,
     );
-    const next = entries.slice(start, end);
-    const previous = visible;
-    if (next.length !== previous.length || next.some((entry, index) => entry !== previous[index])) {
-      visible = next;
-      try {
-        visibleChanged.emit(next);
-      } catch (error) {
-        visible = previous;
-        throw error;
-      }
-    }
-    const selection = options.selection.get();
-    for (const [key, view] of views) {
-      if (measured) {
-        view.Position = udim2(0, 0, 0, offsetAt(indices.get(key)!));
-      }
-      view.unsafeElement.setAttribute('aria-selected', String(key === selection));
-    }
-    const active = selection === undefined ? undefined : views.get(selection);
-    if (active) {
-      element.setAttribute('aria-activedescendant', active.unsafeElement.id);
-    } else {
-      element.removeAttribute('aria-activedescendant');
-    }
+    const next = model.entries.slice(start, end);
+    renderRows(next);
   };
   const scrollToKey = (key: string | number): void => {
     if (disposed) {
@@ -265,7 +142,7 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     }
     pendingScroll = undefined;
     scrollCorrection = undefined;
-    const index = indices.get(key);
+    const index = model.indexOf(key);
     if (index === undefined) {
       return;
     }
@@ -285,39 +162,26 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     }
   };
   const updateSource = (items: readonly Item[]): void => {
-    const next = items.map((item, index): Entry<Item> => ({ item, index, key: options.key(item) }));
-    const nextIndices = new Map(next.map((entry) => [entry.key, entry.index]));
-    if (nextIndices.size !== next.length) {
-      throw new TypeError('Virtual list requires unique keys.');
-    }
-    pendingScroll = undefined;
+    const previous = model.entries;
     const { index: oldIndex, offset } = readAnchor();
     const selection = options.selection.get();
-    const selectedIndex = selection === undefined ? oldIndex : (indices.get(selection) ?? oldIndex);
-    const survivor = (from: number): Entry<Item> | undefined =>
-      entries.find((entry, index) => index >= from && nextIndices.has(entry.key)) ??
-      entries.findLast((entry, index) => index < from && nextIndices.has(entry.key));
+    const selectedIndex =
+      selection === undefined ? oldIndex : (model.indexOf(selection) ?? oldIndex);
+    model.replace(items);
+    pendingScroll = undefined;
+    const survivor = (from: number): VirtualListEntry<Item> | undefined =>
+      previous.find((entry, index) => index >= from && model.indexOf(entry.key) !== undefined) ??
+      previous.findLast((entry, index) => index < from && model.indexOf(entry.key) !== undefined);
     const anchor = survivor(oldIndex);
     const nextSelection = survivor(selectedIndex)?.key;
-    if (measured) {
-      for (const entry of entries) {
-        const nextIndex = nextIndices.get(entry.key);
-        if (nextIndex === undefined) {
-          heights.delete(entry.key);
-        }
-      }
-      geometry = createRowGeometry(next.map((entry) => heights.get(entry.key) ?? estimatedHeight));
-    }
-    entries = next;
-    indices = nextIndices;
     setCanvasSize();
     const anchorIndex = anchor
-      ? (indices.get(anchor.key) ?? Math.min(oldIndex, entries.length - 1))
+      ? (model.indexOf(anchor.key) ?? Math.min(oldIndex, model.entries.length - 1))
       : 0;
     restoreAnchor(anchorIndex, offset);
-    if (selection !== undefined && !indices.has(selection)) {
+    if (selection !== undefined && model.indexOf(selection) === undefined) {
       options.selection.set(
-        nextSelection ?? entries[Math.min(selectedIndex, entries.length - 1)]?.key,
+        nextSelection ?? model.entries[Math.min(selectedIndex, model.entries.length - 1)]?.key,
       );
     }
     render();
@@ -332,18 +196,9 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     scrollCorrection = undefined;
     unregisterDestroy();
     stops.forEach((stop) => stop());
-    resize.disconnect();
-    if (resizeFrame !== undefined) {
-      window.cancelAnimationFrame(resizeFrame);
-    }
-    pendingMeasurements = [];
+    observation.dispose();
     content.destroy();
-    entries = [];
-    indices.clear();
-    visible = [];
-    views.clear();
-    heights.clear();
-    geometry = createRowGeometry([]);
+    model.replace([]);
     if (!viewport.isDestroyed()) {
       viewport.setProperties(saved);
     }
@@ -378,56 +233,7 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     );
     stops.push(viewport.onPropertyChanged('CanvasPosition', render));
     stops.push(viewport.on('scroll', render));
-    stops.push(
-      viewport.on('keydown', (event) => {
-        if (
-          event.defaultPrevented ||
-          isTextEntry(event.target) ||
-          event.ctrlKey ||
-          event.metaKey ||
-          event.altKey ||
-          event.isComposing ||
-          entries.length === 0
-        ) {
-          return;
-        }
-        const selection = options.selection.get();
-        const current = selection === undefined ? -1 : (indices.get(selection) ?? -1);
-        const page = Math.max(1, Math.floor(element.clientHeight / estimatedHeight));
-        const currentTop = offsetAt(Math.max(0, current));
-        let index: number;
-        if (event.key === 'ArrowDown') {
-          index = Math.min(current + 1, entries.length - 1);
-        } else if (event.key === 'ArrowUp') {
-          index = Math.max(current - 1, 0);
-        } else if (event.key === 'Home') {
-          index = 0;
-        } else if (event.key === 'End') {
-          index = entries.length - 1;
-        } else if (event.key === 'PageDown') {
-          index = measured
-            ? Math.max(
-                Math.min(current + 1, entries.length - 1),
-                indexAt(currentTop + element.clientHeight),
-              )
-            : Math.min(Math.max(0, current) + page, entries.length - 1);
-        } else if (event.key === 'PageUp') {
-          index = measured
-            ? Math.min(
-                Math.max(0, current - 1),
-                indexAt(Math.max(0, currentTop - element.clientHeight)),
-              )
-            : Math.max(current - page, 0);
-        } else {
-          return;
-        }
-        event.preventDefault();
-        const key = entries[index]!.key;
-        scrollToKey(key);
-        options.selection.set(key);
-      }),
-    );
-    resize.observe(element);
+    stops.push(bindVirtualListKeyboard(viewport, options.selection, model, scrollToKey));
   } catch (error) {
     dispose();
     throw error;
