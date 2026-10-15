@@ -46,3 +46,44 @@ need for a global batching API. Prefer bounded views, grouped property patches, 
 layout after bulk initial construction; measure application-specific update paths before changing
 synchronous read and observer semantics. There are deliberately no hardware-dependent timing
 assertions in CI. Browser correctness tests enforce the virtual-list DOM bound separately.
+
+## Repeatable lifecycle and application diagnostics
+
+These commands build a minified production fixture, launch fresh Chromium, and save JSON to
+`test-results/diagnostics/` by default. Install Chromium first as described above. They do not
+replace `baseline.json` or impose hardware-dependent timing budgets in CI.
+
+```sh
+npm run benchmark:lifecycle
+npm run benchmark:responsiveness
+# Optional output path, number of measured lifetimes/runs, and integer CPU throttle:
+npm run benchmark:responsiveness -- --repetitions 5 --cpu-throttle 4 --out /tmp/responsiveness.json
+```
+
+The lifecycle workload warms one complete lifetime, then runs five measured lifetimes with
+subscribed rows, active animation, tooltip/popover bindings, a native menu and modal, a
+measured virtual list, and an open runtime inspector. It also samples ten detached documents
+using every Frame tag. Destroyed roots must leave no owned DOM/top-layer content; surviving
+source objects are updated after disposal to exercise subscription cleanup. External CDP full
+GC runs twice before baseline and final readings. WeakRefs must clear and native listener counts
+must return to baseline, or the command saves the failing report and exits unsuccessfully.
+The report includes sampled handles/elements by group, JS heap, document/DOM counters, and listener
+deltas. WeakRef metadata and diagnostic bookkeeping themselves consume memory; a positive heap
+delta alone is not a leak. This exercises sampled Chromium paths, not all application lifetimes
+or native/process memory.
+
+The responsiveness fixture filters 100,000 records through native text input and scrolls the
+virtualized results with real wheel input. It warms the paths, then records five filter/scroll/reset
+runs at 4× CPU throttle. Browser PerformanceEventTiming records input delay, processing, and
+browser-reported next-paint duration for native keyboard/pointer interactions. These durations
+are quantized and only entries meeting the 16 ms observer threshold are reported; they are not
+an INP score. Separate input/scroll event-to-second-frame estimates include a rendering
+opportunity, but are not precise paint timestamps. Input dispatch time can omit hardware/OS
+latency. Long tasks, raw samples, median/p95 summaries, and bounded mounted-view assertions help
+interpret responsiveness without hiding frame waiting inside a synchronous setter benchmark.
+No browser Event Timing record for a fast run means it fell below the observer threshold, not
+zero latency. Use repeated isolated runs when comparing changes; concurrent workloads affect results.
+
+Both reports record browser, CPU, platform, throttle, source revision, working-tree status, and a
+content hash of library and diagnostic sources. Source changes during the production build abort
+the run. Temporary build/server/browser resources are released when the command finishes.

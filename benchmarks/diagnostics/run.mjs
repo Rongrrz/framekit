@@ -1,0 +1,245 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { cpus, platform, tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { chromium } from '@playwright/test';
+import { build, preview } from 'vite';
+
+const directory = dirname(fileURLToPath(import.meta.url));
+const repository = resolve(directory, '../..');
+const mode = process.argv[2];
+if (!['lifecycle', 'responsiveness'].includes(mode)) {
+  throw new Error(
+    'Usage: node benchmarks/diagnostics/run.mjs lifecycle|responsiveness [--out path] [--cpu-throttle 4] [--repetitions 5]',
+  );
+}
+const option = (name, fallback) => {
+  const index = process.argv.indexOf(name);
+  return index < 0 ? fallback : process.argv[index + 1];
+};
+const repetitions = Number(option('--repetitions', '5'));
+const throttle = Number(option('--cpu-throttle', mode === 'responsiveness' ? '4' : '1'));
+assert.ok(
+  [repetitions, throttle].every((value) => Number.isInteger(value) && value > 0),
+  'Repetitions and CPU throttle must be positive integers.',
+);
+const output = resolve(option('--out', `test-results/diagnostics/${mode}.json`));
+const git = (...args) => execFileSync('git', args, { cwd: repository, encoding: 'utf8' }).trim();
+const revision = git('rev-parse', 'HEAD');
+const workingTree = git('status', '--porcelain', '--', 'src', 'benchmarks/diagnostics');
+const fingerprint = async () => {
+  const hash = createHash('sha256');
+  for (const root of ['src', 'benchmarks/diagnostics']) {
+    for (const file of (await readdir(join(repository, root), { recursive: true })).sort()) {
+      const path = join(repository, root, file);
+      if (/\.(ts|mjs|html|css)$/.test(file) && (await stat(path)).isFile()) {
+        hash
+          .update(`${root}/${file}\0`)
+          .update(await readFile(path))
+          .update('\0');
+      }
+    }
+  }
+  return hash.digest('hex');
+};
+const sourceSha256 = await fingerprint();
+const temporary = await mkdtemp(join(tmpdir(), 'framekit-diagnostics-'));
+const configuration = {
+  configFile: false,
+  root: directory,
+  logLevel: 'warn',
+  resolve: {
+    alias: {
+      'framekit/devtools': join(repository, 'src/devtools.ts'),
+      framekit: join(repository, 'src/index.ts'),
+      ...Object.fromEntries(
+        ['animation', 'elements', 'helpers', 'internal', 'modifiers', 'state', 'values'].map(
+          (domain) => [`#${domain}`, join(repository, 'src', domain)],
+        ),
+      ),
+    },
+  },
+  build: { outDir: temporary, emptyOutDir: true, minify: true },
+  preview: { host: '127.0.0.1', port: 0, strictPort: true },
+};
+let server;
+let browser;
+try {
+  await build(configuration);
+  assert.equal(
+    await fingerprint(),
+    sourceSha256,
+    'Source changed during the production build; rerun for a coherent report.',
+  );
+  server = await preview(configuration);
+  browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const client = await page.context().newCDPSession(page);
+  await client.send('Emulation.setCPUThrottlingRate', { rate: throttle });
+  await page.goto(server.resolvedUrls.local[0]);
+  await page.waitForFunction(() => Boolean(window.framekitDiagnostics));
+  const collect = async () => {
+    // Do not dereference WeakRefs in the job that asks V8 to collect their targets.
+    await page.evaluate(() => new Promise((resolveTask) => setTimeout(resolveTask, 0)));
+    await client.send('HeapProfiler.collectGarbage');
+    await client.send('HeapProfiler.collectGarbage');
+  };
+  const counters = async () => ({
+    ...(await client.send('Memory.getDOMCounters')),
+    heap: await client.send('Runtime.getHeapUsage'),
+  });
+  let results;
+  if (mode === 'lifecycle') {
+    await page.evaluate(() => window.framekitDiagnostics.runLifetime(false));
+    await collect();
+    const before = await counters();
+    await page.evaluate(() => window.framekitDiagnostics.sampleDocuments());
+    for (let index = 0; index < repetitions; index += 1) {
+      await page.evaluate(() => window.framekitDiagnostics.runLifetime(true));
+      console.log(`Lifetime ${index + 1}/${repetitions} destroyed`);
+    }
+    await collect();
+    let collection = await page.evaluate(() => window.framekitDiagnostics.lifetimeSummary());
+    for (let attempt = 0; attempt < 2 && collection.retained > 0; attempt += 1) {
+      await collect();
+      collection = await page.evaluate(() => window.framekitDiagnostics.lifetimeSummary());
+    }
+    const after = await counters();
+    results = {
+      collection,
+      before,
+      after,
+      listenerDelta: after.jsEventListeners - before.jsEventListeners,
+      heapDeltaBytes: after.heap.usedSize - before.heap.usedSize,
+      passed: collection.retained === 0 && after.jsEventListeners <= before.jsEventListeners,
+    };
+  } else {
+    await page.evaluate(() => window.framekitDiagnostics.startResponsiveness());
+    const search = page.getByRole('textbox', { name: 'Filter records' });
+    const list = page.getByRole('listbox', { name: 'Search results' });
+    await search.focus();
+    // Warm the same filtering and scrolling paths before retaining samples.
+    await page.keyboard.type('amber');
+    await page.getByRole('status').filter({ hasText: '50000 results' }).waitFor();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.press('Backspace');
+    const settle = () =>
+      page.evaluate(
+        () =>
+          new Promise((done) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(done, 50))),
+          ),
+      );
+    await settle();
+    await page.evaluate(() => window.framekitDiagnostics.resetResponsiveness());
+    const runs = [];
+    for (let index = 0; index < repetitions; index += 1) {
+      await search.focus();
+      await page.keyboard.type('amber');
+      await page.getByRole('status').filter({ hasText: '50000 results' }).waitFor();
+      await list.hover();
+      await page.mouse.wheel(0, 640);
+      await page.waitForFunction(() => document.querySelector('[role="listbox"]').scrollTop > 0);
+      await settle();
+      await search.focus();
+      await page.keyboard.press('ControlOrMeta+A');
+      await page.keyboard.press('Backspace');
+      await page.getByRole('status').filter({ hasText: '100000 results' }).waitFor();
+      await settle();
+      const sample = await page.evaluate(() => window.framekitDiagnostics.responsivenessSummary());
+      assert.ok(sample.mountedViews <= 32, 'Virtualization exceeded the bounded DOM contract.');
+      assert.ok(
+        sample.samples.some((entry) => entry.kind === 'filter') &&
+          sample.samples.some((entry) => entry.kind === 'scroll'),
+        'Missing native input or scroll samples.',
+      );
+      runs.push(sample);
+      await page.evaluate(() => window.framekitDiagnostics.resetResponsiveness());
+      console.log(`Filter + scroll ${index + 1}/${repetitions} measured`);
+    }
+    const summary = (values) => {
+      const sorted = values.toSorted((a, b) => a - b);
+      return {
+        count: sorted.length,
+        medianMs: sorted[Math.floor(sorted.length / 2)] ?? null,
+        p95Ms: sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)] ?? null,
+      };
+    };
+    const samples = runs.flatMap((run) => run.samples);
+    results = {
+      runs,
+      filteringPresentationEstimate: summary(
+        samples
+          .filter((sample) => sample.kind === 'filter')
+          .map((sample) => sample.presentationEstimateMs),
+      ),
+      scrollingPresentationEstimate: summary(
+        samples
+          .filter((sample) => sample.kind === 'scroll')
+          .map((sample) => sample.presentationEstimateMs),
+      ),
+      browserEventDuration: summary(
+        runs
+          .flatMap((run) => run.eventTimings)
+          .filter((entry) => entry.interactionId > 0)
+          .map((entry) => entry.duration),
+      ),
+      longTasks: summary(runs.flatMap((run) => run.longTasks)),
+      passed: true,
+    };
+  }
+  assert.deepEqual(errors, [], 'Browser reported errors.');
+  await mkdir(dirname(output), { recursive: true });
+  await writeFile(
+    output,
+    `${JSON.stringify(
+      {
+        mode,
+        measuredAt: new Date().toISOString(),
+        revision,
+        workingTree,
+        sourceSha256,
+        environment: {
+          browser: browser.version(),
+          cpu: cpus()[0]?.model,
+          platform: platform(),
+          cpuThrottle: throttle,
+        },
+        methodology: {
+          production: true,
+          repetitions,
+          warmupLifetimes: mode === 'lifecycle' ? 1 : 0,
+          eventTiming:
+            'Native keyboard/pointer PerformanceEventTiming: browser next-paint duration, quantized and thresholded at 16 ms; not an INP score.',
+          presentationEstimate:
+            'Event timestamp to second requestAnimationFrame; includes a rendering opportunity, not a precise paint timestamp.',
+          memory:
+            'Chromium JS heap and DOM/listener counters after two external full GCs. Weak references test sampled objects only; native/process memory is excluded.',
+          timingThresholds: false,
+        },
+        results,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(`Saved ${output}`);
+  assert.ok(
+    results.passed,
+    'Lifetime collection or native listener counts failed; inspect the saved report.',
+  );
+} finally {
+  await browser?.close();
+  if (server) {
+    await new Promise((done, reject) =>
+      server.httpServer.close((error) => (error ? reject(error) : done())),
+    );
+  }
+  await rm(temporary, { recursive: true, force: true });
+}

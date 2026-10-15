@@ -60,7 +60,9 @@
     "prepare": "husky",
     "test:browser": "playwright test",
     "benchmark": "playwright test --config playwright.benchmark.config.ts",
-    "check:all": "npm run check && npm run test:all && npm run build:all && npm run test:package"
+    "check:all": "npm run check && npm run test:all && npm run build:all && npm run test:package",
+    "benchmark:lifecycle": "node benchmarks/diagnostics/run.mjs lifecycle",
+    "benchmark:responsiveness": "node benchmarks/diagnostics/run.mjs responsiveness"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
