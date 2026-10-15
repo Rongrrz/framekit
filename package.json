@@ -75,7 +75,7 @@
     "oxlint": "^1.88.0",
     "prettier": "^3.9.10",
     "shiki": "^4.5.0",
-    "typescript": "~6.0.3",
+    "typescript": "~7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.4"
   },
