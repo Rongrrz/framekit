@@ -29,18 +29,24 @@ export const createReferencePage = (
     chapter.title,
     chapter.summary,
   );
+
   const outline = chapter.sections.map((section, index) => {
     const target = appendArticleSection(shell.article, theme, section.title, section.body);
+
     if ('code' in section) {
       createCodeBlock(theme, `${page}${index + 1}Code`, section.code, `${page}.ts`).Parent =
         shell.article;
     }
+
     if ('note' in section) {
       appendCallout(shell.article, theme, section.note);
     }
+
     return { label: section.title, target };
   });
+
   appendOutline(shell.outline, theme, outline, scrollTo);
   appendPageNavigation(shell.article, theme, page);
+
   return shell.page;
 };

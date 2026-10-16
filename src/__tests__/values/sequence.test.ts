@@ -7,6 +7,7 @@ describe('sequences', () => {
     const green = color3FromRGB(0, 255, 0);
     const blue = color3FromRGB(0, 0, 255);
     const colors = colorSequence(red, green, blue);
+
     const transparency = numberSequence(
       { Time: 0, Value: 0 },
       { Time: 0.25, Value: 0.5 },
@@ -19,6 +20,7 @@ describe('sequences', () => {
       { Time: 0.5, Value: 20 },
       { Time: 1, Value: 30 },
     ]);
+
     expect(
       colorSequence(
         { Time: 0, Value: red },

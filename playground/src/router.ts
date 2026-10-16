@@ -20,7 +20,9 @@ export const documentationPages = [
   { page: 'devtools', label: 'Runtime inspector', group: 'Build' },
   { page: 'api', label: 'API overview', group: 'Reference' },
 ] as const;
+
 export type DocsPage = (typeof documentationPages)[number]['page'];
+
 export type SitePage = 'home' | DocsPage;
 
 export const pageHash = (page: SitePage): string => (page === 'home' ? '#/' : `#/${page}`);
@@ -38,7 +40,9 @@ export const bindHashRouter = (owner: Instance, route: ObservableValue<SitePage>
 
 export const navigateToPage = (route: ObservableValue<SitePage>, page: SitePage): void => {
   route.set(page);
+
   const hash = pageHash(page);
+
   if (window.location.hash !== hash) {
     window.location.hash = hash;
   }
@@ -55,15 +59,18 @@ export const createRoutedPage = (
   frame.unsafeElement.classList.add('pg-route');
   watchOwnedValue(frame, route, (currentPage) => {
     frame.Visible = currentPage === page;
+
     if (frame.Visible && frame.unsafeElement.isConnected) {
       const heading = frame.unsafeElement.querySelector<HTMLElement>(
         '[role=heading][aria-level="1"]',
       );
+
       if (heading) {
         heading.tabIndex = -1;
         heading.focus({ preventScroll: true });
       }
     }
   });
+
   return frame;
 };

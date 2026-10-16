@@ -57,11 +57,13 @@ describe('hierarchy', () => {
     const parent = createFrame();
     const button = createTextButton({ Name: 'Action' });
     button.Parent = parent;
+
     const child = parent.findFirstChild('Action');
 
     if (!child?.isA('TextButton')) {
       throw new Error('Expected a TextButton.');
     }
+
     child.Text = 'Run';
     child.onClick(() => undefined);
 
@@ -89,9 +91,11 @@ describe('hierarchy', () => {
     const first = createFrame();
     const middle = createFrame();
     const last = createFrame();
+
     for (const child of [first, middle, last]) {
       child.Parent = previous;
     }
+
     vi.spyOn(rejected.unsafeElement, 'insertBefore').mockImplementation(() => {
       throw new Error('placement failed');
     });
@@ -115,11 +119,13 @@ describe('hierarchy', () => {
     const nested = createFrame({ Name: 'Match' });
     branch.Parent = root;
     nested.Parent = branch;
+
     const children = root.getChildren();
     const descendants = root.getDescendants();
 
     expect(root.findFirstChild('Match')).toBeUndefined();
     expect(root.findFirstChild('Match', true)).toBe(nested);
+
     const direct = createFrame({ Name: 'Match' });
     direct.Parent = root;
 

@@ -5,6 +5,7 @@ import { vector2 } from '#values/vector2.js';
 import type { ScrollingFrame } from '../scrolling-frame.js';
 
 type ScrollAxis = 'X' | 'Y';
+
 type KeyboardScrollIntent = Readonly<{
   axis: ScrollAxis;
   direction: -1 | 1;
@@ -32,11 +33,15 @@ const forwardUnsupportedKeyboardScroll = (node: ScrollingFrame, event: KeyboardE
   ) {
     return;
   }
+
   const intent = resolveKeyboardScrollIntent(event);
+
   if (!intent || acceptsScrollAxis(node, intent.axis)) {
     return;
   }
+
   const ancestor = findScrollingAncestor(node, intent.axis);
+
   if (!ancestor) {
     return;
   }
@@ -47,6 +52,7 @@ const forwardUnsupportedKeyboardScroll = (node: ScrollingFrame, event: KeyboardE
       : intent.axis === 'X'
         ? ancestor.unsafeElement.clientWidth
         : ancestor.unsafeElement.clientHeight;
+
   const offset = intent.direction * distance;
   event.preventDefault();
   ancestor.scrollBy(intent.axis === 'X' ? vector2(offset, 0) : vector2(0, offset));
@@ -85,9 +91,11 @@ const findScrollingAncestorFrom = (
   if (!node) {
     return undefined;
   }
+
   if (node.isA('ScrollingFrame') && acceptsScrollAxis(node, axis)) {
     return node;
   }
+
   return findScrollingAncestorFrom(node.Parent, axis);
 };
 
@@ -95,5 +103,6 @@ const acceptsScrollAxis = (node: ScrollingFrame, axis: ScrollAxis): boolean => {
   if (!node.ScrollingEnabled) {
     return false;
   }
+
   return node.ScrollingDirection === axis || node.ScrollingDirection === 'XY';
 };

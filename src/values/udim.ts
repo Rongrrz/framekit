@@ -20,6 +20,7 @@ export type UDim2 = Readonly<{
 export function udim(scale: number, offset: number): UDim {
   assertFiniteNumber(scale, 'UDim scale');
   assertFiniteNumber(offset, 'UDim offset');
+
   return Object.freeze({ Scale: scale, Offset: offset });
 }
 
@@ -41,13 +42,17 @@ export function udim2FromOffset(xOffset: number, yOffset: number): UDim2 {
 /** Converts a UDim to a safe CSS length. */
 export function udimToCss(value: UDim): string {
   const percent = value.Scale * 100;
+
   if (value.Offset === 0) {
     return `${percent}%`;
   }
+
   if (value.Scale === 0) {
     return `${value.Offset}px`;
   }
+
   const operator = value.Offset < 0 ? '-' : '+';
+
   return `calc(${percent}% ${operator} ${Math.abs(value.Offset)}px)`;
 }
 
@@ -55,6 +60,7 @@ export function assertUDim(value: unknown, name = 'UDim'): asserts value is UDim
   if (typeof value !== 'object' || value === null || !('Scale' in value) || !('Offset' in value)) {
     throw new TypeError(`${name} must contain finite Scale and Offset values.`);
   }
+
   assertFiniteNumber(value.Scale, 'UDim scale');
   assertFiniteNumber(value.Offset, 'UDim offset');
 }
@@ -63,6 +69,7 @@ export function assertUDim2(value: unknown, name = 'UDim2'): asserts value is UD
   if (typeof value !== 'object' || value === null || !('X' in value) || !('Y' in value)) {
     throw new TypeError(`${name} must contain X and Y UDim values.`);
   }
+
   assertUDim(value.X, `${name}.X`);
   assertUDim(value.Y, `${name}.Y`);
 }

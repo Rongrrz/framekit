@@ -16,15 +16,19 @@ test('prepared Frame defaults remain independent through layout, updates, and de
     const parent = createFrame({ Size: udim2FromOffset(300, 200) });
     parent.Parent = gui;
     createUIGridLayout({ CellSize: udim2FromOffset(75, 30) }).Parent = parent;
+
     const first = createFrame({
       TagName: 'article',
       Size: udim2FromOffset(240, 80),
       Position: udim2FromOffset(20, 30),
     });
+
     first.Parent = parent;
     gui.mount('#root');
+
     const arranged = first.AbsoluteSize;
     first.Parent = gui;
+
     const restored = first.AbsoluteSize;
     const restoredPosition = first.AbsolutePosition;
     let calls = 0;
@@ -35,12 +39,15 @@ test('prepared Frame defaults remain independent through layout, updates, and de
     first.setProperties({ Size: udim2FromOffset(400, 90), Visible: false, Rotation: 45 });
     first.destroy();
     first.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
+
     const second = createFrame({ TagName: 'article' });
     second.Parent = gui;
     second.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
+
     const third = createFrame({ TagName: 'article', Size: udim2FromOffset(50, 40) });
     third.Parent = gui;
     third.Size = udim2FromOffset(60, 45);
+
     const result = {
       arranged,
       restored,
@@ -53,9 +60,12 @@ test('prepared Frame defaults remain independent through layout, updates, and de
       tag: second.unsafeElement.tagName,
       separateElements: second.unsafeElement !== third.unsafeElement,
     };
+
     gui.destroy();
+
     return result;
   });
+
   expect(result).toEqual({
     arranged: { X: 75, Y: 30 },
     restored: { X: 240, Y: 80 },
@@ -79,29 +89,39 @@ test('lays out real children and synchronizes native scroll position', async ({ 
       createUIListLayout,
       udim2FromOffset,
     } = window.framekit;
+
     const gui = createScreenGui();
+
     const list = createScrollingFrame({
       Size: udim2FromOffset(200, 100),
       CanvasSize: udim2FromOffset(200, 500),
     });
+
     list.Parent = gui;
     createUIListLayout().Parent = list;
+
     const rows = Array.from({ length: 10 }, () => {
       const row = createFrame({ Size: udim2FromOffset(200, 50) });
       row.Parent = list;
+
       return row;
     });
+
     gui.mount('#root');
     list.unsafeElement.scrollTop = 120;
     list.unsafeElement.dispatchEvent(new Event('scroll'));
+
     const result = {
       height: rows[0]!.AbsoluteSize.Y,
       delta: rows[1]!.AbsolutePosition.Y - rows[0]!.AbsolutePosition.Y,
       scroll: list.CanvasPosition.Y,
     };
+
     gui.destroy();
+
     return result;
   });
+
   expect(result).toEqual({ height: 50, delta: 50, scroll: 120 });
 });
 
@@ -112,6 +132,7 @@ test('direct assignments interrupt an animation in a real frame loop', async ({ 
     const node = createFrame();
     node.Parent = gui;
     gui.mount('#root');
+
     const tween = createTween(node, { Duration: 1 }, { Rotation: 90 });
     tween.play();
     await new Promise<void>((resolve) =>
@@ -119,10 +140,13 @@ test('direct assignments interrupt an animation in a real frame loop', async ({ 
     );
     node.Rotation = 12;
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
     const result = { rotation: node.Rotation, state: tween.playbackState() };
     gui.destroy();
+
     return result;
   });
+
   expect(result).toEqual({ rotation: 12, state: 'Cancelled' });
 });
 
@@ -138,15 +162,18 @@ test('repeated subtree lifetimes release watchers, events, animations, and DOM',
       watchOwnedValue,
       spring,
     } = window.framekit;
+
     const gui = createScreenGui();
     const left = createFrame();
     const right = createFrame();
     left.Parent = gui;
     right.Parent = gui;
     gui.mount('#root');
+
     const value = createObservableValue(0);
     let notifications = 0;
     let clicks = 0;
+
     for (let index = 0; index < 100; index += 1) {
       const subtree = createFrame();
       const button = createTextButton();
@@ -155,6 +182,7 @@ test('repeated subtree lifetimes release watchers, events, animations, and DOM',
       watchOwnedValue(button, value, () => {
         notifications += 1;
       });
+
       button.onClick(() => {
         clicks += 1;
       });
@@ -164,8 +192,10 @@ test('repeated subtree lifetimes release watchers, events, animations, and DOM',
       value.set(index + 1);
       button.unsafeElement.click();
     }
+
     const remaining = gui.unsafeElement.querySelectorAll('*').length;
     gui.destroy();
+
     return {
       notifications,
       clicks,
@@ -173,6 +203,7 @@ test('repeated subtree lifetimes release watchers, events, animations, and DOM',
       roots: document.querySelector('#root')!.childElementCount,
     };
   });
+
   expect(result).toEqual({ notifications: 100, clicks: 0, remaining: 2, roots: 0 });
 });
 
@@ -183,28 +214,35 @@ test('hover subscriptions remain independent and stop on disposal and destructio
     const { createScreenGui, createFrame, createTextButton, udim2FromOffset } = window.framekit;
     const gui = createScreenGui();
     const frame = createFrame({ Size: udim2FromOffset(100, 100) });
+
     const destroy = createTextButton({
       Text: 'Destroy',
       Size: udim2FromOffset(100, 40),
       Position: udim2FromOffset(0, 150),
     });
+
     frame.unsafeElement.id = 'hover-target';
     frame.Parent = gui;
     destroy.Parent = gui;
+
     let enters = 0;
     let leaves = 0;
+
     const stop = frame.onMouseEnter(() => {
       enters += 1;
     });
+
     stop();
     frame.onMouseEnter(() => {
       enters += 1;
       document.documentElement.dataset.enters = String(enters);
     });
+
     frame.onMouseLeave(() => {
       leaves += 1;
       document.documentElement.dataset.leaves = String(leaves);
     });
+
     frame.onDestroy(() => {
       frame.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));
       frame.unsafeElement.dispatchEvent(new MouseEvent('mouseleave'));
@@ -256,14 +294,17 @@ for (const nativeMove of [true, false]) {
       const right = createFrame();
       left.Parent = gui;
       right.Parent = gui;
+
       if (!useNative) {
         Object.defineProperty(left.unsafeElement, 'moveBefore', { value: undefined });
         Object.defineProperty(right.unsafeElement, 'moveBefore', { value: undefined });
       }
+
       const first = createFrame();
       const second = createFrame();
       first.Parent = left;
       second.Parent = left;
+
       const input = createTextInput({ Text: 'persistent selection' });
       input.Parent = second;
       gui.mount('#root');
@@ -271,6 +312,7 @@ for (const nativeMove of [true, false]) {
       input.unsafeElement.setSelectionRange(2, 8, 'backward');
       left.reorderChildren([second, first]);
       second.Parent = right;
+
       const result = {
         focused: document.activeElement === input.unsafeElement,
         start: input.unsafeElement.selectionStart,
@@ -278,9 +320,12 @@ for (const nativeMove of [true, false]) {
         direction: input.unsafeElement.selectionDirection,
         sameElement: right.unsafeElement.firstElementChild === second.unsafeElement,
       };
+
       gui.destroy();
+
       return result;
     }, nativeMove);
+
     expect(result).toEqual({
       focused: true,
       start: 2,
@@ -297,6 +342,7 @@ test('layout sorting aligns visual order with native tab order', async ({ page }
     const gui = createScreenGui();
     const parent = createFrame();
     parent.Parent = gui;
+
     const first = createTextButton({ Text: 'First', LayoutOrder: 2 });
     const second = createTextButton({ Text: 'Second', LayoutOrder: 1 });
     // Explicit tab stops also exercise WebKit with macOS keyboard navigation defaults.
@@ -324,36 +370,47 @@ test('keyed collection updates retain focused controls and release removed views
       createObservableValue,
       bindKeyedChildren,
     } = window.framekit;
+
     const gui = createScreenGui();
     const parent = createFrame();
     parent.Parent = gui;
     gui.mount('#root');
+
     const items = createObservableValue<readonly number[]>([1, 2]);
     let destroyed = 0;
     bindKeyedChildren(parent, items, {
       key: (id) => id,
+
       create: (id) => {
         const input = createTextInput({ Text: `item ${id}` });
         input.onDestroy(() => {
           destroyed += 1;
         });
+
         return input;
       },
     });
+
     const focused = parent.getChildren()[1]!;
+
     if (!focused.isA('TextInput')) {
       throw new Error('Expected an input');
     }
+
     focused.focus();
     focused.unsafeElement.setSelectionRange(1, 4);
     items.set([2, 3, 1]);
+
     const retained = parent.getChildren()[0] === focused;
     const selection = focused.unsafeElement.selectionStart;
     const active = document.activeElement === focused.unsafeElement;
     items.set([2]);
+
     const removed = destroyed;
     gui.destroy();
+
     return { retained, selection, active, removed, destroyed };
   });
+
   expect(result).toEqual({ retained: true, selection: 1, active: true, removed: 2, destroyed: 3 });
 });

@@ -6,17 +6,20 @@ describe('signals', () => {
     'preserves a thrown $failure value while notifying later listeners',
     ({ failure }) => {
       expect.assertions(2);
+
       const event = createSignalEmitter();
       const later = vi.fn();
       event.subscribe(() => {
         throw failure;
       });
       event.subscribe(later);
+
       try {
         event.emit();
       } catch (error) {
         expect(error).toBe(failure);
       }
+
       expect(later).toHaveBeenCalledOnce();
     },
   );
@@ -24,6 +27,7 @@ describe('signals', () => {
   it('preserves nested emissions when a sole listener replaces itself', () => {
     const event = createSignalEmitter<[number]>();
     const received: string[] = [];
+
     const stop = event.subscribe((value) => {
       received.push(`first:${value}`);
       stop();
@@ -39,11 +43,13 @@ describe('signals', () => {
 
   it('rethrows the same failure from a sole listener', () => {
     expect.assertions(1);
+
     const event = createSignalEmitter();
     const failure = new Error('listener failed');
     event.subscribe(() => {
       throw failure;
     });
+
     try {
       event.emit();
     } catch (error) {
@@ -106,6 +112,7 @@ describe('signals', () => {
     const event = createSignalEmitter();
     const later = vi.fn();
     event.subscribe(() => unsubscribe());
+
     const unsubscribe = event.subscribe(later);
     event.emit();
     event.emit();
@@ -120,6 +127,7 @@ describe('signals', () => {
     event.subscribe(() => {
       throw first;
     });
+
     event.subscribe(() => {
       throw second;
     });

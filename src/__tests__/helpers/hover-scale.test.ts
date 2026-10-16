@@ -10,6 +10,7 @@ describe('hover scale', () => {
     const frame = createFrame();
     const scale = createUIScale();
     scale.Parent = frame;
+
     const dispose = bindHoverScale(frame, scale, 1.05);
 
     frame.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'));

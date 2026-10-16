@@ -72,6 +72,7 @@ export function createNodeHandle<Properties extends InstanceProperties>(
   fields: object = {},
 ): Instance<Properties> {
   const handle = Object.create(methods) as object;
+
   for (const [fieldName, value] of Object.entries(fields)) {
     Object.defineProperty(handle, fieldName, {
       configurable: false,
@@ -80,9 +81,11 @@ export function createNodeHandle<Properties extends InstanceProperties>(
       value,
     });
   }
+
   for (const propertyName of Object.keys(initialProperties)) {
     Object.defineProperty(handle, propertyName, getPropertyDescriptor<Properties>(propertyName));
   }
+
   return handle as Instance<Properties>;
 }
 
@@ -92,21 +95,27 @@ function getPropertyDescriptor<Properties extends InstanceProperties>(
   propertyName: string,
 ): PropertyDescriptor {
   const existing = propertyDescriptors.get(propertyName);
+
   if (existing) {
     return existing;
   }
+
   // Accessors depend on the property name and receiver, so every instance can share them.
   const descriptor: PropertyDescriptor = {
     configurable: false,
     enumerable: true,
+
     get(this: Instance<Properties>) {
       return getNodeProperty(this, propertyName as keyof Properties);
     },
+
     set(this: Instance<Properties>, value: Properties[keyof Properties]) {
       setNodeProperty(this, propertyName as keyof Properties, value);
     },
   };
+
   propertyDescriptors.set(propertyName, descriptor);
+
   return descriptor;
 }
 
@@ -117,6 +126,7 @@ export function extendMethodTable<Base extends object, Extension extends object>
 ): Readonly<Base & Extension> {
   const methodTable = Object.create(base) as object;
   Object.defineProperties(methodTable, Object.getOwnPropertyDescriptors(extension));
+
   return Object.freeze(methodTable) as Readonly<Base & Extension>;
 }
 
@@ -128,12 +138,14 @@ const methodTable = {
   ): this is InstanceOf<ClassName> {
     return getClassName(this) === className;
   },
+
   setProperties<Properties extends InstanceProperties>(
     this: Instance<Properties>,
     patch: Partial<Properties>,
   ): void {
     setNodeProperties(this, patch);
   },
+
   onPropertyChanged<Properties extends InstanceProperties, Property extends keyof Properties>(
     this: Instance<Properties>,
     property: Property,
@@ -141,27 +153,35 @@ const methodTable = {
   ): Unsubscribe {
     return subscribeToPropertyChange(this, property, listener);
   },
+
   getChildren(this: Instance): readonly Instance[] {
     return children(this);
   },
+
   reorderChildren(this: Instance, orderedChildren: readonly Instance[]): void {
     reorderChildren(this, orderedChildren);
   },
+
   getDescendants(this: Instance): readonly Instance[] {
     return descendants(this);
   },
+
   findFirstChild(this: Instance, name: string, recursive = false): Instance | undefined {
     return findFirstChild(this, name, recursive);
   },
+
   getFullName(this: Instance): string {
     return getFullName(this);
   },
+
   destroy(this: Instance): void {
     lifecycle.destroy(this);
   },
+
   isDestroyed(this: Instance): boolean {
     return lifecycle.isDestroyed(this);
   },
+
   onDestroy(this: Instance, callback: () => void): Unsubscribe {
     return lifecycle.onDestroy(this, callback);
   },
@@ -177,6 +197,7 @@ Object.defineProperties(methodTable, {
     get(this: Instance): Instance | undefined {
       return getParent(this);
     },
+
     set(this: Instance, newParent: Instance | undefined) {
       setParent(this, newParent);
     },

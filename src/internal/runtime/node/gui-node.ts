@@ -73,9 +73,11 @@ export function createGuiNode<Properties extends InstanceProperties>({
   const propertyNames = new Set(
     initialRenderProperties ?? (Object.keys(properties) as (keyof Properties)[]),
   );
+
   const node = createNodeHandle(properties, getGuiMethodTable(methods), {
     unsafeElement: element,
   }) as GuiElement<Properties>;
+
   registerNode(node, {
     ...createBaseState(className, properties, validateProperties, canHaveParent),
     kind: 'gui',
@@ -86,19 +88,24 @@ export function createGuiNode<Properties extends InstanceProperties>({
     modifiers: new Map(),
   });
   rendering.renderNode(node, propertyNames);
+
   return node;
 }
 
 const guiMethodTables = new WeakMap<object, object>();
+
 const guiNodeMethods = createGuiNodeMethods();
 
 function getGuiMethodTable(methods: GuiMethodTable): object {
   const existing = guiMethodTables.get(methods);
+
   if (existing) {
     return existing;
   }
+
   const methodTable = extendMethodTable(guiNodeMethods, methods);
   guiMethodTables.set(methods, methodTable);
+
   return methodTable;
 }
 
@@ -108,17 +115,22 @@ function createGuiNodeMethods(): object {
     AbsolutePosition: {
       get(this: GuiElement): Vector2 {
         getActiveNodeState(this);
+
         const bounds = this.unsafeElement.getBoundingClientRect();
+
         return vector2(bounds.left, bounds.top);
       },
     },
     AbsoluteSize: {
       get(this: GuiElement): Vector2 {
         getActiveNodeState(this);
+
         const bounds = this.unsafeElement.getBoundingClientRect();
+
         return vector2(bounds.width, bounds.height);
       },
     },
   });
+
   return Object.freeze(methodTable);
 }

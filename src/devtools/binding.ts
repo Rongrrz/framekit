@@ -37,48 +37,61 @@ export const bindRuntimeInspector = (
   if (root.isDestroyed()) {
     throw new Error('Cannot inspect a destroyed root.');
   }
+
   const document = inspectionDocument(root);
   const window = document.defaultView!;
   let inspector: RuntimeInspector | undefined;
   let opener: HTMLElement | undefined;
   let disposed = false;
+
   const open = (): void => {
     if (disposed) {
       throw new Error('Inspector binding has been disposed.');
     }
+
     if (inspector) {
       return;
     }
+
     opener =
       document.activeElement instanceof window.HTMLElement ? document.activeElement : undefined;
     inspector = createRuntimeInspector(root);
+
     if (launcher) {
       launcher.Enabled = false;
     }
+
     inspector.gui.mount(document.body);
     inspector.gui.onDestroy(() => {
       inspector = undefined;
+
       if (!disposed) {
         if (launcher) {
           launcher.Enabled = true;
         }
+
         if (opener?.isConnected) {
           opener.focus({ preventScroll: true });
         }
       }
+
       opener = undefined;
     });
+
     inspector.gui.unsafeElement
       .querySelector<HTMLElement>('[aria-label="Search runtime hierarchy"]')
       ?.focus({ preventScroll: true });
   };
+
   const close = (): void => {
     inspector?.gui.destroy();
   };
+
   const dispose = (): void => {
     if (disposed) {
       return;
     }
+
     disposed = true;
     unregisterRoot();
     document.removeEventListener('keydown', keydown);
@@ -87,8 +100,10 @@ export const bindRuntimeInspector = (
     inspector = undefined;
     opener = undefined;
   };
+
   const keydown = (event: KeyboardEvent): void => {
     const shortcut = options.shortcut;
+
     if (
       !shortcut ||
       event.defaultPrevented ||
@@ -107,15 +122,19 @@ export const bindRuntimeInspector = (
     ) {
       return;
     }
+
     event.preventDefault();
+
     if (inspector) {
       close();
     } else {
       open();
     }
   };
+
   const unregisterRoot = root.onDestroy(dispose);
   const shortcut = options.shortcut;
+
   const shortcutLabel = shortcut
     ? [
         shortcut.ctrlKey && 'Control',
@@ -127,16 +146,21 @@ export const bindRuntimeInspector = (
         .filter(Boolean)
         .join('+')
     : undefined;
+
   const launcher =
     options.button === false ? undefined : createInspectorLauncher(document, open, shortcutLabel);
+
   try {
     launcher?.mount(document.body);
+
     if (options.shortcut) {
       document.addEventListener('keydown', keydown);
     }
   } catch (error) {
     dispose();
+
     throw error;
   }
+
   return Object.freeze({ open, close, dispose });
 };

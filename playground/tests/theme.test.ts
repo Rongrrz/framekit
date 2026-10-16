@@ -68,6 +68,7 @@ describe('document theme', () => {
       if (stored !== null) {
         window.localStorage.setItem('framekit-playground-theme', stored);
       }
+
       vi.stubGlobal('matchMedia', () => ({ matches: prefersLight }));
       expect(resolveInitialTheme()).toBe(expected);
     },
@@ -89,10 +90,12 @@ describe('document theme', () => {
       if (previous !== null) {
         document.documentElement.setAttribute('data-framekit-theme', previous);
       }
+
       const meta = document.createElement('meta');
       meta.name = 'theme-color';
       meta.content = '#123456';
       document.head.append(meta);
+
       const owner = createFrame();
       const mode = createObservableValue<ThemeMode>('dark');
       bindDocumentTheme(owner, mode);
@@ -113,6 +116,7 @@ describe('document theme', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('denied');
     });
+
     const owner = createFrame();
     const mode = createObservableValue<ThemeMode>('dark');
     expect(() => bindDocumentTheme(owner, mode)).not.toThrow();

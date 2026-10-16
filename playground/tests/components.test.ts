@@ -34,6 +34,7 @@ describe('playground reading experience', () => {
     const topics = page.unsafeElement.querySelector('[aria-label="Documentation topics"]')!;
     expect(topics.querySelectorAll('a')).toHaveLength(documentationPages.length);
     expect(topics.querySelector('[aria-current="page"]')?.textContent).toBe('Getting started');
+
     const browse = page.findFirstChild('GuidePageBrowse', true) as TextButton;
     expect(browse.unsafeElement.getAttribute('aria-expanded')).toBe('false');
     browse.unsafeElement.click();
@@ -41,6 +42,7 @@ describe('playground reading experience', () => {
     expect(
       documentationPages.every(({ page: route }) => topics.querySelector(`a[href="#/${route}"]`)),
     ).toBe(true);
+
     expect(
       page.unsafeElement.querySelector('[aria-label="Continue reading"] a')?.getAttribute('href'),
     ).toBe('#/elements');
@@ -52,9 +54,11 @@ describe('playground reading experience', () => {
     const scrollTo = vi.fn();
     const page = createReferencePage('animation', state.theme, state.route, scrollTo);
     const outline = page.findFirstChild('RetargetaspringOutlineButton', true) as TextButton;
+
     const heading = page
       .getDescendants()
       .find((node) => node.isA('TextLabel') && node.Text === 'Retarget a spring') as TextLabel;
+
     state.layout.set('mobile');
     outline.unsafeElement.click();
     expect(scrollTo).toHaveBeenCalledWith(heading);

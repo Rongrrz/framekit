@@ -15,22 +15,28 @@ test('separates focused control keys from application input and preserves text e
       createUserInputService,
       udim2FromOffset,
     } = window.framekit;
+
     const app = createScreenGui();
     app.unsafeElement.id = 'input-app';
+
     const save = createTextButton({ Text: 'Save', Size: udim2FromOffset(160, 40) });
+
     const other = createTextButton({
       Text: 'Other',
       Position: udim2FromOffset(0, 60),
       Size: udim2FromOffset(160, 40),
     });
+
     const field = createTextInput({
       AccessibleLabel: 'Name',
       Position: udim2FromOffset(0, 120),
       Size: udim2FromOffset(160, 40),
     });
+
     save.Parent = app;
     other.Parent = app;
     field.Parent = app;
+
     let localCount = 0;
     let globalCount = 0;
     save.on('keydown', (event) => {
@@ -40,17 +46,21 @@ test('separates focused control keys from application input and preserves text e
         event.preventDefault();
       }
     });
+
     const input = createUserInputService(app);
     input.inputBegan.subscribe((event, processed) => {
       if (event.code === 'KeyK') {
         app.unsafeElement.dataset.processed = String(processed);
         app.unsafeElement.dataset.held = String(input.isKeyDown('KeyK'));
+
         if (!processed) {
           globalCount += 1;
         }
+
         app.unsafeElement.dataset.globalCount = String(globalCount);
       }
     });
+
     input.inputEnded.subscribe((event) => {
       if (event.code === 'KeyK') {
         app.unsafeElement.dataset.held = String(input.isKeyDown('KeyK'));
@@ -59,6 +69,7 @@ test('separates focused control keys from application input and preserves text e
     other.onClick(() => app.destroy());
     app.mount('#root');
   });
+
   const app = page.locator('#input-app');
   const save = page.getByRole('button', { name: 'Save', exact: true });
   const other = page.getByRole('button', { name: 'Other', exact: true });
@@ -75,6 +86,7 @@ test('separates focused control keys from application input and preserves text e
   await expect(app).toHaveAttribute('data-local-count', '1');
   await expect(app).toHaveAttribute('data-global-count', '1');
   await expect(app).toHaveAttribute('data-processed', 'true');
+
   const field = page.getByRole('textbox', { name: 'Name' });
   await field.focus();
   await page.keyboard.press('k');

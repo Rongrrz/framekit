@@ -33,6 +33,7 @@ export const bindTreeView = (
   let items: readonly TreeViewItem[] = [];
   let active: GuiElement | undefined;
   let focusWithin = false;
+
   const attributes = [
     'role',
     'tabindex',
@@ -42,12 +43,15 @@ export const bindTreeView = (
     'aria-posinset',
     'aria-setsize',
   ];
+
   const originals = new Map<GuiElement, (string | null)[]>();
   const typeahead = createTypeahead();
+
   const restore = (node: GuiElement): void => {
     const saved = originals.get(node);
     saved?.forEach((value, index) => {
       const name = attributes[index]!;
+
       if (value === null) {
         node.unsafeElement.removeAttribute(name);
       } else {
@@ -56,16 +60,20 @@ export const bindTreeView = (
     });
     originals.delete(node);
   };
+
   const setActive = (node: GuiElement, focus: boolean): void => {
     active = node;
+
     for (const item of items) {
       item.node.unsafeElement.tabIndex = item.node === active ? 0 : -1;
     }
+
     if (focus) {
       node.focus();
       node.unsafeElement.scrollIntoView({ block: 'nearest' });
     }
   };
+
   const stopWatching = watchOwnedValue(root, source, (next) => {
     if (
       new Set(next.map((item) => item.node)).size !== next.length ||
@@ -84,65 +92,84 @@ export const bindTreeView = (
         'Tree rows must be unique live descendants with visible depth-first levels starting at 1.',
       );
     }
+
     element.setAttribute('role', 'tree');
+
     const previousIndex = items.findIndex((item) => item.node === active);
+
     for (const node of originals.keys()) {
       if (!next.some((item) => item.node === node)) {
         restore(node);
       }
     }
+
     items = next;
+
     const groups = new Map<GuiElement | undefined, TreeViewItem[]>();
     const ancestors: GuiElement[] = [];
+
     for (const item of items) {
       ancestors.length = item.level - 1;
+
       const parent = ancestors.at(-1);
       const siblings = groups.get(parent) ?? [];
       siblings.push(item);
       groups.set(parent, siblings);
       ancestors.push(item.node);
+
       const child = item.node.unsafeElement;
+
       if (!originals.has(item.node)) {
         originals.set(
           item.node,
           attributes.map((name) => child.getAttribute(name)),
         );
       }
+
       child.setAttribute('role', 'treeitem');
       child.setAttribute('aria-level', String(item.level));
       child.setAttribute('aria-selected', String(item.selected ?? false));
+
       if (item.expanded === undefined) {
         child.removeAttribute('aria-expanded');
       } else {
         child.setAttribute('aria-expanded', String(item.expanded));
       }
     }
+
     for (const siblings of groups.values()) {
       siblings.forEach((item, index) => {
         item.node.unsafeElement.setAttribute('aria-posinset', String(index + 1));
         item.node.unsafeElement.setAttribute('aria-setsize', String(siblings.length));
       });
     }
+
     const retained = items.find((item) => item.node === active);
     const fallback = items[Math.max(0, Math.min(previousIndex, items.length - 1))];
     const chosen = retained ?? items.find((item) => item.selected) ?? fallback;
+
     if (chosen) {
       setActive(chosen.node, !retained && focusWithin);
     } else {
       active = undefined;
       element.tabIndex = 0;
+
       if (focusWithin) {
         root.focus();
       }
     }
+
     if (items.length > 0) {
       element.tabIndex = -1;
     }
   });
+
   const subscriptions = [
     root.on('focusin', (event) => {
       focusWithin = true;
+
       const item = items.findLast((item) => item.node.unsafeElement.contains(event.target as Node));
+
       if (item) {
         setActive(item.node, false);
       }
@@ -156,7 +183,9 @@ export const bindTreeView = (
       if (isTextEntry(event.target)) {
         return;
       }
+
       const item = items.findLast((item) => item.node.unsafeElement.contains(event.target as Node));
+
       if (item) {
         setActive(item.node, true);
         options.onSelect(item.node);
@@ -173,12 +202,16 @@ export const bindTreeView = (
       ) {
         return;
       }
+
       const index = items.findIndex((item) => item.node === active);
       const item = items[index];
+
       if (!item) {
         return;
       }
+
       let next: number | undefined;
+
       if (event.key === 'ArrowDown') {
         next = Math.min(index + 1, items.length - 1);
       } else if (event.key === 'ArrowUp') {
@@ -209,41 +242,53 @@ export const bindTreeView = (
           index,
           event,
         );
+
         if (next === undefined) {
           return;
         }
       }
+
       event.preventDefault();
+
       if (next !== undefined && next >= 0) {
         setActive(items[next]!.node, true);
       }
     }),
   ];
+
   let disposed = false;
+
   const dispose = (): void => {
     if (disposed) {
       return;
     }
+
     disposed = true;
     unregisterDestroy();
     stopWatching();
     subscriptions.forEach((stop) => stop());
+
     for (const node of originals.keys()) {
       restore(node);
     }
+
     items = [];
     active = undefined;
+
     if (role === null) {
       element.removeAttribute('role');
     } else {
       element.setAttribute('role', role);
     }
+
     if (rootTabIndex === null) {
       element.removeAttribute('tabindex');
     } else {
       element.setAttribute('tabindex', rootTabIndex);
     }
   };
+
   const unregisterDestroy = root.onDestroy(dispose);
+
   return dispose;
 };

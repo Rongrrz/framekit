@@ -10,6 +10,7 @@ describe('UI grid layouts', () => {
     const frame = createFrame();
     const later = createFrame({ LayoutOrder: 2, Position: udim2FromOffset(10, 20) });
     const earlier = createFrame({ LayoutOrder: 1 });
+
     const layout = createUIGridLayout({
       CellSize: udim2FromOffset(120, 80),
       CellPadding: udim2FromOffset(12, 8),
@@ -52,6 +53,7 @@ describe('UI grid layouts', () => {
 
   it('fills vertical tracks and derives the track count from available space', () => {
     const frame = createFrame();
+
     const layout = createUIGridLayout({
       CellSize: udim2FromOffset(90, 60),
       FillDirection: 'Vertical',

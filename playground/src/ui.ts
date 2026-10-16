@@ -64,6 +64,7 @@ type SurfaceOptions = Readonly<{
 export const createText = (theme: ThemeValue, options: TextOptions): TextLabel => {
   const color = options.color ?? 'text';
   const usesThemeColor = typeof color === 'string';
+
   const label = createTextLabel({
     Name: options.name ?? 'Text',
     Size: options.size,
@@ -79,9 +80,11 @@ export const createText = (theme: ThemeValue, options: TextOptions): TextLabel =
     FontFamily: options.font ?? fonts.sans,
     FontWeight: options.weight ?? 450,
   });
+
   if (usesThemeColor) {
     bindThemeColors(label, theme, (palette) => ({ TextColor3: palette[color] }));
   }
+
   return label;
 };
 
@@ -93,6 +96,7 @@ export const addRoundedBorder = (
   thickness = 1,
 ): void => {
   createUICorner({ CornerRadius: radius }).Parent = instance;
+
   const stroke = createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
   bindThemeColors(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
   stroke.Parent = instance;
@@ -100,6 +104,7 @@ export const addRoundedBorder = (
 
 export const createSurface = (theme: ThemeValue, options: SurfaceOptions): Frame => {
   const background = options.background ?? 'surface';
+
   const frame = createFrame({
     Name: options.name,
     ...(options.size ? { Size: options.size } : {}),
@@ -107,14 +112,17 @@ export const createSurface = (theme: ThemeValue, options: SurfaceOptions): Frame
     BackgroundColor3: themeColor(theme, background),
     ClipsDescendants: options.clipsDescendants ?? false,
   });
+
   bindThemeColors(frame, theme, (palette) => ({ BackgroundColor3: palette[background] }));
   addRoundedBorder(theme, frame, options.radius ?? 20, options.border ?? 'border');
+
   return frame;
 };
 
 export const createButton = (theme: ThemeValue, options: ButtonOptions): TextButton => {
   const background = options.background ?? 'surfaceRaised';
   const foreground = options.foreground ?? 'text';
+
   const button = createTextButton({
     Name: options.name ?? `${options.label.replaceAll(/\s+/g, '')}Button`,
     Size: options.size,
@@ -127,11 +135,13 @@ export const createButton = (theme: ThemeValue, options: ButtonOptions): TextBut
     FontFamily: options.font ?? fonts.sans,
     FontWeight: 650,
   });
+
   bindThemeColors(button, theme, (palette) => ({
     BackgroundColor3: palette[background],
     TextColor3: palette[foreground],
   }));
   addRoundedBorder(theme, button, 11, background);
+
   return button;
 };
 
@@ -152,9 +162,11 @@ export const createPill = (
     weight: 750,
     xAlignment: 'Center',
   });
+
   pill.Name = `${label.replaceAll(/\s+/g, '')}Pill`;
   pill.BackgroundTransparency = 0.88;
   bindThemeColors(pill, theme, (palette) => ({ BackgroundColor3: palette[color] }));
   addRoundedBorder(theme, pill, 999, color);
+
   return pill;
 };

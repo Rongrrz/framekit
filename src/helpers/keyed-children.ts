@@ -33,52 +33,66 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
     if (disposed) {
       return;
     }
+
     disposed = true;
     pending = undefined;
     unregisterDestroy();
     stopWatching();
+
     const owned = [...views.values()];
     views.clear();
     destroyViews(owned);
   };
+
   const unregisterDestroy = parent.onDestroy(dispose);
 
   const reconcile = (items: readonly Item[]): void => {
     const keys = items.map(options.key);
+
     if (new Set(keys).size !== keys.length) {
       throw new TypeError('Keyed children require unique keys.');
     }
+
     const next = new Map<string | number, Node>();
     const created: Node[] = [];
     const identities = new Set(views.values());
+
     try {
       for (const [index, item] of items.entries()) {
         const key = keys[index]!;
         let node = views.get(key);
+
         if (node) {
           if (node.isDestroyed() || node.Parent !== parent) {
             throw new Error('A keyed child was destroyed or reparented outside its binding.');
           }
         } else {
           node = options.create(item);
+
           if (node === parent || node.isDestroyed() || node.Parent || identities.has(node)) {
             throw new TypeError(
               'A keyed child factory must return a unique, live, unattached view.',
             );
           }
+
           created.push(node);
           identities.add(node);
         }
+
         next.set(key, node);
         options.update?.(node, item, index);
+
         if (disposed) {
           destroyViews(created);
+
           return;
         }
       }
+
       for (const node of created) {
         node.Parent = parent;
       }
+
       const owned = new Set([...views.values(), ...next.values()]);
       const unmanaged = parent.getChildren().filter((child) => !owned.has(child as Node));
       const removed = [...views].filter(([key]) => !next.has(key)).map(([, node]) => node);
@@ -88,21 +102,26 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
       destroyViews(removed);
     } catch (error) {
       const errors = [error];
+
       try {
         destroyViews(created.filter((node) => ![...views.values()].includes(node)));
       } catch (cleanupError) {
         errors.push(cleanupError);
       }
+
       throwCollectedErrors(errors, 'Keyed children update and cleanup failed.');
     }
   };
 
   const update = (items: readonly Item[]): void => {
     pending = items;
+
     if (updating || disposed) {
       return;
     }
+
     updating = true;
+
     try {
       while (pending && !disposed) {
         const next = pending;
@@ -113,20 +132,25 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
       updating = false;
     }
   };
+
   try {
     stopWatching = watchOwnedValue(parent, source, update);
+
     if (disposed) {
       stopWatching();
     }
   } catch (error) {
     dispose();
+
     throw error;
   }
+
   return dispose;
 };
 
 const destroyViews = (nodes: readonly GuiElement[]): void => {
   const errors: unknown[] = [];
+
   for (const node of nodes) {
     try {
       node.destroy();
@@ -134,5 +158,6 @@ const destroyViews = (nodes: readonly GuiElement[]): void => {
       errors.push(error);
     }
   }
+
   throwCollectedErrors(errors, 'Multiple keyed child cleanups failed.');
 };

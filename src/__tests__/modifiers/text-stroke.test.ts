@@ -16,10 +16,12 @@ resetDocumentAfterEach();
 describe('text strokes', () => {
   it('preserves typography style owners during text edits and restores the current base', () => {
     const label = createTextLabel({ Text: 'Before', TextSize: 18 });
+
     const font = createStyleModifier('HostFont', { Name: 'HostFont' }, () => ({
       'font-size': '30px',
       'font-family': 'serif',
     }));
+
     font.Parent = label;
 
     label.setProperties({ Text: 'After', TextSize: 24, FontFamily: 'monospace' });
@@ -69,6 +71,7 @@ describe('text strokes', () => {
 
   it('applies, updates, disables, and removes text strokes', () => {
     const label = createTextLabel({ Text: 'FrameKit' });
+
     const stroke = createUITextStroke({
       Color: color3FromRGB(10, 20, 30),
       Transparency: 0.25,
@@ -80,6 +83,7 @@ describe('text strokes', () => {
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-color')).toBe(
       'rgb(10 20 30 / 0.75)',
     );
+
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-stroke-content')).toBe(
       'attr(data-framekit-text-content)',
     );

@@ -21,6 +21,7 @@ describe('UI list layouts', () => {
     outer.Parent = article;
     inner.Parent = row;
     row.Parent = article;
+
     const button = createTextButton();
     button.Parent = row;
 
@@ -50,11 +51,13 @@ describe('UI list layouts', () => {
 
   it('lays out direct GUI children and restores their positioning when detached', () => {
     const frame = createFrame();
+
     const first = createFrame({
       Name: 'First',
       Position: udim2FromOffset(10, 20),
       LayoutOrder: 2,
     });
+
     const second = createFrame({ Name: 'Second', LayoutOrder: 1 });
     const layout = createUIListLayout({ Padding: udim(0, 8) });
 

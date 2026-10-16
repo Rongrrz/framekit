@@ -18,16 +18,20 @@ test.beforeEach(async ({ page }) => {
       bindDialog,
       udim2FromOffset,
     } = window.framekit;
+
     const gui = createScreenGui();
     const tree = createFrame({ Size: udim2FromOffset(200, 200) });
     tree.unsafeElement.setAttribute('aria-label', 'Objects');
     tree.Parent = gui;
     createUIListLayout().Parent = tree;
+
     const rows = ['Folder', 'Alpha', 'Beta'].map((Text) => {
       const row = createTextButton({ Text, Size: udim2FromOffset(200, 32) });
       row.Parent = tree;
+
       return row;
     });
+
     const source = createObservableValue(
       rows.map((node, index) => ({
         node,
@@ -36,9 +40,11 @@ test.beforeEach(async ({ page }) => {
         ...(index === 0 ? { expanded: true } : {}),
       })),
     );
+
     bindTreeView(tree, source, {
       onSelect: (node) =>
         (tree.unsafeElement.dataset.selected = node.unsafeElement.textContent ?? ''),
+
       onToggle: () => {
         source.set(
           source
@@ -49,50 +55,67 @@ test.beforeEach(async ({ page }) => {
         rows.slice(1).forEach((row) => row.destroy());
       },
     });
+
     const trigger = createTextButton({ Text: 'Actions', Position: udim2FromOffset(250, 0) });
     trigger.Parent = gui;
+
     const menu = createFrame({ Size: udim2FromOffset(160, 96) });
     menu.Parent = gui;
     createUIListLayout().Parent = menu;
+
     const commands = ['Copy', 'Disabled', 'Delete'].map((Text) => {
       const item = createTextButton({
         Text,
         Disabled: Text === 'Disabled',
         Size: udim2FromOffset(160, 32),
       });
+
       item.Parent = menu;
+
       return item;
     });
+
     bindMenu(trigger, menu, commands);
+
     const openDialog = createTextButton({ Text: 'Open dialog', Position: udim2FromOffset(400, 0) });
     openDialog.Parent = gui;
+
     const dialog = createFrame({
       Size: udim2FromOffset(300, 200),
       Position: udim2FromOffset(300, 180),
       TagName: 'dialog',
     });
+
     dialog.unsafeElement.setAttribute('aria-label', 'Outer dialog');
     dialog.Parent = gui;
+
     const input = createTextInput({ Text: 'edit me', Size: udim2FromOffset(200, 40) });
     input.unsafeElement.setAttribute('aria-label', 'Dialog input');
     input.Parent = dialog;
+
     const outer = bindDialog(dialog, { initialFocus: input });
     openDialog.onClick(() => outer.open(openDialog));
+
     const inner = createFrame({
       Size: udim2FromOffset(220, 120),
       Position: udim2FromOffset(350, 240),
       TagName: 'dialog',
     });
+
     inner.unsafeElement.setAttribute('aria-label', 'Inner dialog');
     inner.Parent = dialog;
+
     const innerInput = createTextInput();
     innerInput.unsafeElement.setAttribute('aria-label', 'Inner input');
     innerInput.Parent = inner;
+
     const nested = bindDialog(inner, { initialFocus: innerInput });
+
     const nestedTrigger = createTextButton({
       Text: 'Open nested',
       Position: udim2FromOffset(0, 60),
     });
+
     nestedTrigger.Parent = dialog;
     nestedTrigger.onClick(() => nested.open(nestedTrigger));
     gui.mount('#root');
@@ -170,34 +193,43 @@ test('menu activation works once for custom commands and stays inside a scrolled
       udim2FromOffset,
       vector2,
     } = window.framekit;
+
     const gui = createScreenGui();
     const trigger = createTextButton({ Text: 'Custom actions' });
     trigger.Parent = gui;
+
     const menu = createFrame({ Size: udim2FromOffset(160, 96) });
     menu.Parent = gui;
     menu.unsafeElement.dataset.testid = 'custom-menu';
+
     const command = createTextLabel({ Text: 'Run command', Size: udim2FromOffset(160, 32) });
     command.Parent = menu;
+
     const disabled = createTextLabel({
       Text: 'Blocked command',
       Position: udim2FromOffset(0, 32),
       Size: udim2FromOffset(160, 32),
     });
+
     disabled.unsafeElement.setAttribute('aria-disabled', 'true');
     disabled.Parent = menu;
+
     let count = 0;
     command.on('click', () => {
       menu.unsafeElement.dataset.count = String(++count);
     });
+
     disabled.on('click', () => {
       menu.unsafeElement.dataset.blocked = 'activated';
     });
+
     const controller = bindMenu(trigger, menu, [command, disabled]);
     gui.mount('#root');
     document.body.style.height = '2000px';
     window.scrollTo(0, 200);
     controller.open(vector2(innerWidth - 2, innerHeight - 2));
   });
+
   const menu = page.getByTestId('custom-menu');
   const bounds = await menu.boundingBox();
   const viewport = page.viewportSize()!;
@@ -224,27 +256,35 @@ test('invalid initial dialog focus fails before opening a modal or moving focus'
     const { createFrame, createTextButton, createTextInput, bindDialog } = window.framekit;
     const dialog = createFrame({ TagName: 'dialog' });
     document.body.append(dialog.unsafeElement);
+
     const input = createTextInput();
     input.Parent = dialog;
+
     const controller = bindDialog(dialog, { initialFocus: input });
     const opener = createTextButton();
     document.body.append(opener.unsafeElement);
     opener.focus();
     input.destroy();
+
     let rejected = false;
+
     try {
       controller.open(opener);
     } catch {
       rejected = true;
     }
+
     const result = {
       rejected,
       open: dialog.unsafeElement.hasAttribute('open'),
       focusKept: document.activeElement === opener.unsafeElement,
     };
+
     dialog.destroy();
     opener.destroy();
+
     return result;
   });
+
   expect(result).toEqual({ rejected: true, open: false, focusKept: true });
 });

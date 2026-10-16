@@ -5,4 +5,5 @@ declare global {
     runFrameKitBenchmarks: typeof runBenchmarks;
   }
 }
+
 window.runFrameKitBenchmarks = runBenchmarks;

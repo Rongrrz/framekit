@@ -4,7 +4,9 @@ import type { UDim, UDim2 } from '#values/udim.js';
 import type { Vector2 } from '#values/vector2.js';
 
 type AnimatableValue = number | Color3 | Vector2 | UDim | UDim2;
+
 const discreteProperties = ['LayoutOrder', 'ZIndex'] as const;
+
 type DiscreteProperty = (typeof discreteProperties)[number];
 
 /** Mirrors the discrete-property exclusion at the JavaScript caller boundary. */

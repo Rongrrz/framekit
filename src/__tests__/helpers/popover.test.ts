@@ -16,27 +16,33 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupAnimationClock } from '../support/animation-clock.js';
 
 const clock = setupAnimationClock();
+
 const owners = new Set<Instance>();
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.stubGlobal('innerWidth', 800);
   vi.stubGlobal('innerHeight', 600);
   vi.stubGlobal('matchMedia', () => ({ matches: true }));
 });
+
 afterEach(() => {
   for (const owner of owners) {
     owner.destroy();
   }
+
   owners.clear();
   document.body.replaceChildren();
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
+
 const pointer = (element: HTMLElement, type: string, pointerType = 'mouse'): void => {
   element.dispatchEvent(
     new PointerEvent(type, { pointerType, clientX: 240, clientY: 220, bubbles: true }),
   );
 };
+
 const key = (element: HTMLElement, value: string, shiftKey = false): KeyboardEvent => {
   const event = new KeyboardEvent('keydown', {
     key: value,
@@ -44,9 +50,12 @@ const key = (element: HTMLElement, value: string, shiftKey = false): KeyboardEve
     bubbles: true,
     cancelable: true,
   });
+
   element.dispatchEvent(event);
+
   return event;
 };
+
 const deferred = (): Readonly<{
   promise: Promise<void>;
   resolve: () => void;
@@ -54,37 +63,48 @@ const deferred = (): Readonly<{
 }> => {
   let resolve!: () => void;
   let reject!: (error: Error) => void;
+
   const promise = new Promise<void>((done, fail) => {
     resolve = done;
     reject = fail;
   });
+
   return { promise, resolve, reject };
 };
+
 const fixture = () => {
   const root = createScreenGui();
   root.mount(document.body);
   owners.add(root);
+
   const target = createTextButton({ Text: 'Actions' });
   target.Parent = root;
   vi.spyOn(target.unsafeElement, 'getBoundingClientRect').mockReturnValue(
     new DOMRect(200, 200, 100, 40),
   );
+
   const panel = createFrame({ Size: udim2FromOffset(160, 100), Visible: false });
   owners.add(panel);
   vi.spyOn(panel.unsafeElement, 'getBoundingClientRect').mockImplementation(
     () => new DOMRect(panel.Position.X.Offset, panel.Position.Y.Offset, 160, 100),
   );
+
   const first = createTextButton({ Text: 'Copy' });
   first.Parent = panel;
+
   const last = createTextButton({ Text: 'Export' });
   last.Parent = panel;
+
   const outside = createTextButton({ Text: 'Outside' });
   outside.Parent = root;
+
   const bind = (options: PopoverOptions = {}) => {
     const dispose = bindPopover(target, panel, options);
     const layer = panel.Parent as ScreenGui;
+
     return { dispose, layer };
   };
+
   return { root, target, panel, first, last, outside, bind };
 };
 
@@ -93,6 +113,7 @@ describe('popovers', () => {
     const { target, panel, first, bind } = fixture();
     const clicked = vi.fn();
     first.onClick(clicked);
+
     const { layer } = bind({ openOn: 'hover' });
     pointer(target.unsafeElement, 'pointerenter');
     vi.advanceTimersByTime(149);
@@ -196,15 +217,18 @@ describe('popovers', () => {
   it('continues Tab after the trigger when leaving the last portalled control', () => {
     const { target, last, outside, bind } = fixture();
     const rectangle = new DOMRect(0, 0, 100, 40);
+
     const rectangles = {
       0: rectangle,
       length: 1,
       item: () => rectangle,
       [Symbol.iterator]: () => [rectangle][Symbol.iterator](),
     };
+
     for (const control of [target, outside]) {
       vi.spyOn(control.unsafeElement, 'getClientRects').mockReturnValue(rectangles);
     }
+
     bind();
     target.unsafeElement.click();
     last.unsafeElement.focus();
@@ -214,13 +238,16 @@ describe('popovers', () => {
 
   it('restores caller-owned content and accessibility attributes on disposal', () => {
     const { target, panel, bind } = fixture();
+
     const position = panel.Position,
       anchor = vector2(0.5, 0.5);
+
     panel.AnchorPoint = anchor;
     panel.unsafeElement.id = 'actions-panel';
     panel.unsafeElement.setAttribute('role', 'region');
     target.unsafeElement.setAttribute('aria-controls', 'other');
     target.unsafeElement.setAttribute('aria-expanded', 'mixed');
+
     const { layer, dispose } = bind();
     target.unsafeElement.click();
     dispose();
@@ -244,6 +271,7 @@ describe('popovers', () => {
     (owner === 'target' ? target : panel).destroy();
     expect(layer.isDestroyed()).toBe(true);
     expect(target.unsafeElement.hasAttribute('aria-controls')).toBe(false);
+
     if (owner === 'target') {
       expect(panel.isDestroyed()).toBe(false);
     }
@@ -253,6 +281,7 @@ describe('popovers', () => {
     const { target, panel } = fixture();
     expect(() => bindTooltip(target, panel)).toThrow(/non-interactive/);
     expect(() => bindPopover(target, panel, { delay: -1 })).toThrow(/delay/);
+
     const other = document.implementation.createHTMLDocument();
     const foreign = createFrame({}, { ownerDocument: other });
     owners.add(foreign);
@@ -265,11 +294,13 @@ describe('popovers', () => {
 describe('floating panel transitions', () => {
   it('springs opacity and retains momentum when its goal reverses', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false }));
+
     const { target, bind } = fixture();
     const { layer } = bind();
     target.unsafeElement.click();
     expect(layer.unsafeElement.style.opacity).toBe('0');
     clock.advance(75);
+
     const openingOpacity = layer.unsafeElement.style.opacity;
     expect(Number(openingOpacity)).toBeGreaterThan(0);
     expect(Number(openingOpacity)).toBeLessThan(1);
@@ -278,6 +309,7 @@ describe('floating panel transitions', () => {
     clock.advance(1);
     expect(Number(layer.unsafeElement.style.opacity)).toBeGreaterThan(Number(openingOpacity));
     clock.advance(60);
+
     const closingOpacity = layer.unsafeElement.style.opacity;
     expect(Number(closingOpacity)).toBeLessThan(Number(openingOpacity));
     target.unsafeElement.click();
@@ -309,15 +341,19 @@ describe('floating panel transitions', () => {
       const hide = deferred();
       let showSignal!: AbortSignal;
       let hideSignal!: AbortSignal;
+
       const onShow = vi.fn(({ content, signal }: FloatingPanelContext) => {
         expect(content).toBe(panel);
         expect((panel.Parent as ScreenGui).Enabled).toBe(true);
         showSignal = signal;
       });
+
       const onHide = vi.fn(({ signal }: FloatingPanelContext) => {
         hideSignal = signal;
+
         return hide.promise;
       });
+
       if (kind === 'tooltip') {
         panel.getChildren().forEach((child) => child.destroy());
         bindTooltip(target, panel, { followCursor: true, delay: 0, onShow, onHide });
@@ -326,13 +362,16 @@ describe('floating panel transitions', () => {
         bindPopover(target, panel, { onShow, onHide });
         target.unsafeElement.click();
       }
+
       const layer = panel.Parent as ScreenGui;
       expect(onShow).toHaveBeenCalledOnce();
+
       if (kind === 'tooltip') {
         pointer(target.unsafeElement, 'pointerleave');
       } else {
         target.unsafeElement.click();
       }
+
       expect(onHide).toHaveBeenCalledOnce();
       expect(showSignal.aborted).toBe(true);
       expect(layer.Enabled).toBe(true);
@@ -349,10 +388,13 @@ describe('floating panel transitions', () => {
     const hidden = deferred();
     let signal!: AbortSignal;
     const onShow = vi.fn();
+
     const onHide = vi.fn((context: FloatingPanelContext) => {
       signal = context.signal;
+
       return hidden.promise;
     });
+
     const { layer } = bind({ onShow, onHide });
     target.unsafeElement.click();
     target.unsafeElement.click();
@@ -367,19 +409,26 @@ describe('floating panel transitions', () => {
 
   it('aborts an unresolved show hook on hide and an unresolved hide hook on disposal', async () => {
     const { target, bind } = fixture();
+
     const showing = deferred(),
       hiding = deferred();
+
     let showSignal!: AbortSignal, hideSignal!: AbortSignal;
+
     const { layer, dispose } = bind({
       onShow: ({ signal }) => {
         showSignal = signal;
+
         return showing.promise;
       },
+
       onHide: ({ signal }) => {
         hideSignal = signal;
+
         return hiding.promise;
       },
     });
+
     target.unsafeElement.click();
     target.unsafeElement.click();
     expect(showSignal.aborted).toBe(true);
@@ -393,11 +442,14 @@ describe('floating panel transitions', () => {
 
   it('restores visibility before reopening when a hide hook changed it', () => {
     const { target, panel, bind } = fixture();
+
     const onShow = vi.fn(({ content }: FloatingPanelContext) => {
       expect(content.Visible).toBe(true);
     });
+
     bind({
       onShow,
+
       onHide: ({ content }) => {
         content.Visible = false;
       },
@@ -425,12 +477,15 @@ describe('floating panel transitions', () => {
     const { root, target, panel, bind } = fixture();
     const pending = deferred();
     let signal!: AbortSignal;
+
     const { layer } = bind({
       onHide: (context) => {
         signal = context.signal;
+
         return pending.promise;
       },
     });
+
     target.unsafeElement.click();
     target.unsafeElement.click();
     root.unmount();
@@ -446,14 +501,17 @@ describe('floating panel transitions', () => {
       const logger = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       const { target, bind } = fixture();
       const error = new Error('Animation failed');
+
       const { layer } = bind({
         onHide: () => {
           if (failure === 'throw') {
             throw error;
           }
+
           return Promise.reject(error);
         },
       });
+
       target.unsafeElement.click();
       target.unsafeElement.click();
       await Promise.resolve();

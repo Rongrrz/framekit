@@ -48,6 +48,7 @@ export function createBaseState<Properties extends InstanceProperties>(
   canHaveParent = true,
 ): BaseNodeState<Properties> {
   validateProperties?.(properties);
+
   return {
     className,
     properties,
@@ -71,9 +72,11 @@ export function getNodeState<Properties extends InstanceProperties>(
   node: Instance<Properties>,
 ): NodeState<Properties> {
   const state = states.get(node);
+
   if (!state) {
     throw new TypeError('Expected a FrameKit node.');
   }
+
   return state as NodeState<Properties>;
 }
 
@@ -82,9 +85,11 @@ export function getActiveNodeState<Properties extends InstanceProperties>(
   node: Instance<Properties>,
 ): NodeState<Properties> {
   const state = getNodeState(node);
+
   if (state.destroyed) {
     throw new Error(`${state.properties.Name} has been destroyed.`);
   }
+
   return state;
 }
 

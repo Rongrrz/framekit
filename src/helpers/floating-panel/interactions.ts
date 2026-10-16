@@ -19,9 +19,11 @@ export const connectFloatingPanelInteractions = (
   const controllers = escapeControllers.get(document) ?? new Set<FloatingPanelController>();
   escapeControllers.set(document, controllers);
   controllers.add(controller);
+
   const popover = options.kind === 'popover';
   const listeners = createRealmAbortController(target);
   const listenerOptions = { signal: listeners.signal };
+
   const controls = (): HTMLElement[] =>
     [
       ...(panel.matches(focusableContent) ? [panel] : []),
@@ -67,13 +69,16 @@ export const connectFloatingPanelInteractions = (
       },
       listenerOptions,
     );
+
     panel.addEventListener(
       'keydown',
       (event) => {
         if (event.key !== 'Tab') {
           return;
         }
+
         const panelControls = controls();
+
         if (event.shiftKey && document.activeElement === panelControls[0]) {
           event.preventDefault();
           target.focus();
@@ -87,8 +92,10 @@ export const connectFloatingPanelInteractions = (
               control.tabIndex >= 0 &&
               control.getClientRects().length > 0,
           );
+
           const index = pageControls.indexOf(target);
           const next = index < 0 ? undefined : pageControls[(index + 1) % pageControls.length];
+
           if (next) {
             event.preventDefault();
             next.focus();
@@ -97,6 +104,7 @@ export const connectFloatingPanelInteractions = (
       },
       listenerOptions,
     );
+
     document.addEventListener(
       'pointerdown',
       (event) => {
@@ -115,6 +123,7 @@ export const connectFloatingPanelInteractions = (
         // Tab originates on the previous control, before the tooltip trigger gains focus.
         controller.keyboardInput(event);
       }
+
       if (
         event.defaultPrevented ||
         event.key !== 'Escape' ||
@@ -122,9 +131,11 @@ export const connectFloatingPanelInteractions = (
       ) {
         return;
       }
+
       const restoreFocus = popover && panel.contains(document.activeElement);
       event.preventDefault();
       controller.dismiss();
+
       if (restoreFocus) {
         target.focus();
       }

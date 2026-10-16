@@ -11,12 +11,15 @@ const forcedLayout: PlaygroundLayout | undefined =
   previewParameter === 'desktop' || previewParameter === 'mobile' ? previewParameter : undefined;
 
 installPlaygroundStyles();
+
 const playground = createPlaygroundApp(forcedLayout);
+
 playground.mount('#root');
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => playground.destroy());
 }
+
 if (import.meta.env.DEV) {
   const { bindRuntimeInspector } = await import('framekit/devtools');
   bindRuntimeInspector(playground, { shortcut: { key: 'F8' } });

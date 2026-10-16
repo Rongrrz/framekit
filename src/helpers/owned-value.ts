@@ -15,22 +15,29 @@ export const watchOwnedValue = <T>(
   if (owner.isDestroyed()) {
     throw new Error('Observable value subscription owner has been destroyed.');
   }
+
   const unsubscribe = value.onChange(listener);
   let disposed = false;
+
   const dispose = (): void => {
     if (disposed) {
       return;
     }
+
     disposed = true;
     unregisterDestroy();
     unsubscribe();
   };
+
   const unregisterDestroy = owner.onDestroy(dispose);
+
   try {
     listener(value.get());
   } catch (error) {
     dispose();
+
     throw error;
   }
+
   return dispose;
 };

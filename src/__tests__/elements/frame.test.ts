@@ -17,10 +17,12 @@ describe('frames', () => {
   it('keeps prepared defaults independent across instances, documents, tags, and destruction', () => {
     const firstDocument = document.implementation.createHTMLDocument();
     const secondDocument = document.implementation.createHTMLDocument();
+
     const first = createFrame(
       { TagName: 'article', Size: udim2FromOffset(240, 80), Rotation: 45, Visible: false },
       { ownerDocument: firstDocument },
     );
+
     const parent = createFrame({}, { ownerDocument: firstDocument });
     createUIGridLayout({ CellSize: udim2FromOffset(75, 30) }).Parent = parent;
     first.Parent = parent;
@@ -37,6 +39,7 @@ describe('frames', () => {
     expect(third.unsafeElement.ownerDocument).toBe(secondDocument);
     expect(third.unsafeElement.tagName).toBe('DIV');
     expect(second.unsafeElement).not.toBe(third.unsafeElement);
+
     for (const frame of [second, third]) {
       expect(frame.unsafeElement.style.width).toBe('100px');
       expect(frame.unsafeElement.style.height).toBe('100px');

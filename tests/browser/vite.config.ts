@@ -9,6 +9,7 @@ export default defineConfig({
       name: 'playground-test-entry',
       transformIndexHtml: {
         order: 'pre',
+
         handler(html) {
           return html.replaceAll('src="/src/', 'src="/playground/src/');
         },

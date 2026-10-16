@@ -4,7 +4,9 @@ import { udim2, udim2FromOffset } from '#values/udim.js';
 type Bounds = Readonly<{ x: number; y: number; width: number; height: number }>;
 
 const edges = ['w', 'e', 'n', 's', 'nw', 'ne', 'sw', 'se'] as const;
+
 type Edge = (typeof edges)[number];
+
 const edgeNames: Record<Edge, string> = {
   w: 'Resize runtime inspector',
   e: 'Resize inspector right edge',
@@ -23,24 +25,31 @@ export const bindInspectorWindow = (
   onResize: () => void,
 ): (() => void) => {
   const window = panel.unsafeElement.ownerDocument.defaultView!;
+
   const initial = (): Bounds => ({
     x: Math.max(8, window.innerWidth - 696),
     y: 16,
     width: 680,
     height: Math.min(780, window.innerHeight - 32),
   });
+
   let bounds = initial();
+
   const limits = (): Readonly<{ margin: number; width: number; height: number }> => {
     const margin = window.innerWidth < 640 ? 8 : 16;
+
     return {
       margin,
       width: Math.max(1, window.innerWidth - margin * 2),
       height: Math.max(1, window.innerHeight - margin * 2),
     };
   };
+
   const clamp = (value: number, min: number, max: number): number =>
     Math.max(min, Math.min(value, max));
+
   const handles: Frame[] = [];
+
   const apply = (): void => {
     const { margin, width, height } = limits();
     const panelWidth = clamp(bounds.width, Math.min(320, width), width);
@@ -51,10 +60,12 @@ export const bindInspectorWindow = (
       x: clamp(bounds.x, margin, window.innerWidth - margin - panelWidth),
       y: clamp(bounds.y, margin, window.innerHeight - margin - panelHeight),
     };
+
     panel.setProperties({
       Position: udim2FromOffset(bounds.x, bounds.y),
       Size: udim2FromOffset(bounds.width, bounds.height),
     });
+
     for (const [index, handle] of handles.entries()) {
       const vertical = edges[index] === 'n' || edges[index] === 's';
       handle.unsafeElement.setAttribute(
@@ -66,26 +77,33 @@ export const bindInspectorWindow = (
         'aria-valuenow',
         String(vertical ? bounds.height : bounds.width),
       );
+
       handle.unsafeElement.setAttribute(
         'aria-valuetext',
         `${bounds.width} pixels wide, ${bounds.height} pixels tall`,
       );
     }
+
     onResize();
   };
+
   const change = (start: Bounds, edge: Edge | 'move', dx: number, dy: number): void => {
     const { margin, width, height } = limits();
+
     if (edge === 'move') {
       bounds = { ...start, x: start.x + dx, y: start.y + dy };
     } else {
       const right = start.x + start.width;
       const bottom = start.y + start.height;
+
       const x = edge.includes('w')
         ? clamp(start.x + dx, margin, right - Math.min(320, width))
         : start.x;
+
       const y = edge.includes('n')
         ? clamp(start.y + dy, margin, bottom - Math.min(360, height))
         : start.y;
+
       bounds = {
         x,
         y,
@@ -101,8 +119,10 @@ export const bindInspectorWindow = (
             : start.height,
       };
     }
+
     apply();
   };
+
   const bind = (target: Frame, edge: Edge | 'move'): void => {
     let drag: Readonly<{ id: number; x: number; y: number; bounds: Bounds }> | undefined;
     const element = target.unsafeElement;
@@ -116,35 +136,44 @@ export const bindInspectorWindow = (
       ) {
         return;
       }
+
       event.preventDefault();
       target.focus();
       target.setPointerCapture(event.pointerId);
       drag = { id: event.pointerId, x: event.clientX, y: event.clientY, bounds };
     });
+
     target.on('pointermove', (event) => {
       if (drag?.id === event.pointerId) {
         change(drag.bounds, edge, event.clientX - drag.x, event.clientY - drag.y);
       }
     });
+
     target.on('pointerup', (event) => {
       if (drag?.id !== event.pointerId) {
         return;
       }
+
       drag = undefined;
       target.releasePointerCapture(event.pointerId);
     });
+
     target.on('pointercancel', () => {
       drag = undefined;
     });
+
     target.on('lostpointercapture', () => {
       drag = undefined;
     });
+
     target.on('keydown', (event) => {
       if (event.target !== element) {
         return;
       }
+
       if (event.key === 'Home' || event.key === 'End') {
         event.preventDefault();
+
         if (edge === 'move') {
           bounds = initial();
           apply();
@@ -159,12 +188,16 @@ export const bindInspectorWindow = (
             (edge.includes('n') ? -1 : 1) * (height - bounds.height),
           );
         }
+
         return;
       }
+
       if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
         return;
       }
+
       event.preventDefault();
+
       const step = event.shiftKey ? 8 : 24;
       change(
         bounds,
@@ -174,6 +207,7 @@ export const bindInspectorWindow = (
       );
     });
   };
+
   header.unsafeElement.setAttribute('role', 'group');
   header.unsafeElement.setAttribute('aria-label', 'Move runtime inspector');
   header.unsafeElement.title = 'Drag to move · Arrow keys to move · Home to reset';
@@ -184,16 +218,20 @@ export const bindInspectorWindow = (
     if ((event.target as Element).closest('button')) {
       return;
     }
+
     bounds = initial();
     apply();
   });
+
   for (const edge of edges) {
     const horizontal = edge === 'w' || edge === 'e';
     const vertical = edge === 'n' || edge === 's';
+
     const handle = createFrame(
       { Name: `ResizeInspector:${edge}`, BackgroundTransparency: 1, ZIndex: 10 },
       { ownerDocument: panel.unsafeElement.ownerDocument },
     );
+
     handle.Parent = panel;
     handle.setProperties({
       Position: udim2(edge.includes('e') ? 1 : 0, -5, edge.includes('s') ? 1 : 0, -5),
@@ -203,6 +241,7 @@ export const bindInspectorWindow = (
           ? udim2(1, 0, 0, 10)
           : udim2FromOffset(16, 16),
     });
+
     // Corners have their own larger hit targets; edge strips leave them clear.
     if (horizontal) {
       handle.setProperties({
@@ -210,12 +249,14 @@ export const bindInspectorWindow = (
         Size: udim2(0, 10, 1, -24),
       });
     }
+
     if (vertical) {
       handle.setProperties({
         Position: udim2(0, 12, edge === 's' ? 1 : 0, -5),
         Size: udim2(1, -24, 0, 10),
       });
     }
+
     handle.unsafeElement.dataset.fkResize = edge;
     handle.unsafeElement.setAttribute('role', 'separator');
     handle.unsafeElement.setAttribute('aria-label', edgeNames[edge]);
@@ -231,7 +272,9 @@ export const bindInspectorWindow = (
     handles.push(handle);
     bind(handle, edge);
   }
+
   window.addEventListener('resize', apply);
   panel.onDestroy(() => window.removeEventListener('resize', apply));
+
   return apply;
 };

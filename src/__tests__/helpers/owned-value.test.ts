@@ -31,6 +31,7 @@ describe('owned value subscriptions', () => {
   it('rejects a destroyed owner before notifying the listener', () => {
     const owner = createFrame();
     owner.destroy();
+
     const listener = vi.fn();
     expect(() => watchOwnedValue(owner, createObservableValue(1), listener)).toThrow(/destroyed/);
     expect(listener).not.toHaveBeenCalled();
@@ -53,6 +54,7 @@ it('subscribes before immediate delivery so reentrant updates are not lost', () 
   const seen: number[] = [];
   watchOwnedValue(owner, value, (next) => {
     seen.push(next);
+
     if (next === 1) {
       value.set(2);
     }
@@ -64,9 +66,11 @@ it('subscribes before immediate delivery so reentrant updates are not lost', () 
 it('releases the subscription when initial delivery fails', () => {
   const owner = createFrame();
   const value = createObservableValue(1);
+
   const listener = vi.fn(() => {
     throw new Error('initial delivery');
   });
+
   expect(() => watchOwnedValue(owner, value, listener)).toThrow('initial delivery');
   value.set(2);
   expect(listener).toHaveBeenCalledOnce();
@@ -77,6 +81,7 @@ it('keeps detached owners subscribed until destruction', () => {
   const parent = createFrame();
   const owner = createFrame();
   owner.Parent = parent;
+
   const value = createObservableValue(1);
   watchOwnedValue(owner, value, (next) => {
     owner.Name = String(next);

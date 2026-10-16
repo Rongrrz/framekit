@@ -20,6 +20,7 @@ describe('native text controls', () => {
       AutoComplete: 'email',
       AccessibleLabel: 'Account email',
     });
+
     const changed = vi.fn();
 
     input.onTextChanged(changed);

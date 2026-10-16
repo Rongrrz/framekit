@@ -79,6 +79,7 @@ export function createTextLabel(
 ): TextLabel {
   const { TextTagName = 'span', ...properties } = initialProperties;
   assertAllowedValue(TextTagName, textTagNames, 'TextLabel TextTagName');
+
   return createTextNode(
     'TextLabel',
     resolveOwnerDocument(options).createElement('div'),
@@ -94,6 +95,7 @@ export function createTextButton(
   options: DomOptions = {},
 ): TextButton {
   const element = resolveOwnerDocument(options).createElement('button');
+
   const node = createTextNode(
     'TextButton',
     element,
@@ -121,6 +123,7 @@ export function createTextButton(
   ) as TextButton;
 
   initializeButtonElement(node, element);
+
   return node;
 }
 
@@ -162,39 +165,50 @@ export function createTextNode<Properties extends TextLabelProperties>(
     element,
     defaultProperties,
     initialProperties,
+
     renderProperties: (properties, changedProperties) => {
       if (changedProperties.has('AutomaticSize')) {
         // Intrinsic text must participate in layout for the host to follow wrapped content.
         text.style.position = properties.AutomaticSize === 'None' ? 'absolute' : 'relative';
       }
+
       if (changedProperties.has('Text')) {
         text.textContent = properties.Text;
       }
+
       renderTextStyle(text, properties, changedProperties);
+
       if (hasTextStyleChange(changedProperties)) {
         syncTextStrokeHost(element, properties, text.style.fontSize);
       }
+
       if (changedProperties.has('TextXAlignment')) {
         text.style.justifyContent = horizontalFlexAlignment[properties.TextXAlignment];
       }
+
       if (changedProperties.has('TextYAlignment')) {
         text.style.alignItems = verticalFlexAlignment[properties.TextYAlignment];
       }
+
       renderAdditionalProperties?.(properties, changedProperties);
     },
+
     methods,
     canContainGuiChildren,
     capabilities: { displayText: true },
+
     validateProperties: (properties) => {
       validateTextProperties(properties);
       validateAdditionalProperties?.(properties);
     },
   });
+
   bindTextScaleResize(node, element, () => {
     const properties = getNodeProperties(node);
     renderTextStyle(text, properties);
     syncTextStrokeHost(element, properties, text.style.fontSize);
   });
+
   return node;
 }
 
@@ -202,6 +216,7 @@ function validateTextProperties(
   properties: Readonly<TextLabelProperties | TextButtonProperties>,
 ): void {
   validateTextStyleProperties(properties);
+
   if ('Disabled' in properties) {
     validateButtonProperties(properties);
   }

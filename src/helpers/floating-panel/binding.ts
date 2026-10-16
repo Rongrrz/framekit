@@ -15,6 +15,7 @@ export const bindFloatingPanel = (
   options: PanelOptions,
 ): Unsubscribe => {
   validatePanelOptions(target, options);
+
   const portal = createFloatingPanelPortal(target, content, options);
   const controller = createFloatingPanelController(portal, options);
   const disconnectInteractions = connectFloatingPanelInteractions(portal, controller, options);
@@ -24,6 +25,7 @@ export const bindFloatingPanel = (
     if (disposed) {
       return;
     }
+
     disposed = true;
     controller.dispose();
     disconnectInteractions();
@@ -35,5 +37,6 @@ export const bindFloatingPanel = (
   const unregisterTargetDestroy = target.onDestroy(dispose);
   const unregisterContentDestroy = content.onDestroy(dispose);
   controller.start();
+
   return dispose;
 };

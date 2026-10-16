@@ -8,6 +8,7 @@ import type { PanelOptions } from './types.js';
 
 const interactiveContent =
   'button, input, select, textarea, a[href], [tabindex], [contenteditable]:not([contenteditable="false"])';
+
 let nextPanelId = 0;
 
 export type FloatingPanelPortal = Readonly<{
@@ -36,18 +37,23 @@ export const createFloatingPanelPortal = (
   const panel = content.unsafeElement;
   const popover = options.kind === 'popover';
   const followCursor = options.kind === 'tooltip' && options.followCursor;
+
   if (content.isDestroyed()) {
     throw new Error('Floating panel content has been destroyed.');
   }
+
   if (content === target || content.Parent || panel.isConnected) {
     throw new Error('Floating panel content must be detached.');
   }
+
   if (panel.ownerDocument !== document) {
     throw new TypeError('Floating panel content must belong to the target document.');
   }
+
   if (!popover && (panel.matches(interactiveContent) || panel.querySelector(interactiveContent))) {
     throw new TypeError('Tooltip content must be non-interactive.');
   }
+
   if (panel.id && document.getElementById(panel.id)) {
     throw new Error('Floating panel content must have a unique id.');
   }
@@ -61,13 +67,16 @@ export const createFloatingPanelPortal = (
     pointerEvents: panel.style.pointerEvents,
     expanded: element.getAttribute('aria-expanded'),
   };
+
   const id = panel.id || createPanelId(document, options.kind);
   const relation = popover ? 'aria-controls' : 'aria-describedby';
   const relationAlreadyPresent = (element.getAttribute(relation) ?? '').split(/\s+/).includes(id);
+
   const layer = createScreenGui(
     { Name: popover ? 'PopoverLayer' : 'TooltipLayer', Enabled: false, DisplayOrder: 2147483647 },
     { ownerDocument: document },
   );
+
   const layerElement = layer.unsafeElement;
   Object.assign(layerElement.style, {
     pointerEvents: 'none',
@@ -76,10 +85,13 @@ export const createFloatingPanelPortal = (
     border: '0',
     background: 'transparent',
   });
+
   const supportsPopover = typeof layerElement.showPopover === 'function';
+
   if (supportsPopover) {
     layerElement.setAttribute('popover', 'manual');
   }
+
   content.setProperties({
     Position: udim2FromOffset(0, 0),
     AnchorPoint: vector2(0, 0),
@@ -91,9 +103,11 @@ export const createFloatingPanelPortal = (
   content.Parent = layer;
   // Modal dialogs make outside content inert even when it enters the top layer.
   layer.mount(element.closest('dialog') ?? document.body ?? document.documentElement);
+
   if (!relationAlreadyPresent) {
     element.setAttribute(relation, [element.getAttribute(relation), id].filter(Boolean).join(' '));
   }
+
   if (popover) {
     element.setAttribute('aria-expanded', 'false');
   }
@@ -102,7 +116,9 @@ export const createFloatingPanelPortal = (
     if (layer.Enabled) {
       return;
     }
+
     layer.Enabled = true;
+
     if (supportsPopover) {
       layerElement.showPopover();
     }
@@ -112,9 +128,11 @@ export const createFloatingPanelPortal = (
     if (!layer.Enabled) {
       return;
     }
+
     if (supportsPopover) {
       layerElement.hidePopover();
     }
+
     layer.Enabled = false;
   };
 
@@ -129,17 +147,21 @@ export const createFloatingPanelPortal = (
       const remaining = (element.getAttribute(relation) ?? '')
         .split(/\s+/)
         .filter((token) => token && token !== id);
+
       if (remaining.length) {
         element.setAttribute(relation, remaining.join(' '));
       } else {
         element.removeAttribute(relation);
       }
     }
+
     if (popover) {
       restoreAttribute(element, 'aria-expanded', original.expanded);
     }
+
     if (!content.isDestroyed()) {
       content.Parent = undefined;
+
       if (options.kind === 'tooltip' && options.destroyContent) {
         content.destroy();
       } else {
@@ -153,6 +175,7 @@ export const createFloatingPanelPortal = (
         panel.style.pointerEvents = original.pointerEvents;
       }
     }
+
     layer.destroy();
   };
 
@@ -173,6 +196,7 @@ export const createFloatingPanelPortal = (
 
 const createPanelId = (document: Document, kind: 'tooltip' | 'popover'): string => {
   const id = `framekit-${kind}-${++nextPanelId}`;
+
   return document.getElementById(id) ? createPanelId(document, kind) : id;
 };
 

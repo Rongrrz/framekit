@@ -50,6 +50,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   node: Instance<Properties>,
 ): SpringBinding<Properties> {
   getActiveNodeState(node);
+
   const springsByProperty = new Map<keyof Properties, PropertySpringState>();
   const animationPatch: Partial<Properties> = {};
   const settledProperties: (keyof Properties)[] = [];
@@ -61,6 +62,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   const runner = createAnimationRunner(node, {
     frame: advanceSprings,
     cancelPropertyFromConflict: stopProperty,
+
     onDestroy: () => {
       springsByProperty.clear();
       completedEmitter.clear();
@@ -69,18 +71,23 @@ export function createSpringBinding<Properties extends InstanceProperties>(
 
   function animate(goal: AnimationGoal<Properties>, options?: SpringOptions): void {
     assertUsable();
+
     const springOptions = resolveSpringOptions(options ?? {}, defaultSpringOptions);
+
     const preparedGoal = prepareAnimationGoal(node, goal, 'spring', (property, currentValue) => {
       const existingSpring = springsByProperty.get(property);
+
       return existingSpring
         ? composeAnimationValue(existingSpring.kind, existingSpring.currentComponents)
         : currentValue;
     });
+
     const goalProperties = preparedGoal.map(({ property }) => property);
     runner.claim(goalProperties);
 
     for (const { property, start, goal: target } of preparedGoal) {
       const existingSpring = springsByProperty.get(property);
+
       if (existingSpring) {
         existingSpring.goalComponents = target.components;
         existingSpring.options = springOptions;
@@ -95,24 +102,30 @@ export function createSpringBinding<Properties extends InstanceProperties>(
         options: springOptions,
       });
     }
+
     scheduleNextFrame();
   }
 
   function stop(property?: AnimatableProperty<Properties>): void {
     assertUsable();
+
     if (property !== undefined) {
       stopProperty(property as keyof Properties);
+
       return;
     }
+
     stopAllProperties();
   }
 
   function stopAllProperties(): void {
     const properties = Array.from(springsByProperty.keys());
     springsByProperty.clear();
+
     for (const property of properties) {
       delete animationPatch[property];
     }
+
     runner.release(properties);
     cancelFrame();
   }
@@ -121,8 +134,10 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     if (!springsByProperty.delete(property)) {
       return;
     }
+
     delete animationPatch[property];
     runner.release([property]);
+
     if (springsByProperty.size === 0) {
       cancelFrame();
     }
@@ -132,6 +147,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
     if (runner.isScheduled()) {
       return;
     }
+
     previousTimestampMs = performance.now();
     runner.schedule();
   }
@@ -139,8 +155,10 @@ export function createSpringBinding<Properties extends InstanceProperties>(
   function advanceSprings(timestampMs: number): void {
     if (springsByProperty.size === 0 || runner.isDestroyed()) {
       cancelFrame();
+
       return;
     }
+
     const deltaTimeSeconds = Math.max(0, (timestampMs - previousTimestampMs) / 1000);
     previousTimestampMs = timestampMs;
     settledProperties.length = 0;
@@ -149,6 +167,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
       if (advancePropertySpring(springState, deltaTimeSeconds, springSolution)) {
         settledProperties.push(property);
       }
+
       animationPatch[property] = composeAnimationValue(
         springState.kind,
         springState.currentComponents,
@@ -159,13 +178,17 @@ export function createSpringBinding<Properties extends InstanceProperties>(
       runner.apply(animationPatch);
     } catch (error) {
       stopAllProperties();
+
       throw error;
     }
+
     for (const property of settledProperties) {
       springsByProperty.delete(property);
       delete animationPatch[property];
     }
+
     runner.release(settledProperties);
+
     if (springsByProperty.size === 0) {
       cancelFrame();
       emitSignalSafely(completedEmitter);
@@ -196,8 +219,10 @@ function advancePropertySpring(
   solution: SpringSolution,
 ): boolean {
   let settled = true;
+
   for (let index = 0; index < state.currentComponents.length; index += 1) {
     const goal = state.goalComponents[index]!;
+
     const next = solveSpring(
       state.currentComponents[index]!,
       state.velocityComponents[index]!,
@@ -206,8 +231,10 @@ function advancePropertySpring(
       state.options,
       solution,
     );
+
     state.currentComponents[index] = next.value;
     state.velocityComponents[index] = next.velocity;
+
     if (
       Math.abs(next.value - goal) > state.options.precision ||
       Math.abs(next.velocity) > state.options.restVelocity
@@ -220,5 +247,6 @@ function advancePropertySpring(
     state.currentComponents = [...state.goalComponents];
     state.velocityComponents.fill(0);
   }
+
   return settled;
 }

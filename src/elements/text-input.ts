@@ -20,6 +20,7 @@ export type TextInputProperties = TextControlProperties & {
 export type TextInput = TextControl<TextInputProperties, HTMLInputElement>;
 
 const textInputTypes = ['Text', 'Email', 'Password', 'Search', 'Telephone', 'URL'] as const;
+
 const nativeInputTypes = {
   Text: 'text',
   Email: 'email',
@@ -35,6 +36,7 @@ export function createTextInput(
   options: DomOptions = {},
 ): TextInput {
   const element = resolveOwnerDocument(options).createElement('input');
+
   return createTextControl({
     className: 'TextInput',
     element,
@@ -43,12 +45,15 @@ export function createTextInput(
       InputType: 'Text',
     },
     initialProperties,
+
     renderProperties: (properties, changedProperties) => {
       if (changedProperties.has('InputType')) {
         element.type = nativeInputTypes[properties.InputType];
       }
+
       element.style.overflow = 'hidden';
     },
+
     validateProperties: (properties) => {
       assertAllowedValue(properties.InputType, textInputTypes, 'InputType');
     },

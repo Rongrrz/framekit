@@ -3,9 +3,11 @@ import { expect, it } from 'vitest';
 
 it('reorders the exact hierarchy and rejects missing, duplicate, or foreign children', () => {
   const parent = createFrame();
+
   const children = Array.from({ length: 3 }, (_, index) =>
     createTextButton({ Name: String(index) }),
   );
+
   children.forEach((child) => {
     child.Parent = parent;
   });
@@ -18,6 +20,7 @@ it('reorders the exact hierarchy and rejects missing, duplicate, or foreign chil
   expect(() => parent.reorderChildren([children[0]!, children[0]!, children[2]!])).toThrow(
     /exactly once/,
   );
+
   const foreign = createFrame();
   expect(() => parent.reorderChildren([children[0]!, foreign, children[2]!])).toThrow(
     /exactly once/,
@@ -33,6 +36,7 @@ it('aligns DOM and visual layout order while preserving explicit hierarchy order
   const second = createTextButton({ LayoutOrder: 1 });
   first.Parent = parent;
   second.Parent = parent;
+
   const layout = createUIListLayout();
   layout.Parent = parent;
   expect(parent.getChildren()).toEqual([first, second, layout]);
@@ -51,21 +55,28 @@ it('preserves tree ownership through deterministic sequences of moves and reorde
   parents.forEach((parent) => {
     parent.Parent = root;
   });
+
   const nodes = Array.from({ length: 12 }, () => createFrame());
   nodes.forEach((node) => {
     node.Parent = parents[0]!;
   });
+
   for (let step = 0; step < 100; step += 1) {
     nodes[(step * 7) % nodes.length]!.Parent = parents[step % 2]!;
+
     const parent = parents[step % 2]!;
     parent.reorderChildren([...parent.getChildren()].reverse());
+
     for (const candidate of parents) {
       for (const child of candidate.getChildren()) {
         expect(child.Parent).toBe(candidate);
       }
+
       expect(candidate.unsafeElement.childElementCount).toBe(candidate.getChildren().length);
     }
+
     expect(new Set(root.getDescendants()).size).toBe(nodes.length + parents.length);
   }
+
   root.destroy();
 });

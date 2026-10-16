@@ -23,6 +23,7 @@ describe('playground page shell', () => {
       createObservableValue(themes.dark),
       createObservableValue<SitePage>('guide'),
     );
+
     const guide = createFrame({ AutomaticSize: 'Y' });
     guide.Parent = shell.content;
     expect(guide.Parent).toBe(shell.content);
@@ -35,19 +36,23 @@ describe('playground page shell', () => {
   it('retargets one retained scroll spring between documentation sections', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('innerWidth', 1292);
+
     const shell = createPageShell(
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );
+
     const heading = createTextLabel({ Position: udim2FromOffset(0, 600) });
     heading.Parent = shell.content;
     vi.spyOn(heading.unsafeElement, 'getBoundingClientRect').mockImplementation(
       () => new DOMRect(0, heading.Position.Y.Offset - shell.page.CanvasPosition.Y + 16, 100, 48),
     );
     shell.scrollTo(heading);
+
     for (let frame = 0; frame < 8; frame += 1) {
       clock.advance();
     }
+
     expect(shell.page.CanvasPosition.Y).toBeGreaterThan(0);
     expect(shell.page.CanvasPosition.Y).toBeLessThan(600);
 
@@ -61,10 +66,12 @@ describe('playground page shell', () => {
   it('stops the scroll spring when CanvasPosition is assigned directly', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('innerWidth', 1292);
+
     const shell = createPageShell(
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );
+
     const heading = createTextLabel();
     heading.Parent = shell.content;
     vi.spyOn(heading.unsafeElement, 'getBoundingClientRect').mockImplementation(
@@ -100,15 +107,19 @@ describe('playground page shell', () => {
   it('scrolls immediately and clamps above-canvas targets under reduced motion', () => {
     const clock = installAnimationClock();
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
+
     const shell = createPageShell(
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );
+
     const heading = createTextLabel();
     heading.Parent = shell.content;
+
     const bounds = vi
       .spyOn(heading.unsafeElement, 'getBoundingClientRect')
       .mockReturnValue(new DOMRect(0, 316, 100, 48));
+
     shell.scrollTo(heading);
     expect(shell.page.CanvasPosition).toEqual(vector2(0, 300));
     bounds.mockReturnValue(new DOMRect(0, -400, 100, 48));

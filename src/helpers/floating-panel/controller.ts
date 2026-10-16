@@ -58,14 +58,17 @@ export const createFloatingPanelController = (
       : !pointerFocus &&
         target.contains(document.activeElement) &&
         document.activeElement?.matches(':focus-visible') === true;
+
   const active = (): boolean => pinned || (hoverEnabled && (hovered || panelHovered || hasFocus()));
 
   const hideImmediately = (): void => {
     window.clearTimeout(timer);
     timer = undefined;
+
     if (frame !== undefined) {
       window.cancelAnimationFrame(frame);
     }
+
     frame = undefined;
     motion.cancel();
     portal.hide();
@@ -75,19 +78,25 @@ export const createFloatingPanelController = (
 
   const position = (updatePlacement = true): boolean => {
     const bounds = target.getBoundingClientRect();
+
     if (!target.isConnected || (bounds.width === 0 && bounds.height === 0)) {
       hideImmediately();
       hovered = focused = pinned = false;
+
       return false;
     }
+
     if (!updatePlacement) {
       return !disposed && portal.isVisible();
     }
+
     const panelBounds = panel.getBoundingClientRect();
+
     const anchor =
       followCursor && !hasFocus() && pointer
         ? { left: pointer.X, right: pointer.X, top: pointer.Y, bottom: pointer.Y }
         : bounds;
+
     const point = panelPosition(
       anchor,
       panelBounds,
@@ -96,51 +105,66 @@ export const createFloatingPanelController = (
       document.documentElement.clientWidth || window.innerWidth,
       document.documentElement.clientHeight || window.innerHeight,
     );
+
     const x = content.Position.X.Offset + point.X - panelBounds.left;
     const y = content.Position.Y.Offset + point.Y - panelBounds.top;
+
     if (x !== content.Position.X.Offset || y !== content.Position.Y.Offset) {
       content.Position = udim2FromOffset(x, y);
     }
+
     return !disposed && portal.isVisible();
   };
 
   const track = (): void => {
     frame = undefined;
+
     if (disposed || !portal.isVisible()) {
       return;
     }
+
     // A closing cursor panel fades at its last position rather than jumping back to the trigger.
     if (!position(motion.showing !== false)) {
       return;
     }
+
     frame = window.requestAnimationFrame(track);
   };
 
   const show = (): void => {
     timer = undefined;
+
     if (disposed || dismissed || !active()) {
       return;
     }
+
     content.Visible = true;
+
     if (!portal.isVisible()) {
       motion.prepare();
       portal.show();
     }
+
     portal.setExpanded(true);
+
     if (!position()) {
       return;
     }
+
     if (frame === undefined) {
       frame = window.requestAnimationFrame(track);
     }
+
     motion.run(true);
   };
 
   const hide = (): void => {
     timer = undefined;
+
     if (!portal.isVisible()) {
       return;
     }
+
     portal.setExpanded(false);
     motion.run(false);
   };
@@ -148,6 +172,7 @@ export const createFloatingPanelController = (
   const update = (): void => {
     window.clearTimeout(timer);
     timer = undefined;
+
     if (active() && !dismissed) {
       if (portal.isVisible()) {
         if (motion.showing === false) {
@@ -160,14 +185,18 @@ export const createFloatingPanelController = (
       } else {
         timer = window.setTimeout(show, delay);
       }
+
       return;
     }
+
     if (!active()) {
       dismissed = false;
     }
+
     if (!portal.isVisible()) {
       return;
     }
+
     if (followCursor) {
       hide();
     } else {
@@ -192,63 +221,79 @@ export const createFloatingPanelController = (
       if (!hoverEnabled || event.pointerType === 'touch') {
         return;
       }
+
       hovered = true;
       pointer = vector2(event.clientX, event.clientY);
       update();
     },
+
     targetPointerLeave: (): void => {
       hovered = false;
       update();
     },
+
     targetPointerMove: (event: PointerEvent): void => {
       pointer = vector2(event.clientX, event.clientY);
+
       if (followCursor && hovered && portal.isVisible() && !dismissed) {
         position();
       }
     },
+
     targetPointerDown: (): void => {
       // Clicking an already-focused button may leave :focus-visible matching until blur.
       pointerFocus = true;
       update();
     },
+
     keyboardInput: (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') {
         pointerFocus = false;
+
         if (target.contains(document.activeElement)) {
           update();
         }
       }
     },
+
     targetFocusIn: (): void => {
       focused = true;
       update();
     },
+
     focusOut: (relatedTarget: EventTarget | null): void => {
       focused = inside(relatedTarget);
+
       if (!focused) {
         pointerFocus = false;
       }
+
       if (popover && !focused) {
         pinned = false;
       }
+
       update();
     },
+
     panelPointerEnter: (): void => {
       if (!followCursor) {
         panelHovered = true;
         update();
       }
     },
+
     panelPointerLeave: (): void => {
       if (!followCursor) {
         panelHovered = false;
         update();
       }
     },
+
     panelFocusIn: (): void => {
       focused = true;
       update();
     },
+
     togglePinned: (): void => {
       if (pinned && !dismissed) {
         dismiss();
@@ -258,20 +303,24 @@ export const createFloatingPanelController = (
         show();
       }
     },
+
     enterPanel: (): void => {
       dismissed = false;
       pinned = true;
       show();
     },
+
     dismiss,
     inside,
     isVisible: portal.isVisible,
     shouldHandleEscape: (): boolean => active() || portal.isVisible() || timer !== undefined,
+
     start: (): void => {
       if (hasFocus() && hoverEnabled) {
         update();
       }
     },
+
     dispose: (): void => {
       disposed = true;
       hideImmediately();

@@ -23,6 +23,7 @@ import { createMessageView, type Message, type MessageView } from './message';
 export const createInbox = (): ScreenGui => {
   const app = createScreenGui({ Name: 'InboxApplication' });
   const theme = createObservableValue(themes.dark);
+
   const data: Message[] = Array.from({ length: 2000 }, (_, id) => ({
     id,
     subject: `${id % 2 ? 'Design review' : 'Delivery update'} ${id}`,
@@ -30,11 +31,13 @@ export const createInbox = (): ScreenGui => {
     expanded: false,
     attachment: id % 2 === 0 || id === 1999,
   }));
+
   const main = createFrame({
     TagName: 'main',
     Size: udim2(1, -32, 1, -32),
     Position: udim2FromOffset(16, 16),
   });
+
   bindThemeColors(main, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
   main.Parent = app;
   createText(theme, {
@@ -43,6 +46,7 @@ export const createInbox = (): ScreenGui => {
     textSize: 28,
     weight: 800,
   }).Parent = main;
+
   const query = createTextInput({
     InputType: 'Search',
     AccessibleLabel: 'Filter inbox',
@@ -51,27 +55,33 @@ export const createInbox = (): ScreenGui => {
     Size: udim2(1, 0, 0, 40),
     Position: udim2FromOffset(0, 48),
   });
+
   bindThemeColors(query, theme, (palette) => ({
     BackgroundColor3: palette.surfaceRaised,
     TextColor3: palette.text,
     PlaceholderColor3: palette.textMuted,
   }));
   query.Parent = main;
+
   const actions = createFrame({
     Size: udim2(1, 0, 0, 44),
     Position: udim2FromOffset(0, 100),
     BackgroundTransparency: 1,
   });
+
   actions.Parent = main;
   createUIListLayout({ FillDirection: 'Horizontal', Wraps: true, Padding: udim(0, 8) }).Parent =
     actions;
+
   const viewport = createScrollingFrame({
     Size: udim2(1, 0, 1, -206),
     Position: udim2FromOffset(0, 158),
   });
+
   viewport.unsafeElement.setAttribute('aria-label', 'Inbox messages');
   bindThemeColors(viewport, theme, (palette) => ({ BackgroundColor3: palette.surface }));
   viewport.Parent = main;
+
   const status = createText(theme, {
     text: '',
     size: udim2(1, 0, 0, 40),
@@ -79,15 +89,19 @@ export const createInbox = (): ScreenGui => {
     textSize: 13,
     wrapped: true,
   });
+
   status.unsafeElement.setAttribute('role', 'status');
   status.Parent = main;
+
   const selection = createObservableValue<string | number | undefined>(0);
   const visible = createObservableValue<readonly Message[]>(data);
   let images = false;
   let fontState = 'fallback font';
+
   const updateStatus = (): void => {
     status.Text = `${visible.get().length} messages · selected ${selection.get() ?? 'none'} · ${fontState}`;
   };
+
   const publish = (): void => {
     const term = query.Text.toLowerCase();
     visible.set(
@@ -95,19 +109,25 @@ export const createInbox = (): ScreenGui => {
     );
     updateStatus();
   };
+
   const rowViews = new WeakMap<Frame, MessageView>();
+
   const list = bindVirtualList(viewport, visible, {
     itemHeight: { estimate: 160 },
     overscan: 3,
     selection,
     key: (message) => message.id,
+
     create: () => {
       const view = createMessageView(theme);
       rowViews.set(view.node, view);
+
       return view.node;
     },
+
     update: (node, message) => rowViews.get(node)!.update(message, images),
   });
+
   function action(label: string, run: () => void): void {
     const button = createButton(theme, {
       label,
@@ -115,30 +135,37 @@ export const createInbox = (): ScreenGui => {
       position: udim2FromOffset(0, 0),
       textSize: 13,
     });
+
     button.onClick(run);
     button.Parent = actions;
   }
   action('Expand selected', () => {
     const message = data.find((message) => message.id === selection.get());
+
     if (!message) {
       return;
     }
+
     data[data.indexOf(message)] = { ...message, expanded: !message.expanded };
     publish();
   });
+
   action('Load attachments', () => {
     images = true;
     publish();
   });
+
   const font = new FontFace(
     'FrameKitInboxReading',
     'local("Arial"), local("Liberation Sans"), local("DejaVu Sans"), local("Helvetica")',
   );
+
   let fontTimer: ReturnType<typeof setTimeout> | undefined;
   action('Load reading font', () => {
     if (fontState !== 'fallback font') {
       return;
     }
+
     fontState = 'loading font';
     publish();
     fontTimer = setTimeout(() => {
@@ -147,6 +174,7 @@ export const createInbox = (): ScreenGui => {
           if (app.isDestroyed()) {
             return;
           }
+
           document.fonts.add(loaded);
           fontState = 'reading font ready';
           publish();
@@ -160,8 +188,10 @@ export const createInbox = (): ScreenGui => {
       );
     }, 250);
   });
+
   action('Last message', () => {
     const key = visible.get().at(-1)?.id;
+
     if (key !== undefined) {
       list.scrollToKey(key);
       selection.set(key);
@@ -176,6 +206,7 @@ export const createInbox = (): ScreenGui => {
     breakpoints: [
       {
         maxWidth: 599,
+
         apply: () => {
           actions.Size = udim2(1, 0, 0, 136);
           viewport.setProperties({ Position: udim2FromOffset(0, 248), Size: udim2(1, 0, 1, -296) });
@@ -189,9 +220,11 @@ export const createInbox = (): ScreenGui => {
       },
     ],
   });
+
   app.onDestroy(() => {
     clearTimeout(fontTimer);
     document.fonts.delete(font);
   });
+
   return app;
 };

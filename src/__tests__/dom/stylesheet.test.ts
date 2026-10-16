@@ -7,6 +7,7 @@ describe('shared stylesheet installation', () => {
     const options = { ownerDocument, nonce: 'server-generated-nonce' };
 
     installFrameKitStyles(options);
+
     const button = createTextButton({}, { ownerDocument });
     installFrameKitStyles(options);
 

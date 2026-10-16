@@ -14,6 +14,7 @@ it('owns tree semantics and supports arrows, typeahead, selection, and expansion
     row.Parent = root;
   });
   document.body.append(root.unsafeElement);
+
   const source = createObservableValue<readonly TreeViewItem[]>(
     rows.map((node, index) => ({
       node,
@@ -22,15 +23,18 @@ it('owns tree semantics and supports arrows, typeahead, selection, and expansion
       ...(index === 0 ? { expanded: true } : {}),
     })),
   );
+
   const onSelect = vi.fn();
   const onToggle = vi.fn();
   const dispose = bindTreeView(root, source, { onSelect, onToggle });
   rows[0]!.focus();
+
   const key = (value: string): void => {
     document.activeElement?.dispatchEvent(
       new KeyboardEvent('keydown', { key: value, bubbles: true, cancelable: true }),
     );
   };
+
   key('ArrowDown');
   expect(document.activeElement).toBe(rows[1]!.unsafeElement);
   key('b');
@@ -54,9 +58,11 @@ it('rejects invalid rows before modifying semantics or retaining a subscription'
   const root = createFrame();
   const foreign = createTextButton();
   root.unsafeElement.setAttribute('role', 'navigation');
+
   const source = createObservableValue<readonly TreeViewItem[]>([
     { node: foreign, level: 1, label: 'Foreign' },
   ]);
+
   expect(() => bindTreeView(root, source, { onSelect: vi.fn(), onToggle: vi.fn() })).toThrow(
     /live descendants/,
   );
@@ -75,16 +81,19 @@ it('selects the deepest row for a nested DOM target and rejects hidden descendan
   folder.Parent = root;
   child.Parent = folder;
   document.body.append(root.unsafeElement);
+
   const rows: readonly TreeViewItem[] = [
     { node: folder, label: 'Folder', level: 1, expanded: true },
     { node: child, label: 'Child', level: 2 },
   ];
+
   const source = createObservableValue(rows);
   const onSelect = vi.fn();
   const stop = bindTreeView(root, source, { onSelect, onToggle: vi.fn() });
   child.unsafeElement.click();
   expect(onSelect).toHaveBeenCalledExactlyOnceWith(child);
   expect(child.unsafeElement.tabIndex).toBe(0);
+
   const reported = vi.spyOn(console, 'error').mockImplementation(() => undefined);
   source.set([{ ...rows[0]!, expanded: false }, rows[1]!]);
   expect(reported).toHaveBeenCalledWith(

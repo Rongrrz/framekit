@@ -3,6 +3,7 @@ import type { Instance, InstanceProperties } from './instance.js';
 import type { BaseNodeState, GuiCapabilities, GuiNodeState } from './registry.js';
 
 declare const styleModifierBrand: unique symbol;
+
 declare const layoutBrand: unique symbol;
 
 /** The stable rendering surface exposed to an attached modifier. */

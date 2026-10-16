@@ -8,6 +8,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
+
 const allowedDependencies = {
   internal: ['internal'],
   'internal/dom': ['internal', 'internal/dom'],
@@ -47,15 +48,18 @@ type SourceDomain = keyof typeof allowedDependencies;
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = resolve(directory, entry.name);
+
     return entry.isDirectory() ? sourceFiles(path) : path.endsWith('.ts') ? [path] : [];
   });
 }
 
 function domainFiles(domain: SourceDomain): string[] {
   const directory = resolve(sourceRoot, domain);
+
   if (domain !== 'internal') {
     return sourceFiles(directory);
   }
+
   return readdirSync(directory, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'))
     .map((entry) => resolve(directory, entry.name));
@@ -63,21 +67,27 @@ function domainFiles(domain: SourceDomain): string[] {
 
 function runtimeDependencies(file: string): string[] {
   const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest);
+
   return source.statements.flatMap((statement) => {
     if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) {
       return [];
     }
+
     if (
       (ts.isImportDeclaration(statement) && statement.importClause?.isTypeOnly) ||
       (ts.isExportDeclaration(statement) && statement.isTypeOnly)
     ) {
       return [];
     }
+
     const specifier = statement.moduleSpecifier;
+
     if (!specifier || !ts.isStringLiteral(specifier)) {
       return [];
     }
+
     const dependency = resolveSourceImport(file, specifier.text);
+
     return dependency ? [dependency] : [];
   });
 }
@@ -86,17 +96,21 @@ function resolveSourceImport(file: string, specifier: string): string | undefine
   if (specifier.startsWith('#')) {
     return resolve(sourceRoot, specifier.slice(1).replace(/\.js$/, '.ts'));
   }
+
   if (specifier.startsWith('.')) {
     return resolve(dirname(file), specifier.replace(/\.js$/, '.ts'));
   }
+
   return undefined;
 }
 
 function sourceDomain(file: string): SourceDomain {
   const [root, nested] = relative(sourceRoot, file).split(sep);
+
   if (root === 'internal' && (nested === 'dom' || nested === 'runtime')) {
     return `internal/${nested}`;
   }
+
   return root as SourceDomain;
 }
 
@@ -113,28 +127,37 @@ describe('source dependency direction', () => {
           readFileSync(file, 'utf8'),
           ts.ScriptTarget.Latest,
         );
+
         for (const statement of source.statements) {
           if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) {
             continue;
           }
+
           const specifier = statement.moduleSpecifier;
+
           if (!specifier || !ts.isStringLiteral(specifier)) {
             continue;
           }
+
           const target = resolveSourceImport(file, specifier.text);
+
           if (!target) {
             continue;
           }
+
           const targetDomain = sourceDomain(target);
           const expectedPrefix = targetDomain === domain ? '.' : crossDomainPrefix(targetDomain);
           expect(
             specifier.text.startsWith(expectedPrefix),
             `${file} should import ${specifier.text} through ${expectedPrefix}`,
           ).toBe(true);
+
           const allowedByDomain = allowedDomains.some((allowedDomain) => {
             const root = resolve(sourceRoot, allowedDomain);
+
             return target === root || target.startsWith(`${root}${sep}`);
           });
+
           // Class narrowing is the one intentional reverse type dependency: the runtime maps
           // built-in class names to their public element and modifier types without importing them
           // at runtime.
@@ -144,8 +167,10 @@ describe('source dependency direction', () => {
             statement.importClause?.isTypeOnly === true &&
             ['elements', 'modifiers'].some((domain) => {
               const root = resolve(sourceRoot, domain);
+
               return target === root || target.startsWith(`${root}${sep}`);
             });
+
           expect(allowedByDomain || allowedClassMapType, `${file} imports ${specifier.text}`).toBe(
             true,
           );
@@ -163,20 +188,26 @@ describe('source dependency direction', () => {
     const visit = (file: string, path: readonly string[]): void => {
       if (visiting.has(file)) {
         const cycleStart = path.indexOf(file);
+
         const cycle = [...path.slice(cycleStart), file]
           .map((entry) => relative(sourceRoot, entry))
           .join(' -> ');
+
         throw new Error(`Runtime import cycle: ${cycle}`);
       }
+
       if (visited.has(file)) {
         return;
       }
+
       visiting.add(file);
+
       for (const dependency of runtimeDependencies(file)) {
         if (productionFiles.has(dependency)) {
           visit(dependency, [...path, file]);
         }
       }
+
       visiting.delete(file);
       visited.add(file);
     };

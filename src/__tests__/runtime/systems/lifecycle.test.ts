@@ -39,6 +39,7 @@ describe('resource cleanup', () => {
     child.onDestroy(() => {
       throw childFailure;
     });
+
     root.onDestroy(() => {
       throw rootFailure;
     });

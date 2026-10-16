@@ -40,36 +40,46 @@ export const nativeGuiMethods = Object.freeze({
     const element = this.unsafeElement;
     const listenerOptions = { ...options };
     let disposed = false;
+
     const dispose = (): void => {
       if (disposed) {
         return;
       }
+
       disposed = true;
       state.cleanups.delete(dispose);
       element.removeEventListener(eventName, handle, listenerOptions.capture);
     };
+
     const handle = (event: HTMLElementEventMap[EventName]): void => {
       if (listenerOptions.once) {
         dispose();
       }
+
       listener(event);
     };
+
     element.addEventListener(eventName, handle, listenerOptions);
     state.cleanups.add(dispose);
+
     return dispose;
   },
+
   focus(this: GuiElement, options?: FocusOptions): void {
     getActiveNodeState(this);
     this.unsafeElement.focus(options);
   },
+
   blur(this: GuiElement): void {
     getActiveNodeState(this);
     this.unsafeElement.blur();
   },
+
   setPointerCapture(this: GuiElement, pointerId: number): void {
     getActiveNodeState(this);
     this.unsafeElement.setPointerCapture(pointerId);
   },
+
   releasePointerCapture(this: GuiElement, pointerId: number): void {
     getActiveNodeState(this);
     this.unsafeElement.releasePointerCapture(pointerId);

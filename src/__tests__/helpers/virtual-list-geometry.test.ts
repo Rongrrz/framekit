@@ -20,6 +20,7 @@ it('handles empty collections and the last row of a large collection', () => {
   const empty = createRowGeometry([]);
   expect(empty.offset(0)).toBe(0);
   expect(empty.indexAt(500)).toBe(0);
+
   const geometry = createRowGeometry(Array.from({ length: 100_000 }, () => 32));
   geometry.set(50_000, 64);
   expect(geometry.offset(100_000)).toBe(3_200_032);

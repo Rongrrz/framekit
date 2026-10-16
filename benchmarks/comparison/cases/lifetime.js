@@ -8,14 +8,18 @@ export const lifetimeCases = [
     count: 1000,
     group: 'Lifetime',
     fresh: true,
+
     prepare: (runtime) => {
       const fixture = makeFixture(runtime, 1000);
+
       return {
         run: fixture.bindHover,
+
         verify: () => {
           fixture.dispatchHover();
           assert(fixture.hoverCalls() === 1000, 'Hover binding failed');
         },
+
         dispose: fixture.dispose,
       };
     },
@@ -25,16 +29,21 @@ export const lifetimeCases = [
     label: 'Deliver 1,000 hover events',
     count: 1000,
     group: 'Lifetime',
+
     prepare: (runtime) => {
       const fixture = makeFixture(runtime, 1000);
       fixture.bindHover();
+
       let expected = 0;
+
       return {
         run: fixture.dispatchHover,
+
         verify: () => {
           expected += 1000;
           assert(fixture.hoverCalls() === expected, 'Hover delivery failed');
         },
+
         dispose: fixture.dispose,
       };
     },
@@ -48,19 +57,24 @@ export const lifetimeCases = [
     count,
     group: 'Lifetime',
     fresh: true,
+
     prepare: (runtime) => {
       const fixture = makeFixture(runtime, count, kind);
       const captured = Array.from(fixture.element().children);
+
       return {
         run: () => {
           fixture.dispose();
           host().getBoundingClientRect();
         },
+
         verify: () => {
           assert(host().childElementCount === 0, 'Root leaked');
+
           if (kind === 'resources') {
             assert(fixture.cleanups() === count, 'Owned resource cleanup failed');
           }
+
           captured.forEach((element) =>
             element.dispatchEvent(
               new MouseEvent(runtime === 'framekit' ? 'mouseenter' : 'mouseover', {
@@ -70,6 +84,7 @@ export const lifetimeCases = [
           );
           assert(fixture.hoverCalls() === 0, 'Destroyed target delivered hover');
         },
+
         dispose: () => {},
       };
     },
@@ -80,8 +95,10 @@ export const lifetimeCases = [
     count: 100,
     group: 'Lifetime',
     fresh: true,
+
     prepare: (runtime) => {
       let cleaned = 0;
+
       return {
         run: () => {
           for (let index = 0; index < 20; index += 1) {
@@ -90,10 +107,13 @@ export const lifetimeCases = [
             fixture.dispose();
             cleaned += fixture.cleanups();
           }
+
           host().getBoundingClientRect();
         },
+
         verify: () =>
           assert(cleaned === 2000 && host().childElementCount === 0, 'Repeated lifetime leaked'),
+
         dispose: () => {},
       };
     },

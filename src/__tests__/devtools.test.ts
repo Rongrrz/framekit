@@ -12,10 +12,12 @@ it('owns the launcher outside the inspected tree and removes all UI when the bin
   const window = new Window({
     url: 'http://localhost/demo?item=2#/guide',
   }) as unknown as globalThis.Window;
+
   const document = window.document;
   const root = createFrame({ Name: 'Application' }, { ownerDocument: document });
   const binding = bindRuntimeInspector(root);
   expect(root.getChildren()).toEqual([]);
+
   const launcher = document.querySelector<HTMLButtonElement>('[aria-label="Debug"]')!;
   expect(launcher).not.toBeNull();
   launcher.click();
@@ -58,6 +60,7 @@ it('returns readonly snapshots and reports animation claims through destruction'
   const child = createTextButton();
   child.Parent = frame;
   spring(child, { Rotation: 30 });
+
   const snapshot = inspectInstance(child);
   expect(snapshot.parent).toBe(frame);
   expect(snapshot.animatedProperties).toEqual(['Rotation']);
@@ -89,9 +92,11 @@ it('owns the inspector lifetime without adding it to the inspected tree', () => 
   const root = createFrame();
   const child = createTextButton();
   child.Parent = root;
+
   const inspector = createRuntimeInspector(root);
   inspector.select(child);
   expect(root.getChildren()).toEqual([child]);
+
   const foreign = createFrame();
   expect(() => inspector.select(foreign)).toThrow(/hierarchy/);
   root.destroy();
@@ -101,13 +106,16 @@ it('owns the inspector lifetime without adding it to the inspected tree', () => 
 
 it('uses the inspected document and removes its styles, picking listeners, and refresh timer', () => {
   vi.useFakeTimers();
+
   const root = createFrame();
   const inspector = createRuntimeInspector(root);
   expect(inspector.gui.unsafeElement.ownerDocument).toBe(root.unsafeElement.ownerDocument);
   expect(vi.getTimerCount()).toBe(1);
+
   const styles = [...document.head.querySelectorAll('style')].filter((style) =>
     style.textContent?.includes('[data-fk-debug-panel]'),
   );
+
   expect(styles).toHaveLength(1);
   inspector.gui.destroy();
   expect(vi.getTimerCount()).toBe(0);
@@ -122,8 +130,10 @@ it('keeps a subtree inspector in its own document and does not navigate above it
   const outside = createFrame({ Name: 'Outside' }, { ownerDocument });
   const scoped = createFrame({ Name: 'ScopedRoot' }, { ownerDocument });
   scoped.Parent = outside;
+
   const child = createTextButton({ Name: 'Nested' }, { ownerDocument });
   child.Parent = scoped;
+
   const inspector = createRuntimeInspector(scoped);
   inspector.gui.mount(ownerDocument.body);
   inspector.select(scoped);
@@ -143,11 +153,14 @@ it('keeps a subtree inspector in its own document and does not navigate above it
 
 it('supports shortcut-only and programmatic bindings with exact modifier matching', () => {
   const root = createFrame();
+
   const binding = bindRuntimeInspector(root, {
     button: false,
     shortcut: { key: 'd', ctrlKey: true, shiftKey: true },
   });
+
   expect(document.querySelector('[aria-label="Debug"]')).toBeNull();
+
   const press = (options: KeyboardEventInit = {}): KeyboardEvent => {
     const event = new KeyboardEvent('keydown', {
       key: 'D',
@@ -155,9 +168,12 @@ it('supports shortcut-only and programmatic bindings with exact modifier matchin
       cancelable: true,
       ...options,
     });
+
     document.dispatchEvent(event);
+
     return event;
   };
+
   press({ ctrlKey: true });
   expect(document.querySelector('[data-fk-debug-panel]')).toBeNull();
   expect(press({ ctrlKey: true, shiftKey: true }).defaultPrevented).toBe(true);
@@ -179,6 +195,7 @@ it('protects text editing and handled or composing keys while allowing a modifie
   const input = document.body.appendChild(document.createElement('input'));
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', bubbles: true }));
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', isComposing: true }));
+
   const handled = new KeyboardEvent('keydown', { key: 'i', cancelable: true });
   handled.preventDefault();
   document.dispatchEvent(handled);
@@ -186,10 +203,12 @@ it('protects text editing and handled or composing keys while allowing a modifie
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'i' }));
   expect(document.querySelector('[data-fk-debug-panel]')).not.toBeNull();
   binding.dispose();
+
   const modified = bindRuntimeInspector(root, {
     button: false,
     shortcut: { key: 'i', altKey: true },
   });
+
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'i', altKey: true, bubbles: true }));
   expect(document.querySelector('[data-fk-debug-panel]')).not.toBeNull();
   root.destroy();

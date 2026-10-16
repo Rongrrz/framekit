@@ -12,11 +12,13 @@ for (const followCursor of [false, true]) {
       const { createScreenGui, createTextButton, bindTooltip, udim2FromOffset } = window.framekit;
       const root = createScreenGui();
       const trigger = createTextButton({ Text: 'Help', Size: udim2FromOffset(120, 40) });
+
       const next = createTextButton({
         Text: 'Next',
         Position: udim2FromOffset(0, 100),
         Size: udim2FromOffset(120, 40),
       });
+
       // Explicit tab stops also work with macOS WebKit's keyboard navigation defaults.
       trigger.unsafeElement.tabIndex = 0;
       next.unsafeElement.tabIndex = 0;
@@ -25,6 +27,7 @@ for (const followCursor of [false, true]) {
       bindTooltip(trigger, 'Helpful description', { followCursor, delay: 50 });
       root.mount('#root');
     }, followCursor);
+
     const trigger = page.getByRole('button', { name: 'Help', exact: true });
     const tooltip = page.getByRole('tooltip');
     await page.mouse.move(500, 400);

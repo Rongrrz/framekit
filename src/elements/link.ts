@@ -39,6 +39,7 @@ export type Link = GuiElement<LinkProperties> &
   };
 
 const linkTargets = ['_self', '_blank', '_parent', '_top'] as const;
+
 const allowedLinkProtocols = new Set(['http:', 'https:', 'mailto:', 'tel:', 'blob:']);
 
 /** Creates a native anchor whose navigation attributes remain property-driven. */
@@ -47,6 +48,7 @@ export function createLink(
   options: DomOptions = {},
 ): Link {
   const element = resolveOwnerDocument(options).createElement('a');
+
   const node = createTextNode(
     'Link',
     element,
@@ -65,15 +67,19 @@ export function createLink(
       if (changedProperties.has('Href')) {
         setOptionalAttribute(element, 'href', properties.Href);
       }
+
       if (changedProperties.has('Target')) {
         element.target = properties.Target;
       }
+
       if (changedProperties.has('Rel')) {
         setOptionalAttribute(element, 'rel', properties.Rel);
       }
+
       if (changedProperties.has('Download')) {
         setOptionalAttribute(element, 'download', properties.Download);
       }
+
       if (changedProperties.has('AccessibleLabel')) {
         setOptionalAttribute(element, 'aria-label', properties.AccessibleLabel);
       }
@@ -88,6 +94,7 @@ export function createLink(
     signal: listenerController.signal,
   });
   lifecycle.onDestroy(node, () => listenerController.abort());
+
   return node;
 }
 
@@ -107,7 +114,9 @@ function validateLinkDestination(href: string, ownerDocument: Document): void {
   if (!href) {
     return;
   }
+
   const url = new URL(href, ownerDocument.baseURI);
+
   if (!allowedLinkProtocols.has(url.protocol)) {
     throw new TypeError(`Unsupported link URL protocol "${url.protocol}".`);
   }

@@ -21,6 +21,7 @@ describe('images', () => {
       ScaleType: 'Crop',
       ImageTransparency: 0.25,
     });
+
     const element = image.unsafeElement.querySelector('img');
 
     expect(element?.getAttribute('src')).toBe('/item.png');

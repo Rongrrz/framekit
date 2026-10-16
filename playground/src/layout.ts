@@ -6,6 +6,7 @@ import {
 } from 'framekit';
 
 export type PlaygroundLayout = 'desktop' | 'mobile';
+
 export type Responsive<Value> = Readonly<Record<PlaygroundLayout, Value>>;
 
 export const mobileBreakpoint = 960;

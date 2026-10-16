@@ -58,8 +58,11 @@ const objectFit = {
   Fit: 'contain',
   Crop: 'cover',
 } satisfies Record<ScaleType, string>;
+
 const scaleTypes: readonly ScaleType[] = ['Stretch', 'Fit', 'Crop'];
+
 const imageLabelTagNames = ['div', 'figure'] as const;
+
 const allowedImageProtocols = new Set(['http:', 'https:', 'blob:']);
 
 /** Creates a non-interactive image node. */
@@ -69,6 +72,7 @@ export function createImageLabel(
 ): ImageLabel {
   const { TagName = 'div', ...properties } = initialProperties;
   assertAllowedValue(TagName, imageLabelTagNames, 'ImageLabel TagName');
+
   return createImageNode(
     'ImageLabel',
     resolveOwnerDocument(options).createElement(TagName),
@@ -83,6 +87,7 @@ export function createImageButton(
   options: DomOptions = {},
 ): ImageButton {
   const element = resolveOwnerDocument(options).createElement('button');
+
   const node = createImageNode(
     'ImageButton',
     element,
@@ -108,6 +113,7 @@ export function createImageButton(
   ) as ImageButton;
 
   initializeButtonElement(node, element);
+
   return node;
 }
 
@@ -151,22 +157,27 @@ function createImageNode<Properties extends ImageLabelProperties>(
     element,
     defaultProperties,
     initialProperties,
+
     renderProperties: (properties, changedProperties) => {
       if (changedProperties.has('Image')) {
         setImageSource(image, properties.Image);
       }
+
       if (changedProperties.has('AltText')) {
         image.alt = properties.AltText;
       }
+
       if (changedProperties.has('ImageTransparency')) {
         image.style.opacity = String(1 - properties.ImageTransparency);
       }
+
       if (changedProperties.has('ScaleType')) {
         image.style.objectFit = objectFit[properties.ScaleType];
       }
 
       renderAdditionalProperties?.(properties, changedProperties);
     },
+
     methods,
     canContainGuiChildren,
     validateProperties: (properties) => validateImageProperties(properties, element.ownerDocument),
@@ -181,17 +192,21 @@ function validateImageProperties(
   assertString(properties.AltText, 'AltText');
   assertUnitInterval(properties.ImageTransparency, 'ImageTransparency');
   assertAllowedValue(properties.ScaleType, scaleTypes, 'ScaleType');
+
   if ('Disabled' in properties) {
     validateButtonProperties(properties);
   }
+
   validateImageSource(properties.Image, ownerDocument);
 }
 
 function setImageSource(element: HTMLImageElement, source: string): void {
   if (!source) {
     element.removeAttribute('src');
+
     return;
   }
+
   element.src = source;
 }
 
@@ -199,8 +214,10 @@ function validateImageSource(source: string, ownerDocument: Document): void {
   if (!source) {
     return;
   }
+
   const url = new URL(source, ownerDocument.baseURI);
   const allowedDataImage = url.protocol === 'data:' && /^data:image\//i.test(source);
+
   if (!allowedImageProtocols.has(url.protocol) && !allowedDataImage) {
     throw new TypeError(`Unsupported image URL protocol "${url.protocol}".`);
   }

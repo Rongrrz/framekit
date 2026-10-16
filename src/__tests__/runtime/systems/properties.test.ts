@@ -35,6 +35,7 @@ describe('node properties', () => {
   it('still validates attached modifiers when a patch keeps the current values', () => {
     const frame = createFrame();
     let acceptsTarget = true;
+
     const modifier = createStyleModifier(
       'Guard',
       { Name: 'Guard' },
@@ -46,8 +47,10 @@ describe('node properties', () => {
         }
       },
     );
+
     modifier.Parent = frame;
     acceptsTarget = false;
+
     const changed = vi.fn();
     frame.onPropertyChanged('Rotation', changed);
     expect(() => (frame.Rotation = 0)).toThrow('Target rejected');
@@ -95,10 +98,12 @@ describe('node properties', () => {
   it('restores committed state and rendering when a derived renderer rejects an update', () => {
     const frame = createFrame({ Name: 'Ready' });
     const changed = vi.fn();
+
     const modifier = createStyleModifier('Fragile', { Name: 'Fragile' }, (_, target) => {
       if (target.properties.Name === 'Rejected') {
         throw new Error('render failed');
       }
+
       return { 'border-radius': '4px' };
     });
 
@@ -163,9 +168,11 @@ describe('node properties', () => {
     expect(() => frame.setProperties({ AnchorPoint: { X: 0, Y: 'center' } } as never)).toThrow(
       /AnchorPoint\.Y must be a finite number/,
     );
+
     expect(() =>
       frame.setProperties({ BackgroundColor3: { R: 999, G: 0, B: 0 } } as never),
     ).toThrow(/Color3 channels/);
+
     expect(frame).toMatchObject({
       Name: 'Frame',
       Visible: true,
@@ -178,6 +185,7 @@ describe('node properties', () => {
       X: { Scale: 0, Offset: 10 },
       Y: { Scale: 0, Offset: 20 },
     };
+
     const frame = createFrame({ Position: position });
 
     position.X.Offset = 999;
@@ -190,15 +198,18 @@ describe('node properties', () => {
 
   it('evaluates accessor-backed frozen inputs once instead of retaining live getters', () => {
     let offset = 10;
+
     const position = Object.freeze({
       X: Object.freeze({
         Scale: 0,
+
         get Offset() {
           return offset;
         },
       }),
       Y: udim(0, 20),
     });
+
     const frame = createFrame({ Position: position });
 
     offset = 999;
@@ -213,16 +224,20 @@ describe('node properties', () => {
       const frame = createFrame();
       let offset = 10;
       let reads = 0;
+
       const position = Object.freeze({
         X: Object.freeze({
           Scale: 0,
+
           get Offset() {
             reads += 1;
+
             return offset;
           },
         }),
         Y: udim(0, 20),
       });
+
       const update = (): void => {
         if (mode === 'setter') {
           frame.Position = position;
@@ -230,6 +245,7 @@ describe('node properties', () => {
           frame.setProperties({ Position: position });
         }
       };
+
       update();
       expect(reads).toBe(1);
       offset = 30;

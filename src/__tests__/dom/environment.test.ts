@@ -21,6 +21,7 @@ describe('DOM ownership', () => {
     const iframe = document.body.appendChild(document.createElement('iframe'));
     const ownerDocument = iframe.contentDocument!;
     const options = { ownerDocument };
+
     const nodes = [
       createFrame({ TagName: 'article' }, options),
       createTextLabel({ TextTagName: 'h2' }, options),
@@ -35,9 +36,11 @@ describe('DOM ownership', () => {
 
     for (const node of nodes) {
       expect(node.unsafeElement.ownerDocument).toBe(ownerDocument);
+
       for (const child of node.unsafeElement.children) {
         expect(child.ownerDocument).toBe(ownerDocument);
       }
+
       node.destroy();
     }
 
@@ -48,6 +51,7 @@ describe('DOM ownership', () => {
     const ownerDocument = document.implementation.createHTMLDocument();
     const target = ownerDocument.body.appendChild(ownerDocument.createElement('main'));
     target.id = 'app';
+
     const gui = createScreenGui({}, { ownerDocument });
     const frame = createFrame({}, { ownerDocument });
 

@@ -95,20 +95,25 @@ export function createTextControl<
   });
 
   let applyingNativeInput = false;
+
   const node = createGuiObjectNode({
     className,
     element,
     defaultProperties,
     initialProperties,
+
     renderProperties: (properties, changedProperties) => {
       renderTextControlProperties(element, properties, changedProperties, applyingNativeInput);
       renderProperties?.(properties, changedProperties);
     },
+
     methods: textChangedEventMethods,
+
     validateProperties: (properties) => {
       validateTextControlProperties(properties);
       validateProperties?.(properties);
     },
+
     canContainGuiChildren: false,
   }) as TextControl<Properties, Element>;
 
@@ -121,11 +126,13 @@ export function createTextControl<
     'input',
     (event) => {
       applyingNativeInput = true;
+
       try {
         setNodeProperties(node, { Text: element.value } as Partial<Properties>);
       } finally {
         applyingNativeInput = false;
       }
+
       emitNodeEvent(
         node,
         guiEventKeys.textChanged,
@@ -136,6 +143,7 @@ export function createTextControl<
     { signal: listenerController.signal },
   );
   lifecycle.onDestroy(node, () => listenerController.abort());
+
   return node;
 }
 
@@ -164,12 +172,15 @@ function renderTextControlProperties<Properties extends TextControlProperties>(
   applyingNativeInput: boolean,
 ): void {
   renderTextStyle(element, properties, changedProperties);
+
   if (changedProperties.has('Text') && !applyingNativeInput) {
     element.value = properties.Text;
   }
+
   if (changedProperties.has('PlaceholderText')) {
     element.placeholder = properties.PlaceholderText;
   }
+
   if (
     changedProperties.has('PlaceholderColor3') ||
     changedProperties.has('PlaceholderTransparency')
@@ -179,24 +190,31 @@ function renderTextControlProperties<Properties extends TextControlProperties>(
       color3ToCss(properties.PlaceholderColor3, properties.PlaceholderTransparency),
     );
   }
+
   if (changedProperties.has('Disabled')) {
     element.disabled = properties.Disabled;
   }
+
   if (changedProperties.has('ReadOnly')) {
     element.readOnly = properties.ReadOnly;
   }
+
   if (changedProperties.has('AccessibleLabel')) {
     setOptionalAttribute(element, 'aria-label', properties.AccessibleLabel);
   }
+
   if (changedProperties.has('FieldName')) {
     setOptionalAttribute(element, 'name', properties.FieldName);
   }
+
   if (changedProperties.has('AutoComplete')) {
     setOptionalAttribute(element, 'autocomplete', properties.AutoComplete);
   }
+
   if (changedProperties.has('Disabled')) {
     element.style.cursor = properties.Disabled ? 'not-allowed' : 'text';
   }
+
   if (changedProperties.has('TextYAlignment')) {
     element.style.alignContent = textAlignment(properties.TextYAlignment);
   }
@@ -218,9 +236,11 @@ function textAlignment(alignment: TextStyleProperties['TextYAlignment']): string
   if (alignment === 'Center') {
     return 'center';
   }
+
   if (alignment === 'Bottom') {
     return 'end';
   }
+
   return 'start';
 }
 

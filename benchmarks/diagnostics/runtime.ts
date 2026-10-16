@@ -8,6 +8,7 @@ import {
 } from 'framekit';
 
 export type RuntimeWorkload = 'patch' | 'destroy' | 'destroy-resources';
+
 type Fixture = Readonly<{
   root: ScreenGui;
   rows: readonly Frame[];
@@ -15,17 +16,22 @@ type Fixture = Readonly<{
   count: number;
   cleanups: () => number;
 }>;
+
 let fixture: Fixture | undefined;
 
 /** Setup stays outside the CPU recording so teardown samples do not measure construction. */
 export const prepareRuntimeProfile = (kind: RuntimeWorkload, count: number): void => {
   disposeRuntimeProfile();
+
   const root = createScreenGui();
   const parent = createFrame({ Size: udim2FromOffset(800, count * 10) });
   parent.Parent = root;
+
   let cleanups = 0;
+
   const rows = Array.from({ length: count }, () => {
     const row = createFrame({ Size: udim2FromOffset(800, 10) });
+
     if (kind === 'destroy-resources') {
       row.onMouseEnter(() => undefined);
       row.onPropertyChanged('Rotation', () => undefined);
@@ -33,9 +39,12 @@ export const prepareRuntimeProfile = (kind: RuntimeWorkload, count: number): voi
         cleanups += 1;
       });
     }
+
     row.Parent = parent;
+
     return row;
   });
+
   createUIListLayout().Parent = parent;
   root.mount('#root');
   parent.unsafeElement.getBoundingClientRect();
@@ -47,7 +56,9 @@ export const runRuntimeProfile = (): Readonly<{ elapsedMs: number; operations: n
   if (!fixture) {
     throw new Error('Prepare a runtime profile first.');
   }
+
   const started = performance.now();
+
   if (fixture.kind === 'patch') {
     for (let iteration = 0; iteration < 31; iteration += 1) {
       for (const row of fixture.rows) {
@@ -57,12 +68,14 @@ export const runRuntimeProfile = (): Readonly<{ elapsedMs: number; operations: n
           BackgroundTransparency: (iteration % 2) / 2,
         });
       }
+
       fixture.root.unsafeElement.getBoundingClientRect();
     }
   } else {
     fixture.root.destroy();
     document.querySelector('#root')!.getBoundingClientRect();
   }
+
   return {
     elapsedMs: performance.now() - started,
     operations: fixture.kind === 'patch' ? 31 * fixture.count : fixture.count,
@@ -74,6 +87,7 @@ export const verifyRuntimeProfile = (): void => {
   if (!fixture) {
     throw new Error('Prepare a runtime profile first.');
   }
+
   if (fixture.kind === 'patch') {
     if (
       fixture.rows.some(

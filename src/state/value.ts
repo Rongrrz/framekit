@@ -1,6 +1,7 @@
 import { createSignalEmitter, emitSignalSafely, type Unsubscribe } from './signal.js';
 
 type ValueListener<T> = (value: T) => void;
+
 type ValueUpdater<T> = (currentValue: T) => T;
 
 /** A synchronous value that can be read and observed without being mutated. */
@@ -28,6 +29,7 @@ export function createObservableValue<T>(initialValue: T): ObservableValue<T> {
     if (Object.is(currentValue, nextValue)) {
       return;
     }
+
     currentValue = nextValue;
     emitSignalSafely(changedSignal, currentValue);
   }

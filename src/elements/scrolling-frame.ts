@@ -80,15 +80,20 @@ export type ScrollingFrame = GuiElement<ScrollingFrameProperties> &
   };
 
 const scrollingDirections: readonly ScrollingDirection[] = ['X', 'Y', 'XY'];
+
 const automaticCanvasSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
+
 const scrollingFrameTagNames = ['div', 'main', 'section', 'article', 'aside', 'nav'] as const;
+
 const scrollingFrameMethodTable = {
   ...guiEventMethods,
+
   scrollTo(this: ScrollingFrame, position: Vector2): void {
     getActiveNodeState(this);
     assertVector2(position, 'position');
     this.CanvasPosition = position;
   },
+
   scrollBy(this: ScrollingFrame, offset: Vector2): void {
     getActiveNodeState(this);
     assertVector2(offset, 'offset');
@@ -103,12 +108,14 @@ Object.defineProperties(scrollingFrameMethodTable, {
   AbsoluteCanvasSize: {
     get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
+
       return vector2(this.unsafeElement.scrollWidth, this.unsafeElement.scrollHeight);
     },
   },
   MaxCanvasPosition: {
     get(this: ScrollingFrame): Vector2 {
       getActiveNodeState(this);
+
       return vector2(
         Math.max(0, this.unsafeElement.scrollWidth - this.unsafeElement.clientWidth),
         Math.max(0, this.unsafeElement.scrollHeight - this.unsafeElement.clientHeight),
@@ -126,6 +133,7 @@ export function createScrollingFrame(
 ): ScrollingFrame {
   const { TagName = 'div', ...properties } = initialProperties;
   assertAllowedValue(TagName, scrollingFrameTagNames, 'ScrollingFrame TagName');
+
   const ownerDocument = resolveOwnerDocument(options);
   const element = ownerDocument.createElement(TagName);
   const canvasBounds = ownerDocument.createElement('div');
@@ -142,7 +150,9 @@ export function createScrollingFrame(
   element.append(canvasBounds);
   element.tabIndex = 0;
   installFrameKitStyles({ ownerDocument });
+
   const canvasPositionSync = createCanvasPositionSync(element);
+
   const node = createGuiObjectNode<ScrollingFrameProperties>({
     className: 'ScrollingFrame',
     element,
@@ -159,6 +169,7 @@ export function createScrollingFrame(
       ScrollBarThickness: 12,
     },
     initialProperties: properties,
+
     renderProperties: (properties, changedProperties) => {
       if (
         changedProperties.has('ScrollingDirection') ||
@@ -166,8 +177,10 @@ export function createScrollingFrame(
       ) {
         const scrollX =
           properties.ScrollingDirection === 'X' || properties.ScrollingDirection === 'XY';
+
         const scrollY =
           properties.ScrollingDirection === 'Y' || properties.ScrollingDirection === 'XY';
+
         setStyle(element, 'overflow-x', properties.ScrollingEnabled && scrollX ? 'auto' : 'hidden');
         setStyle(element, 'overflow-y', properties.ScrollingEnabled && scrollY ? 'auto' : 'hidden');
         setStyle(
@@ -175,16 +188,19 @@ export function createScrollingFrame(
           'overscroll-behavior-x',
           properties.ScrollingEnabled && scrollX ? 'none' : 'auto',
         );
+
         setStyle(
           element,
           'overscroll-behavior-y',
           properties.ScrollingEnabled && scrollY ? 'none' : 'auto',
         );
       }
+
       if (changedProperties.has('ScrollBarThickness')) {
         setStyle(element, '--framekit-scrollbar-thickness', `${properties.ScrollBarThickness}px`);
         setStyle(element, 'scrollbar-width', resolveScrollbarWidth(properties.ScrollBarThickness));
       }
+
       if (
         changedProperties.has('ScrollBarImageColor3') ||
         changedProperties.has('ScrollBarImageTransparency')
@@ -195,6 +211,7 @@ export function createScrollingFrame(
           color3ToCss(properties.ScrollBarImageColor3, properties.ScrollBarImageTransparency),
         );
       }
+
       if (changedProperties.has('CanvasSize') || changedProperties.has('AutomaticCanvasSize')) {
         setStyle(
           canvasBounds,
@@ -203,6 +220,7 @@ export function createScrollingFrame(
             ? '0px'
             : udimToCss(properties.CanvasSize.X),
         );
+
         setStyle(
           canvasBounds,
           'height',
@@ -211,19 +229,23 @@ export function createScrollingFrame(
             : udimToCss(properties.CanvasSize.Y),
         );
       }
+
       if (changedProperties.has('CanvasPosition')) {
         const acceptedPosition = canvasPositionSync.render(properties.CanvasPosition);
+
         if (acceptedPosition) {
           return { CanvasPosition: acceptedPosition };
         }
       }
     },
+
     methods: scrollingFrameMethods,
     validateProperties: validateScrollingFrameProperties,
   }) as ScrollingFrame;
 
   canvasPositionSync.connect(node);
   connectKeyboardScrolling(node);
+
   return node;
 }
 

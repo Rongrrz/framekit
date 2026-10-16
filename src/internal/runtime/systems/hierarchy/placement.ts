@@ -18,15 +18,20 @@ export const placeChildElement = (
   ) {
     return;
   }
+
   const siblings = getChildren(parentState);
   let nextGuiSibling: GuiElement | undefined;
+
   for (let index = childIndex + 1; index < siblings.length; index += 1) {
     const sibling = siblings[index]!;
+
     if (!isGuiNode(sibling)) {
       continue;
     }
+
     nextGuiSibling = sibling;
     break;
   }
+
   placeElement(parent.unsafeElement, child.unsafeElement, nextGuiSibling?.unsafeElement ?? null);
 };

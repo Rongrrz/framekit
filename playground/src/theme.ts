@@ -26,6 +26,7 @@ export type ThemePalette = Readonly<{
 }>;
 
 export type ThemeToken = keyof ThemePalette;
+
 export type ThemeValue = ObservableValue<ThemePalette>;
 
 export const themes = {
@@ -85,6 +86,7 @@ export const typeScale = {
 export const scrollbarThickness = 12;
 
 const themeStorageKey = 'framekit-playground-theme';
+
 const documentThemeColors = {
   dark: '#0a0d12',
   light: '#f5f7fa',
@@ -128,6 +130,7 @@ export const bindThemePalette = (
 export const resolveInitialTheme = (): ThemeMode => {
   try {
     const stored = window.localStorage.getItem(themeStorageKey);
+
     if (stored === 'dark' || stored === 'light') {
       return stored;
     }
@@ -150,21 +153,25 @@ export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeM
 
   watchOwnedValue(owner, theme, (mode) => {
     root.setAttribute('data-framekit-theme', mode);
+
     if (themeColorMeta) {
       themeColorMeta.content = documentThemeColors[mode];
     }
+
     try {
       window.localStorage.setItem(themeStorageKey, mode);
     } catch {
       // Theme switching remains functional when storage is unavailable.
     }
   });
+
   owner.onDestroy(() => {
     if (previousTheme === null) {
       root.removeAttribute('data-framekit-theme');
     } else {
       root.setAttribute('data-framekit-theme', previousTheme);
     }
+
     if (themeColorMeta && previousThemeColor !== undefined) {
       themeColorMeta.content = previousThemeColor;
     }
@@ -187,6 +194,7 @@ export const installPlaygroundStyles = (): void => {
   if (document.querySelector('[data-framekit-playground-styles]')) {
     return;
   }
+
   const style = document.createElement('style');
   style.dataset.framekitPlaygroundStyles = '';
   style.textContent = `

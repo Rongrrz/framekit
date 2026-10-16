@@ -23,6 +23,7 @@ export type Message = Readonly<{
   expanded: boolean;
   attachment: boolean;
 }>;
+
 export type MessageView = Readonly<{
   node: Frame;
   update(message: Message, loadImages: boolean): void;
@@ -39,6 +40,7 @@ export const createMessageView = (theme: ThemeValue): MessageView => {
     PaddingTop: udim(0, 16),
     PaddingBottom: udim(0, 16),
   }).Parent = node;
+
   const text = (size: number, heading: boolean): TextLabel => {
     const label = createTextLabel({
       AutomaticSize: 'Y',
@@ -50,30 +52,39 @@ export const createMessageView = (theme: ThemeValue): MessageView => {
       BackgroundTransparency: 1,
       FontFamily: heading ? fonts.sans : 'FrameKitInboxReading, monospace',
     });
+
     bindThemeColors(label, theme, (palette) => ({
       TextColor3: heading ? palette.text : palette.textMuted,
     }));
     label.Parent = node;
+
     return label;
   };
+
   const subject = text(18, true);
   const body = text(16, false);
+
   const image = createImageLabel({
     Size: udim2(1, 0, 0, 24),
     ScaleType: 'Fit',
     AltText: 'Weekly delivery chart',
     Visible: false,
   });
+
   image.Parent = node;
+
   let ratio: UIAspectRatioConstraint | undefined;
   image.on(
     'load',
     (event) => {
       const native = event.target as HTMLImageElement;
+
       if (!native.naturalWidth || !native.naturalHeight) {
         return;
       }
+
       image.Size = udim2(1, 0, 0, 1000);
+
       if (ratio) {
         ratio.AspectRatio = native.naturalWidth / native.naturalHeight;
       } else {
@@ -82,10 +93,12 @@ export const createMessageView = (theme: ThemeValue): MessageView => {
         });
         ratio.Parent = image;
       }
+
       image.unsafeElement.dataset.loaded = 'true';
     },
     { capture: true },
   );
+
   image.on(
     'error',
     () => {
@@ -93,8 +106,10 @@ export const createMessageView = (theme: ThemeValue): MessageView => {
     },
     { capture: true },
   );
+
   return {
     node,
+
     update: (message, loadImages): void => {
       node.unsafeElement.dataset.messageId = String(message.id);
       node.unsafeElement.setAttribute('aria-label', message.subject);

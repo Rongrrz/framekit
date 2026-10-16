@@ -53,6 +53,7 @@ export type GuiObject<Properties extends GuiObjectProperties = GuiObjectProperti
   GuiElement<Properties>;
 
 const automaticSizes: readonly AutomaticSize[] = ['None', 'X', 'Y', 'XY'];
+
 const defaultGuiObjectProperties = Object.freeze({
   Name: 'GuiObject',
   Size: udim2FromOffset(100, 100),
@@ -67,6 +68,7 @@ const defaultGuiObjectProperties = Object.freeze({
   AutomaticSize: 'None',
   ClipsDescendants: false,
 } satisfies GuiObjectProperties);
+
 const guiObjectPropertyNames = Object.keys(defaultGuiObjectProperties);
 
 /** Returns a fresh set of default GUI object properties. */
@@ -112,14 +114,18 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
     className,
     properties: mergeProperties(defaultProperties, initialProperties),
     element,
+
     renderProperties: (properties, changedProperties) => {
       renderGuiObject(element, properties, changedProperties);
+
       return renderProperties?.(properties, changedProperties);
     },
+
     validateProperties: (properties, requestedProperties) => {
       validateGuiObjectProperties(properties, requestedProperties);
       validateProperties?.(properties);
     },
+
     methods,
     canContainGuiChildren,
     capabilities: { guiObject: true, ...capabilities },
@@ -140,6 +146,7 @@ function renderGuiObject(
         ? 'auto'
         : udimToCss(properties.Size.X),
     );
+
     setStyle(
       element,
       'height',
@@ -148,11 +155,13 @@ function renderGuiObject(
         : udimToCss(properties.Size.Y),
     );
   }
+
   if (changedProperties.has('Position')) {
     setStyle(element, 'position', 'absolute');
     setStyle(element, 'left', udimToCss(properties.Position.X));
     setStyle(element, 'top', udimToCss(properties.Position.Y));
   }
+
   if (changedProperties.has('AnchorPoint')) {
     setStyle(
       element,
@@ -160,12 +169,15 @@ function renderGuiObject(
       `translate(${-properties.AnchorPoint.X * 100}%, ${-properties.AnchorPoint.Y * 100}%)`,
     );
   }
+
   if (changedProperties.has('Rotation')) {
     setStyle(element, 'rotate', `${properties.Rotation}deg`);
   }
+
   if (changedProperties.has('Visible')) {
     setStyle(element, 'display', properties.Visible ? '' : 'none');
   }
+
   if (
     changedProperties.has('BackgroundColor3') ||
     changedProperties.has('BackgroundTransparency')
@@ -176,9 +188,11 @@ function renderGuiObject(
       color3ToCss(properties.BackgroundColor3, properties.BackgroundTransparency),
     );
   }
+
   if (changedProperties.has('ZIndex')) {
     setStyle(element, 'z-index', String(properties.ZIndex));
   }
+
   if (changedProperties.has('ClipsDescendants')) {
     setStyle(element, 'overflow', properties.ClipsDescendants ? 'hidden' : 'visible');
   }

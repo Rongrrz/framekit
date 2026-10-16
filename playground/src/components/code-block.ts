@@ -12,6 +12,7 @@ export const createCodeBlock = (
   filename = 'example.ts',
 ): Frame => {
   const source = lines.join('\n').replaceAll('\r\n', '\n').trimEnd();
+
   const block = createSurface(theme, {
     name,
     size: udim2(1, 0, 0, 72 + source.split('\n').length * 22),
@@ -19,7 +20,9 @@ export const createCodeBlock = (
     radius: 12,
     clipsDescendants: true,
   });
+
   block.unsafeElement.classList.add('pg-code-block');
+
   const title = createText(theme, {
     text: filename,
     size: udim2(1, -130, 0, 36),
@@ -28,7 +31,9 @@ export const createCodeBlock = (
     textSize: 12,
     color: 'textFaint',
   });
+
   title.Parent = block;
+
   const copy = createButton(theme, {
     label: 'Copy',
     name: `${name}Copy`,
@@ -36,8 +41,10 @@ export const createCodeBlock = (
     position: udim2(1, -112, 0, 6),
     textSize: 11,
   });
+
   copy.AccessibleLabel = `Copy ${name} example`;
   copy.Parent = block;
+
   const scroll = createScrollingFrame({
     Name: `${name}Scroll`,
     Size: udim2(1, 0, 1, -40),
@@ -47,11 +54,14 @@ export const createCodeBlock = (
     ScrollBarThickness: 8,
     ScrollBarImageColor3: themeColor(theme, 'textFaint'),
   });
+
   scroll.unsafeElement.setAttribute('aria-label', `${name} code example`);
   bindThemeColors(scroll, theme, (palette) => ({ ScrollBarImageColor3: palette.textFaint }));
+
   const document = scroll.unsafeElement.ownerDocument;
   const content = document.createElement('div');
   content.className = 'pg-code-source';
+
   const pre = document.createElement('pre');
   const code = document.createElement('code');
   code.textContent = source;
@@ -64,13 +74,16 @@ export const createCodeBlock = (
   const prepared = import('./code-formatting')
     .then(({ prepareCode }) => prepareCode(source, filename))
     .catch(() => ({ source, html: undefined }));
+
   void prepared.then((example) => {
     if (block.isDestroyed() || !example.html) {
       return;
     }
+
     content.innerHTML = example.html;
     block.Size = udim2(1, 0, 0, 72 + example.source.split('\n').length * 22);
   });
+
   copy.onClick(() => {
     void prepared.then((example) => {
       if (!copy.isDestroyed()) {
@@ -79,5 +92,6 @@ export const createCodeBlock = (
     });
   });
   block.unsafeElement.style.marginTop = '4px';
+
   return block;
 };

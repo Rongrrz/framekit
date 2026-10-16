@@ -21,7 +21,9 @@ export const createCanvasPositionSync = (element: HTMLElement): CanvasPositionSy
     if (!positionsMatch(readCanvasPosition(element), position)) {
       writeCanvasPosition(element, position);
     }
+
     lastRenderedPosition = readCanvasPosition(element);
+
     return positionsMatch(lastRenderedPosition, position) ? undefined : lastRenderedPosition;
   };
 
@@ -31,17 +33,22 @@ export const createCanvasPositionSync = (element: HTMLElement): CanvasPositionSy
       'scroll',
       () => {
         const browserPosition = readCanvasPosition(element);
+
         if (
           positionsMatch(browserPosition, lastRenderedPosition) &&
           positionsMatch(browserPosition, getNodeProperty(node, 'CanvasPosition'))
         ) {
           return;
         }
+
         const canvasPosition = getNodeProperty(node, 'CanvasPosition');
+
         if (positionsMatch(browserPosition, canvasPosition)) {
           lastRenderedPosition = browserPosition;
+
           return;
         }
+
         setNodeProperties(node, { CanvasPosition: browserPosition });
       },
       { passive: true, signal: listeners.signal },
@@ -59,9 +66,11 @@ export const resolveScrollbarWidth = (thickness: number): string => {
   if (thickness === 0) {
     return 'none';
   }
+
   if (thickness <= 8) {
     return 'thin';
   }
+
   return 'auto';
 };
 
@@ -71,8 +80,10 @@ const readCanvasPosition = (element: HTMLElement): Vector2 =>
 const writeCanvasPosition = (element: HTMLElement, position: Vector2): void => {
   if (typeof element.scrollTo === 'function') {
     element.scrollTo(position.X, position.Y);
+
     return;
   }
+
   element.scrollLeft = position.X;
   element.scrollTop = position.Y;
 };

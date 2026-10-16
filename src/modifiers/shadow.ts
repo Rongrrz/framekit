@@ -63,6 +63,7 @@ function resolveShadowStyles(properties: Readonly<UIShadowProperties>): Styles {
 
 function resolveShadow(properties: Readonly<UIShadowProperties>): string {
   const inset = properties.Inset ? 'inset ' : '';
+
   return `${inset}${properties.Offset.X}px ${properties.Offset.Y}px ${properties.BlurRadius}px ${properties.SpreadRadius}px ${color3ToCss(properties.Color, properties.Transparency)}`;
 }
 

@@ -50,6 +50,7 @@ export function setupAnimationClock(): AnimationClock {
     for (let frame = 0; frame < maximumFrames && pendingFrames.size > 0; frame += 1) {
       advance();
     }
+
     if (pendingFrames.size > 0) {
       throw new Error(`Animations did not settle within ${maximumFrames} frames.`);
     }

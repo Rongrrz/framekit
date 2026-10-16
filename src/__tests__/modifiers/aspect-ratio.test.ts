@@ -40,6 +40,7 @@ describe('UI aspect ratio constraints', () => {
 
   it('can scale from its parent while maintaining the ratio', () => {
     const frame = createFrame();
+
     const constraint = createUIAspectRatioConstraint({
       AspectRatio: 16 / 9,
       AspectType: 'ScaleWithParentSize',

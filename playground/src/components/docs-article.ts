@@ -28,9 +28,11 @@ export const appendFlowText = (
 ): TextLabel => {
   const label = createText(theme, { ...options, wrapped: true, yAlignment: 'Top' });
   label.AutomaticSize = 'Y';
+
   const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
   Object.assign(text.style, { position: 'static', inset: 'auto', display: 'block', lineHeight });
   label.Parent = parent;
+
   return label;
 };
 
@@ -45,6 +47,7 @@ export const createExampleRow = (
     AutomaticSize: 'Y',
     BackgroundTransparency: 1,
   });
+
   const list = createUIListLayout({ Padding: udim(0, 16) });
   bindLayoutProperties(row, layout, list, {
     desktop: { FillDirection: 'Horizontal' },
@@ -53,6 +56,7 @@ export const createExampleRow = (
   list.Parent = row;
   row.unsafeElement.classList.add('pg-examples');
   row.Parent = parent;
+
   return row;
 };
 
@@ -69,6 +73,7 @@ export const appendOutline = (
     textSize: typeScale.caption,
     weight: 650,
   }).Parent = parent;
+
   for (const [index, item] of items.entries()) {
     const link = createButton(theme, {
       label: item.label,
@@ -79,6 +84,7 @@ export const appendOutline = (
       foreground: 'textMuted',
       textSize: typeScale.caption,
     });
+
     link.FontWeight = 550;
     link.TextXAlignment = 'Left';
     link.onClick(() => onNavigate(item.target));
@@ -101,6 +107,7 @@ export const appendArticleTitle = (
     font: fonts.mono,
     weight: 650,
   });
+
   const heading = appendFlowText(
     parent,
     theme,
@@ -112,6 +119,7 @@ export const appendArticleTitle = (
     },
     1.2,
   );
+
   appendFlowText(parent, theme, {
     text: body,
     size: udim2FromScale(1, 0),
@@ -120,6 +128,7 @@ export const appendArticleTitle = (
   });
   heading.unsafeElement.setAttribute('role', 'heading');
   heading.unsafeElement.setAttribute('aria-level', '1');
+
   return heading;
 };
 
@@ -140,6 +149,7 @@ export const appendArticleSection = (
     },
     1.25,
   );
+
   heading.unsafeElement.style.marginTop = '28px';
   heading.unsafeElement.setAttribute('role', 'heading');
   heading.unsafeElement.setAttribute('aria-level', '2');
@@ -149,6 +159,7 @@ export const appendArticleSection = (
     color: 'textMuted',
     textSize: typeScale.body,
   });
+
   return heading;
 };
 
@@ -160,6 +171,7 @@ export const appendCallout = (parent: Frame, theme: ThemeValue, text: string): v
     border: 'accentMuted',
     radius: 10,
   });
+
   callout.AutomaticSize = 'Y';
   callout.unsafeElement.style.padding = '14px 16px';
   callout.unsafeElement.style.marginTop = '12px';
@@ -176,13 +188,16 @@ export const appendCallout = (parent: Frame, theme: ThemeValue, text: string): v
 /** Connects the reading path with native links that can also open in a new tab. */
 export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: DocsPage): void => {
   const index = documentationPages.findIndex((entry) => entry.page === page);
+
   const footer = createFrame({
     Name: 'ArticleNavigation',
     BackgroundTransparency: 1,
     TagName: 'nav',
   });
+
   footer.unsafeElement.classList.add('pg-article-navigation');
   footer.unsafeElement.setAttribute('aria-label', 'Continue reading');
+
   for (const [label, entry] of [
     ['Previous', documentationPages[index - 1]],
     ['Next', documentationPages[index + 1]],
@@ -190,6 +205,7 @@ export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: Doc
     if (!entry) {
       continue;
     }
+
     const link = createLink({
       Text: `${label} / ${entry.label} →`,
       Href: pageHash(entry.page),
@@ -198,9 +214,11 @@ export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: Doc
       TextXAlignment: 'Left',
       BackgroundTransparency: 1,
     });
+
     link.unsafeElement.classList.add('pg-reading-link');
     bindThemeColors(link, theme, (palette) => ({ TextColor3: palette.accent }));
     link.Parent = footer;
   }
+
   footer.Parent = parent;
 };

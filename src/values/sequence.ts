@@ -27,10 +27,13 @@ export function colorSequence(
   ...remaining: readonly (Color3 | ColorSequenceKeypoint)[]
 ): ColorSequence {
   const values = [first, second, ...remaining];
+
   const keypoints = isColorSequenceKeypoint(first)
     ? values.map(asColorKeypoint)
     : evenlySpace(values.map(asColor));
+
   assertColorSequence(keypoints);
+
   return Object.freeze(keypoints.map((keypoint) => Object.freeze(keypoint)));
 }
 
@@ -41,9 +44,12 @@ export function numberSequence(
   ...remaining: readonly (number | NumberSequenceKeypoint)[]
 ): NumberSequence {
   const values = [first, second, ...remaining];
+
   const keypoints =
     typeof first === 'number' ? evenlySpace(values.map(asNumber)) : values.map(asNumberKeypoint);
+
   assertNumberSequence(keypoints);
+
   return Object.freeze(keypoints.map((keypoint) => Object.freeze(keypoint)));
 }
 
@@ -61,6 +67,7 @@ export function assertNumberSequence(value: unknown): asserts value is NumberSeq
 
 function evenlySpace<Value>(values: readonly Value[]): { Time: number; Value: Value }[] {
   const finalIndex = values.length - 1;
+
   return values.map((value, index) => ({ Time: index / finalIndex, Value: value }));
 }
 
@@ -74,19 +81,24 @@ function assertSequence(
   }
 
   let previousTime = -1;
+
   for (const [index, keypoint] of value.entries()) {
     if (!isRecord(keypoint)) {
       throw new TypeError(`${name}[${index}] must be a keypoint.`);
     }
+
     assertFiniteNumber(keypoint.Time, `${name}[${index}].Time`);
+
     if (keypoint.Time < 0 || keypoint.Time > 1 || keypoint.Time <= previousTime) {
       throw new RangeError(`${name} times must increase from 0 to 1.`);
     }
+
     previousTime = keypoint.Time;
     validateValue(keypoint, index);
   }
 
   const keypoints = value as readonly { Time: number }[];
+
   if (keypoints[0]!.Time !== 0 || keypoints.at(-1)!.Time !== 1) {
     throw new RangeError(`${name} must begin at 0 and end at 1.`);
   }
@@ -106,6 +118,7 @@ function asColor(value: Color3 | ColorSequenceKeypoint): Color3 {
   if (isColorSequenceKeypoint(value)) {
     throw new TypeError('ColorSequence cannot mix colors and keypoints.');
   }
+
   return value;
 }
 
@@ -113,6 +126,7 @@ function asColorKeypoint(value: Color3 | ColorSequenceKeypoint): ColorSequenceKe
   if (!isColorSequenceKeypoint(value)) {
     throw new TypeError('ColorSequence cannot mix colors and keypoints.');
   }
+
   return value;
 }
 
@@ -120,6 +134,7 @@ function asNumber(value: number | NumberSequenceKeypoint): number {
   if (typeof value !== 'number') {
     throw new TypeError('NumberSequence cannot mix numbers and keypoints.');
   }
+
   return value;
 }
 
@@ -127,5 +142,6 @@ function asNumberKeypoint(value: number | NumberSequenceKeypoint): NumberSequenc
   if (typeof value === 'number') {
     throw new TypeError('NumberSequence cannot mix numbers and keypoints.');
   }
+
   return value;
 }

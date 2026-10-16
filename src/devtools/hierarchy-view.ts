@@ -13,6 +13,7 @@ import { colors, createDebugUI } from './view.js';
 
 type HierarchyItem = HierarchyRow &
   Readonly<{ selected: boolean; collapsed: boolean; searching: boolean }>;
+
 type HierarchyView = Readonly<{
   render(
     projected: readonly HierarchyRow[],
@@ -22,6 +23,7 @@ type HierarchyView = Readonly<{
   ): void;
   reveal(node: Instance, focus: boolean): void;
 }>;
+
 /** Owns keyed hierarchy row views and their tree semantics, independent of inspector navigation. */
 export const bindInspectorHierarchy = (
   tree: ScrollingFrame,
@@ -33,17 +35,23 @@ export const bindInspectorHierarchy = (
   const ui = createDebugUI(tree.unsafeElement.ownerDocument);
   const ids = new WeakMap<Instance, number>();
   let nextId = 0;
+
   const key = (node: Instance): number => {
     const existing = ids.get(node);
+
     if (existing !== undefined) {
       return existing;
     }
+
     nextId += 1;
     ids.set(node, nextId);
+
     return nextId;
   };
+
   const hierarchy = createObservableValue<readonly HierarchyItem[]>([]);
   const treeRows = createObservableValue<readonly TreeViewItem[]>([]);
+
   const rows = new Map<
     Instance,
     Readonly<{
@@ -53,31 +61,41 @@ export const bindInspectorHierarchy = (
       toggle: TextButton;
     }>
   >();
+
   bindKeyedChildren(tree, hierarchy, {
     key: (row) => key(row.node),
+
     create: (row) => {
       const frame = ui.frame(undefined, {
         Name: `Runtime:${key(row.node)}`,
         Size: udim2(1, -4, 0, 32),
         BackgroundColor3: colors.selected,
       });
+
       createUICorner({ CornerRadius: 6 }).Parent = frame;
+
       const toggle = ui.button(frame, '', {
         Size: udim2FromOffset(22, 28),
         BackgroundTransparency: 1,
         TextSize: 15,
       });
+
       toggle.unsafeElement.tabIndex = -1;
       toggle.on('click', (event) => {
         event.stopPropagation();
+
         const current = hierarchy.get().find((item) => item.node === row.node);
+
         if (!current || current.searching) {
           return;
         }
+
         options.onToggle(current.node, current.collapsed);
         rows.get(row.node)?.frame.focus();
       });
+
       const name = ui.label(frame, '', { Size: udim2(1, -102, 1, 0), TextSize: 12 });
+
       const badge = ui.label(frame, '', {
         Position: udim2(1, -76, 0, 0),
         Size: udim2FromOffset(70, 32),
@@ -85,10 +103,13 @@ export const bindInspectorHierarchy = (
         TextColor3: colors.muted,
         TextXAlignment: 'Right',
       });
+
       rows.set(row.node, { frame, name, badge, toggle });
       frame.onDestroy(() => rows.delete(row.node));
+
       return frame;
     },
+
     update: (frame, row) => {
       const view = rows.get(row.node)!;
       const inset = 4 + (row.level - 1) * 14;
@@ -97,6 +118,7 @@ export const bindInspectorHierarchy = (
         'aria-label',
         `${row.node.Name} (${row.snapshot.className})`,
       );
+
       view.toggle.setProperties({
         Text: row.searching || !row.collapsed ? '⌄' : '›',
         Visible: row.snapshot.children.length > 0,
@@ -104,6 +126,7 @@ export const bindInspectorHierarchy = (
         Position: udim2FromOffset(inset, 2),
         AccessibleLabel: `${row.collapsed ? 'Expand' : 'Collapse'} ${row.node.Name}`,
       });
+
       view.name.setProperties({
         Text: row.node.Name,
         Position: udim2FromOffset(inset + 24, 0),
@@ -114,29 +137,36 @@ export const bindInspectorHierarchy = (
       view.badge.Text = row.snapshot.className.replace(/^UI/, '');
     },
   });
+
   bindTreeView(tree, treeRows, {
     onSelect: (node) => {
       const instance = [...rows].find(([, view]) => view.frame === node)?.[0];
+
       if (instance) {
         options.onSelect(instance);
       }
     },
+
     onToggle: (node, expanded) => {
       const instance = [...rows].find(([, view]) => view.frame === node)?.[0];
+
       if (instance) {
         options.onToggle(instance, expanded);
       }
     },
   });
+
   return {
     render: (projected, selected, collapsed, query): void => {
       const searching = Boolean(query.trim());
+
       const items = projected.map((row) => ({
         ...row,
         selected: row.node === selected,
         collapsed: collapsed.has(row.node),
         searching,
       }));
+
       hierarchy.set(items);
       treeRows.set(
         items.map((row) => ({
@@ -148,11 +178,14 @@ export const bindInspectorHierarchy = (
         })),
       );
     },
+
     reveal: (node, focus): void => {
       const row = rows.get(node)?.frame;
+
       if (focus) {
         row?.focus({ preventScroll: true });
       }
+
       row?.unsafeElement.scrollIntoView({ block: 'nearest' });
     },
   };

@@ -21,6 +21,7 @@ export function isDestroyed(node: Instance): boolean {
 export function onDestroy(node: Instance, callback: () => void): () => void {
   const cleanups = getActiveNodeState(node).cleanups;
   cleanups.add(callback);
+
   return () => cleanups.delete(callback);
 }
 
@@ -30,23 +31,28 @@ function destroyRecursively(
   ancestorElementBeingRemoved?: HTMLElement,
 ): void {
   const state = getNodeState(node);
+
   if (state.destroyed) {
     return;
   }
 
   const children = getChildren(state);
+
   const subtreeElementBeingRemoved =
     ancestorElementBeingRemoved ??
     (state.kind === 'gui' ? (node as GuiElement).unsafeElement : undefined);
+
   for (const child of children) {
     // The whole subtree is leaving, so child teardown must not rerender its parent.
     getNodeState(child).parent = undefined;
     destroyRecursively(child, errors, subtreeElementBeingRemoved);
   }
+
   children.length = 0;
 
   if (state.parent) {
     const previousParent = unlinkNodeFromParent(node, state)!;
+
     try {
       rendering.renderRemovedChild(previousParent, node);
     } catch (error) {
@@ -56,6 +62,7 @@ function destroyRecursively(
 
   state.destroyed = true;
   rendering.releaseLayout(node);
+
   for (const callback of state.cleanups) {
     try {
       callback();
@@ -63,11 +70,13 @@ function destroyRecursively(
       errors.push(error);
     }
   }
+
   state.cleanups.clear();
 
   if (state.kind === 'gui') {
     try {
       const element = (node as GuiElement).unsafeElement;
+
       if (!ancestorElementBeingRemoved?.contains(element)) {
         element.remove();
       }

@@ -20,6 +20,7 @@ export function color3FromHex(hex: string): Color3 {
   if (!/^#[\dA-Fa-f]{6}$/.test(hex)) {
     throw new TypeError(`Expected a color in #RRGGBB format, got "${hex}".`);
   }
+
   return color3FromRGB(
     Number.parseInt(hex.slice(1, 3), 16),
     Number.parseInt(hex.slice(3, 5), 16),
@@ -30,6 +31,7 @@ export function color3FromHex(hex: string): Color3 {
 /** Converts a color and Roblox-style transparency to a CSS color string. */
 export function color3ToCss(value: Color3, transparency = 0): string {
   const alpha = 1 - transparency;
+
   return `rgb(${value.R} ${value.G} ${value.B} / ${alpha})`;
 }
 
@@ -37,9 +39,11 @@ export function assertColor3(value: unknown, name = 'Color3'): asserts value is 
   if (typeof value !== 'object' || value === null) {
     throw new TypeError(`${name} must contain valid R, G, and B channels.`);
   }
+
   if (!('R' in value) || !('G' in value) || !('B' in value)) {
     throw new TypeError(`${name} must contain valid R, G, and B channels.`);
   }
+
   for (const channel of [value.R, value.G, value.B]) {
     if (typeof channel !== 'number' || !Number.isInteger(channel) || channel < 0 || channel > 255) {
       throw new TypeError(`${name} channels must be integers from 0 to 255.`);
@@ -49,6 +53,7 @@ export function assertColor3(value: unknown, name = 'Color3'): asserts value is 
 
 function colorChannel(value: number): number {
   assertFiniteNumber(value, 'Color component');
+
   return Math.round(clamp(value, 0, 255));
 }
 

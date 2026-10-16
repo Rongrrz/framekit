@@ -9,6 +9,7 @@ import type {} from './harness.js';
 test('records reproducible diagnostic workloads', async ({ page, browser }) => {
   await page.goto('/benchmarks/index.html');
   await page.waitForFunction(() => Boolean(window.runFrameKitBenchmarks));
+
   const results = await page.evaluate(() => window.runFrameKitBenchmarks());
   expect(results.remainingRoots).toBe(0);
   expect(results.virtualCollection.maxMountedViews).toBeLessThanOrEqual(15);

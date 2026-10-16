@@ -67,9 +67,11 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
     }
 
     const propertyName = String(property);
+
     if (isDiscreteAnimationProperty(property)) {
       throw new TypeError(`Property "${propertyName}" changes discretely and cannot be animated.`);
     }
+
     const goalValue = propertyGoal[property];
     const currentValue = currentProperties[property];
     const startValue = resolveStartValue ? resolveStartValue(property, currentValue) : currentValue;
@@ -78,11 +80,13 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
       const start = decomposeAnimationValue(startValue, propertyName);
       const preparedGoal = decomposeAnimationValue(goalValue, propertyName);
       assertCompatibleAnimationValues(start, preparedGoal, propertyName);
+
       return { property, goalValue, start, goal: preparedGoal };
     } catch (error) {
       if (!(error instanceof TypeError)) {
         throw error;
       }
+
       throw new TypeError(
         `Property "${propertyName}" does not contain ${messages.invalidValue} values.`,
         { cause: error },
@@ -95,5 +99,6 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
   } catch (error) {
     throw new TypeError(`The ${kind} goal contains invalid property values.`, { cause: error });
   }
+
   return preparedProperties;
 }

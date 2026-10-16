@@ -6,17 +6,21 @@ const updateCase = (id, label, count, changedCount, kind, value, separate = fals
   label,
   count,
   group: 'Updates',
+
   prepare: (runtime) => {
     const fixture = makeFixture(runtime, count, kind);
     let iteration = 0;
+
     return {
       run: () => {
         fixture.write(changedCount, value(++iteration), separate);
         fixture.flushLayout();
       },
+
       verify: () => {
         const first = fixture.element().firstElementChild;
         const expected = value(iteration);
+
         if (kind === 'text') {
           assert(first.textContent === expected.text, 'Text not committed');
         } else if (kind === 'corner') {
@@ -27,11 +31,14 @@ const updateCase = (id, label, count, changedCount, kind, value, separate = fals
               `${typeof expected === 'number' ? expected : expected.rotation}deg`,
             'Rotation not committed',
           );
+
           if (kind === 'observed') {
             assert(fixture.notifications() === iteration * changedCount, 'Wrong observer count');
           }
+
           if (typeof expected === 'object') {
             assert(first.style.height === `${expected.height}px`, 'Size not committed');
+
             const expectedStyle = document.createElement('div').style;
             expectedStyle.backgroundColor = `rgb(200 200 200 / ${1 - expected.transparency})`;
             assert(
@@ -39,11 +46,13 @@ const updateCase = (id, label, count, changedCount, kind, value, separate = fals
               'Transparency not committed',
             );
           }
+
           const lastChanged = fixture.element().children[changedCount - 1];
           assert(
             lastChanged.style.rotate === first.style.rotate,
             'Last requested rotation not committed',
           );
+
           if (changedCount < count) {
             assert(
               fixture.element().children[changedCount].style.rotate === '0deg',
@@ -51,8 +60,10 @@ const updateCase = (id, label, count, changedCount, kind, value, separate = fals
             );
           }
         }
+
         assert(fixture.element().children.length === count, 'Unexpected row count');
       },
+
       dispose: fixture.dispose,
     };
   },

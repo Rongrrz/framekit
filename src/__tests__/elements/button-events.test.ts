@@ -71,6 +71,7 @@ describe('buttons', () => {
     button.onSecondaryButtonDown(callback);
     button.onSecondaryButtonUp(callback);
     button.onSecondaryClick(callback);
+
     for (const [type, mouseButton] of [
       ['click', 0],
       ['mousedown', 0],

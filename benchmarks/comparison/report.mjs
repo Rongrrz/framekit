@@ -3,6 +3,7 @@ import { basename } from 'node:path';
 
 const median = (values) =>
   [...values].sort((left, right) => left - right)[Math.floor(values.length / 2)];
+
 const rounded = (value) => Math.round(value * 1000) / 1000;
 
 /** One statistical policy serves the table, chart, and machine-readable report. */
@@ -14,14 +15,17 @@ export function summarize(report) {
         .flatMap((run) =>
           run.results.filter((result) => result.id === definition.id && result.runtime === runtime),
         );
+
       const samples = results
         .flatMap((result) => result.samples)
         .sort((left, right) => left - right);
+
       return {
         medianMs: rounded(median(results.map((result) => result.medianMs))),
         p95Ms: rounded(samples[Math.min(samples.length - 1, Math.floor(samples.length * 0.95))]),
       };
     };
+
     return {
       ...definition,
       before: stats('before', 'framekit'),
@@ -36,18 +40,24 @@ export function summarize(report) {
 export async function writeReport(report, path) {
   const summary = report.summary ?? summarize(report);
   const number = (value) => value.toFixed(1);
+
   const rows = summary.map((entry) => {
     const change =
       entry.before.medianMs > 0
         ? rounded(100 * (entry.current.medianMs / entry.before.medianMs - 1))
         : undefined;
+
     const percentage = change === undefined ? '—' : `${change >= 0 ? '+' : ''}${number(change)}%`;
+
     return `| ${entry.label} | ${number(entry.before.medianMs)} | ${number(entry.current.medianMs)} | ${percentage} | ${number(entry.before.p95Ms)} → ${number(entry.current.p95Ms)} | ${number(entry.reactRoot.medianMs)} | ${number(entry.reactLocal.medianMs)} |`;
   });
+
   const samplesFile = basename(path.replace(/\.md$/, '.json'));
+
   const sourceState = report.libraryWorkingTree
     ? `Uncommitted library changes were included:\n\n\`\`\`text\n${report.libraryWorkingTree}\n\`\`\``
     : 'The library source tree was clean.';
+
   await writeFile(
     path,
     `# FrameKit / React performance comparison

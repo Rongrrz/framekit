@@ -30,6 +30,7 @@ export const createNavigation = (
     BackgroundTransparency: 0.05,
     ZIndex: 100,
   });
+
   navigation.unsafeElement.setAttribute('role', 'navigation');
   navigation.unsafeElement.setAttribute('aria-label', 'Primary');
   bindThemeColors(navigation, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
@@ -43,6 +44,7 @@ export const createNavigation = (
     foreground: 'onAccent',
     textSize: 17,
   });
+
   const brand = createText(theme, {
     text: 'FrameKit',
     name: 'BrandName',
@@ -51,6 +53,7 @@ export const createNavigation = (
     textSize: typeScale.body,
     weight: 700,
   });
+
   mark.onClick(() => navigate('home'));
   mark.Parent = navigation;
   brand.Parent = navigation;
@@ -64,6 +67,7 @@ export const createNavigation = (
     foreground: 'textMuted',
     textSize: typeScale.small,
   });
+
   const api = createButton(theme, {
     label: 'Reference',
     name: 'ApiNavButton',
@@ -73,6 +77,7 @@ export const createNavigation = (
     foreground: 'textMuted',
     textSize: typeScale.small,
   });
+
   const source = createButton(theme, {
     label: 'GitHub',
     name: 'SourceNavButton',
@@ -82,6 +87,7 @@ export const createNavigation = (
     foreground: 'textMuted',
     textSize: typeScale.small,
   });
+
   guide.onClick(() => navigate('guide'));
   api.onClick(() => navigate('api'));
   source.onClick(() => window.open(repositoryUrl, '_blank', 'noopener,noreferrer'));
@@ -99,6 +105,7 @@ export const createNavigation = (
     font: fonts.mono,
     textSize: typeScale.caption,
   });
+
   themeToggle.onClick(() => mode.set(mode.get() === 'dark' ? 'light' : 'dark'));
   themeToggle.Parent = navigation;
   bindTooltip(themeToggle, 'Switch between light and dark themes', { placement: 'bottom' });
@@ -109,6 +116,7 @@ export const createNavigation = (
     Position: udim2FromOffset(0, 62),
     ZIndex: 101,
   });
+
   const progress = createFrame({ Name: 'ScrollProgress', Size: udim2FromScale(0, 1) });
   bindThemeColors(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
   bindThemeColors(progress, theme, (palette) => ({ BackgroundColor3: palette.accent }));
@@ -123,6 +131,7 @@ export const createNavigation = (
         1,
         page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight,
       );
+
       progress.Size = udim2FromScale(
         Math.min(1, Math.max(0, page.unsafeElement.scrollTop / maximum)),
         1,
@@ -138,6 +147,7 @@ export const createNavigation = (
       route.get() !== 'home' && route.get() !== 'api' ? palette.accent : palette.textMuted;
     api.TextColor3 = route.get() === 'api' ? palette.accent : palette.textMuted;
   };
+
   watchOwnedValue(navigation, route, updateNavigation);
   watchOwnedValue(navigation, mode, (currentMode) => {
     themeToggle.Text = currentMode === 'dark' ? '☀  Light' : '◐  Dark';
@@ -148,21 +158,26 @@ export const createNavigation = (
     desktop: { Visible: true },
     mobile: { Visible: false },
   });
+
   bindLayoutProperties(navigation, layout, guide, {
     desktop: { Position: udim2(1, -382, 0, 14), Size: udim2FromOffset(74, 36) },
     mobile: { Position: udim2FromOffset(60, 14), Size: udim2FromOffset(62, 36) },
   });
+
   bindLayoutProperties(navigation, layout, api, {
     desktop: { Position: udim2(1, -302, 0, 14), Size: udim2FromOffset(90, 36) },
     mobile: { Position: udim2FromOffset(126, 14), Size: udim2FromOffset(90, 36) },
   });
+
   bindLayoutProperties(navigation, layout, source, {
     desktop: { Visible: true },
     mobile: { Visible: false },
   });
+
   bindLayoutProperties(navigation, layout, themeToggle, {
     desktop: { Position: udim2(1, -122, 0, 14), Size: udim2FromOffset(104, 36) },
     mobile: { Position: udim2(1, -92, 0, 14), Size: udim2FromOffset(80, 36) },
   });
+
   return navigation;
 };

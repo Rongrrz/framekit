@@ -8,21 +8,28 @@ export type StyleOptions = DomOptions & Readonly<{ nonce?: string }>;
 /** Installs shared styles once. Supply a CSP nonce before creating nodes in a protected document. */
 export function installFrameKitStyles(options: StyleOptions = {}): void {
   const ownerDocument = resolveOwnerDocument(options);
+
   if (options.nonce !== undefined) {
     assertString(options.nonce, 'Style nonce');
   }
+
   const existing = ownerDocument.querySelector<HTMLStyleElement>('style[data-framekit-styles]');
+
   if (existing) {
     if (options.nonce !== undefined && existing.nonce !== options.nonce) {
       throw new Error('Install FrameKit styles with the required nonce before creating nodes.');
     }
+
     return;
   }
+
   const style = ownerDocument.createElement('style');
   style.dataset.framekitStyles = '';
+
   if (options.nonce !== undefined) {
     style.nonce = options.nonce;
   }
+
   style.textContent = sharedStyles;
   ownerDocument.head.append(style);
 }

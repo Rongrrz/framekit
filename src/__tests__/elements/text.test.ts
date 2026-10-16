@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe('text labels', () => {
@@ -17,10 +18,12 @@ describe('text labels', () => {
     'bounds font-fitting work when the estimate is far from the fitting size %i',
     (maximumFit) => {
       const ownerDocument = document.implementation.createHTMLDocument();
+
       const canvas = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
         font: '',
         measureText: () => ({ width: 100 }),
       } as unknown as CanvasRenderingContext2D);
+
       const label = createTextLabel({ Text: 'Estimate mismatch' }, { ownerDocument });
       const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
       let measurements = 0;
@@ -33,10 +36,12 @@ describe('text labels', () => {
             if (++measurements > 128) {
               throw new Error('Font fitting exceeded its measurement budget.');
             }
+
             return Number.parseInt(text.style.fontSize, 10) <= maximumFit ? 1 : 20_000_000;
           },
         },
       });
+
       try {
         expect(() => (label.TextScaled = true)).not.toThrow();
         expect(text.style.fontSize).toBe(`${maximumFit}px`);
@@ -61,8 +66,10 @@ describe('text labels', () => {
     { FontWeight: -1 },
   ])('rejects invalid typography in constructors and atomic updates: %j', (patch) => {
     const message = new RegExp(Object.keys(patch)[0]!);
+
     for (const createText of [createTextLabel, createTextButton, createTextInput, createTextArea]) {
       expect(() => createText(patch as never)).toThrow(message);
+
       const node = createText({ Text: 'Before' });
       expect(() => node.setProperties({ ...patch, Rotation: 45 } as never)).toThrow(message);
       expect(node.Text).toBe('Before');
@@ -75,8 +82,10 @@ describe('text labels', () => {
     'updates fixed-size text without requiring layout measurements (%#)',
     (createText) => {
       const node = createText({ Text: 'Before', TextSize: 18 });
+
       const text =
         node.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]') ?? node.unsafeElement;
+
       for (const property of ['clientWidth', 'clientHeight', 'scrollWidth', 'scrollHeight']) {
         Object.defineProperty(text, property, {
           get: () => {
@@ -157,6 +166,7 @@ describe('text labels', () => {
         public unobserve(): void {}
       },
     );
+
     const label = createTextLabel({ Text: 'Scale me', TextSize: 24 });
     const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
     Object.defineProperties(text, {

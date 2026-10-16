@@ -21,10 +21,13 @@ describe('playground application', () => {
   it('creates one persistent routed site and a styled native scrollbar', () => {
     const app = createPlaygroundApp('desktop', 'dark');
     app.mount(document.body);
+
     const siteRoots = Array.from(document.querySelectorAll('[data-framekit="ScreenGui"]')).filter(
       (element) => !element.querySelector('[role="tooltip"], [role="group"]'),
     );
+
     expect(siteRoots).toEqual([app.unsafeElement]);
+
     for (const name of [
       'ThemeToggleButton',
       'TooltipExample1',
@@ -36,16 +39,19 @@ describe('playground application', () => {
       expect(id).toBeTruthy();
       expect(document.getElementById(id!)?.getAttribute('role')).toBe('tooltip');
     }
+
     for (const name of ['PopoverExample1', 'PopoverExample2']) {
       const button = app.findFirstChild(name, true) as TextButton;
       const id = button.unsafeElement.getAttribute('aria-controls');
       expect(document.getElementById(id!)?.querySelectorAll('button')).toHaveLength(3);
       expect(button.unsafeElement.getAttribute('aria-expanded')).toBe('false');
     }
+
     expect((app.findFirstChild('HomePage', true) as Frame).Visible).toBe(true);
     expect((app.findFirstChild('GuidePage', true) as Frame).Visible).toBe(false);
     expect((app.findFirstChild('ApiPage', true) as Frame).Visible).toBe(false);
     expect(app.unsafeElement.querySelector('[role=heading][aria-level="1"]')).not.toBeNull();
+
     const page = app.findFirstChild('FrameKitPlaygroundPage', true) as ScrollingFrame;
     expect(page.ScrollBarThickness).toBe(12);
     expect(page.ScrollBarImageColor3).toEqual(color3FromRGB(105, 120, 137));
@@ -82,6 +88,7 @@ describe('playground application', () => {
 
   it('resizes the same hierarchy at the responsive breakpoint', () => {
     vi.stubGlobal('innerWidth', 1440);
+
     const app = createPlaygroundApp(undefined, 'dark');
     const visual = app.findFirstChild('HomeCodeVisual', true) as Frame;
     vi.stubGlobal('innerWidth', 640);

@@ -30,8 +30,10 @@ export const bindVirtualRows = <Item, Node extends GuiObject>(
     { get: () => visible, onChange: visibleChanged.subscribe },
     {
       key: (entry) => entry.key,
+
       create: (entry) => {
         const node = options.create(entry.item);
+
         if (
           node.isDestroyed() ||
           node.Parent ||
@@ -40,10 +42,12 @@ export const bindVirtualRows = <Item, Node extends GuiObject>(
         ) {
           throw new TypeError('A virtual row factory must return a unique, live, unattached view.');
         }
+
         if (!node.unsafeElement.id) {
           nextRowId += 1;
           node.unsafeElement.id = `framekit-option-${nextRowId}`;
         }
+
         node.unsafeElement.setAttribute('role', 'option');
         node.unsafeElement.tabIndex = -1;
         node.on('click', (event) => {
@@ -58,8 +62,10 @@ export const bindVirtualRows = <Item, Node extends GuiObject>(
           observation.unobserveRow(node.unsafeElement);
           views.delete(entry.key);
         });
+
         return node;
       },
+
       update: (node, entry) => {
         options.update?.(node, entry.item, entry.index);
         node.setProperties({
@@ -73,29 +79,39 @@ export const bindVirtualRows = <Item, Node extends GuiObject>(
       },
     },
   );
+
   content.onDestroy(() => {
     visible = [];
     views.clear();
   });
+
   return (next): void => {
     const previous = visible;
+
     if (next.length !== previous.length || next.some((entry, index) => entry !== previous[index])) {
       visible = next;
+
       try {
         visibleChanged.emit(next);
       } catch (error) {
         visible = previous;
+
         throw error;
       }
     }
+
     const selection = options.selection.get();
+
     for (const [key, view] of views) {
       if (measured) {
         view.Position = udim2(0, 0, 0, offsetAt(model.indexOf(key)!));
       }
+
       view.unsafeElement.setAttribute('aria-selected', String(key === selection));
     }
+
     const active = selection === undefined ? undefined : views.get(selection);
+
     if (active) {
       element.setAttribute('aria-activedescendant', active.unsafeElement.id);
     } else {

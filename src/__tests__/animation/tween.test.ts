@@ -12,6 +12,7 @@ import { setupAnimationClock } from '../support/animation-clock.js';
 import { destroyNodesAfterEach } from '../support/node-cleanup.js';
 
 const { advance } = setupAnimationClock();
+
 const trackNode = destroyNodesAfterEach();
 
 describe('tweens', () => {
@@ -27,11 +28,13 @@ describe('tweens', () => {
       tween.play();
       frame.setProperties({});
       expect(tween.playbackState()).toBe('Playing');
+
       if (mode === 'setter') {
         frame.Rotation = 0;
       } else {
         frame.setProperties({ Rotation: 0 });
       }
+
       expect(tween.playbackState()).toBe('Cancelled');
       expect(completed).toHaveBeenCalledExactlyOnceWith('Cancelled');
       expect(changed).not.toHaveBeenCalled();
@@ -57,6 +60,7 @@ describe('tweens', () => {
     const first = trackNode(createFrame({ Rotation: 0 }));
     const second = trackNode(createFrame({ Rotation: 0 }));
     const firstTween = createTween(first, { Duration: 1, EasingStyle: 'Linear' }, { Rotation: 90 });
+
     const secondTween = createTween(
       second,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -105,6 +109,7 @@ describe('tweens', () => {
 
   it('repeats indefinitely until explicitly cancelled', () => {
     const frame = trackNode(createFrame({ Rotation: 0 }));
+
     const tween = createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear', RepeatCount: -1, Reverses: true },
@@ -131,6 +136,7 @@ describe('tweens', () => {
         BackgroundColor3: color3FromRGB(0, 50, 100),
       }),
     );
+
     const tween = createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -159,6 +165,7 @@ describe('tweens', () => {
 
   it('constrains easing overshoot to a property domain', () => {
     const frame = trackNode(createFrame({ BackgroundTransparency: 0 }));
+
     const tween = createTween(
       frame,
       { Duration: 1, EasingStyle: 'Back', EasingDirection: 'Out' },
@@ -178,11 +185,13 @@ describe('tweens', () => {
     'applies the %s easing direction to playback progress',
     (EasingDirection, expected) => {
       const frame = trackNode(createFrame({ Rotation: 0 }));
+
       const tween = createTween(
         frame,
         { Duration: 1, EasingStyle: 'Quad', EasingDirection },
         { Rotation: 90 },
       );
+
       tween.play();
       advance(250);
       expect(frame.Rotation).toBe(expected);
@@ -194,6 +203,7 @@ describe('tweens', () => {
 
   it('supports delay, pause, resume, and cancellation', () => {
     const frame = trackNode(createFrame({ BackgroundTransparency: 0 }));
+
     const tween = createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear', EasingDirection: 'In', Delay: 0.25 },
@@ -201,6 +211,7 @@ describe('tweens', () => {
         BackgroundTransparency: 1,
       },
     );
+
     const completed = vi.fn();
 
     tween.completed.subscribe(completed);
@@ -239,6 +250,7 @@ describe('tweens', () => {
 
   it('returns to the start when reversing and completes repeats', () => {
     const frame = trackNode(createFrame({ BackgroundTransparency: 0 }));
+
     const tween = createTween(
       frame,
       {
@@ -276,6 +288,7 @@ describe('tweens', () => {
     const frame = trackNode(createFrame());
     const first = createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const second = createTween(frame, { Duration: 1 }, { BackgroundTransparency: 0.5 });
+
     const position = createTween(
       frame,
       { Duration: 1 },
@@ -295,6 +308,7 @@ describe('tweens', () => {
 
   it('keeps ownership consistent when cancellation listeners start another tween', () => {
     const frame = trackNode(createFrame({ BackgroundTransparency: 0 }));
+
     const first = createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -302,6 +316,7 @@ describe('tweens', () => {
         BackgroundTransparency: 1,
       },
     );
+
     const reentrant = createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -309,6 +324,7 @@ describe('tweens', () => {
         BackgroundTransparency: 0.75,
       },
     );
+
     const latest = createTween(
       frame,
       { Duration: 1, EasingStyle: 'Linear' },
@@ -366,6 +382,7 @@ describe('tweens', () => {
     const frame = trackNode(createFrame());
     const tween = createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
     const reportError = vi.fn();
+
     const listener = vi.fn(() => {
       throw new Error('listener failed');
     });
@@ -394,6 +411,7 @@ describe('tweens', () => {
     tween.completed.subscribe(() => {
       throw new Error('cancel listener failed');
     });
+
     frame.onPropertyChanged('Rotation', () => {
       throw new Error('property listener failed');
     });
@@ -410,11 +428,13 @@ describe('tweens', () => {
   it('does not let completion observers block an ownership handoff', () => {
     const frame = trackNode(createFrame({ Rotation: 0, BackgroundTransparency: 0 }));
     const existing = createTween(frame, { Duration: 1 }, { BackgroundTransparency: 1 });
+
     const interrupted = createTween(
       frame,
       { Duration: 1 },
       { Rotation: 90, BackgroundTransparency: 0.5 },
     );
+
     const reportError = vi.fn();
 
     vi.stubGlobal('reportError', reportError);
@@ -441,6 +461,7 @@ describe('tweens', () => {
     rotation.completed.subscribe(() => {
       throw new Error('rotation cancellation failed');
     });
+
     transparency.completed.subscribe(() => {
       throw new Error('transparency cancellation failed');
     });
@@ -465,6 +486,7 @@ describe('tweens', () => {
     expect(() => createTween(frame, { Duration: 1 }, { Missing: 1 } as never)).toThrow(
       /Unknown tween property "Missing"/,
     );
+
     expect(() =>
       createTween(frame, { Duration: 1 }, { BackgroundTransparency: Number.NaN }),
     ).toThrow(

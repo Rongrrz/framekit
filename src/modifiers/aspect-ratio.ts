@@ -30,6 +30,7 @@ export type UIAspectRatioConstraintProperties = InstanceProperties & {
 export type UIAspectRatioConstraint = StyleModifier<UIAspectRatioConstraintProperties>;
 
 const aspectTypes: readonly AspectType[] = ['FitWithinMaxSize', 'ScaleWithParentSize'];
+
 const dominantAxes: readonly DominantAxis[] = ['Width', 'Height'];
 
 /** Creates a constraint that maintains its GUI parent's width-to-height ratio. */
@@ -71,9 +72,11 @@ function resolveAspectRatio(
   if (!target.capabilities.guiObject) {
     return styles;
   }
+
   const targetProperties = target.properties as Readonly<GuiObjectProperties>;
   const width = udimToCss(targetProperties.Size.X);
   const height = udimToCss(targetProperties.Size.Y);
+
   return {
     ...styles,
     'max-width': width,

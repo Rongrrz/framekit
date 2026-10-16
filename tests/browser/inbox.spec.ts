@@ -14,34 +14,43 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
 }, info) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
+
   let releaseImages = (): void => {};
+
   const imagesReady = new Promise<void>((resolve) => {
     releaseImages = resolve;
   });
+
   await page.route('**/attachment.svg*', async (route) => {
     if (route.request().resourceType() !== 'image') {
       await route.continue();
+
       return;
     }
+
     await imagesReady;
     await route.continue();
   });
   await page.setViewportSize({ width: 850, height: 900 });
   await page.goto('/playground/inbox.html');
+
   const list = page.getByRole('listbox', { name: 'Inbox messages' });
   await expect(list.getByRole('option').first()).toBeVisible();
   await settle(page);
+
   const anchor = list.locator('[data-message-id="2"]');
   await list.evaluate((element) => {
     const row = element.querySelector<HTMLElement>('[data-message-id="2"]')!;
     element.scrollTop = parseFloat(row.style.top) + 7;
   });
+
   const offset = () =>
     anchor.evaluate(
       (element) =>
         element.getBoundingClientRect().top -
         element.closest('[role="listbox"]')!.getBoundingClientRect().top,
     );
+
   await expect.poll(async () => Math.abs((await offset()) + 7)).toBeLessThan(1);
   await page.getByRole('button', { name: 'Load attachments' }).click();
   await expect(list.locator('[data-loaded="true"]')).toHaveCount(0);
@@ -49,6 +58,7 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
   await expect(anchor.locator('[data-loaded="true"]')).toHaveCount(1);
   await settle(page);
   await expect.poll(async () => Math.abs((await offset()) + 7)).toBeLessThan(1);
+
   const beforeFont = await anchor.boundingBox();
   await page.getByRole('button', { name: 'Load reading font' }).click();
   await expect(page.getByRole('status')).toContainText('reading font ready');
@@ -56,11 +66,13 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
   await expect.poll(async () => Math.abs((await offset()) + 7)).toBeLessThan(1);
   expect((await anchor.boundingBox())!.height).not.toBe(beforeFont!.height);
   await anchor.click();
+
   const beforeExpand = await anchor.boundingBox();
   await page.getByRole('button', { name: 'Expand selected' }).click();
   await expect
     .poll(async () => (await anchor.boundingBox())!.height)
     .toBeGreaterThan(beforeExpand!.height);
+
   const filter = page.getByRole('searchbox', { name: 'Filter inbox' });
   await filter.fill('Design review');
   await expect(page.getByRole('status')).toContainText('1000 messages');
@@ -72,6 +84,7 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
   await expect(page.getByRole('status')).toContainText('2000 messages');
   await list.focus();
   await page.keyboard.press('End');
+
   const last = list.locator('[data-message-id="1999"]');
   await expect(last).toHaveAttribute('aria-selected', 'true');
   await expect(last).toBeInViewport();
@@ -82,6 +95,7 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
     .poll(() =>
       list.evaluate((element) => {
         const rows = [...element.querySelectorAll<HTMLElement>('[role="option"]')];
+
         return rows.every(
           (row, index) =>
             index === 0 ||
@@ -114,15 +128,20 @@ test('releases rows and pending image and font work when the screen is destroyed
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
+
   let release = (): void => {};
+
   const imagesReady = new Promise<void>((resolve) => {
     release = resolve;
   });
+
   await page.route('**/attachment.svg*', async (route) => {
     if (route.request().resourceType() !== 'image') {
       await route.continue();
+
       return;
     }
+
     await imagesReady;
     await route.continue();
   });
@@ -144,6 +163,7 @@ test('brings a cached row back into view after its offscreen attachments change 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 850, height: 650 });
   await page.goto('/playground/inbox.html');
+
   const list = page.getByRole('listbox', { name: 'Inbox messages' });
   const last = list.locator('[data-message-id="1999"]');
   await page.getByRole('button', { name: 'Last message' }).click();

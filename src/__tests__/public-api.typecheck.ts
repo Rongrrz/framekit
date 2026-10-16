@@ -55,6 +55,7 @@ function verifyPublicTypeContracts(): void {
   createFrame({ TagName: 'button' });
   // @ts-expect-error A creation-only tag cannot be changed on a live node.
   article.setProperties({ TagName: 'section' });
+
   const inputService = createUserInputService(article);
   inputService.inputBegan.subscribe((event, processed) => {
     const handled: boolean = processed;
@@ -62,6 +63,7 @@ function verifyPublicTypeContracts(): void {
     event.key.toUpperCase();
   });
   inputService.inputEnded.subscribe((event) => event.code.toUpperCase());
+
   const keyDown: boolean = inputService.isKeyDown('KeyW');
   void keyDown;
   // @ts-expect-error Consumers cannot emit input events.
@@ -69,6 +71,7 @@ function verifyPublicTypeContracts(): void {
   // @ts-expect-error A non-DOM modifier cannot own a document input service.
   createUserInputService(createUIScale());
   inputService.dispose();
+
   const frame = createFrame();
   frame.on('keydown', (event) => event.key.toUpperCase());
   frame.on('pointerdown', (event) => frame.setPointerCapture(event.pointerId));
@@ -77,17 +80,21 @@ function verifyPublicTypeContracts(): void {
   // @ts-expect-error Native event names are checked.
   frame.on('madeup', () => undefined);
   frame.reorderChildren(frame.getChildren());
+
   const items = createObservableValue<readonly { id: number; name: string }[]>([]);
   bindKeyedChildren(frame, items, {
     key: (item) => item.id,
     create: () => createTextLabel(),
+
     update: (node, item) => {
       node.Text = item.name;
     },
   });
+
   watchOwnedValue(frame, createObservableValue(1), (value) => {
     frame.Rotation = value;
   });
+
   const viewport = createScrollingFrame();
   bindVirtualList(viewport, items, {
     itemHeight: 32,
@@ -95,12 +102,14 @@ function verifyPublicTypeContracts(): void {
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
+
   bindVirtualList(viewport, items, {
     itemHeight: { estimate: 48 },
     key: (item) => item.id,
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel({ AutomaticSize: 'Y', TextWrapped: true }),
   });
+
   bindVirtualList(viewport, items, {
     // @ts-expect-error Measured rows require a numeric estimate.
     itemHeight: { estimate: 'auto' },
@@ -108,13 +117,17 @@ function verifyPublicTypeContracts(): void {
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
+
   const debug = bindRuntimeInspector(frame, {
     button: false,
     shortcut: { key: 'D', ctrlKey: true, shiftKey: true },
   });
+
   debug.dispose();
+
   const inspector = createRuntimeInspector(frame);
   inspector.gui.destroy();
+
   const snapshot = inspectInstance(frame);
   const tree: string = toTreeString(frame);
   void tree;
@@ -129,52 +142,69 @@ function verifyPublicTypeContracts(): void {
     frame,
     frame,
   ];
+
   void frameViews;
+
   const button = createTextButton();
   const scale = createUIScale();
   const grid = createUIGridLayout({ FillDirectionMaxCells: 3 });
   grid.Parent = frame;
+
   const observableValue: ObservableValue<number> = createObservableValue(1);
   observableValue.set(2);
+
   const computedValue: ComputedValue<string> = createComputedValue([observableValue], () =>
     String(observableValue.get()),
   );
+
   computedValue.onChange((value) => value.toUpperCase());
   // @ts-expect-error Computed values are readonly.
   computedValue.set('3');
+
   const signalEmitter: SignalEmitter<[number]> = createSignalEmitter<[number]>();
   signalEmitter.emit(observableValue.get());
   installFrameKitStyles();
   scale.Parent = button;
+
   const dispose: Unsubscribe = bindHoverScale(button, scale);
   void dispose;
+
   const tooltipOptions: TooltipOptions = {
     followCursor: true,
     style: { TextColor3: color3FromRGB(255, 255, 255) },
   };
+
   const disposeTooltip: Unsubscribe = bindTooltip(button, 'Save', tooltipOptions);
   void disposeTooltip;
   bindTooltip(frame, createTextLabel(), { placement: 'right' });
+
   const animatePanel: FloatingPanelHook = ({ content, signal }) => {
     content.BackgroundTransparency = 0;
     signal.addEventListener('abort', () => undefined);
+
     return Promise.resolve();
   };
+
   bindTooltip(button, 'Save', { onShow: animatePanel, onHide: animatePanel });
+
   const disposePopover: Unsubscribe = bindPopover(button, frame, {
     openOn: 'hover',
     placement: 'bottom',
     onShow: animatePanel,
     onHide: animatePanel,
   });
+
   void disposePopover;
+
   const applyContainerLayout = ({ width, height }: ResponsiveLayoutContext): void => {
     frame.Size = udim2FromOffset(width, height);
   };
+
   const disposeResponsiveLayout: Unsubscribe = bindResponsiveLayout(frame, {
     observe: frame,
     breakpoints: [{ maxWidth: 479, apply: applyContainerLayout }, { apply: applyContainerLayout }],
   });
+
   void disposeResponsiveLayout;
   // @ts-expect-error Container breakpoint widths are numeric.
   bindResponsiveLayout(frame, { observe: frame, breakpoints: [{ maxWidth: 'small', apply() {} }] });
@@ -221,6 +251,7 @@ function verifyPublicTypeContracts(): void {
   const child = frame.findFirstChild('Action');
   // @ts-expect-error Heterogeneous traversal requires narrowing before concrete property access.
   void child?.Text;
+
   if (child?.isA('TextButton')) {
     child.Text = 'Run';
     child.onClick((event: MouseEvent) => event.preventDefault());

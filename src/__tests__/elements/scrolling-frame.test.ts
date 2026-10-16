@@ -59,6 +59,7 @@ describe('scrolling frames', () => {
       bubbles: true,
       cancelable: true,
     });
+
     code.unsafeElement.dispatchEvent(pageDown);
 
     expect(pageDown.defaultPrevented).toBe(true);
@@ -70,6 +71,7 @@ describe('scrolling frames', () => {
       bubbles: true,
       cancelable: true,
     });
+
     code.unsafeElement.dispatchEvent(arrowRight);
 
     expect(arrowRight.defaultPrevented).toBe(false);
@@ -77,11 +79,13 @@ describe('scrolling frames', () => {
 
     const input = document.createElement('input');
     code.unsafeElement.append(input);
+
     const inputPageDown = new KeyboardEvent('keydown', {
       key: 'PageDown',
       bubbles: true,
       cancelable: true,
     });
+
     input.dispatchEvent(inputPageDown);
 
     expect(inputPageDown.defaultPrevented).toBe(false);
@@ -96,6 +100,7 @@ describe('scrolling frames', () => {
       ScrollBarImageTransparency: 0.25,
       ScrollBarThickness: 6,
     });
+
     const canvasBounds = scrolling.unsafeElement.querySelector<HTMLElement>(
       '[data-framekit-canvas-bounds]',
     );
@@ -105,6 +110,7 @@ describe('scrolling frames', () => {
     expect(scrolling.unsafeElement.style.getPropertyValue('--framekit-scrollbar-thickness')).toBe(
       '6px',
     );
+
     expect(scrolling.unsafeElement.style.getPropertyValue('--framekit-scrollbar-color')).toBe(
       'rgb(18 153 98 / 0.75)',
     );
@@ -154,6 +160,7 @@ describe('scrolling frames', () => {
       if (typeof left !== 'number' || top === undefined) {
         return;
       }
+
       scrolling.unsafeElement.scrollLeft = left;
       scrolling.unsafeElement.scrollTop = top;
     });
@@ -199,6 +206,7 @@ describe('scrolling frames', () => {
     expect(springTarget.CanvasPosition).toEqual(vector2(0, 40));
 
     const tweenTarget = createScrollingFrame();
+
     const tween = createTween(
       tweenTarget,
       { Duration: 1 },
@@ -247,6 +255,7 @@ describe('scrolling frames', () => {
     vi.stubGlobal('performance', { now: () => 0 });
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
       frame = callback;
+
       return 1;
     });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
@@ -257,6 +266,7 @@ describe('scrolling frames', () => {
       if (typeof left !== 'number' || top === undefined) {
         return;
       }
+
       scrolling.unsafeElement.scrollLeft = Math.round(left);
       scrolling.unsafeElement.scrollTop = Math.round(top);
     });

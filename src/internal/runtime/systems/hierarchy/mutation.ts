@@ -23,6 +23,7 @@ export const setParent = (node: Instance, newParent: Instance | undefined): void
 /** Removes a node from the authoritative hierarchy state and returns its previous parent. */
 export const unlinkNodeFromParent = (node: Instance, state: NodeState): Instance | undefined => {
   const previousParent = state.parent;
+
   if (!previousParent) {
     return undefined;
   }
@@ -30,31 +31,40 @@ export const unlinkNodeFromParent = (node: Instance, state: NodeState): Instance
   const parentState = getNodeState(previousParent);
   const siblings = getChildren(parentState);
   const index = siblings.indexOf(node);
+
   if (index >= 0) {
     siblings.splice(index, 1);
   }
+
   if (isModifierState(state) && parentState.kind === 'gui') {
     parentState.modifiers.delete(state.className);
   }
+
   state.parent = undefined;
+
   return previousParent;
 };
 
 const append = (parent: Instance, child: Instance): void => {
   const parentState = getActiveNodeState(parent);
   const childState = getActiveNodeState(child);
+
   if (parent === child || isAncestor(child, parent)) {
     throw new Error('A node cannot be appended to itself or one of its descendants.');
   }
+
   if (!childState.canHaveParent) {
     throw new TypeError(`${childState.properties.Name} must remain a hierarchy root.`);
   }
+
   if (isModifierState(parentState)) {
     throw new TypeError('UI modifiers cannot contain child nodes.');
   }
+
   if (parentState.kind === 'gui' && isGuiNode(child) && !parentState.canContainGuiChildren) {
     throw new TypeError(`${parentState.properties.Name} cannot contain GUI children.`);
   }
+
   if (
     isGuiNode(parent) &&
     isGuiNode(child) &&
@@ -62,13 +72,17 @@ const append = (parent: Instance, child: Instance): void => {
   ) {
     throw new TypeError('GUI parent and child must belong to the same document.');
   }
+
   if (childState.kind === 'style') {
     childState.validateTarget?.(childState.properties, getModifierTarget(parentState));
   }
+
   if (childState.parent === parent) {
     placeChildElement(parent, parentState, child, getChildren(parentState).indexOf(child));
+
     return;
   }
+
   if (isModifierState(childState) && parentState.modifiers.has(childState.className)) {
     throw new Error(
       `${parentState.properties.Name} already has a ${childState.className} modifier.`,
@@ -76,21 +90,27 @@ const append = (parent: Instance, child: Instance): void => {
   }
 
   const previousParent = childState.parent;
+
   const previousIndex = previousParent
     ? getChildren(getNodeState(previousParent)).indexOf(child)
     : -1;
+
   try {
     unlinkNodeFromParent(child, childState);
+
     const insertionIndex = linkNodeToParent(parent, parentState, child, childState);
     placeChildElement(parent, parentState, child, insertionIndex);
+
     if (previousParent) {
       rendering.renderRemovedChild(previousParent, child);
     }
+
     rendering.renderInsertedChild(parent, child);
   } catch (error) {
     if (childState.parent === parent) {
       unlinkNodeFromParent(child, childState);
     }
+
     if (
       isGuiNode(child) &&
       isGuiNode(parent) &&
@@ -98,8 +118,10 @@ const append = (parent: Instance, child: Instance): void => {
     ) {
       child.unsafeElement.remove();
     }
+
     if (previousParent && childState.parent !== previousParent) {
       const previousParentState = getNodeState(previousParent);
+
       const restoredIndex = linkNodeToParent(
         previousParent,
         previousParentState,
@@ -107,8 +129,10 @@ const append = (parent: Instance, child: Instance): void => {
         childState,
         previousIndex,
       );
+
       placeChildElement(previousParent, previousParentState, child, restoredIndex);
     }
+
     restoreRendering(
       parent,
       previousParent,
@@ -120,21 +144,27 @@ const append = (parent: Instance, child: Instance): void => {
 
 const detach = (node: Instance): void => {
   const state = getActiveNodeState(node);
+
   if (!state.canHaveParent) {
     return;
   }
+
   const previousParent = state.parent;
+
   if (!previousParent) {
     return;
   }
+
   const previousParentState = getNodeState(previousParent);
   const previousIndex = getChildren(previousParentState).indexOf(node);
 
   try {
     unlinkNodeFromParent(node, state);
+
     if (isGuiNode(node)) {
       node.unsafeElement.remove();
     }
+
     rendering.renderRemovedChild(previousParent, node);
   } catch (error) {
     if (state.parent !== previousParent) {
@@ -145,8 +175,10 @@ const detach = (node: Instance): void => {
         state,
         previousIndex,
       );
+
       placeChildElement(previousParent, previousParentState, node, restoredIndex);
     }
+
     restoreRendering(
       previousParent,
       undefined,
@@ -164,12 +196,14 @@ const restoreRendering = (
 ): never => {
   try {
     rendering.renderDerivedStyles(parent);
+
     if (previousParent) {
       rendering.renderDerivedStyles(previousParent);
     }
   } catch (rollbackError) {
     throw new AggregateError([originalError, rollbackError], rollbackMessage);
   }
+
   throw originalError;
 };
 
@@ -179,6 +213,7 @@ const isAncestor = (candidate: Instance, node: Instance): boolean => {
       return true;
     }
   }
+
   return false;
 };
 
@@ -190,28 +225,35 @@ const linkNodeToParent = (
   index = getChildren(parentState).length,
 ): number => {
   childState.parent = parent;
+
   const siblings = getChildren(parentState);
   const insertionIndex = Math.max(0, Math.min(index, siblings.length));
+
   if (insertionIndex === siblings.length) {
     siblings.push(child);
   } else {
     siblings.splice(insertionIndex, 0, child);
   }
+
   if (isModifierState(childState) && parentState.kind === 'gui') {
     parentState.modifiers.set(childState.className, child as Modifier);
   }
+
   return insertionIndex;
 };
 
 /** Reorders the exact set of direct children in one hierarchy and layout transaction. */
 export const reorderChildren = (parent: Instance, orderedChildren: readonly Instance[]): void => {
   const state = getActiveNodeState(parent);
+
   if (state.kind !== 'gui') {
     throw new TypeError('Only GUI nodes can contain children.');
   }
+
   const previous = state.children;
   const next = [...orderedChildren];
   const existing = new Set(previous);
+
   if (
     next.length !== previous.length ||
     new Set(next).size !== next.length ||
@@ -219,10 +261,13 @@ export const reorderChildren = (parent: Instance, orderedChildren: readonly Inst
   ) {
     throw new TypeError('Expected every direct child exactly once.');
   }
+
   if (next.every((child, index) => child === previous[index])) {
     return;
   }
+
   state.children = next;
+
   try {
     rendering.renderDerivedStyles(parent);
   } catch (error) {

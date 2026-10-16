@@ -23,6 +23,7 @@ export const bindMenu = (
   items: readonly GuiElement[],
 ): MenuController => {
   const element = menu.unsafeElement;
+
   if (
     trigger.isDestroyed() ||
     menu.isDestroyed() ||
@@ -35,17 +36,24 @@ export const bindMenu = (
   ) {
     throw new TypeError('Menu items must be descendants of the menu.');
   }
+
   installFrameKitStyles({ ownerDocument: element.ownerDocument });
+
   const typeahead = createTypeahead();
+
   const savedTrigger = ['aria-haspopup', 'aria-expanded', 'aria-controls'].map((name) =>
     trigger.unsafeElement.getAttribute(name),
   );
+
   const savedMenu = ['role', 'popover'].map((name) => element.getAttribute(name));
+
   const savedItems = items.map((item) =>
     ['role', 'tabindex'].map((name) => item.unsafeElement.getAttribute(name)),
   );
+
   const originalPosition = menu.Position;
   const originalId = element.getAttribute('id');
+
   if (!element.id) {
     do {
       nextMenuId += 1;
@@ -55,6 +63,7 @@ export const bindMenu = (
       element.ownerDocument.getElementById(element.id) !== element
     );
   }
+
   trigger.unsafeElement.setAttribute('aria-controls', element.id);
   element.setAttribute('role', 'menu');
   element.popover = 'auto';
@@ -64,7 +73,9 @@ export const bindMenu = (
     item.unsafeElement.setAttribute('role', 'menuitem');
     item.unsafeElement.tabIndex = -1;
   });
+
   let disposed = false;
+
   const enabled = (): readonly GuiElement[] =>
     items.filter(
       (item) =>
@@ -72,39 +83,50 @@ export const bindMenu = (
         !item.unsafeElement.matches(':disabled, [aria-disabled="true"]') &&
         item.unsafeElement.getClientRects().length > 0,
     );
+
   const isOpen = (): boolean => element.matches(':popover-open');
+
   const close = (restore = true): void => {
     if (isOpen()) {
       element.hidePopover();
     }
+
     trigger.unsafeElement.setAttribute('aria-expanded', 'false');
+
     if (restore && !trigger.isDestroyed() && trigger.unsafeElement.isConnected) {
       trigger.focus();
     }
   };
+
   const open = (position?: Vector2): void => {
     if (disposed || menu.isDestroyed() || trigger.isDestroyed()) {
       throw new Error('Menu binding has been disposed.');
     }
+
     const bounds = trigger.unsafeElement.getBoundingClientRect();
     const x = position?.X ?? bounds.left;
     const y = position?.Y ?? bounds.bottom;
     menu.Position = udim2FromOffset(x, y);
+
     if (!isOpen()) {
       element.showPopover();
     }
+
     const window = element.ownerDocument.defaultView!;
     const menuBounds = element.getBoundingClientRect();
     const left = Math.max(0, Math.min(x, window.innerWidth - menuBounds.width));
+
     const top =
       !position && y + menuBounds.height > window.innerHeight
         ? Math.max(0, bounds.top - menuBounds.height)
         : Math.max(0, Math.min(y, window.innerHeight - menuBounds.height));
+
     // Correct against measured viewport geometry, including a scrolled document.
     menu.Position = udim2FromOffset(x + left - menuBounds.left, y + top - menuBounds.top);
     trigger.unsafeElement.setAttribute('aria-expanded', 'true');
     enabled()[0]?.focus();
   };
+
   const stops = [
     trigger.on('click', () => {
       if (isOpen()) {
@@ -117,6 +139,7 @@ export const bindMenu = (
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
         open();
+
         if (event.key === 'ArrowUp') {
           enabled().at(-1)?.focus();
         }
@@ -127,6 +150,7 @@ export const bindMenu = (
       'click',
       (event) => {
         const item = items.find((item) => item.unsafeElement.contains(event.target as Node));
+
         if (item?.unsafeElement.matches(':disabled, [aria-disabled="true"]')) {
           event.preventDefault();
           event.stopPropagation();
@@ -150,26 +174,36 @@ export const bindMenu = (
       ) {
         return;
       }
+
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
         close();
+
         return;
       }
+
       if (event.key === 'Tab') {
         close();
+
         return;
       }
+
       const controls = enabled();
+
       const index = controls.findIndex(
         (item) => item.unsafeElement === element.ownerDocument.activeElement,
       );
+
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         controls[index]?.unsafeElement.click();
+
         return;
       }
+
       let next: number | undefined;
+
       if (event.key === 'ArrowDown') {
         next = (index + 1) % controls.length;
       } else if (event.key === 'ArrowUp') {
@@ -185,12 +219,14 @@ export const bindMenu = (
           event,
         );
       }
+
       if (next !== undefined) {
         event.preventDefault();
         controls[next]?.focus();
       }
     }),
   ];
+
   const restore = (
     target: HTMLElement,
     names: readonly string[],
@@ -198,6 +234,7 @@ export const bindMenu = (
   ): void => {
     names.forEach((name, index) => {
       const value = values[index];
+
       if (value === null || value === undefined) {
         target.removeAttribute(name);
       } else {
@@ -205,10 +242,12 @@ export const bindMenu = (
       }
     });
   };
+
   const dispose = (): void => {
     if (disposed) {
       return;
     }
+
     disposed = true;
     unregisterTrigger();
     unregisterMenu();
@@ -220,19 +259,24 @@ export const bindMenu = (
       savedTrigger,
     );
     restore(element, ['role', 'popover'], savedMenu);
+
     if (originalId === null) {
       element.removeAttribute('id');
     } else {
       element.id = originalId;
     }
+
     items.forEach((item, index) =>
       restore(item.unsafeElement, ['role', 'tabindex'], savedItems[index]!),
     );
+
     if (!menu.isDestroyed()) {
       menu.Position = originalPosition;
     }
   };
+
   const unregisterTrigger = trigger.onDestroy(dispose);
   const unregisterMenu = menu.onDestroy(dispose);
+
   return Object.freeze({ open, close: () => close(), dispose });
 };

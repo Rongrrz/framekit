@@ -31,11 +31,13 @@ export const createPlaygroundApp = (
 ): ScreenGui => {
   const initialLayout =
     forcedLayout ?? (window.innerWidth < mobileBreakpoint ? 'mobile' : 'desktop');
+
   const layout = createObservableValue<PlaygroundLayout>(initialLayout);
   const theme = createObservableValue<ThemeMode>(initialTheme);
   const palette = createObservableValue(themes[initialTheme]);
   const route = createObservableValue(resolveInitialPage());
   const { app, page, content, scrollTo } = createPageShell(palette, route);
+
   const navigate = (destination: Parameters<typeof navigateToPage>[1]): void =>
     navigateToPage(route, destination);
 
@@ -45,9 +47,11 @@ export const createPlaygroundApp = (
   createHomePage(palette, route, navigate).Parent = content;
   createGuidePage(palette, route, scrollTo).Parent = content;
   createApiPage(palette, route).Parent = content;
+
   for (const chapter of Object.keys(referenceChapters) as (keyof typeof referenceChapters)[]) {
     createReferencePage(chapter, palette, route, scrollTo).Parent = content;
   }
+
   createOverlaysPage(layout, palette, route, scrollTo).Parent = content;
   createControlsPage(palette, route, scrollTo).Parent = content;
   createNavigation(page, route, navigate, layout, theme, palette).Parent = app;
@@ -57,6 +61,7 @@ export const createPlaygroundApp = (
     const label = documentationPages.find((entry) => entry.page === page)?.label;
     document.title = label ? `${label} · FrameKit` : 'FrameKit · Typed UI objects for the web';
   });
+
   app.onDestroy(() => {
     document.title = previousTitle;
   });
@@ -68,5 +73,6 @@ export const createPlaygroundApp = (
       desktop: () => layout.set('desktop'),
     });
   }
+
   return app;
 };

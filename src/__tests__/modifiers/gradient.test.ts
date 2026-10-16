@@ -21,11 +21,14 @@ describe('gradients', () => {
     'keeps text gradients active through text and paint edits (%#)',
     (createText) => {
       const label = createText({ Text: 'Before', TextColor3: color3FromRGB(255, 255, 255) });
+
       const gradient = createUIGradient({
         ApplyTo: 'Text',
         Color: colorSequence(color3FromRGB(255, 0, 0), color3FromRGB(0, 0, 255)),
       });
+
       gradient.Parent = label;
+
       const host = label.unsafeElement;
       const initialImage = host.style.getPropertyValue('--framekit-text-gradient-image');
 
@@ -47,6 +50,7 @@ describe('gradients', () => {
 
   it('applies color and transparency sequences through UIGradient', () => {
     const frame = createFrame({ BackgroundColor3: color3FromRGB(255, 255, 255) });
+
     const gradient = createUIGradient({
       Color: colorSequence(color3FromRGB(255, 0, 0), color3FromRGB(0, 0, 255)),
       Transparency: numberSequence(0, 0.5),
@@ -72,6 +76,7 @@ describe('gradients', () => {
       Text: 'FrameKit',
       TextColor3: color3FromRGB(255, 255, 255),
     });
+
     const gradient = createUIGradient({
       ApplyTo: 'Text',
       Color: colorSequence(color3FromRGB(255, 0, 0), color3FromRGB(0, 0, 255)),
@@ -84,9 +89,11 @@ describe('gradients', () => {
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-image')).toContain(
       'linear-gradient(90deg',
     );
+
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
       'transparent',
     );
+
     const renderedText = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]');
     expect(renderedText?.style.backgroundClip).toBe('text');
 
@@ -95,6 +102,7 @@ describe('gradients', () => {
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-image')).toBe(
       'none',
     );
+
     expect(label.unsafeElement.style.getPropertyValue('--framekit-text-gradient-fill')).toBe(
       'currentcolor',
     );
@@ -116,6 +124,7 @@ describe('gradients', () => {
       defaultProperties: { ...createDefaultGuiObjectProperties(), Text: 'not a text renderer' },
       initialProperties: {},
     });
+
     const gradient = createUIGradient({ ApplyTo: 'Text' });
 
     expect(() => (gradient.Parent = textLikeNode)).toThrow(/TextLabel or TextButton/);

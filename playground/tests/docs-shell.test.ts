@@ -17,15 +17,18 @@ afterEach(() => {
 describe('documentation spacing', () => {
   it('uses natural paragraph height and fixed heading typography', () => {
     const parent = createFrame();
+
     const heading = appendArticleSection(
       parent,
       createObservableValue(themes.dark),
       'Heading',
       'Body',
     );
+
     const labels = parent.getChildren().filter((child) => child.isA('TextLabel'));
     expect(heading.TextScaled).toBe(false);
     expect(heading.TextSize).toBe(28);
+
     for (const label of labels) {
       expect(label.AutomaticSize).toBe('Y');
       expect(label.TextWrapped).toBe(true);
@@ -33,12 +36,14 @@ describe('documentation spacing', () => {
         label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')?.style.position,
       ).toBe('static');
     }
+
     parent.destroy();
   });
 
   it('keeps example rows in the article flow when the responsive direction changes', () => {
     const parent = createFrame();
     createUIListLayout().Parent = parent;
+
     const layout = createObservableValue<PlaygroundLayout>('desktop');
     const row = createExampleRow(parent, layout);
     createTextButton().Parent = row;
@@ -57,6 +62,7 @@ describe('documentation spacing', () => {
       createObservableValue(themes.dark),
       createObservableValue('guide'),
     );
+
     expect(shell.article.unsafeElement.tagName).toBe('ARTICLE');
     expect(shell.page.AutomaticSize).toBe('Y');
     expect(shell.article.AutomaticSize).toBe('Y');

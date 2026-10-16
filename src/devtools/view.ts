@@ -31,6 +31,7 @@ export const installInspectorStyles = (owner: GuiElement): void => {
   const style = document.createElement('style');
   style.nonce =
     document.querySelector<HTMLStyleElement>('style[data-framekit-styles]')?.nonce ?? '';
+
   style.textContent = `
     [data-fk-debug] { color-scheme: light; }
     [data-fk-debug] button { cursor: pointer; border: 0; }
@@ -59,9 +60,11 @@ export const createInspectorLauncher = (
     { Name: 'FrameKitDevtoolsLauncher', DisplayOrder: 9999 },
     { ownerDocument: document },
   );
+
   gui.unsafeElement.dataset.fkDebug = '';
   gui.unsafeElement.style.pointerEvents = 'none';
   installInspectorStyles(gui);
+
   const button = createDebugUI(document).button(
     gui,
     shortcut?.match(/^F\d+$/) ? `⌘ Debug tools · ${shortcut}` : '⌘ Debug tools',
@@ -76,11 +79,14 @@ export const createInspectorLauncher = (
       FontWeight: 700,
     },
   );
+
   button.unsafeElement.style.pointerEvents = 'auto';
   button.unsafeElement.title = `Open FrameKit runtime inspector${shortcut ? ` · ${shortcut}` : ''}`;
+
   if (shortcut) {
     button.unsafeElement.setAttribute('aria-keyshortcuts', shortcut);
   }
+
   button.unsafeElement.style.border = '1px solid #ffffff55';
   button.unsafeElement.style.boxShadow = '0 4px 20px #17223330';
   button.onClick(() => {
@@ -88,20 +94,24 @@ export const createInspectorLauncher = (
     button.focus();
     open();
   });
+
   return gui;
 };
 
 /** Native creation options keep secondary documents isolated from the global document. */
 export const createDebugUI = (ownerDocument: Document) => {
   const options = { ownerDocument };
+
   const frame = (
     parent: GuiElement | undefined,
     properties: Partial<FrameProperties> = {},
   ): Frame => {
     const node = createFrame({ BackgroundTransparency: 1, ...properties }, options);
     node.Parent = parent;
+
     return node;
   };
+
   const label = (
     parent: GuiElement | undefined,
     Text: string,
@@ -122,9 +132,12 @@ export const createDebugUI = (ownerDocument: Document) => {
       },
       options,
     );
+
     node.Parent = parent;
+
     return node;
   };
+
   const button = (
     parent: GuiElement | undefined,
     Text: string,
@@ -145,10 +158,13 @@ export const createDebugUI = (ownerDocument: Document) => {
       },
       options,
     );
+
     createUICorner({ CornerRadius: 7 }).Parent = node;
     node.Parent = parent;
+
     return node;
   };
+
   const input = (
     parent: GuiElement | undefined,
     AccessibleLabel: string,
@@ -170,10 +186,13 @@ export const createDebugUI = (ownerDocument: Document) => {
       },
       options,
     );
+
     createUICorner({ CornerRadius: 8 }).Parent = node;
     node.Parent = parent;
+
     return node;
   };
+
   const scroll = (parent: GuiElement | undefined, label: string): ScrollingFrame => {
     const node = createScrollingFrame(
       {
@@ -185,9 +204,12 @@ export const createDebugUI = (ownerDocument: Document) => {
       },
       options,
     );
+
     node.unsafeElement.setAttribute('aria-label', label);
     node.Parent = parent;
+
     return node;
   };
+
   return { frame, label, button, input, scroll };
 };

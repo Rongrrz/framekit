@@ -53,6 +53,7 @@ export const verticalFlexAlignment = {
 } as const;
 
 const horizontalAlignments: readonly TextXAlignment[] = ['Left', 'Center', 'Right'];
+
 const verticalAlignments: readonly TextYAlignment[] = ['Top', 'Center', 'Bottom'];
 
 export function createDefaultTextStyleProperties(): TextStyleProperties {
@@ -82,18 +83,23 @@ export function renderTextStyle(
   ) {
     setStyle(element, 'color', color3ToCss(properties.TextColor3, properties.TextTransparency));
   }
+
   if (!changedProperties || changedProperties.has('TextWrapped')) {
     setStyle(element, 'white-space', properties.TextWrapped ? 'pre-wrap' : 'pre');
   }
+
   if (!changedProperties || changedProperties.has('TextXAlignment')) {
     setStyle(element, 'text-align', properties.TextXAlignment.toLowerCase());
   }
+
   if (!changedProperties || changedProperties.has('FontFamily')) {
     setStyle(element, 'font-family', properties.FontFamily);
   }
+
   if (!changedProperties || changedProperties.has('FontWeight')) {
     setStyle(element, 'font-weight', String(properties.FontWeight));
   }
+
   if (
     !changedProperties ||
     changedProperties.has('Text') ||
@@ -117,6 +123,7 @@ export function validateTextStyleProperties(properties: Readonly<TextStyleProper
   assertBoolean(properties.TextScaled, 'TextScaled');
   assertBoolean(properties.TextWrapped, 'TextWrapped');
   assertString(properties.FontFamily, 'FontFamily');
+
   if (typeof properties.FontWeight !== 'string') {
     assertNonNegativeFinite(properties.FontWeight, 'FontWeight');
   }
@@ -131,5 +138,6 @@ export function hasTextStyleChange(changedProperties: ReadonlySet<PropertyKey>):
       return true;
     }
   }
+
   return false;
 }

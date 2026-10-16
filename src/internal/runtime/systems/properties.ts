@@ -79,9 +79,11 @@ export function subscribeToPropertyChange<
   listener: (value: Properties[Property], previousValue: Properties[Property]) => void,
 ): Unsubscribe {
   const properties = getNodeState(node).properties;
+
   if (!Object.hasOwn(properties, property)) {
     throw new TypeError(`Unknown property "${String(property)}" on ${properties.Name}.`);
   }
+
   return subscribeToNodeEvent(node, property, listener);
 }
 
@@ -121,23 +123,29 @@ function preparePropertyPatch<Properties extends InstanceProperties>(
   requestedProperties: readonly (keyof Properties)[] = Object.keys(patch) as (keyof Properties)[],
 ): Properties {
   validatePropertyPatch(state.properties, patch, requestedProperties);
+
   const nextProperties = requestedProperties.every((property) =>
     Object.is(state.properties[property], patch[property]),
   )
     ? state.properties
     : { ...state.properties, ...patch };
+
   state.validateProperties?.(nextProperties, requestedProperties);
   validateModifierRelationships(state, nextProperties);
+
   return nextProperties;
 }
 
 function getPropertyWriteEventKey(property: PropertyKey): symbol {
   const existing = propertyWriteEventKeys.get(property);
+
   if (existing) {
     return existing;
   }
+
   const created = Symbol(`Property write: ${String(property)}`);
   propertyWriteEventKeys.set(property, created);
+
   return created;
 }
 
@@ -147,6 +155,7 @@ export function mergeProperties<Properties extends InstanceProperties>(
   initialProperties: Partial<Properties>,
 ): Properties {
   validatePropertyPatch(defaultProperties, initialProperties);
+
   if (
     Object.isFrozen(defaultProperties) &&
     snapshotPropertyValue(defaultProperties) === defaultProperties
@@ -154,6 +163,7 @@ export function mergeProperties<Properties extends InstanceProperties>(
     // Immutable defaults can be shared; only the caller's values need a deep snapshot.
     return Object.freeze({ ...defaultProperties, ...snapshotPropertyValue(initialProperties) });
   }
+
   return snapshotPropertyValue({ ...defaultProperties, ...initialProperties });
 }
 
@@ -169,12 +179,15 @@ function validatePropertyPatch<Properties extends InstanceProperties>(
     }
 
     const received = patch[property];
+
     if (received === undefined || received === null) {
       throw new TypeError(`Property "${String(property)}" on ${current.Name} is required.`);
     }
+
     if (typeof received === 'number' && !Number.isFinite(received)) {
       throw new TypeError(`Property "${String(property)}" on ${current.Name} must be finite.`);
     }
+
     if (property === 'Name') {
       assertString(received, 'Name');
     }
@@ -190,24 +203,29 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
   const nextProperties = preparePropertyPatch(state, patch, requestedProperties);
 
   const previousProperties = state.properties;
+
   // Validation still runs for unchanged writes; their write events can cancel animations.
   if (nextProperties === previousProperties) {
     return;
   }
+
   const changedProperties = new Set(
     requestedProperties.filter(
       (property) => !Object.is(previousProperties[property], patch[property]),
     ),
   );
+
   if (changedProperties.size === 0) {
     return;
   }
 
   state.properties = nextProperties;
+
   try {
     rendering.renderPropertyChanges(node, changedProperties);
   } catch (error) {
     state.properties = previousProperties;
+
     try {
       rendering.renderPropertyChanges(node, changedProperties);
     } catch (rollbackError) {
@@ -216,6 +234,7 @@ function commitPropertyPatch<Properties extends InstanceProperties>(
         'A property update failed, and rendering could not be fully restored.',
       );
     }
+
     throw error;
   }
 
@@ -228,17 +247,21 @@ function validateModifierRelationships<Properties extends InstanceProperties>(
 ): void {
   if (state.kind === 'style' && state.parent) {
     const parentState = getNodeState(state.parent);
+
     if (parentState.kind === 'gui') {
       state.validateTarget?.(nextProperties, getModifierTarget(parentState));
     }
+
     return;
   }
+
   if (state.kind !== 'gui') {
     return;
   }
 
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);
+
     if (modifierState.kind === 'style') {
       modifierState.validateTarget?.(modifierState.properties, {
         properties: nextProperties,

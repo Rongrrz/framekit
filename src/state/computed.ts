@@ -20,9 +20,11 @@ export function createComputedValue<T>(
 
   const recompute = (): void => {
     const nextValue = derive();
+
     if (Object.is(currentValue, nextValue)) {
       return;
     }
+
     currentValue = nextValue;
     emitSignalSafely(changedSignal, currentValue);
   };
@@ -31,12 +33,15 @@ export function createComputedValue<T>(
     for (const unsubscribe of sourceUnsubscribes) {
       unsubscribe();
     }
+
     sourceUnsubscribes = [];
   };
 
   const startObservingSources = (): void => {
     currentValue = derive();
+
     const unsubscribes: Unsubscribe[] = [];
+
     try {
       for (const source of sources) {
         unsubscribes.push(source.onChange(recompute));
@@ -45,8 +50,10 @@ export function createComputedValue<T>(
       for (const unsubscribe of unsubscribes) {
         unsubscribe();
       }
+
       throw error;
     }
+
     sourceUnsubscribes = unsubscribes;
   };
 
@@ -54,17 +61,21 @@ export function createComputedValue<T>(
     if (observerCount === 0) {
       startObservingSources();
     }
+
     const unsubscribeSignal = changedSignal.subscribe(listener);
     observerCount += 1;
+
     let subscribed = true;
 
     return () => {
       if (!subscribed) {
         return;
       }
+
       subscribed = false;
       unsubscribeSignal();
       observerCount -= 1;
+
       if (observerCount === 0) {
         stopObservingSources();
       }

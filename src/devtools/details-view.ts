@@ -24,30 +24,40 @@ export const bindInspectorDetails = (
     className: selectedClass,
     metricValues,
   } = controls;
+
   const ui = createDebugUI(details.unsafeElement.ownerDocument);
   const ids = new WeakMap<Instance, number>();
   let nextId = 0;
+
   const key = (node: Instance): number => {
     const existing = ids.get(node);
+
     if (existing !== undefined) {
       return existing;
     }
+
     nextId += 1;
     ids.set(node, nextId);
+
     return nextId;
   };
+
   const ancestors = createObservableValue<readonly Instance[]>([]);
   bindKeyedChildren(breadcrumbs, ancestors, {
     key,
+
     create: (node) => {
       const button = ui.button(undefined, '', {
         BackgroundTransparency: 1,
         TextColor3: colors.muted,
         TextSize: 10,
       });
+
       button.onClick(() => onSelect(node));
+
       return button;
     },
+
     update: (button, node) =>
       button.setProperties({
         Text: `${node.Name} ›`,
@@ -62,7 +72,9 @@ export const bindInspectorDetails = (
     heading: boolean;
     animated: boolean;
   }>;
+
   const properties = createObservableValue<readonly PropertyRow[]>([]);
+
   const propertyViews = new Map<
     Frame,
     Readonly<{
@@ -71,31 +83,40 @@ export const bindInspectorDetails = (
       swatch: Frame;
     }>
   >();
+
   bindKeyedChildren(details, properties, {
     key: (row) => row.key,
+
     create: () => {
       const frame = ui.frame(undefined);
+
       const name = ui.label(frame, '', {
         Size: udim2(0.46, -8, 1, 0),
         TextSize: 11,
         TextColor3: colors.muted,
       });
+
       const value = ui.label(frame, '', {
         Position: udim2(0.46, 6, 0, 0),
         Size: udim2(0.54, -6, 1, 0),
         TextSize: 11,
         FontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
       });
+
       value.unsafeElement.dataset.debugValue = '';
+
       const swatch = ui.frame(frame, {
         Size: udim2FromOffset(10, 10),
         Position: udim2(0.46, -10, 0.5, -5),
       });
+
       createUICorner({ CornerRadius: 3 }).Parent = swatch;
       propertyViews.set(frame, { name, value, swatch });
       frame.onDestroy(() => propertyViews.delete(frame));
+
       return frame;
     },
+
     update: (frame, row) => {
       const view = propertyViews.get(frame)!;
       const formatted = formatValue(row.value);
@@ -105,17 +126,20 @@ export const bindInspectorDetails = (
         'aria-label',
         row.heading ? row.name : `${row.name}: ${formatted.text}`,
       );
+
       if (row.heading) {
         frame.unsafeElement.setAttribute('aria-level', '3');
       } else {
         frame.unsafeElement.removeAttribute('aria-level');
       }
+
       view.name.setProperties({
         Text: row.name,
         FontWeight: row.heading ? 650 : 450,
         TextColor3: row.heading ? colors.ink : colors.muted,
         Size: udim2(row.heading ? 1 : 0.46, -8, 1, 0),
       });
+
       view.value.setProperties({
         Text: `${row.animated ? '● ' : ''}${formatted.text}`,
         Visible: !row.heading,
@@ -125,6 +149,7 @@ export const bindInspectorDetails = (
       view.value.unsafeElement.title = row.heading
         ? ''
         : (JSON.stringify(row.value) ?? String(row.value));
+
       view.swatch.setProperties({
         Visible: !row.heading && Boolean(formatted.swatch),
         BackgroundTransparency: formatted.swatch ? 0 : 1,
@@ -132,21 +157,26 @@ export const bindInspectorDetails = (
       });
     },
   });
+
   return (selected, path, query): void => {
     ancestors.set(path.slice(-3));
     selectedName.Text = selected.Name;
     selectedName.unsafeElement.title = selected.getFullName();
+
     const snapshot = inspectInstance(selected);
     selectedClass.Text = `Class: ${snapshot.className}`;
     metricValues[0]!.Text = String(snapshot.children.length);
     metricValues[1]!.Text = String(snapshot.cleanupRegistrations);
     metricValues[2]!.Text = String(snapshot.animatedProperties.length);
+
     const term = query.trim().toLowerCase();
     const groups = new Map<string, PropertyRow[]>();
+
     for (const [name, value] of Object.entries(snapshot.properties)) {
       if (term && !`${name} ${formatValue(value).text}`.toLowerCase().includes(term)) {
         continue;
       }
+
       const group = propertyGroup(name);
       const bucket = groups.get(group) ?? [];
       bucket.push({
@@ -158,6 +188,7 @@ export const bindInspectorDetails = (
       });
       groups.set(group, bucket);
     }
+
     properties.set(
       [...groups].flatMap(([group, entries]) => [
         { key: `$${group}`, name: group, heading: true, animated: false },

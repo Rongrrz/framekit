@@ -17,10 +17,12 @@ describe.each([createUIListLayout, createUIGridLayout])(
       const sourceFirst = createFrame({ LayoutOrder: 0 });
       sourceLast.Parent = source;
       sourceFirst.Parent = source;
+
       const destinationLast = createFrame({ LayoutOrder: 3 });
       const destinationFirst = createFrame({ LayoutOrder: 1 });
       destinationLast.Parent = destination;
       destinationFirst.Parent = destination;
+
       const layout = createLayout();
       layout.Parent = source;
 
@@ -31,6 +33,7 @@ describe.each([createUIListLayout, createUIGridLayout])(
         sourceFirst.unsafeElement,
       ]);
       expect(sourceFirst.unsafeElement.style.position).toBe('absolute');
+
       const plain = createFrame({ LayoutOrder: -1 });
       plain.Parent = source;
       expect(source.unsafeElement.lastElementChild).toBe(plain.unsafeElement);
@@ -51,9 +54,11 @@ describe.each([createUIListLayout, createUIGridLayout])(
           (row) => row.unsafeElement,
         ),
       );
+
       for (const row of [destinationLast, destinationFirst, arranged, sourceFirst, sourceLast]) {
         expect(row.unsafeElement.style.position).toBe('absolute');
       }
+
       source.destroy();
       destination.destroy();
     });
@@ -64,10 +69,12 @@ describe.each([createUIListLayout, createUIGridLayout])(
       const last = createFrame({ LayoutOrder: 1 });
       createStyleModifier('CustomOrder', { Name: 'CustomOrder' }, () => ({ order: '7' })).Parent =
         first;
+
       createStyleModifier('CustomOrder', { Name: 'CustomOrder' }, () => ({ order: '-5' })).Parent =
         last;
       first.Parent = parent;
       last.Parent = parent;
+
       const layout = createLayout();
       layout.Parent = parent;
 
@@ -84,14 +91,19 @@ describe.each([createUIListLayout, createUIGridLayout])(
     it('prepends and removes a row without mutating surviving row attributes', () => {
       const parent = createFrame();
       createLayout().Parent = parent;
+
       const rows = [createFrame(), createFrame()];
+
       for (const row of rows) {
         row.Parent = parent;
       }
+
       const observer = new MutationObserver(() => undefined);
+
       for (const row of rows) {
         observer.observe(row.unsafeElement, { attributes: true });
       }
+
       const first = createFrame({ LayoutOrder: -1 });
       first.Parent = parent;
       expect([...parent.unsafeElement.children]).toEqual([
@@ -111,17 +123,21 @@ describe.each([createUIListLayout, createUIGridLayout])(
       const destination = createFrame();
       createLayout().Parent = parent;
       createLayout().Parent = destination;
+
       const first = createFrame({
         LayoutOrder: 0,
         Position: udim2FromOffset(12, 15),
         Size: udim2FromOffset(140, 60),
       });
+
       const middle = createFrame({ LayoutOrder: 1 });
       const last = createFrame({ LayoutOrder: 2 });
       createUIListLayout().Parent = first;
+
       for (const child of [first, middle, last]) {
         child.Parent = parent;
       }
+
       first.Parent = undefined;
 
       expect(first.unsafeElement.style.position).toBe('absolute');
@@ -142,6 +158,7 @@ describe.each([createUIListLayout, createUIGridLayout])(
       expect(parent.unsafeElement.firstElementChild).toBe(last.unsafeElement);
       first.destroy();
       expect(destination.unsafeElement.firstElementChild).toBe(middle.unsafeElement);
+
       const appended = createFrame({ LayoutOrder: 3 });
       appended.Parent = destination;
       expect([...destination.unsafeElement.children]).toEqual([
@@ -155,15 +172,18 @@ describe.each([createUIListLayout, createUIGridLayout])(
     it('commits removal before cleanup callbacks mutate the layout, even when cleanup fails', () => {
       const parent = createFrame();
       createLayout().Parent = parent;
+
       const first = createFrame({ LayoutOrder: 0 });
       const last = createFrame({ LayoutOrder: 2 });
       first.Parent = parent;
       last.Parent = parent;
+
       const inserted = createFrame({ LayoutOrder: 1 });
       first.onDestroy(() => {
         expect(parent.getChildren().includes(first)).toBe(false);
         expect(last.unsafeElement.style.position).toBe('relative');
         inserted.Parent = parent;
+
         throw new Error('Cleanup failed');
       });
 
@@ -180,17 +200,21 @@ describe.each([createUIListLayout, createUIGridLayout])(
     it('restores hierarchy, DOM order, and positioning if removing a placement layer fails', () => {
       const parent = createFrame();
       createLayout().Parent = parent;
+
       const first = createFrame();
       const last = createFrame();
       first.Parent = parent;
       last.Parent = parent;
+
       const setProperty = first.unsafeElement.style.setProperty.bind(first.unsafeElement.style);
+
       const failure = vi
         .spyOn(first.unsafeElement.style, 'setProperty')
         .mockImplementation((property, value, priority) => {
           if (property === 'position' && value === 'absolute') {
             throw new Error('Placement reset failed');
           }
+
           setProperty(property, value, priority);
         });
 
@@ -208,9 +232,11 @@ describe.each([createUIListLayout, createUIGridLayout])(
       const parent = createFrame();
       const layout = createLayout();
       layout.Parent = parent;
+
       const later = createFrame({ LayoutOrder: 2 });
       const first = createFrame({ LayoutOrder: 1 });
       const equal = createFrame({ LayoutOrder: 1 });
+
       for (const child of [later, first, equal]) {
         child.Parent = parent;
       }
@@ -219,6 +245,7 @@ describe.each([createUIListLayout, createUIGridLayout])(
         [first, equal, later].map((child) => child.unsafeElement),
       );
       parent.reorderChildren([layout, later, equal, first]);
+
       const appended = createFrame({ LayoutOrder: 1 });
       appended.Parent = parent;
 
@@ -234,12 +261,14 @@ describe.each([createUIListLayout, createUIGridLayout])(
       const parent = createFrame();
       const layout = createLayout();
       layout.Parent = parent;
+
       const beta = createFrame({ Name: 'Beta' });
       const alpha = createFrame({ Name: 'Alpha' });
       beta.Parent = parent;
       alpha.Parent = parent;
       layout.SortOrder = 'Name';
       beta.Name = 'Gamma';
+
       const middle = createFrame({ Name: 'Beta' });
       const equal = createFrame({ Name: 'Alpha' });
       middle.Parent = parent;
@@ -256,12 +285,14 @@ describe.each([createUIListLayout, createUIGridLayout])(
       const existing = createFrame({ LayoutOrder: 2 });
       existing.Parent = parent;
       createLayout().Parent = parent;
+
       const child = createFrame({ LayoutOrder: 1, Position: udim2FromOffset(12, 15) });
       const insertBefore = parent.unsafeElement.insertBefore.bind(parent.unsafeElement);
       vi.spyOn(parent.unsafeElement, 'insertBefore').mockImplementation((node, before) => {
         if (before === existing.unsafeElement) {
           throw new Error('Sorted insertion failed');
         }
+
         return insertBefore(node, before);
       });
 
@@ -287,6 +318,7 @@ it('composes list and grid child rules and switches to the remaining layout', ()
   const grid = createUIGridLayout();
   list.Parent = parent;
   grid.Parent = parent;
+
   const first = createFrame({ Name: 'Zebra', LayoutOrder: 1 });
   const second = createFrame({ Name: 'Alpha', LayoutOrder: 2 });
   first.Parent = parent;
@@ -296,6 +328,7 @@ it('composes list and grid child rules and switches to the remaining layout', ()
   expect(second.unsafeElement.style.flexShrink).toBe('0');
   expect(second.unsafeElement.style.width).toBe('100%');
   grid.destroy();
+
   const middle = createFrame({ Name: 'Middle' });
   middle.Parent = parent;
 

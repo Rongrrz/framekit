@@ -31,12 +31,15 @@ export type ScreenGui = GuiElement<ScreenGuiProperties> & ScreenGuiMethods;
 
 const screenGuiMethods = Object.freeze({
   ...guiEventMethods,
+
   mount(this: ScreenGui, target: string | HTMLElement): void {
     mountScreenGui(this, target);
   },
+
   unmount(this: ScreenGui): void {
     unmountScreenGui(this);
   },
+
   isMounted(this: ScreenGui): boolean {
     return isScreenGuiMounted(this);
   },
@@ -68,20 +71,24 @@ export function createScreenGui(
       initialProperties,
     ),
     element,
+
     renderProperties: (properties, changedProperties) => {
       if (changedProperties.has('Enabled')) {
         setStyle(element, 'display', properties.Enabled ? '' : 'none');
       }
+
       if (changedProperties.has('DisplayOrder')) {
         setStyle(element, 'z-index', String(properties.DisplayOrder));
       }
     },
+
     validateProperties: validateScreenGuiProperties,
     methods: screenGuiMethods,
     canHaveParent: false,
   }) as ScreenGui;
 
   lifecycle.onDestroy(gui, () => mountTargets.delete(gui));
+
   return gui;
 }
 
@@ -93,10 +100,13 @@ function validateScreenGuiProperties(properties: Readonly<ScreenGuiProperties>):
 /** Mounts a full-viewport ScreenGui beneath the supplied DOM owner. */
 function mountScreenGui(gui: ScreenGui, target: string | HTMLElement): void {
   getActiveNodeState(gui);
+
   const element = resolveMountTarget(gui, target);
+
   if (element.ownerDocument !== gui.unsafeElement.ownerDocument) {
     throw new TypeError('ScreenGui cannot be mounted into a different document.');
   }
+
   if (mountTargets.get(gui) === element && gui.unsafeElement.parentElement === element) {
     return;
   }
@@ -113,11 +123,15 @@ function unmountScreenGui(gui: ScreenGui): void {
 
 function isScreenGuiMounted(gui: ScreenGui): boolean {
   getActiveNodeState(gui);
+
   const target = mountTargets.get(gui);
+
   if (!target || gui.unsafeElement.parentElement !== target) {
     mountTargets.delete(gui);
+
     return false;
   }
+
   return true;
 }
 
@@ -125,7 +139,9 @@ function resolveMountTarget(gui: ScreenGui, target: string | HTMLElement): HTMLE
   if (typeof target !== 'string') {
     return target;
   }
+
   let element: HTMLElement | null;
+
   try {
     element = gui.unsafeElement.ownerDocument.querySelector<HTMLElement>(target);
   } catch {
@@ -135,5 +151,6 @@ function resolveMountTarget(gui: ScreenGui, target: string | HTMLElement): HTMLE
   if (!element) {
     throw new Error(`Unable to mount ScreenGui: target "${target}" was not found.`);
   }
+
   return element;
 }

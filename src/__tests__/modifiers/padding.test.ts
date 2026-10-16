@@ -8,6 +8,7 @@ resetDocumentAfterEach();
 describe('UI padding', () => {
   it('applies, updates, and removes padding on its parent', () => {
     const frame = createFrame();
+
     const padding = createUIPadding({
       PaddingTop: udim(0, 8),
       PaddingRight: udim(0.1, 4),

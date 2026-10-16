@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetDocumentAfterEach } from '../support/reset-document.js';
 
 resetDocumentAfterEach();
+
 afterEach(() => vi.restoreAllMocks());
 
 const press = (
@@ -18,7 +19,9 @@ const press = (
     cancelable: true,
     ...options,
   });
+
   target.dispatchEvent(event);
+
   return event;
 };
 
@@ -28,6 +31,7 @@ describe('owned keyboard input service', () => {
     const input = createUserInputService(owner);
     const began = vi.fn();
     input.inputBegan.subscribe(began);
+
     const button = createTextButton();
     const text = createTextInput();
     document.body.append(button.unsafeElement, text.unsafeElement);
@@ -35,12 +39,16 @@ describe('owned keyboard input service', () => {
     const unhandled = press(button.unsafeElement);
     expect(began).toHaveBeenLastCalledWith(unhandled, false);
     button.on('keydown', (event) => event.preventDefault());
+
     const handled = press(button.unsafeElement);
     expect(began).toHaveBeenLastCalledWith(handled, true);
+
     const editing = press(text.unsafeElement);
     expect(began).toHaveBeenLastCalledWith(editing, true);
+
     const editable = document.body.appendChild(document.createElement('div'));
     editable.contentEditable = 'true';
+
     const nested = editable.appendChild(document.createElement('span'));
     const editingChild = press(nested);
     expect(began).toHaveBeenLastCalledWith(editingChild, true);
@@ -94,11 +102,13 @@ describe('owned keyboard input service', () => {
       input.inputEnded.subscribe(ended);
       press(document);
       expect(input.isKeyDown('KeyW')).toBe(true);
+
       if (action === 'destroy') {
         owner.destroy();
       } else {
         input.dispose();
       }
+
       input.dispose();
       expect(input.isKeyDown('KeyW')).toBe(false);
       press(document);

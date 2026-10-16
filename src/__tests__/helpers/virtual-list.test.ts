@@ -9,23 +9,30 @@ import { expect, it, vi } from 'vitest';
 it('mounts a bounded window and releases views and subscriptions on disposal', () => {
   const viewport = createScrollingFrame();
   Object.defineProperty(viewport.unsafeElement, 'clientHeight', { value: 160 });
+
   const source = createObservableValue<readonly number[]>(
     Array.from({ length: 10_000 }, (_, index) => index),
   );
+
   const selection = createObservableValue<string | number | undefined>(0);
   const destroyed = vi.fn();
+
   const create = vi.fn(() => {
     const row = createTextLabel();
     row.onDestroy(destroyed);
+
     return row;
   });
+
   const list = bindVirtualList(viewport, source, {
     itemHeight: 32,
     key: (id) => id,
     selection,
     create,
   });
+
   expect(create.mock.calls.length).toBeLessThanOrEqual(9);
+
   const mounted = create.mock.calls.length;
   list.dispose();
   list.dispose();
@@ -40,11 +47,13 @@ it('mounts a bounded window and releases views and subscriptions on disposal', (
 it('rejects invalid geometry and duplicate keys without retaining a subtree', () => {
   const viewport = createScrollingFrame();
   const source = createObservableValue([1, 1]);
+
   const options = {
     key: (id: number) => id,
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   };
+
   expect(() => bindVirtualList(viewport, source, { ...options, itemHeight: 0 })).toThrow();
   expect(() => bindVirtualList(viewport, source, { ...options, itemHeight: 32 })).toThrow(
     /unique keys/,
@@ -56,14 +65,17 @@ it('rejects invalid geometry and duplicate keys without retaining a subtree', ()
 it('preserves surviving scroll and selection neighbors when several earlier items are deleted', () => {
   const viewport = createScrollingFrame();
   Object.defineProperty(viewport.unsafeElement, 'clientHeight', { value: 160 });
+
   const source = createObservableValue(Array.from({ length: 100 }, (_, index) => index));
   const selection = createObservableValue<string | number | undefined>(90);
+
   const list = bindVirtualList(viewport, source, {
     itemHeight: 32,
     key: (id) => id,
     selection,
     create: () => createTextLabel(),
   });
+
   viewport.unsafeElement.scrollTop = 327; // Item 10 with a seven-pixel offset.
   source.set(source.get().filter((id) => id !== 0 && id !== 10 && id !== 90));
   expect(viewport.unsafeElement.scrollTop).toBe(295); // Surviving item 11 is now at index 9.
@@ -96,13 +108,16 @@ it('rejects caller-owned rows without mutating or destroying them', () => {
 it('accepts measured-row estimates and preserves caller height and automatic sizing', () => {
   const viewport = createScrollingFrame();
   Object.defineProperty(viewport.unsafeElement, 'clientHeight', { value: 160 });
+
   const row = createTextLabel({ AutomaticSize: 'Y' });
+
   const binding = bindVirtualList(viewport, createObservableValue([1]), {
     itemHeight: { estimate: 48 },
     key: (id) => id,
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => row,
   });
+
   expect(row.AutomaticSize).toBe('Y');
   expect(row.Size.X.Scale).toBe(1);
   expect(viewport.CanvasSize.Y.Offset).toBe(48);
@@ -114,6 +129,7 @@ it('accepts measured-row estimates and preserves caller height and automatic siz
 
 it('rejects invalid measured estimates before changing the viewport', () => {
   const viewport = createScrollingFrame();
+
   for (const estimate of [0, -1, NaN, Infinity]) {
     expect(() =>
       bindVirtualList(viewport, createObservableValue([1]), {
@@ -124,6 +140,7 @@ it('rejects invalid measured estimates before changing the viewport', () => {
       }),
     ).toThrow();
   }
+
   expect(viewport.getChildren()).toEqual([]);
   expect(viewport.unsafeElement.hasAttribute('role')).toBe(false);
   viewport.destroy();
@@ -132,13 +149,16 @@ it('rejects invalid measured estimates before changing the viewport', () => {
 it('preserves fractional scroll offsets when earlier rows are inserted', () => {
   const viewport = createScrollingFrame();
   Object.defineProperty(viewport.unsafeElement, 'clientHeight', { value: 160 });
+
   const source = createObservableValue(Array.from({ length: 100 }, (_, id) => id));
+
   const binding = bindVirtualList(viewport, source, {
     itemHeight: 32,
     key: (id) => id,
     selection: createObservableValue<string | number | undefined>(undefined),
     create: () => createTextLabel(),
   });
+
   viewport.unsafeElement.scrollTop = 31.5;
   source.set([-1, ...source.get()]);
   expect(viewport.unsafeElement.scrollTop).toBe(63.5);

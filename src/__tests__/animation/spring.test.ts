@@ -15,6 +15,7 @@ import { setupAnimationClock } from '../support/animation-clock.js';
 import { destroyNodesAfterEach } from '../support/node-cleanup.js';
 
 const { advance, settle } = setupAnimationClock();
+
 const trackNode = destroyNodesAfterEach();
 
 describe('spring animations', () => {
@@ -59,6 +60,7 @@ describe('spring animations', () => {
         BackgroundColor3: color3FromRGB(0, 0, 0),
       }),
     );
+
     const controller = spring(frame);
     const completed = vi.fn();
 
@@ -92,6 +94,7 @@ describe('spring animations', () => {
     const settings = { tension: 170, friction: 5 } as const;
 
     spring(frame, { BackgroundTransparency: 1 }, settings);
+
     for (let index = 0; index < 5; index += 1) {
       advance();
     }
@@ -204,6 +207,7 @@ describe('spring animations', () => {
       Position: udim2FromOffset(100, 100),
     });
     advance();
+
     const stoppedPosition = frame.Position;
     controller.stop('Position');
 
@@ -225,6 +229,7 @@ describe('spring animations', () => {
     const completed = vi.fn();
     controller.completed.subscribe(completed);
     advance();
+
     const rotation = frame.Rotation;
     controller.stop();
     controller.stop();

@@ -12,41 +12,63 @@ import { build } from 'vite';
 import { summarize, writeReport } from './report.mjs';
 
 const directory = dirname(fileURLToPath(import.meta.url));
+
 const repository = resolve(directory, '../..');
+
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
+
   return index < 0 ? fallback : process.argv[index + 1];
 };
+
 const baselineRef = option('--baseline', '13bbf6d');
+
 const rounds = Number(option('--rounds', '3'));
+
 const repetitions = Number(option('--repetitions', '7'));
+
 const throttle = Number(option('--cpu-throttle', '1'));
+
 const requestedCases = option('--cases', '').split(',').filter(Boolean);
+
 const output = resolve(option('--out', join(directory, 'results.json')));
+
 await mkdir(dirname(output), { recursive: true });
+
 if (![rounds, repetitions, throttle].every((value) => Number.isInteger(value) && value > 0)) {
   throw new Error('Rounds, repetitions, and CPU throttle must be positive integers.');
 }
+
 const git = (...args) => execFileSync('git', args, { cwd: repository, encoding: 'utf8' }).trim();
+
 const baselineRevision = git(
   'rev-parse',
   '--verify',
   '--end-of-options',
   `${baselineRef}^{commit}`,
 );
+
 const currentRevision = git('rev-parse', 'HEAD');
+
 const libraryWorkingTree = git('status', '--porcelain', '--', 'src');
+
 const temporary = await mkdtemp(join(tmpdir(), 'framekit-comparison-'));
+
 const oldSource = join(temporary, 'source');
+
 await mkdir(oldSource);
+
 execFileSync('tar', ['-x', '-C', oldSource], {
   input: execFileSync('git', ['archive', baselineRevision, 'src'], {
     cwd: repository,
   }),
 });
+
 // Build the captured working source, so later edits cannot change an in-flight comparison.
 const currentSource = join(temporary, 'current-source');
+
 await cp(join(repository, 'src'), join(currentSource, 'src'), { recursive: true });
+
 const sourceSha256 = Object.fromEntries(
   await Promise.all(
     [
@@ -55,8 +77,10 @@ const sourceSha256 = Object.fromEntries(
     ].map(async ([variant, source]) => {
       const root = join(source, 'src');
       const hash = createHash('sha256');
+
       for (const file of (await readdir(root, { recursive: true })).sort()) {
         const path = join(root, file);
+
         if ((await stat(path)).isFile()) {
           hash
             .update(file)
@@ -65,11 +89,14 @@ const sourceSha256 = Object.fromEntries(
             .update('\0');
         }
       }
+
       return [variant, hash.digest('hex')];
     }),
   ),
 );
+
 const directories = {};
+
 for (const [variant, source] of [
   ['before', oldSource],
   ['current', currentSource],
@@ -93,32 +120,42 @@ for (const [variant, source] of [
     build: { outDir: directories[variant], emptyOutDir: true, minify: true },
   });
 }
+
 const builtJavaScriptSha256 = Object.fromEntries(
   await Promise.all(
     Object.entries(directories).map(async ([variant, root]) => {
       const hash = createHash('sha256');
+
       for (const file of (await readdir(root, { recursive: true })).sort()) {
         if (file.endsWith('.js')) {
           hash.update(await readFile(join(root, file)));
         }
       }
+
       return [variant, hash.digest('hex')];
     }),
   ),
 );
+
 const server = createServer(async (request, response) => {
   try {
     const [, variant, ...parts] = new URL(request.url, 'http://localhost').pathname.split('/');
     const root = directories[variant];
+
     if (!root) {
       response.writeHead(404).end();
+
       return;
     }
+
     const path = resolve(root, decodeURIComponent(parts.join('/') || 'index.html'));
+
     if (!path.startsWith(root + sep)) {
       response.writeHead(403).end();
+
       return;
     }
+
     const content = await readFile(path);
     response
       .writeHead(200, {
@@ -135,67 +172,92 @@ const server = createServer(async (request, response) => {
     response.writeHead(404).end();
   }
 });
+
 await new Promise((resolveListen) => server.listen(0, '127.0.0.1', resolveListen));
+
 const port = server.address().port;
+
 const browser = await chromium.launch();
+
 const runs = [];
+
 let definitions;
+
 let environment;
+
 const audits = {};
+
 try {
   for (let round = 0; round < rounds; round += 1) {
     for (const variant of round % 2 ? ['current', 'before'] : ['before', 'current']) {
       const results = [];
+
       const runtimes =
         variant === 'before' ? ['framekit'] : ['framekit', 'react-root', 'react-local'];
+
       // Balance scheduling while giving both FrameKit versions the same page history.
       runtimes.push(...runtimes.splice(0, round % runtimes.length));
+
       for (const runtime of runtimes) {
         const page = await browser.newPage({
           viewport: { width: 1440, height: 900 },
         });
+
         const errors = [];
         page.on('pageerror', (error) => errors.push(error.message));
+
         if (throttle !== 1) {
           const client = await page.context().newCDPSession(page);
           await client.send('Emulation.setCPUThrottlingRate', {
             rate: throttle,
           });
         }
+
         await page.goto(`http://127.0.0.1:${port}/${variant}/index.html`);
         await page.waitForFunction(() => Boolean(window.runComparisonCase));
         definitions = await page.evaluate(() => window.comparisonCases);
+
         if (requestedCases.length > 0) {
           for (const id of requestedCases) {
             if (!definitions.some((definition) => definition.id === id)) {
               throw new Error(`Unknown benchmark case: ${id}`);
             }
           }
+
           definitions = definitions.filter((definition) => requestedCases.includes(definition.id));
         }
+
         environment = await page.evaluate(() => window.comparisonEnvironment);
+
         if (runtime === 'framekit') {
           audits[variant] = await page.evaluate(() => window.compatibilityAudit());
         }
+
         for (const definition of definitions) {
           const result = await page.evaluate(
             ({ id, runtime, repetitions }) => window.runComparisonCase(id, runtime, repetitions),
             { id: definition.id, runtime, repetitions },
           );
+
           results.push(result);
           console.log(
             `${round + 1}/${rounds} ${variant} ${definition.id} | ${runtime}: ${result.medianMs} ms`,
           );
         }
+
         if (errors.length) {
           throw new Error(errors.join('\n'));
         }
+
         await page.close();
       }
+
       runs.push({ round: round + 1, variant, results });
     }
   }
+
   const benchmarkHash = createHash('sha256');
+
   const benchmarkFiles = [
     ...(await readdir(directory)).filter((file) =>
       ['.js', '.mjs', '.html'].includes(extname(file)),
@@ -204,9 +266,11 @@ try {
       .filter((file) => file.endsWith('.js'))
       .map((file) => `cases/${file}`),
   ].sort();
+
   for (const file of benchmarkFiles) {
     benchmarkHash.update(await readFile(join(directory, file)));
   }
+
   const report = {
     measuredAt: new Date().toISOString(),
     baselineRevision,
@@ -238,6 +302,7 @@ try {
     audits,
     runs,
   };
+
   report.summary = summarize(report);
   await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   await writeReport(report, `${output.replace(/\.json$/, '')}.md`);

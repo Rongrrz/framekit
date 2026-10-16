@@ -85,6 +85,7 @@ describe('responsive layouts', () => {
     const mobile = vi.fn();
     const desktop = vi.fn();
     vi.stubGlobal('innerWidth', 640);
+
     const dispose = bindResponsiveLayout(owner, { breakpoint: 700, mobile, desktop });
 
     dispose();
@@ -125,6 +126,7 @@ describe('responsive layouts', () => {
     const medium = vi.fn();
     const wide = vi.fn();
     const bounds = stubBounds(container.unsafeElement, 420, 300);
+
     const breakpoints = [
       { maxWidth: 479, apply: compact },
       { maxWidth: 899, apply: medium },
@@ -191,7 +193,9 @@ describe('responsive layouts', () => {
     const explicitlyDisposedObserver = installResizeObserver();
     const firstOwner = createFrame();
     stubBounds(firstOwner.unsafeElement, 400, 300);
+
     const firstApply = vi.fn();
+
     const dispose = bindResponsiveLayout(firstOwner, {
       observe: firstOwner,
       breakpoints: [{ apply: firstApply }],
@@ -220,9 +224,11 @@ describe('responsive layouts', () => {
 
   it('rejects invalid container layout configurations', () => {
     installResizeObserver();
+
     const owner = createFrame();
     const container = createFrame();
     stubBounds(container.unsafeElement, 400, 300);
+
     const apply = vi.fn();
 
     expect(() =>
@@ -231,6 +237,7 @@ describe('responsive layouts', () => {
         breakpoints: [{ maxWidth: 600, apply }],
       }),
     ).toThrow(/final.*omit maxWidth/i);
+
     expect(() =>
       bindResponsiveLayout(owner, {
         observe: container,
@@ -250,6 +257,7 @@ describe('responsive layouts', () => {
 
   it('rejects a container from another document', () => {
     installResizeObserver();
+
     const owner = createFrame();
     const otherDocument = document.implementation.createHTMLDocument();
     const container = createFrame({}, { ownerDocument: otherDocument });
@@ -284,6 +292,7 @@ const stubBounds = (element: HTMLElement, width: number, height: number): Mutabl
         toJSON: () => ({}),
       }) satisfies DOMRect,
   );
+
   return bounds;
 };
 
@@ -293,12 +302,15 @@ const installResizeObserver = (): Readonly<{
   disconnect: ReturnType<typeof vi.fn>;
 }> => {
   let connected = false;
+
   const observe = vi.fn(() => {
     connected = true;
   });
+
   const disconnect = vi.fn(() => {
     connected = false;
   });
+
   const unobserve = vi.fn();
   let callback: ResizeObserverCallback | undefined;
 
@@ -314,12 +326,14 @@ const installResizeObserver = (): Readonly<{
 
   const callbackObserver = { observe, disconnect, unobserve } satisfies ResizeObserver;
   vi.stubGlobal('ResizeObserver', TestResizeObserver);
+
   return {
     trigger: (): void => {
       if (connected) {
         callback?.([], callbackObserver);
       }
     },
+
     observe,
     disconnect,
   };

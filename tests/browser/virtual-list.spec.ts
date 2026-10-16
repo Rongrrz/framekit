@@ -8,6 +8,7 @@ test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/playground/collections.html');
+
   const list = page.getByRole('listbox', { name: 'Virtual collection' });
   await expect(list.getByRole('option', { name: 'Row 0', exact: true })).toBeVisible();
   expect(await list.getByRole('option').count()).toBeLessThan(32);
@@ -21,15 +22,19 @@ test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable
   expect(await list.getByRole('option').count()).toBeLessThan(32);
   await page.keyboard.press('Home');
   await page.keyboard.press('PageDown');
+
   const before = await list.evaluate((element) => ({
     top: element.scrollTop,
     active: element.getAttribute('aria-activedescendant'),
   }));
+
   await page.getByRole('button', { name: 'Insert at top' }).click();
+
   const after = await list.evaluate((element) => ({
     top: element.scrollTop,
     active: element.getAttribute('aria-activedescendant'),
   }));
+
   expect(after.top).toBe(before.top + 32);
   expect(after.active).toBe(before.active);
   expect(errors).toEqual([]);
@@ -39,6 +44,7 @@ test('keeps native focus on the viewport when the selected option scrolls out of
   page,
 }) => {
   await page.goto('/playground/collections.html');
+
   const list = page.getByRole('listbox');
   await list.focus();
   await list.evaluate((element) => {

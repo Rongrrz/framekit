@@ -14,6 +14,7 @@ export const bindVirtualListKeyboard = <Item>(
 ): Unsubscribe => {
   const element = viewport.unsafeElement;
   const { measured, estimatedHeight, offset: offsetAt, indexAt } = model;
+
   return viewport.on('keydown', (event) => {
     if (
       event.defaultPrevented ||
@@ -26,11 +27,13 @@ export const bindVirtualListKeyboard = <Item>(
     ) {
       return;
     }
+
     const selection = selectionValue.get();
     const current = selection === undefined ? -1 : (model.indexOf(selection) ?? -1);
     const page = Math.max(1, Math.floor(element.clientHeight / estimatedHeight));
     const currentTop = offsetAt(Math.max(0, current));
     let index: number;
+
     if (event.key === 'ArrowDown') {
       index = Math.min(current + 1, model.entries.length - 1);
     } else if (event.key === 'ArrowUp') {
@@ -56,7 +59,9 @@ export const bindVirtualListKeyboard = <Item>(
     } else {
       return;
     }
+
     event.preventDefault();
+
     const key = model.entries[index]!.key;
     scrollToKey(key);
     selectionValue.set(key);

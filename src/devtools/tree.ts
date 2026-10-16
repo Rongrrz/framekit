@@ -12,9 +12,11 @@ export const toTreeString = (node: Instance): string => {
   while (pending.length > 0) {
     const { current, prefix, isLast } = pending.pop()!;
     lines.push(`${prefix}${isLast ? '└─ ' : '├─ '}${formatNode(current)}`);
+
     const childPrefix = `${prefix}${isLast ? '   ' : '│  '}`;
     pushTreeLines(pending, getChildren(getNodeState(current)), childPrefix);
   }
+
   return lines.join('\n');
 };
 
@@ -26,5 +28,6 @@ const pushTreeLines = (pending: TreeLine[], nodes: readonly Instance[], prefix: 
 
 const formatNode = (node: Instance): string => {
   const state = getNodeState(node);
+
   return `${state.properties.Name} [${state.className}]`;
 };

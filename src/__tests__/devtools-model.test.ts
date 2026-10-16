@@ -7,12 +7,16 @@ it('reveals matching descendants with their ancestor paths without changing coll
   const root = createFrame({ Name: 'Project' });
   const panel = createFrame({ Name: 'Checkout' });
   panel.Parent = root;
+
   const button = createTextButton({ Name: 'Submit' });
   button.Parent = panel;
+
   const unrelated = createFrame({ Name: 'Other' });
   unrelated.Parent = root;
+
   const collapsed = new Set([root, panel]);
   expect(projectHierarchy(root, collapsed, '').map((row) => row.node)).toEqual([root]);
+
   const search = projectHierarchy(root, collapsed, 'textbutton');
   expect(search.map((row) => [row.node, row.level])).toEqual([
     [root, 1],

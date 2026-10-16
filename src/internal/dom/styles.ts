@@ -1,5 +1,7 @@
 export type StyleLayer = 'modifier' | 'layout' | 'parent-layout';
+
 export type StyleValues = Readonly<{ [property: string]: string | undefined }>;
+
 type StyleRecord = Record<string, string | undefined>;
 
 type ElementStyleState = {
@@ -12,6 +14,7 @@ type ElementStyleState = {
 };
 
 const stylesByElement = new WeakMap<HTMLElement, ElementStyleState>();
+
 // Derived layers are replaced as a whole, so unused layers can share one immutable record.
 const emptyStyles: StyleValues = Object.freeze(Object.create(null) as Record<string, string>);
 
@@ -21,6 +24,7 @@ export function createStyledElementFactory<Element extends HTMLElement>(
 ): () => Element {
   const prototype = template.cloneNode(false) as Element;
   const state = getStyleState(template);
+
   // These private snapshots are never written. Writable descriptors let instance records
   // shadow inherited defaults by normal assignment without per-property defineProperty calls.
   const defaults = {
@@ -29,6 +33,7 @@ export function createStyledElementFactory<Element extends HTMLElement>(
     fallback: copyStyleRecord(state.fallback),
     rendered: copyStyleRecord(state.rendered),
   };
+
   return () => {
     const element = prototype.cloneNode(false) as Element;
     stylesByElement.set(element, {
@@ -37,20 +42,24 @@ export function createStyledElementFactory<Element extends HTMLElement>(
       fallback: Object.create(defaults.fallback) as StyleRecord,
       rendered: Object.create(defaults.rendered) as StyleRecord,
     });
+
     return element;
   };
 }
 
 function copyStyleRecord(values: StyleRecord): StyleRecord {
   const copy = Object.create(null) as StyleRecord;
+
   for (const property in values) {
     copy[property] = values[property];
   }
+
   return copy;
 }
 
 function clearStyleValue(values: StyleRecord, property: string): void {
   delete values[property];
+
   // Removing an inherited default needs an explicit shadow, or it would become visible again.
   if (values[property] !== undefined) {
     values[property] = undefined;
@@ -77,22 +86,30 @@ export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: S
   const previousStyles = state[layer];
   const properties = Object.keys(styles);
   let nextStyles = emptyStyles;
+
   if (properties.length > 0) {
     const definedStyles = Object.create(null) as Record<string, string>;
+
     for (const property of properties) {
       const value = styles[property];
+
       if (value === undefined) {
         continue;
       }
+
       captureFallback(element, state, property);
       definedStyles[property] = value;
     }
+
     nextStyles = definedStyles;
   }
+
   state[layer] = nextStyles;
+
   for (const property of Object.keys(previousStyles)) {
     renderResolvedProperty(element, state, property);
   }
+
   for (const property of properties) {
     if (!Object.hasOwn(previousStyles, property)) {
       renderResolvedProperty(element, state, property);
@@ -102,9 +119,11 @@ export function setStyleLayer(element: HTMLElement, layer: StyleLayer, styles: S
 
 function getStyleState(element: HTMLElement): ElementStyleState {
   const existing = stylesByElement.get(element);
+
   if (existing) {
     return existing;
   }
+
   const created: ElementStyleState = {
     base: Object.create(null) as Record<string, string>,
     modifier: emptyStyles,
@@ -113,7 +132,9 @@ function getStyleState(element: HTMLElement): ElementStyleState {
     fallback: Object.create(null) as Record<string, string>,
     rendered: Object.create(null) as Record<string, string>,
   };
+
   stylesByElement.set(element, created);
+
   return created;
 }
 
@@ -121,6 +142,7 @@ function captureFallback(element: HTMLElement, state: ElementStyleState, propert
   if (state.base[property] !== undefined || state.fallback[property] !== undefined) {
     return;
   }
+
   const currentValue = element.style.getPropertyValue(property);
   state.fallback[property] = currentValue;
   state.rendered[property] = currentValue;
@@ -132,17 +154,22 @@ function renderResolvedProperty(
   property: string,
 ): void {
   const value = resolveStyleValue(state, property);
+
   if (value === undefined) {
     if (state.rendered[property] === undefined && !element.style.getPropertyValue(property)) {
       return;
     }
+
     element.style.removeProperty(property);
     clearStyleValue(state.rendered, property);
+
     return;
   }
+
   if (state.rendered[property] === value) {
     return;
   }
+
   element.style.setProperty(property, value);
   state.rendered[property] = value;
 }
@@ -151,6 +178,7 @@ function resolveStyleValue(state: ElementStyleState, property: string): string |
   if (property === 'display' && state.base[property] === 'none') {
     return 'none';
   }
+
   // A container's own layout must not replace its placement in its parent's layout.
   return (
     state['parent-layout'][property] ??

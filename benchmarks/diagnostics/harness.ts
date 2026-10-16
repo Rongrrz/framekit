@@ -12,7 +12,9 @@ type InputTiming = Readonly<{
   handlerMs: number | null;
   presentationEstimateMs: number;
 }>;
+
 const samples: InputTiming[] = [];
+
 const eventTimings: {
   name: string;
   duration: number;
@@ -20,16 +22,20 @@ const eventTimings: {
   processingMs: number;
   interactionId: number;
 }[] = [];
+
 const longTasks: number[] = [];
+
 const observers: PerformanceObserver[] = [];
 
 /** Browser event timestamps include queued input; a second frame provides a presentation estimate. */
 const startResponsiveness = (): void => {
   const app = createSearchApplication();
   const starts = new WeakMap<Event, number>();
+
   const capture = (event: Event): void => {
     starts.set(event, performance.now());
   };
+
   const listen = (event: Event): void => {
     const kind = event.type === 'input' ? 'filter' : 'scroll';
     const started = starts.get(event);
@@ -41,9 +47,11 @@ const startResponsiveness = (): void => {
       }),
     );
   };
+
   document.addEventListener('input', capture, true);
   document.addEventListener('input', listen);
   document.addEventListener('scroll', listen, true);
+
   if (PerformanceObserver.supportedEntryTypes.includes('event')) {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries() as PerformanceEventTiming[]) {
@@ -56,18 +64,22 @@ const startResponsiveness = (): void => {
         });
       }
     });
+
     // The browser supports durationThreshold before TypeScript's DOM definitions include it.
     const eventOptions = { type: 'event', durationThreshold: 16, buffered: true };
     observer.observe(eventOptions);
     observers.push(observer);
   }
+
   if (PerformanceObserver.supportedEntryTypes.includes('longtask')) {
     const observer = new PerformanceObserver((list) =>
       longTasks.push(...list.getEntries().map((entry) => entry.duration)),
     );
+
     observer.observe({ type: 'longtask' });
     observers.push(observer);
   }
+
   window.addEventListener(
     'pagehide',
     () => {
@@ -87,6 +99,7 @@ const resetResponsiveness = (): void => {
   eventTimings.length = 0;
   longTasks.length = 0;
 };
+
 const diagnostics = {
   prepareRuntimeProfile,
   runRuntimeProfile,
@@ -97,6 +110,7 @@ const diagnostics = {
   lifetimeSummary,
   startResponsiveness,
   resetResponsiveness,
+
   responsivenessSummary: () => ({
     samples: [...samples],
     eventTimings: [...eventTimings],
@@ -114,4 +128,5 @@ declare global {
     readonly interactionId: number;
   }
 }
+
 window.framekitDiagnostics = diagnostics;

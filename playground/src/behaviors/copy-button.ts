@@ -12,30 +12,37 @@ export const copyCommand = async (
   idleLabel: string,
 ): Promise<void> => {
   let copied = true;
+
   try {
     await navigator.clipboard.writeText(command);
   } catch {
     copied = false;
   }
+
   if (button.isDestroyed()) {
     return;
   }
 
   button.Text = copied ? 'COPIED  ✅' : 'Copy failed';
+
   const previousFeedback = feedbackTimers.get(button);
+
   if (previousFeedback) {
     window.clearTimeout(previousFeedback.timer);
     previousFeedback.unregisterCleanup();
   }
 
   let unregisterCleanup = (): void => {};
+
   const timer = window.setTimeout(() => {
     feedbackTimers.delete(button);
     unregisterCleanup();
+
     if (!button.isDestroyed()) {
       button.Text = idleLabel;
     }
   }, 1600);
+
   unregisterCleanup = button.onDestroy(() => {
     window.clearTimeout(timer);
     feedbackTimers.delete(button);

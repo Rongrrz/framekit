@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const repository = fileURLToPath(new URL('../', import.meta.url));
+
 const consumer = mkdtempSync(join(tmpdir(), 'framekit-consumer-'));
+
 const fixture = readFileSync(join(repository, 'src/__tests__/public-api.typecheck.ts'), 'utf8');
 
 beforeAll(() => {
@@ -26,12 +28,16 @@ beforeAll(() => {
       stdio: 'pipe',
     },
   );
+
   const packageDirectory = join(consumer, 'node_modules/framekit');
   mkdirSync(packageDirectory, { recursive: true });
+
   const archive = readdirSync(consumer).find((file) => file.endsWith('.tgz'));
+
   if (!archive) {
     throw new Error('npm pack did not produce an archive.');
   }
+
   execFileSync('tar', [
     '-xzf',
     join(consumer, archive),
@@ -56,6 +62,7 @@ describe('packed package consumers', () => {
       format === 'module'
         ? "const api = await import('framekit');"
         : "const api = require('framekit');";
+
     const output = execFileSync(
       process.execPath,
       [
@@ -82,6 +89,7 @@ describe('packed package consumers', () => {
       ],
       { cwd: consumer, encoding: 'utf8' },
     );
+
     expect(JSON.parse(output)).toEqual({
       bindPopover: 'function',
       bindTooltip: 'function',
@@ -104,7 +112,9 @@ describe('packed package consumers', () => {
         format === 'module'
           ? "const api = await import('framekit'); const devtools = await import('framekit/devtools');"
           : "const api = require('framekit'); const devtools = require('framekit/devtools');";
+
       const environment = new URL('../node_modules/happy-dom/lib/index.js', import.meta.url).href;
+
       const output = execFileSync(
         process.execPath,
         [
@@ -142,6 +152,7 @@ describe('packed package consumers', () => {
         ],
         { cwd: consumer, encoding: 'utf8' },
       );
+
       expect(JSON.parse(output)).toEqual({
         name: 'Packaged instance',
         className: 'Frame',

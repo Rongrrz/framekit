@@ -40,19 +40,24 @@ const frameTagNames = [
   'nav',
   'figure',
 ] as const;
+
 const defaultFrameProperties: Readonly<FrameProperties> = Object.freeze({
   ...createDefaultGuiObjectProperties(),
   Name: 'Frame',
 });
+
 const frameTemplates = new WeakMap<Document, Map<FrameTagName, () => HTMLElement>>();
 
 function createFrameElement(ownerDocument: Document, tagName: FrameTagName): HTMLElement {
   let templates = frameTemplates.get(ownerDocument);
+
   if (!templates) {
     templates = new Map();
     frameTemplates.set(ownerDocument, templates);
   }
+
   let createElement = templates.get(tagName);
+
   if (!createElement) {
     const node = createGuiObjectNode({
       className: 'Frame',
@@ -60,10 +65,12 @@ function createFrameElement(ownerDocument: Document, tagName: FrameTagName): HTM
       defaultProperties: defaultFrameProperties,
       initialProperties: {},
     });
+
     createElement = createStyledElementFactory(node.unsafeElement);
     node.destroy();
     templates.set(tagName, createElement);
   }
+
   return createElement();
 }
 
@@ -71,6 +78,7 @@ function createFrameElement(ownerDocument: Document, tagName: FrameTagName): HTM
 export function createFrame(initialProperties: FrameOptions = {}, options: DomOptions = {}): Frame {
   const { TagName = 'div', ...properties } = initialProperties;
   assertAllowedValue(TagName, frameTagNames, 'Frame TagName');
+
   return createGuiObjectNode({
     className: 'Frame',
     element: createFrameElement(resolveOwnerDocument(options), TagName),

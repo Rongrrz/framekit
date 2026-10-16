@@ -14,6 +14,7 @@ describe('links', () => {
       Rel: 'help noopener',
       AccessibleLabel: 'Read the FrameKit guide',
     });
+
     const onClick = vi.fn((event: MouseEvent) => event.preventDefault());
 
     link.onClick(onClick);

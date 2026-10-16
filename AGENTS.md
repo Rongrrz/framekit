@@ -14,3 +14,10 @@ Use focused validation during development. Keep the full test and build matrix i
 - `npm run check` is static validation (formatting, types, lint). Reserve `npm run check:all` for
   broad changes, release preparation, or an explicit request for comprehensive local validation.
   Run packaged-consumer checks when exports, build configuration, or packaging change.
+
+# Source readability
+
+- Separate functions, types, control-flow blocks, and distinct setup, update, and cleanup phases
+  with a blank line. Keep related short declarations and a value export with its types together.
+- Separate multiline callbacks and CSS rules so their boundaries are easy to scan.
+- Preserve this spacing when editing; formatter compliance alone does not ensure readable grouping.

@@ -41,6 +41,7 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
 
   function claim(properties: readonly (keyof Properties)[]): void {
     claimAnimationProperties(node, properties, owner);
+
     for (const property of properties) {
       claimedProperties.add(property);
     }
@@ -48,6 +49,7 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
 
   function release(properties: readonly (keyof Properties)[]): void {
     releaseAnimationProperties(node, properties, owner);
+
     for (const property of properties) {
       claimedProperties.delete(property);
     }
@@ -61,6 +63,7 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
     if (scheduled) {
       return;
     }
+
     scheduled = true;
     scheduleAnimationTask(options.frame);
   }
@@ -69,6 +72,7 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
     if (!scheduled) {
       return;
     }
+
     scheduled = false;
     cancelAnimationTask(options.frame);
   }

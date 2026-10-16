@@ -75,6 +75,7 @@ it.each([createFrame, createScreenGui])(
     const dispose = node.onMouseEnter(enter);
     node.onMouseEnter(otherEnter);
     node.onMouseLeave(leave);
+
     const event = new MouseEvent('mouseenter');
     node.unsafeElement.dispatchEvent(event);
     expect(enter).toHaveBeenCalledExactlyOnceWith(event);

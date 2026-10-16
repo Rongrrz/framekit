@@ -12,14 +12,17 @@ export const validatePanelOptions = (target: GuiElement, options: PanelOptions):
   if (target.isDestroyed()) {
     throw new Error('Floating panel target has been destroyed.');
   }
+
   if (!target.unsafeElement.ownerDocument.defaultView) {
     throw new Error('Floating panel requires a document with a window.');
   }
+
   if (options.kind === 'tooltip') {
     assertBoolean(options.followCursor, 'Tooltip followCursor');
   } else {
     assertAllowedValue(options.openOn, ['hover', 'click'], 'Popover openOn');
   }
+
   if (options.placement !== undefined) {
     assertAllowedValue(
       options.placement,
@@ -27,12 +30,15 @@ export const validatePanelOptions = (target: GuiElement, options: PanelOptions):
       'Floating panel placement',
     );
   }
+
   if (options.gap !== undefined) {
     assertNonNegativeFinite(options.gap, 'Floating panel gap');
   }
+
   if (options.delay !== undefined) {
     assertNonNegativeFinite(options.delay, 'Floating panel delay');
   }
+
   for (const hook of [options.onShow, options.onHide]) {
     if (hook !== undefined && typeof hook !== 'function') {
       throw new TypeError('Floating panel hooks must be functions.');

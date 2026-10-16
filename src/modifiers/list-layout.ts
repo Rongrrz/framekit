@@ -46,8 +46,11 @@ export type UIListLayoutProperties = InstanceProperties & {
 export type UIListLayout = LayoutModifier<UIListLayoutProperties>;
 
 const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
+
 const horizontalAlignments: readonly HorizontalAlignment[] = ['Left', 'Center', 'Right'];
+
 const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bottom'];
+
 const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a list layout that arranges its parent's direct GUI children. */

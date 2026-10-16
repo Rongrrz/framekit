@@ -27,6 +27,7 @@ export const appendPopoverExamples = (
     'Interactive popovers',
     'Hover, focus, or click to open. Tab enters the buttons; Escape or clicking outside closes. Try the actions below.',
   );
+
   const status = createText(theme, {
     text: 'Choose an action in either dropdown.',
     name: 'PopoverExampleStatus',
@@ -35,9 +36,12 @@ export const appendPopoverExamples = (
     color: 'textMuted',
     wrapped: true,
   });
+
   status.unsafeElement.setAttribute('role', 'status');
+
   const row = createExampleRow(article, layout);
   let count = 0;
+
   for (const [index, label] of ['Default spring', 'Custom fade + blur'].entries()) {
     const trigger = createButton(theme, {
       label,
@@ -45,6 +49,7 @@ export const appendPopoverExamples = (
       position: udim2FromOffset(0, 0),
       size: udim2FromOffset(332, 44),
     });
+
     bindLayoutProperties(trigger, layout, trigger, {
       desktop: {
         Size: udim2FromOffset(332, 44),
@@ -54,13 +59,16 @@ export const appendPopoverExamples = (
       },
     });
     trigger.Parent = row;
+
     const panel = createSurface(theme, {
       name: `PopoverExamplePanel${index + 1}`,
       size: udim2FromOffset(250, 172),
       background: 'surfaceRaised',
       radius: 12,
     });
+
     panel.unsafeElement.setAttribute('aria-label', `${label} actions`);
+
     const actions = [
       [
         'Say hello',
@@ -82,6 +90,7 @@ export const appendPopoverExamples = (
         },
       ],
     ] as const;
+
     for (const [actionIndex, [text, action]] of actions.entries()) {
       const button = createButton(theme, {
         label: text,
@@ -89,9 +98,11 @@ export const appendPopoverExamples = (
         position: udim2FromOffset(12, 12 + actionIndex * 52),
         background: 'surface',
       });
+
       button.onClick(action);
       button.Parent = panel;
     }
+
     bindPopover(trigger, panel, {
       openOn: 'hover',
       gap: 8,
@@ -99,6 +110,7 @@ export const appendPopoverExamples = (
     });
     trigger.onDestroy(() => panel.destroy());
   }
+
   status.Parent = article;
   createCodeBlock(theme, 'PopoverHooksCode', [
     'const dispose = bindPopover(button, dropdown, {',
@@ -113,12 +125,14 @@ export const appendPopoverExamples = (
     '// The same hooks work with bindTooltip().',
     '// Omit hooks for the built-in spring and reduced-motion support.',
   ]).Parent = article;
+
   return heading;
 };
 
 /** A caller-defined opacity/blur animation; its signal cancels native animation work. */
 const createPopoverAnimation = (): Pick<PopoverOptions, 'onShow' | 'onHide'> => {
   let opacity = 0;
+
   const animate = async (
     { content, signal }: FloatingPanelContext,
     showing: boolean,
@@ -126,10 +140,13 @@ const createPopoverAnimation = (): Pick<PopoverOptions, 'onShow' | 'onHide'> => 
     const element = content.unsafeElement;
     const window = element.ownerDocument.defaultView!;
     const destination = showing ? 1 : 0;
+
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       opacity = destination;
+
       return;
     }
+
     const animation = element.animate(
       [
         { opacity, filter: `blur(${(1 - opacity) * 4}px)` },
@@ -137,11 +154,14 @@ const createPopoverAnimation = (): Pick<PopoverOptions, 'onShow' | 'onHide'> => 
       ],
       { duration: 180 * Math.abs(destination - opacity), easing: 'ease-out' },
     );
+
     const cancel = (): void => {
       opacity = Number(window.getComputedStyle(element).opacity);
       animation.cancel();
     };
+
     signal.addEventListener('abort', cancel, { once: true });
+
     try {
       await animation.finished;
       opacity = destination;
@@ -154,6 +174,7 @@ const createPopoverAnimation = (): Pick<PopoverOptions, 'onShow' | 'onHide'> => 
       animation.cancel();
     }
   };
+
   return {
     onShow: (context) => animate(context, true),
     onHide: (context) => animate(context, false),

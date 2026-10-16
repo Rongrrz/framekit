@@ -20,32 +20,47 @@ const workloads = {
 };
 
 const directory = dirname(fileURLToPath(import.meta.url));
+
 const repository = resolve(directory, '../..');
+
 const mode = process.argv[2];
+
 if (!Object.hasOwn(workloads, mode)) {
   throw new Error(
     'Usage: node benchmarks/diagnostics/run.mjs lifecycle|responsiveness|runtime [--out path] [--cpu-throttle 4] [--repetitions 5]',
   );
 }
+
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
+
   return index < 0 ? fallback : process.argv[index + 1];
 };
+
 const repetitions = Number(option('--repetitions', '5'));
+
 const throttle = Number(option('--cpu-throttle', mode === 'responsiveness' ? '4' : '1'));
+
 assert.ok(
   [repetitions, throttle].every((value) => Number.isInteger(value) && value > 0),
   'Repetitions and CPU throttle must be positive integers.',
 );
+
 const output = resolve(option('--out', `test-results/diagnostics/${mode}.json`));
+
 const git = (...args) => execFileSync('git', args, { cwd: repository, encoding: 'utf8' }).trim();
+
 const revision = git('rev-parse', 'HEAD');
+
 const workingTree = git('status', '--porcelain', '--', 'src', 'benchmarks/diagnostics');
+
 const fingerprint = async () => {
   const hash = createHash('sha256');
+
   for (const root of ['src', 'benchmarks/diagnostics']) {
     for (const file of (await readdir(join(repository, root), { recursive: true })).sort()) {
       const path = join(repository, root, file);
+
       if (/\.(ts|mjs|html|css)$/.test(file) && (await stat(path)).isFile()) {
         hash
           .update(`${root}/${file}\0`)
@@ -54,10 +69,14 @@ const fingerprint = async () => {
       }
     }
   }
+
   return hash.digest('hex');
 };
+
 const sourceSha256 = await fingerprint();
+
 const temporary = await mkdtemp(join(tmpdir(), 'framekit-diagnostics-'));
+
 const configuration = {
   configFile: false,
   root: directory,
@@ -76,8 +95,11 @@ const configuration = {
   build: { outDir: temporary, emptyOutDir: true, minify: mode !== 'runtime' },
   preview: { host: '127.0.0.1', port: 0, strictPort: true },
 };
+
 let server;
+
 let browser;
+
 try {
   await build(configuration);
   assert.equal(
@@ -87,13 +109,16 @@ try {
   );
   server = await preview(configuration);
   browser = await chromium.launch();
+
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
+
   const client = await page.context().newCDPSession(page);
   await client.send('Emulation.setCPUThrottlingRate', { rate: throttle });
   await page.goto(server.resolvedUrls.local[0]);
   await page.waitForFunction(() => Boolean(window.framekitDiagnostics));
+
   const results = await workloads[mode]({ page, client, repetitions, output });
   assert.deepEqual(errors, [], 'Browser reported errors.');
   await mkdir(dirname(output), { recursive: true });
@@ -142,10 +167,12 @@ try {
   );
 } finally {
   await browser?.close();
+
   if (server) {
     await new Promise((done, reject) =>
       server.httpServer.close((error) => (error ? reject(error) : done())),
     );
   }
+
   await rm(temporary, { recursive: true, force: true });
 }

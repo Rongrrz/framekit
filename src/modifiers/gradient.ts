@@ -84,14 +84,17 @@ function resolveGradientStyles(
   const times = mergeSequenceTimes(properties.Color, properties.Transparency);
   const offset = gradientOffset(properties.Offset, properties.Rotation);
   const cssAngle = properties.Rotation + 90;
+
   const stops = times.map((time) => {
     const color = multiplyColors(targetColor, sampleColor(properties.Color, time));
     const gradientTransparency = sampleNumber(properties.Transparency, time);
     const transparency = combineTransparency(targetTransparency, gradientTransparency);
+
     return `${color3ToCss(color, transparency)} ${formatPercentage(time + offset)}`;
   });
 
   const image = `linear-gradient(${cssAngle}deg, ${stops.join(', ')})`;
+
   return properties.ApplyTo === 'Text'
     ? {
         [textGradientFillProperty]: 'transparent',
@@ -116,9 +119,11 @@ function validateGradientProperties(properties: Readonly<UIGradientProperties>):
   assertBoolean(properties.Enabled, 'Enabled');
   assertColorSequence(properties.Color);
   assertNumberSequence(properties.Transparency);
+
   for (const keypoint of properties.Transparency) {
     assertUnitInterval(keypoint.Value, 'Transparency');
   }
+
   assertFiniteNumber(properties.Rotation, 'Rotation');
   assertVector2(properties.Offset, 'Offset');
   assertAllowedValue(properties.ApplyTo, ['Background', 'Text'], 'ApplyTo');
@@ -136,6 +141,7 @@ function mergeSequenceTimes(
 function sampleColor(sequence: ColorSequence, time: number): Color3 {
   const [start, end] = surroundingKeypoints(sequence, time);
   const alpha = interpolationAlpha(start.Time, end.Time, time);
+
   return color3FromRGB(
     interpolate(start.Value.R, end.Value.R, alpha),
     interpolate(start.Value.G, end.Value.G, alpha),
@@ -145,6 +151,7 @@ function sampleColor(sequence: ColorSequence, time: number): Color3 {
 
 function sampleNumber(sequence: NumberSequence, time: number): number {
   const [start, end] = surroundingKeypoints(sequence, time);
+
   return interpolate(start.Value, end.Value, interpolationAlpha(start.Time, end.Time, time));
 }
 
@@ -153,9 +160,11 @@ function surroundingKeypoints<Keypoint extends { Time: number }>(
   time: number,
 ): readonly [Keypoint, Keypoint] {
   const endIndex = sequence.findIndex((keypoint) => keypoint.Time >= time);
+
   if (endIndex <= 0) {
     return [sequence[0]!, sequence[0]!];
   }
+
   return [sequence[endIndex - 1]!, sequence[endIndex]!];
 }
 
@@ -169,6 +178,7 @@ function interpolate(start: number, end: number, alpha: number): number {
 
 function gradientOffset(offset: Vector2, rotation: number): number {
   const radians = (rotation * Math.PI) / 180;
+
   return offset.X * Math.cos(radians) + offset.Y * Math.sin(radians);
 }
 
@@ -176,20 +186,25 @@ function readTargetColor(target: ModifierTarget, surface: GradientTarget): Color
   if (surface === 'Text' && target.capabilities.displayText) {
     return (target.properties as unknown as Readonly<{ TextColor3: Color3 }>).TextColor3;
   }
+
   if (surface === 'Background' && target.capabilities.guiObject) {
     return (target.properties as Readonly<GuiObjectProperties>).BackgroundColor3;
   }
+
   return color3FromRGB(255, 255, 255);
 }
 
 function readTargetTransparency(target: ModifierTarget, surface: GradientTarget): number {
   if (surface === 'Text' && target.capabilities.displayText) {
     const properties = target.properties as unknown as Readonly<{ TextTransparency: number }>;
+
     return properties.TextTransparency;
   }
+
   if (surface === 'Background' && target.capabilities.guiObject) {
     return (target.properties as Readonly<GuiObjectProperties>).BackgroundTransparency;
   }
+
   return 0;
 }
 

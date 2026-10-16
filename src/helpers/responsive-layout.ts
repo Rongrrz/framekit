@@ -66,11 +66,13 @@ function bindViewportLayout(
   }
 
   const ownerWindow = owner.unsafeElement.ownerDocument.defaultView;
+
   if (!ownerWindow) {
     throw new Error('Responsive layout requires a document with a window.');
   }
 
   let currentLayout: ViewportLayout | undefined;
+
   const updateLayout = (): void => {
     const nextLayout = ownerWindow.innerWidth < options.breakpoint ? 'mobile' : 'desktop';
 
@@ -83,6 +85,7 @@ function bindViewportLayout(
   };
 
   updateLayout();
+
   if (owner.isDestroyed()) {
     return noop;
   }
@@ -91,6 +94,7 @@ function bindViewportLayout(
   ownerWindow.addEventListener('resize', updateLayout, {
     signal: listenerController.signal,
   });
+
   const unregisterDestroy = owner.onDestroy(dispose);
 
   function dispose(): void {
@@ -106,26 +110,34 @@ function bindContainerLayout(
   options: ContainerResponsiveLayoutOptions,
 ): Unsubscribe {
   const observed = options.observe;
+
   if (observed.isDestroyed()) {
     throw new Error('Responsive layout container has been destroyed.');
   }
+
   if (owner.unsafeElement.ownerDocument !== observed.unsafeElement.ownerDocument) {
     throw new TypeError('Responsive layout owner and container must belong to the same document.');
   }
 
   validateBreakpoints(options.breakpoints);
+
   const ownerWindow = owner.unsafeElement.ownerDocument.defaultView;
+
   if (!ownerWindow) {
     throw new Error('Responsive layout requires a document with a window.');
   }
+
   const ResizeObserverConstructor = ownerWindow.ResizeObserver ?? globalThis.ResizeObserver;
+
   if (typeof ResizeObserverConstructor !== 'function') {
     throw new Error('Container responsive layout requires ResizeObserver.');
   }
 
   let currentBreakpointIndex: number | undefined;
+
   const updateLayout = (): void => {
     const bounds = observed.unsafeElement.getBoundingClientRect();
+
     const nextBreakpointIndex = options.breakpoints.findIndex(
       ({ maxWidth }) => maxWidth === undefined || bounds.width <= maxWidth,
     );
@@ -138,6 +150,7 @@ function bindContainerLayout(
       currentBreakpointIndex === undefined
         ? undefined
         : options.breakpoints[currentBreakpointIndex];
+
     const breakpoint = options.breakpoints[nextBreakpointIndex]!;
     currentBreakpointIndex = nextBreakpointIndex;
     breakpoint.apply({
@@ -149,12 +162,14 @@ function bindContainerLayout(
   };
 
   updateLayout();
+
   if (owner.isDestroyed() || observed.isDestroyed()) {
     return noop;
   }
 
   const observer = new ResizeObserverConstructor(updateLayout);
   observer.observe(observed.unsafeElement);
+
   const unregisterOwnerDestroy = owner.onDestroy(dispose);
   const unregisterContainerDestroy = observed === owner ? noop : observed.onDestroy(dispose);
 
@@ -185,10 +200,12 @@ function validateBreakpoints(
   }
 
   const boundedBreakpoints = breakpoints.slice(0, -1);
+
   for (const breakpoint of boundedBreakpoints) {
     if (breakpoint.maxWidth === undefined) {
       throw new TypeError('Only the final responsive layout breakpoint may omit maxWidth.');
     }
+
     assertNonNegativeFinite(breakpoint.maxWidth, 'Responsive layout maxWidth');
   }
 
@@ -197,6 +214,7 @@ function validateBreakpoints(
   }
 
   const widths = boundedBreakpoints.map(({ maxWidth }) => maxWidth!);
+
   if (widths.some((width, index) => index > 0 && width <= widths[index - 1]!)) {
     throw new TypeError('Responsive layout maxWidth values must be strictly increasing.');
   }

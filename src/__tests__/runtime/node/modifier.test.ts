@@ -74,6 +74,7 @@ describe('modifier attachment and validation', () => {
   it('rolls back a failed modifier append without corrupting its target', () => {
     const frame = createFrame({ Name: 'RejectedTarget' });
     const render = vi.fn(() => ({}));
+
     const rejected = createStyleModifier(
       'Rejected',
       { Name: 'Rejected' },
@@ -101,10 +102,12 @@ describe('modifier attachment and validation', () => {
     const frame = createFrame();
     const corner = createUICorner({ CornerRadius: 6 });
     let renderMustFail = false;
+
     const failing = createStyleModifier('Failing', { Name: 'Failing' }, () => {
       if (renderMustFail) {
         throw new Error('derived render failed');
       }
+
       return {};
     });
 

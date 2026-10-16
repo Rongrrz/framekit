@@ -9,10 +9,13 @@ export function destroyNodesAfterEach(): <Node extends Instance>(node: Node) => 
     for (const node of nodes) {
       node.destroy();
     }
+
     nodes.clear();
   });
+
   return (node) => {
     nodes.add(node);
+
     return node;
   };
 }

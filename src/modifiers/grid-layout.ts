@@ -47,8 +47,11 @@ export type UIGridLayoutProperties = InstanceProperties & {
 export type UIGridLayout = LayoutModifier<UIGridLayoutProperties>;
 
 const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
+
 const horizontalAlignments: readonly HorizontalAlignment[] = ['Left', 'Center', 'Right'];
+
 const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bottom'];
+
 const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a grid that gives each direct GUI child the same cell size. */
@@ -80,6 +83,7 @@ function resolveGridLayout(properties: Readonly<UIGridLayoutProperties>): Layout
   const cellWidth = udimToCss(properties.CellSize.X);
   const cellHeight = udimToCss(properties.CellSize.Y);
   const trackCount = properties.FillDirectionMaxCells || 'auto-fill';
+
   const sharedParentStyles = {
     display: 'grid',
     gap: `${udimToCss(properties.CellPadding.Y)} ${udimToCss(properties.CellPadding.X)}`,
@@ -87,6 +91,7 @@ function resolveGridLayout(properties: Readonly<UIGridLayoutProperties>): Layout
     'justify-content': resolveHorizontalAlignment(properties.HorizontalAlignment),
     'align-content': resolveVerticalAlignment(properties.VerticalAlignment),
   } satisfies Styles;
+
   const parent: Styles = horizontal
     ? {
         ...sharedParentStyles,

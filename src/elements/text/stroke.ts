@@ -8,10 +8,13 @@ import {
 } from './style.js';
 
 export const textStrokeColorProperty = '--framekit-text-stroke-color';
+
 export const textStrokeContentProperty = '--framekit-text-stroke-content';
+
 export const textStrokeWidthProperty = '--framekit-text-stroke-width';
 
 const textStrokeAlignProperty = '--framekit-text-stroke-align';
+
 const textStrokeJustifyProperty = '--framekit-text-stroke-justify';
 
 /** Prepares one text host to render an optional outline without another DOM node. */

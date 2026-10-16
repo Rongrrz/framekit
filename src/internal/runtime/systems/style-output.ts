@@ -55,9 +55,11 @@ export function composeStyles(...sources: readonly Styles[]): Styles {
   for (const source of sources) {
     for (const property of Object.keys(source) as StyleProperty[]) {
       const value = source[property];
+
       if (value === undefined) {
         continue;
       }
+
       const previousValue = composed[property];
       const separator = resolveSeparator(property);
       composed[property] =
@@ -70,11 +72,14 @@ export function composeStyles(...sources: readonly Styles[]): Styles {
 
 function resolveSeparator(property: StyleProperty): string | undefined {
   const composition = compositionByProperty.get(property);
+
   if (composition === 'comma-separated') {
     return ', ';
   }
+
   if (composition === 'space-separated') {
     return ' ';
   }
+
   return undefined;
 }

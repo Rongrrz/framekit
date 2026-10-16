@@ -21,6 +21,7 @@ describe('composing base and modifier styles', () => {
     const parent = createFrame();
     const child = createFrame();
     const resolveLayout = vi.fn(() => ({ parent: {}, child: {}, compareChildren: () => 0 }));
+
     const layout = createLayoutModifier(
       'TrackedLayout',
       { Name: 'TrackedLayout', Gap: 0 },
@@ -47,6 +48,7 @@ describe('composing base and modifier styles', () => {
 
   it('reconciles modifiers without replaying base property renderers', () => {
     const applyProperties = vi.fn();
+
     const node = createGuiObjectNode({
       className: 'TrackedNode',
       element: document.createElement('div'),
@@ -54,6 +56,7 @@ describe('composing base and modifier styles', () => {
       initialProperties: {},
       renderProperties: applyProperties,
     });
+
     const corner = createUICorner({ CornerRadius: 8 });
 
     expect(applyProperties).toHaveBeenCalledOnce();
@@ -68,6 +71,7 @@ describe('composing base and modifier styles', () => {
   it('applies, updates, and removes corner and stroke styles through the tree', () => {
     const frame = createTextLabel();
     const corner = createUICorner({ CornerRadius: 12 });
+
     const stroke = createUIStroke({
       Color: color3FromRGB(10, 20, 30),
       Thickness: 2,
@@ -106,6 +110,7 @@ describe('composing base and modifier styles', () => {
   it('composes shadows and strokes without overwriting siblings', () => {
     const frame = createFrame();
     const stroke = createUIStroke({ Color: color3FromRGB(255, 255, 255), Thickness: 2 });
+
     const shadow = createUIShadow({
       Color: color3FromRGB(10, 20, 30),
       Offset: vector2(4, 8),
@@ -126,9 +131,11 @@ describe('composing base and modifier styles', () => {
 
   it('uses the declared composition policy for filter output', () => {
     const frame = createFrame();
+
     const blur = createStyleModifier('Blur', { Name: 'Blur' }, () => ({
       filter: 'blur(2px)',
     }));
+
     const contrast = createStyleModifier('Contrast', { Name: 'Contrast' }, () => ({
       filter: 'contrast(1.2)',
     }));
@@ -144,6 +151,7 @@ describe('composing base and modifier styles', () => {
       Name: 'Override',
       BackgroundColor3: color3FromRGB(20, 30, 40),
     });
+
     const conditional = createStyleModifier('Conditional', { Name: 'Conditional' }, (_, target) =>
       target.properties.Name === 'Override' ? { 'background-color': 'rgb(200 100 50)' } : {},
     );

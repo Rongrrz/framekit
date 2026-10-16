@@ -11,9 +11,11 @@ export function bindHoverScale(
   hoveredScale = 1.035,
 ): Unsubscribe {
   assertNonNegativeFinite(hoveredScale, 'Hovered scale');
+
   if (scale.Parent !== node) {
     throw new Error('Hover scale must be attached to its event node.');
   }
+
   const unsubscribeEnter = node.onMouseEnter(() => spring(scale, { Scale: hoveredScale }));
   const unsubscribeLeave = node.onMouseLeave(() => spring(scale, { Scale: 1 }));
   const unregisterDestroy = node.onDestroy(dispose);
@@ -23,10 +25,12 @@ export function bindHoverScale(
     if (!active) {
       return;
     }
+
     active = false;
     unsubscribeEnter();
     unsubscribeLeave();
     unregisterDestroy();
+
     if (!scale.isDestroyed()) {
       spring(scale).stop('Scale');
     }

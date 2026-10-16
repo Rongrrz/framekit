@@ -25,12 +25,14 @@ test('disposes an open menu repeatedly and restores caller attributes, position,
     menu.unsafeElement.setAttribute('popover', 'manual');
     item.unsafeElement.setAttribute('role', 'link');
     item.unsafeElement.tabIndex = 3;
+
     const position = menu.Position;
     const binding = bindMenu(trigger, menu, [item]);
     binding.open();
     binding.dispose();
     binding.dispose();
     trigger.unsafeElement.click();
+
     const result = {
       open: menu.unsafeElement.matches(':popover-open'),
       trigger: ['aria-controls', 'aria-expanded', 'aria-haspopup'].map((name) =>
@@ -44,10 +46,13 @@ test('disposes an open menu repeatedly and restores caller attributes, position,
       focused: document.activeElement === trigger.unsafeElement,
       retained: !menu.isDestroyed() && !item.isDestroyed(),
     };
+
     trigger.destroy();
     menu.destroy();
+
     return result;
   });
+
   expect(result).toEqual({
     open: false,
     trigger: ['original-control', 'mixed', 'listbox'],
@@ -65,11 +70,14 @@ test('outside-click dismissal synchronizes menu state and preserves the clicked 
   await page.evaluate(() => {
     const { createFrame, createTextButton, createTextInput, bindMenu, udim2FromOffset } =
       window.framekit;
+
     const trigger = createTextButton({ Text: 'Menu trigger' });
+
     const outside = createTextInput({
       AccessibleLabel: 'Outside',
       Position: udim2FromOffset(400, 0),
     });
+
     const menu = createFrame({ Size: udim2FromOffset(180, 60) });
     const item = createTextButton({ Text: 'Menu command' });
     item.Parent = menu;
@@ -93,6 +101,7 @@ for (const destroyOpener of [false, true]) {
   }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
+
     const result = await page.evaluate((destroyOpener) => {
       const { createFrame, createTextButton, bindDialog } = window.framekit;
       const opener = createTextButton({ Text: 'Open' });
@@ -101,22 +110,29 @@ for (const destroyOpener of [false, true]) {
       close.Parent = dialog;
       dialog.unsafeElement.setAttribute('aria-label', 'Lifetime modal');
       document.body.append(opener.unsafeElement, dialog.unsafeElement);
+
       const binding = bindDialog(dialog, { initialFocus: close });
       binding.open(opener);
+
       if (destroyOpener) {
         opener.destroy();
       }
+
       binding.dispose();
       binding.dispose();
+
       const result = {
         open: (dialog.unsafeElement as HTMLDialogElement).open,
         focusRestored: document.activeElement === opener.unsafeElement,
         retained: !dialog.isDestroyed() && !close.isDestroyed(),
       };
+
       dialog.destroy();
       opener.destroy();
+
       return result;
     }, destroyOpener);
+
     expect(result).toEqual({ open: false, focusRestored: !destroyOpener, retained: true });
     expect(errors).toEqual([]);
   });
@@ -134,20 +150,27 @@ test('destroying an open menu trigger or modal releases native top-layer state',
     document.body.append(trigger.unsafeElement, menu.unsafeElement);
     bindMenu(trigger, menu, [command]).open();
     trigger.destroy();
+
     const menuClosed = !menu.unsafeElement.matches(':popover-open');
+
     const attributesRestored =
       !menu.unsafeElement.hasAttribute('popover') && !command.unsafeElement.hasAttribute('role');
+
     menu.destroy();
+
     const dialog = createFrame({ TagName: 'dialog' });
     document.body.append(dialog.unsafeElement);
+
     const binding = bindDialog(dialog);
     binding.open();
     dialog.destroy();
+
     return {
       menuClosed,
       attributesRestored,
       modalClosed: !(dialog.unsafeElement as HTMLDialogElement).open,
     };
   });
+
   expect(result).toEqual({ menuClosed: true, attributesRestored: true, modalClosed: true });
 });

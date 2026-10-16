@@ -15,6 +15,7 @@ export type SpringOptions = Readonly<{
 }>;
 
 export type ResolvedSpringOptions = Required<SpringOptions>;
+
 export type SpringSolution = { value: number; velocity: number };
 
 export const defaultSpringOptions: ResolvedSpringOptions = {
@@ -33,8 +34,10 @@ export function resolveSpringOptions(
 ): ResolvedSpringOptions {
   const precision = options.precision ?? fallback.precision;
   const inferredRestVelocity = precision * (1000 / 16);
+
   const restVelocityFallback =
     options.precision === undefined ? fallback.restVelocity : inferredRestVelocity;
+
   const resolved: ResolvedSpringOptions = {
     tension: options.tension ?? fallback.tension,
     friction: options.friction ?? fallback.friction,
@@ -48,6 +51,7 @@ export function resolveSpringOptions(
   assertPositiveFinite(resolved.mass, 'Spring mass');
   assertPositiveFinite(resolved.precision, 'Spring precision');
   assertPositiveFinite(resolved.restVelocity, 'Spring rest velocity');
+
   return resolved;
 }
 
@@ -62,6 +66,7 @@ export function solveSpring(
   if (deltaTime === 0) {
     solution.value = value;
     solution.velocity = velocity;
+
     return solution;
   }
 
@@ -75,16 +80,21 @@ export function solveSpring(
     const decay = Math.exp(-dampingRatio * angularFrequency * deltaTime);
     const cosine = Math.cos(dampedFrequency * deltaTime);
     const sine = Math.sin(dampedFrequency * deltaTime);
+
     const sineCoefficient =
       (velocity + dampingRatio * angularFrequency * displacement) / dampedFrequency;
+
     const nextDisplacement = decay * (displacement * cosine + sineCoefficient * sine);
+
     const nextVelocity =
       decay *
       (-dampingRatio * angularFrequency * (displacement * cosine + sineCoefficient * sine) +
         -displacement * dampedFrequency * sine +
         sineCoefficient * dampedFrequency * cosine);
+
     solution.value = goal + nextDisplacement;
     solution.velocity = nextVelocity;
+
     return solution;
   }
 
@@ -100,6 +110,7 @@ export function solveSpring(
     solution.value = goal + firstCoefficient * firstDecay + secondCoefficient * secondDecay;
     solution.velocity =
       firstRate * firstCoefficient * firstDecay + secondRate * secondCoefficient * secondDecay;
+
     return solution;
   }
 
@@ -108,5 +119,6 @@ export function solveSpring(
   const coefficient = velocity + angularFrequency * displacement;
   solution.value = goal + decay * (displacement + coefficient * deltaTime);
   solution.velocity = decay * (velocity - angularFrequency * coefficient * deltaTime);
+
   return solution;
 }

@@ -24,8 +24,10 @@ export const createHomePage = (
   const page = createRoutedPage('HomePage', 'home', route);
   const content = createFrame({ Name: 'HomeContent', BackgroundTransparency: 1 });
   content.unsafeElement.classList.add('pg-home');
+
   const hero = createFrame({ Name: 'HomeHero', BackgroundTransparency: 1 });
   hero.unsafeElement.classList.add('pg-home-hero');
+
   const heading = appendArticleTitle(
     hero,
     theme,
@@ -33,9 +35,12 @@ export const createHomePage = (
     'UI you can hold onto.',
     'Typed objects. Direct properties. One clear owner. Build browser interfaces with the same tree you use to inspect and clean them up.',
   );
+
   heading.unsafeElement.classList.add('pg-hero-title');
+
   const actions = createFrame({ Name: 'HomeActions', BackgroundTransparency: 1 });
   actions.unsafeElement.classList.add('pg-home-actions');
+
   for (const [label, name, destination, primary] of [
     ['Get started  →', 'GetStartedButton', 'guide', true],
     ['Explore the API', 'ApiReferenceButton', 'api', false],
@@ -48,9 +53,11 @@ export const createHomePage = (
       background: primary ? 'accent' : 'surfaceRaised',
       foreground: primary ? 'onAccent' : 'text',
     });
+
     button.onClick(() => navigate(destination));
     button.Parent = actions;
   }
+
   actions.Parent = hero;
   appendFlowText(hero, theme, {
     text: 'TypeScript · Native DOM · No component framework required',
@@ -78,6 +85,7 @@ export const createHomePage = (
     'button.Parent = app;',
     "app.mount('#app');",
   ]).Parent = visual;
+
   const preview = createFrame({ Name: 'HomeResult', BackgroundTransparency: 1 });
   preview.unsafeElement.classList.add('pg-home-preview');
   appendFlowText(preview, theme, {
@@ -87,7 +95,9 @@ export const createHomePage = (
     textSize: 10,
     color: 'textFaint',
   });
+
   const count = createObservableValue(0);
+
   const counter = createButton(theme, {
     label: 'Clicks: 0',
     name: 'LiveCounter',
@@ -96,6 +106,7 @@ export const createHomePage = (
     background: 'accent',
     foreground: 'onAccent',
   });
+
   counter.onClick(() => count.set(count.get() + 1));
   watchOwnedValue(counter, count, (value) => {
     counter.Text = `Clicks: ${value}`;
@@ -112,14 +123,17 @@ export const createHomePage = (
     textSize: 28,
     weight: 700,
   });
+
   appendFlowText(learning, theme, {
     text: 'Start with a working interface, then learn the contracts behind it.',
     size: udim2(1, 0, 0, 0),
     textSize: 16,
     color: 'textMuted',
   });
+
   const cards = createFrame({ Name: 'LearningCards', BackgroundTransparency: 1 });
   cards.unsafeElement.classList.add('pg-learning-cards');
+
   for (const [number, title, description, destination] of [
     [
       '01',
@@ -152,6 +166,7 @@ export const createHomePage = (
       TextYAlignment: 'Top',
       BackgroundTransparency: 1,
     });
+
     link.unsafeElement.classList.add('pg-learning-card');
     bindThemeColors(link, theme, (palette) => ({
       TextColor3: palette.text,
@@ -159,8 +174,10 @@ export const createHomePage = (
     }));
     link.Parent = cards;
   }
+
   cards.Parent = learning;
   learning.Parent = content;
   content.Parent = page;
+
   return page;
 };

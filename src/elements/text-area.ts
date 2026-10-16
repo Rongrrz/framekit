@@ -20,6 +20,7 @@ export type TextAreaProperties = TextControlProperties & {
 export type TextArea = TextControl<TextAreaProperties, HTMLTextAreaElement>;
 
 const resizeDirections = ['None', 'Horizontal', 'Vertical', 'Both'] as const;
+
 const nativeResizeDirections = {
   None: 'none',
   Horizontal: 'horizontal',
@@ -33,6 +34,7 @@ export function createTextArea(
   options: DomOptions = {},
 ): TextArea {
   const element = resolveOwnerDocument(options).createElement('textarea');
+
   return createTextControl({
     className: 'TextArea',
     element,
@@ -43,15 +45,19 @@ export function createTextArea(
       ResizeDirection: 'None',
     },
     initialProperties,
+
     renderProperties: (properties, changedProperties) => {
       if (changedProperties.has('ResizeDirection')) {
         element.style.resize = nativeResizeDirections[properties.ResizeDirection];
       }
+
       if (changedProperties.has('TextWrapped')) {
         element.wrap = properties.TextWrapped ? 'soft' : 'off';
       }
+
       element.style.overflow = 'auto';
     },
+
     validateProperties: (properties) => {
       assertAllowedValue(properties.ResizeDirection, resizeDirections, 'ResizeDirection');
     },

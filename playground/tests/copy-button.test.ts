@@ -4,17 +4,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { copyCommand } from '../src/behaviors/copy-button';
 
 const buttons = new Set<TextButton>();
+
 const createButton = (): TextButton => {
   const button = createTextButton({ Text: 'Copy', BackgroundColor3: color3FromRGB(1, 2, 3) });
   buttons.add(button);
+
   return button;
 };
 
 beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
+
 afterEach(() => {
   for (const button of buttons) {
     button.destroy();
   }
+
   buttons.clear();
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -29,7 +33,9 @@ describe('copy command feedback', () => {
           throw new Error('Clipboard denied');
         }
       });
+
       vi.stubGlobal('navigator', result === 'unavailable' ? {} : { clipboard: { writeText } });
+
       const button = createButton();
 
       await copyCommand(button, 'npm install framekit', 'Copy');
@@ -37,6 +43,7 @@ describe('copy command feedback', () => {
       if (result !== 'unavailable') {
         expect(writeText).toHaveBeenCalledWith('npm install framekit');
       }
+
       expect(button.Text).toBe(result === 'success' ? 'COPIED  ✅' : 'Copy failed');
       expect(button.BackgroundColor3).toEqual(color3FromRGB(1, 2, 3));
       vi.advanceTimersByTime(1599);
@@ -49,6 +56,7 @@ describe('copy command feedback', () => {
 
   it('replaces the previous feedback timer on another completed copy', async () => {
     vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+
     const button = createButton();
     await copyCommand(button, 'first', 'First idle');
     vi.advanceTimersByTime(800);
@@ -70,9 +78,11 @@ describe('copy command feedback', () => {
           }),
       },
     });
+
     const button = createButton();
     const changed = vi.fn();
     button.onPropertyChanged('Text', changed);
+
     const copying = copyCommand(button, 'command', 'Copy');
     button.destroy();
     finishWrite();
@@ -83,6 +93,7 @@ describe('copy command feedback', () => {
 
   it('cancels pending feedback when the button is destroyed', async () => {
     vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+
     const button = createButton();
     await copyCommand(button, 'command', 'Copy');
     button.destroy();

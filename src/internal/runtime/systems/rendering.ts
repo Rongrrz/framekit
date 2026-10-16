@@ -21,8 +21,10 @@ export function renderPropertyChanges<Properties extends InstanceProperties>(
   changedProperties: ReadonlySet<keyof Properties>,
 ): void {
   const state = getNodeState(node);
+
   if (isModifierState(state)) {
     const target = state.parent;
+
     if (!target) {
       return;
     }
@@ -32,12 +34,14 @@ export function renderPropertyChanges<Properties extends InstanceProperties>(
     } else {
       renderModifierStyles(target);
     }
+
     return;
   }
 
   if (state.kind === 'gui') {
     renderNode(node, changedProperties);
   }
+
   if (state.parent && affectsParentLayout(changedProperties) && layoutsByNode.has(state.parent)) {
     renderLayouts(state.parent);
   }
@@ -49,13 +53,17 @@ export function renderNode<Properties extends InstanceProperties>(
   changedProperties: ReadonlySet<keyof Properties>,
 ): void {
   const state = getNodeState(node);
+
   if (state.kind !== 'gui') {
     return;
   }
+
   const reconciledProperties = state.renderProperties?.(state.properties, changedProperties);
+
   if (reconciledProperties) {
     state.properties = { ...state.properties, ...reconciledProperties };
   }
+
   if (state.modifiers.size > 0) {
     renderModifierStyles(node);
   }
@@ -69,6 +77,7 @@ function affectsParentLayout<Properties extends InstanceProperties>(
       return true;
     }
   }
+
   return false;
 }
 
@@ -80,16 +89,20 @@ export function renderDerivedStyles(node: Instance): void {
 
 function renderModifierStyles(node: Instance): void {
   const state = getNodeState(node);
+
   if (state.kind !== 'gui') {
     return;
   }
+
   let resolvedStyles: Styles = {};
 
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);
+
     if (modifierState.kind !== 'style') {
       continue;
     }
+
     resolvedStyles = composeStyles(
       resolvedStyles,
       modifierState.resolveStyles(modifierState.properties, getModifierTarget(state)),
@@ -102,9 +115,11 @@ function renderModifierStyles(node: Instance): void {
 /** Recomputes layout output and removes only declarations no longer produced by a layout. */
 function renderLayouts(node: Instance): void {
   const state = getNodeState(node);
+
   if (state.kind !== 'gui') {
     return;
   }
+
   const guiNode = node as GuiElement;
   const children = state.children.filter(isGuiNode);
   let parentStyles: Styles = {};
@@ -113,6 +128,7 @@ function renderLayouts(node: Instance): void {
 
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);
+
     if (modifierState.kind === 'layout') {
       const resolved = modifierState.resolveLayout(modifierState.properties);
       parentStyles = composeStyles(parentStyles, resolved.parent);
@@ -125,10 +141,12 @@ function renderLayouts(node: Instance): void {
   const currentChildren = new Set(children);
   const ordered = [...children];
   const compare = compareChildren;
+
   if (compare) {
     const propertiesByChild = new Map(
       children.map((child) => [child, getLayoutChildProperties(child)]),
     );
+
     ordered.sort((left, right) =>
       compare(propertiesByChild.get(left)!, propertiesByChild.get(right)!),
     );
@@ -139,17 +157,21 @@ function renderLayouts(node: Instance): void {
   } else {
     layoutsByNode.delete(node);
   }
+
   setStyleLayer(guiNode.unsafeElement, 'layout', parentStyles);
+
   for (const child of previousChildren) {
     if ((!compare || !currentChildren.has(child)) && !getNodeState(child).destroyed) {
       setStyleLayer(child.unsafeElement, 'parent-layout', {});
     }
   }
+
   if (compare) {
     for (const child of ordered) {
       setStyleLayer(child.unsafeElement, 'parent-layout', childStyles);
     }
   }
+
   // Layout sorting affects reading and tab order as well as visual placement. The logical
   // hierarchy retains explicit insertion order, including modifiers and equal-order ties.
   placeElements(
@@ -167,17 +189,23 @@ export function releaseLayout(node: Instance): void {
 export function renderInsertedChild(parent: Instance, child: Instance): void {
   if (!isGuiNode(child)) {
     renderDerivedStyles(parent);
+
     return;
   }
+
   const layout = layoutsByNode.get(parent);
+
   if (!layout) {
     return;
   }
+
   const properties = getLayoutChildProperties(child);
   let start = 0;
   let end = layout.children.length;
+
   while (start < end) {
     const middle = Math.floor((start + end) / 2);
+
     if (
       layout.compareChildren(properties, getLayoutChildProperties(layout.children[middle]!)) < 0
     ) {
@@ -186,6 +214,7 @@ export function renderInsertedChild(parent: Instance, child: Instance): void {
       start = middle + 1;
     }
   }
+
   // Record the child before touching DOM so normal hierarchy rollback can clear its layer.
   layout.children.splice(start, 0, child);
   setStyleLayer(child.unsafeElement, 'parent-layout', layout.child);
@@ -200,17 +229,24 @@ export function renderInsertedChild(parent: Instance, child: Instance): void {
 export function renderRemovedChild(parent: Instance, child: Instance): void {
   if (!isGuiNode(child)) {
     renderDerivedStyles(parent);
+
     return;
   }
+
   const layout = layoutsByNode.get(parent);
+
   if (!layout) {
     return;
   }
+
   const index = layout.children.indexOf(child);
+
   if (index < 0) {
     renderDerivedStyles(parent);
+
     return;
   }
+
   layout.children.splice(index, 1);
   setStyleLayer(child.unsafeElement, 'parent-layout', {});
 }
@@ -218,10 +254,12 @@ export function renderRemovedChild(parent: Instance, child: Instance): void {
 function getLayoutChildProperties(child: GuiElement): LayoutChild {
   const state = getNodeState(child);
   const properties = state.properties;
+
   const layoutOrder =
     state.kind === 'gui' && state.capabilities.guiObject
       ? (properties as InstanceProperties & { LayoutOrder: number }).LayoutOrder
       : 0;
+
   return {
     Name: properties.Name,
     LayoutOrder: typeof layoutOrder === 'number' ? layoutOrder : 0,

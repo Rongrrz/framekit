@@ -24,39 +24,49 @@ export const createUserInputService = (owner: GuiElement): UserInputService => {
   if (owner.isDestroyed()) {
     throw new Error('Cannot create an input service for a destroyed owner.');
   }
+
   const document = owner.unsafeElement.ownerDocument;
   const window = document.defaultView;
   const began = createSignalEmitter<[KeyboardEvent, boolean]>();
   const ended = createSignalEmitter<[KeyboardEvent, boolean]>();
   const pressed = new Set<string>();
   const reset = (): void => pressed.clear();
+
   const visibility = (): void => {
     if (document.visibilityState === 'hidden') {
       reset();
     }
   };
+
   const keydown = (event: KeyboardEvent): void => {
     if (event.isComposing) {
       return;
     }
+
     if (event.code) {
       pressed.add(event.code);
     }
+
     if (!event.repeat) {
       began.emit(event, event.defaultPrevented || isTextEntry(event.target));
     }
   };
+
   const keyup = (event: KeyboardEvent): void => {
     pressed.delete(event.code);
+
     if (!event.isComposing) {
       ended.emit(event, event.defaultPrevented || isTextEntry(event.target));
     }
   };
+
   let disposed = false;
+
   const dispose = (): void => {
     if (disposed) {
       return;
     }
+
     disposed = true;
     unregisterDestroy();
     document.removeEventListener('keydown', keydown);
@@ -67,11 +77,13 @@ export const createUserInputService = (owner: GuiElement): UserInputService => {
     began.clear();
     ended.clear();
   };
+
   const unregisterDestroy = owner.onDestroy(dispose);
   document.addEventListener('keydown', keydown);
   document.addEventListener('keyup', keyup);
   document.addEventListener('visibilitychange', visibility);
   window?.addEventListener('blur', reset);
+
   return Object.freeze({
     inputBegan: readonlySignal(began),
     inputEnded: readonlySignal(ended),

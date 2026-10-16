@@ -24,6 +24,7 @@ export const prepareCode = async (
 ): Promise<Readonly<{ source: string; html: string }>> => {
   const language =
     filename === 'Terminal' ? 'bash' : filename.endsWith('.html') ? 'html' : 'typescript';
+
   const formatted =
     language === 'bash'
       ? source.trimEnd()
@@ -36,6 +37,7 @@ export const prepareCode = async (
             singleQuote: true,
           })
         ).trimEnd();
+
   return {
     source: formatted,
     html: highlighter.codeToHtml(formatted, {

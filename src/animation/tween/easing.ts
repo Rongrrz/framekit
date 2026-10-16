@@ -30,6 +30,7 @@ const easingStyles: readonly EasingStyle[] = [
   'Bounce',
   'Elastic',
 ];
+
 const easingDirections: readonly EasingDirection[] = ['In', 'Out', 'InOut'];
 
 export function assertEasingStyle(value: unknown): asserts value is EasingStyle {
@@ -42,15 +43,19 @@ export function assertEasingDirection(value: unknown): asserts value is EasingDi
 
 export function ease(alpha: number, style: EasingStyle, direction: EasingDirection): number {
   const clampedAlpha = Math.min(1, Math.max(0, alpha));
+
   if (direction === 'In') {
     return easeIn(clampedAlpha, style);
   }
+
   if (direction === 'Out') {
     return 1 - easeIn(1 - clampedAlpha, style);
   }
+
   if (clampedAlpha < 0.5) {
     return easeIn(clampedAlpha * 2, style) / 2;
   }
+
   return 1 - easeIn((1 - clampedAlpha) * 2, style) / 2;
 }
 
@@ -74,6 +79,7 @@ function easeIn(alpha: number, style: EasingStyle): number {
       return 1 - Math.sqrt(1 - alpha ** 2);
     case 'Back': {
       const overshoot = 1.70158;
+
       return (overshoot + 1) * alpha ** 3 - overshoot * alpha ** 2;
     }
     case 'Bounce':
@@ -82,6 +88,7 @@ function easeIn(alpha: number, style: EasingStyle): number {
       if (alpha === 0 || alpha === 1) {
         return alpha;
       }
+
       return -(2 ** (10 * alpha - 10)) * Math.sin(((alpha * 10 - 10.75) * 2 * Math.PI) / 3);
   }
 }
@@ -89,14 +96,18 @@ function easeIn(alpha: number, style: EasingStyle): number {
 function bounceOut(alpha: number): number {
   const scale = 7.5625;
   const divisor = 2.75;
+
   if (alpha < 1 / divisor) {
     return scale * alpha ** 2;
   }
+
   if (alpha < 2 / divisor) {
     return scale * (alpha - 1.5 / divisor) ** 2 + 0.75;
   }
+
   if (alpha < 2.5 / divisor) {
     return scale * (alpha - 2.25 / divisor) ** 2 + 0.9375;
   }
+
   return scale * (alpha - 2.625 / divisor) ** 2 + 0.984375;
 }

@@ -59,6 +59,7 @@ export const guiEventMethods = Object.freeze({
       this.on('mouseenter', (event) => emitNodeEvent(this, guiEventKeys.mouseEnter, event));
     });
   },
+
   onMouseLeave(this: GuiElement, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.mouseLeave, listener, () => {
       this.on('mouseleave', (event) => emitNodeEvent(this, guiEventKeys.mouseLeave, event));
@@ -80,18 +81,23 @@ export const linkEventMethods = Object.freeze({
 export const buttonEventMethods = Object.freeze({
   ...guiEventMethods,
   ...clickEventMethods,
+
   onPrimaryButtonDown(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.primaryButtonDown, listener);
   },
+
   onPrimaryButtonUp(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.primaryButtonUp, listener);
   },
+
   onSecondaryClick(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.secondaryClick, listener);
   },
+
   onSecondaryButtonDown(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.secondaryButtonDown, listener);
   },
+
   onSecondaryButtonUp(this: Instance, listener: (event: MouseEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.secondaryButtonUp, listener);
   },
@@ -99,6 +105,7 @@ export const buttonEventMethods = Object.freeze({
 
 export const textChangedEventMethods = Object.freeze({
   ...guiEventMethods,
+
   onTextChanged(this: Instance, listener: (text: string, event: InputEvent) => void): Unsubscribe {
     return subscribeToNodeEvent(this, guiEventKeys.textChanged, listener);
   },

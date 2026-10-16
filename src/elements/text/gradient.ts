@@ -1,4 +1,5 @@
 export const textGradientFillProperty = '--framekit-text-gradient-fill';
+
 export const textGradientImageProperty = '--framekit-text-gradient-image';
 
 /** Prepares rendered text to consume an optional gradient from its FrameKit host. */
