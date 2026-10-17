@@ -62,11 +62,12 @@ export const bindTreeView = (
   };
 
   const setActive = (node: GuiElement, focus: boolean): void => {
-    active = node;
-
-    for (const item of items) {
-      item.node.unsafeElement.tabIndex = item.node === active ? 0 : -1;
+    if (active && active !== node) {
+      active.unsafeElement.tabIndex = -1;
     }
+
+    active = node;
+    node.unsafeElement.tabIndex = 0;
 
     if (focus) {
       node.focus();
@@ -75,8 +76,10 @@ export const bindTreeView = (
   };
 
   const stopWatching = watchOwnedValue(root, source, (next) => {
+    const nodes = new Set(next.map((item) => item.node));
+
     if (
-      new Set(next.map((item) => item.node)).size !== next.length ||
+      nodes.size !== next.length ||
       next.some(
         (item, index) =>
           item.node.isDestroyed() ||
@@ -98,8 +101,12 @@ export const bindTreeView = (
     const previousIndex = items.findIndex((item) => item.node === active);
 
     for (const node of originals.keys()) {
-      if (!next.some((item) => item.node === node)) {
+      if (!nodes.has(node)) {
         restore(node);
+
+        if (active === node) {
+          active = undefined;
+        }
       }
     }
 
@@ -129,6 +136,7 @@ export const bindTreeView = (
       child.setAttribute('role', 'treeitem');
       child.setAttribute('aria-level', String(item.level));
       child.setAttribute('aria-selected', String(item.selected ?? false));
+      child.tabIndex = item.node === active ? 0 : -1;
 
       if (item.expanded === undefined) {
         child.removeAttribute('aria-expanded');

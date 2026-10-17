@@ -105,3 +105,39 @@ it('selects the deepest row for a nested DOM target and rejects hidden descendan
   stop();
   root.destroy();
 });
+
+it('keeps one tab stop through refresh and reorder, restoring removed rows before moving focus', () => {
+  const root = createFrame();
+  const rows = ['First', 'Second', 'Third'].map((label, index) => {
+    const node = createTextButton({ Text: label });
+    node.unsafeElement.tabIndex = index + 7;
+    node.Parent = root;
+
+    return { node, label, level: 1 };
+  });
+
+  document.body.append(root.unsafeElement);
+
+  const source = createObservableValue<readonly TreeViewItem[]>(rows);
+  const dispose = bindTreeView(root, source, { onSelect: vi.fn(), onToggle: vi.fn() });
+  rows[0]!.node.focus();
+  rows[0]!.node.unsafeElement.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }),
+  );
+  source.set([...rows]);
+  expect(rows.map(({ node }) => node.unsafeElement.tabIndex)).toEqual([-1, 0, -1]);
+
+  source.set([rows[0]!, rows[2]!]);
+  expect(rows[1]!.node.unsafeElement.tabIndex).toBe(8);
+  expect(rows[1]!.node.unsafeElement.hasAttribute('role')).toBe(false);
+  expect(document.activeElement).toBe(rows[2]!.node.unsafeElement);
+  expect(rows[0]!.node.unsafeElement.tabIndex).toBe(-1);
+
+  source.set([rows[2]!, rows[0]!]);
+  expect(document.activeElement).toBe(rows[2]!.node.unsafeElement);
+  expect(rows[2]!.node.unsafeElement.tabIndex).toBe(0);
+  expect(rows[0]!.node.unsafeElement.tabIndex).toBe(-1);
+  dispose();
+  expect(rows.map(({ node }) => node.unsafeElement.tabIndex)).toEqual([7, 8, 9]);
+  root.destroy();
+});
