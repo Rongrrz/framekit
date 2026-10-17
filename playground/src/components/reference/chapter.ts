@@ -1,3 +1,5 @@
+import type { CodeExample } from '../../code-example';
+
 /** Concise chapters keep API contracts and the example that demonstrates them together. */
 export type ReferenceChapter = Readonly<{
   title: string;
@@ -5,7 +7,7 @@ export type ReferenceChapter = Readonly<{
   sections: readonly Readonly<{
     title: string;
     body: string;
-    code?: readonly string[];
+    code?: CodeExample;
     note?: string;
   }>[];
 }>;

@@ -1,3 +1,6 @@
+import chooseHowToOpenItExample from '../../../examples/devtools/choose-how-to-open-it.ts?example';
+import readSnapshotsInCodeExample from '../../../examples/devtools/read-snapshots-in-code.ts?example';
+import shortcutOnlyOrCustomControlsExample from '../../../examples/devtools/shortcut-only-or-custom-controls.ts?example';
 import type { ReferenceChapter } from './chapter';
 
 export const devtoolsChapter = {
@@ -8,35 +11,13 @@ export const devtoolsChapter = {
     {
       title: 'Choose how to open it',
       body: 'bindRuntimeInspector(root, options?) shows a Debug tools button by default and creates the inspector only when opened. Set button to false for a shortcut or your own UI; add shortcut to enable both. The returned binding always exposes open, close, and dispose.',
-      code: [
-        "import { createScreenGui } from 'framekit';",
-        "import { bindRuntimeInspector } from 'framekit/devtools';",
-        '',
-        'const app = createScreenGui();',
-        "app.mount('#app');",
-        'const debug = bindRuntimeInspector(app, {',
-        '  button: true,',
-        "  shortcut: { key: 'D', ctrlKey: true, shiftKey: true },",
-        '});',
-        '// debug.open(); debug.close(); debug.dispose();',
-      ],
+      code: chooseHowToOpenItExample,
       note: 'Shortcuts toggle the inspector. Modifiers match exactly; omitted ctrlKey, metaKey, altKey, and shiftKey mean false. Use metaKey for a Command shortcut. Browser and OS reserved shortcuts may not reach the page.',
     },
     {
       title: 'Shortcut-only or custom controls',
       body: 'With button: false, no launcher is mounted. Unmodified shortcuts are ignored inside inputs, textareas, selects, and editable content, except function keys (F1–F24). Ctrl, Command, and Alt shortcuts also work while an inspector search field has focus. Repeated, composing, or already-handled key events are ignored.',
-      code: [
-        "import { createScreenGui, createTextButton } from 'framekit';",
-        "import { bindRuntimeInspector } from 'framekit/devtools';",
-        '',
-        'const app = createScreenGui();',
-        'const debug = bindRuntimeInspector(app, {',
-        "  button: false, shortcut: { key: 'F8' },",
-        '});',
-        "const inspect = createTextButton({ Text: 'Inspect interface' });",
-        'inspect.onClick(debug.open);',
-        'inspect.Parent = app;',
-      ],
+      code: shortcutOnlyOrCustomControlsExample,
       note: 'Omit shortcut for button-only use. Set button: false and omit shortcut to use only your own controls. dispose removes the launcher, shortcut listener, and open inspector. Destroying the inspected root does the same.',
     },
     {
@@ -52,20 +33,7 @@ export const devtoolsChapter = {
     {
       title: 'Read snapshots in code',
       body: 'inspectInstance returns a readonly snapshot with properties, parent, children, animation claims, and cleanup registrations. toTreeString prints the logical hierarchy, including modifiers. createRuntimeInspector creates an independent inspector when you need to manage mounting yourself.',
-      code: [
-        "import { createFrame } from 'framekit';",
-        'import { inspectInstance, toTreeString,',
-        "  createRuntimeInspector } from 'framekit/devtools';",
-        '',
-        'const root = createFrame();',
-        'console.log(toTreeString(root));',
-        'console.log(inspectInstance(root).properties);',
-        'const inspector = createRuntimeInspector(root);',
-        'inspector.gui.mount(document.body);',
-        'inspector.select(root);',
-        'inspector.refresh();',
-        'inspector.gui.destroy();',
-      ],
+      code: readSnapshotsInCodeExample,
       note: 'Devtools use the inspected root’s document and stay outside its ownership tree. Keep the integration behind your bundler’s development flag; the Playground removes it from production builds.',
     },
   ],

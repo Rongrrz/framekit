@@ -1,7 +1,6 @@
-import * as estree from 'prettier/plugins/estree';
-import * as html from 'prettier/plugins/html';
-import * as typescript from 'prettier/plugins/typescript';
-import { format } from 'prettier/standalone';
+import { extname } from 'node:path';
+
+import { format } from 'prettier';
 import { createHighlighterCoreSync } from 'shiki/core';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 import bashGrammar from 'shiki/langs/bash.mjs';
@@ -10,7 +9,9 @@ import typescriptGrammar from 'shiki/langs/typescript.mjs';
 import darkPlus from 'shiki/themes/dark-plus.mjs';
 import lightPlus from 'shiki/themes/light-plus.mjs';
 
-// One highlighter serves the site; only the grammars used by our examples are bundled.
+import type { CodeExample } from '../src/code-example.ts';
+
+// Formatting and highlighting run in Node; the browser receives only their prepared output.
 const highlighter = createHighlighterCoreSync({
   langs: [typescriptGrammar, htmlGrammar, bashGrammar],
   themes: [lightPlus, darkPlus],
@@ -18,20 +19,18 @@ const highlighter = createHighlighterCoreSync({
 });
 
 /** Produces the single source used by both syntax rendering and clipboard writes. */
-export const prepareCode = async (
-  source: string,
-  filename: string,
-): Promise<Readonly<{ source: string; html: string }>> => {
+export const prepareCode = async (source: string, filename: string): Promise<CodeExample> => {
+  const normalized = source.replaceAll('\r\n', '\n').trimEnd();
   const language =
-    filename === 'Terminal' ? 'bash' : filename.endsWith('.html') ? 'html' : 'typescript';
+    extname(filename) === '.sh' ? 'bash' : extname(filename) === '.html' ? 'html' : 'typescript';
 
   const formatted =
     language === 'bash'
-      ? source.trimEnd()
+      ? normalized
       : (
-          await format(source, {
+          await format(normalized, {
             parser: language,
-            plugins: [typescript, estree, html],
+            filepath: filename,
             printWidth: 80,
             tabWidth: 2,
             singleQuote: true,

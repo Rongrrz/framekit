@@ -6,6 +6,8 @@ import {
   udim2FromOffset,
 } from 'framekit';
 
+import popoverExample from '../../examples/overlays/popover.ts?example';
+import tooltipExample from '../../examples/overlays/tooltip.ts?example';
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import type { SitePage } from '../router';
 import { typeScale, type ThemeValue } from '../theme';
@@ -44,14 +46,7 @@ export const createOverlaysPage = (
     'bindTooltip(target, textOrFrame, options?) opens on hover or keyboard focus (focus-visible). Clicking does not keep it open after the pointer leaves. Choose placement, gap, delay, followCursor, or style. Escape dismisses it; keyboard focus anchors cursor-following tooltips to the trigger.',
   );
 
-  createCodeBlock(theme, 'TooltipCode', [
-    "import { createTextButton, bindTooltip } from 'framekit';",
-    "const button = createTextButton({ Text: 'Save' });",
-    "const dispose = bindTooltip(button, 'Save your changes', {",
-    "  placement: 'top', gap: 8, delay: 200,",
-    '});',
-    '// dispose(); // Or destroy the target to release the binding.',
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'TooltipCode', tooltipExample).Parent = shell.article;
   appendTooltipExamples(shell.article, layout, theme);
 
   const popover = appendArticleSection(
@@ -61,15 +56,7 @@ export const createOverlaysPage = (
     'Pass a live, detached Frame as content. openOn defaults to click; hover mode also supports focus and activation. Tab reaches controls in the panel. Escape or an outside click dismisses it.',
   );
 
-  createCodeBlock(theme, 'PopoverCode', [
-    'import { createFrame, createTextButton, bindPopover,',
-    "  udim2FromOffset } from 'framekit';",
-    "const trigger = createTextButton({ Text: 'Actions' });",
-    'const panel = createFrame({ Size: udim2FromOffset(240, 60) });',
-    "createTextButton({ Text: 'Save', Size: udim2FromOffset(240, 44) }).Parent = panel;",
-    "bindPopover(trigger, panel, { placement: 'bottom', gap: 8 });",
-    'trigger.onDestroy(() => panel.destroy());',
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'PopoverCode', popoverExample).Parent = shell.article;
 
   appendCallout(
     shell.article,

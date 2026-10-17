@@ -9,6 +9,7 @@ import {
   bindPopover,
 } from 'framekit';
 
+import popoverHooksExample from '../../examples/popover/popover-hooks.ts?example';
 import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
 import { typeScale, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
@@ -112,19 +113,7 @@ export const appendPopoverExamples = (
   }
 
   status.Parent = article;
-  createCodeBlock(theme, 'PopoverHooksCode', [
-    'const dispose = bindPopover(button, dropdown, {',
-    "  openOn: 'hover', placement: 'bottom',",
-    '  onShow: ({ content, signal }) =>',
-    '    animateIn(content, signal),',
-    '  onHide: ({ content, signal }) =>',
-    '    animateOut(content, signal),',
-    '});',
-    '// Return a promise to finish hiding after your animation.',
-    '// Honor signal to cancel on re-entry or disposal.',
-    '// The same hooks work with bindTooltip().',
-    '// Omit hooks for the built-in spring and reduced-motion support.',
-  ]).Parent = article;
+  createCodeBlock(theme, 'PopoverHooksCode', popoverHooksExample).Parent = article;
 
   return heading;
 };

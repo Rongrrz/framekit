@@ -2,9 +2,12 @@ import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vite';
 
+import { codeExamples } from '../../playground/tooling/code-examples.ts';
+
 export default defineConfig({
   appType: 'mpa',
   plugins: [
+    codeExamples(),
     {
       name: 'playground-test-entry',
       transformIndexHtml: {

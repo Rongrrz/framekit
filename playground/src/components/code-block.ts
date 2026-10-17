@@ -1,6 +1,7 @@
 import { createScrollingFrame, type Frame, udim2, udim2FromOffset } from 'framekit';
 
 import { copyCommand } from '../behaviors/copy-button';
+import type { CodeExample } from '../code-example';
 import { bindThemeColors, fonts, themeColor, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
 
@@ -8,10 +9,10 @@ import { createButton, createSurface, createText } from '../ui';
 export const createCodeBlock = (
   theme: ThemeValue,
   name: string,
-  lines: readonly string[],
+  example: CodeExample,
   filename = 'example.ts',
 ): Frame => {
-  const source = lines.join('\n').replaceAll('\r\n', '\n').trimEnd();
+  const { source, html } = example;
 
   const block = createSurface(theme, {
     name,
@@ -62,34 +63,13 @@ export const createCodeBlock = (
   const content = document.createElement('div');
   content.className = 'pg-code-source';
 
-  const pre = document.createElement('pre');
-  const code = document.createElement('code');
-  code.textContent = source;
-  pre.append(code);
-  content.append(pre);
+  // Only the build pipeline produces this escaped, syntax-highlighted markup.
+  content.innerHTML = html;
   scroll.unsafeElement.append(content);
   scroll.Parent = block;
 
-  // The examples remain readable and copyable while the optional enhancement loads.
-  const prepared = import('./code-formatting')
-    .then(({ prepareCode }) => prepareCode(source, filename))
-    .catch(() => ({ source, html: undefined }));
-
-  void prepared.then((example) => {
-    if (block.isDestroyed() || !example.html) {
-      return;
-    }
-
-    content.innerHTML = example.html;
-    block.Size = udim2(1, 0, 0, 72 + example.source.split('\n').length * 22);
-  });
-
   copy.onClick(() => {
-    void prepared.then((example) => {
-      if (!copy.isDestroyed()) {
-        return copyCommand(copy, example.source, 'Copy');
-      }
-    });
+    void copyCommand(copy, source, 'Copy');
   });
   block.unsafeElement.style.marginTop = '4px';
 

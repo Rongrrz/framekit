@@ -1,3 +1,7 @@
+import attachReparentTraverseExample from '../../../examples/lifecycle/attach-reparent-traverse.ts?example';
+import ownExternalResourcesExample from '../../../examples/lifecycle/own-external-resources.ts?example';
+import reuseOrReleaseExample from '../../../examples/lifecycle/reuse-or-release.ts?example';
+import writePropertiesAsATransactionExample from '../../../examples/lifecycle/write-properties-as-a-transaction.ts?example';
 import type { ReferenceChapter } from './chapter';
 
 export const lifecycleChapter = {
@@ -8,68 +12,25 @@ export const lifecycleChapter = {
     {
       title: 'Attach, reparent & traverse',
       body: 'Assign Parent to attach a child or move it between live parents. ScreenGui is a root and cannot have a Parent. getChildren and getDescendants return snapshots of the FrameKit hierarchy, including modifiers.',
-      code: [
-        "import { createFrame, createTextButton } from 'framekit';",
-        '',
-        "const card = createFrame({ Name: 'Card' });",
-        "const action = createTextButton({ Name: 'Save' });",
-        'action.Parent = card;',
-        "const found = card.findFirstChild('Save', true);",
-        "if (found?.isA('TextButton')) {",
-        "  found.Text = 'Save changes'; // Concrete type narrowed.",
-        '}',
-      ],
+      code: attachReparentTraverseExample,
       note: 'Names are editable labels, not unique IDs. reorderChildren requires an exact permutation of all direct children. Cycles and invalid parent relationships are rejected.',
     },
     {
       title: 'Reuse or release',
       body: 'Visible = false hides an element. Parent = undefined detaches it. ScreenGui.unmount removes the root from the document. These keep instances, listeners, subscriptions, and animations alive. destroy is permanent and recursively releases descendants.',
-      code: [
-        "import { createScreenGui, createFrame } from 'framekit';",
-        '',
-        'const app = createScreenGui();',
-        'const card = createFrame();',
-        'card.Parent = app;',
-        'card.Parent = undefined; // Keep it for later.',
-        'card.Parent = app;',
-        'app.unmount(); // Keep the whole tree.',
-        'app.destroy(); // Permanently release the whole tree.',
-        'console.log(app.isDestroyed()); // true',
-      ],
+      code: reuseOrReleaseExample,
       note: 'Destroying twice is harmless. Property reads and other operations requiring a live node throw after destruction; check isDestroyed when an external callback may outlive the node.',
     },
     {
       title: 'Own external resources',
       body: 'Native node event listeners and owned value watchers clean up automatically. Register other subscriptions, browser listeners, timers, sockets, and detached caller-owned content with onDestroy.',
-      code: [
-        "import { createFrame } from 'framekit';",
-        '',
-        'const owner = createFrame();',
-        'const controller = new AbortController();',
-        "window.addEventListener('online', () => console.log('Online'), {",
-        '  signal: controller.signal,',
-        '});',
-        'owner.onDestroy(() => controller.abort());',
-        "const timer = window.setInterval(() => console.log('Tick'), 1000);",
-        'owner.onDestroy(() => window.clearInterval(timer));',
-      ],
+      code: ownExternalResourcesExample,
       note: 'Children are destroyed before their owner cleanup callbacks run. Cleanup continues when one callback fails; one error is rethrown and multiple errors become an AggregateError.',
     },
     {
       title: 'Write properties as a transaction',
       body: 'Direct assignments and setProperties use the same synchronous validation and render path. setProperties validates the complete patch before committing. Use it for related changes that should be validated together.',
-      code: [
-        "import { createFrame, udim2FromOffset } from 'framekit';",
-        '',
-        'const card = createFrame();',
-        "const stop = card.onPropertyChanged('Visible', (next, previous) => {",
-        '  console.log(previous, next);',
-        '});',
-        'card.setProperties({',
-        '  Visible: true, Position: udim2FromOffset(24, 24),',
-        '});',
-        'stop();',
-      ],
+      code: writePropertiesAsATransactionExample,
       note: 'Property observers run only for changed values. Equal-value direct writes still stop animation ownership for the written property. Avoid observer feedback loops: listener-triggered writes are immediate.',
     },
   ],

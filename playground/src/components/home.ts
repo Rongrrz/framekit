@@ -9,6 +9,7 @@ import {
   watchOwnedValue,
 } from 'framekit';
 
+import counterExample from '../../examples/home/counter.ts?example';
 import { createRoutedPage, pageHash, type SitePage } from '../router';
 import { bindThemeColors, fonts, type ThemeValue } from '../theme';
 import { createButton } from '../ui';
@@ -69,22 +70,7 @@ export const createHomePage = (
 
   const visual = createFrame({ Name: 'HomeCodeVisual', BackgroundTransparency: 1 });
   visual.unsafeElement.classList.add('pg-home-code');
-  createCodeBlock(theme, 'CounterCode', [
-    'import { createScreenGui, createTextButton,',
-    "  udim2FromOffset } from 'framekit';",
-    '',
-    'const app = createScreenGui();',
-    'const button = createTextButton({',
-    "  Text: 'Clicks: 0',",
-    '  Size: udim2FromOffset(220, 44),',
-    '});',
-    'let count = 0;',
-    'button.onClick(() => {',
-    '  button.Text = `Clicks: ${++count}`;',
-    '});',
-    'button.Parent = app;',
-    "app.mount('#app');",
-  ]).Parent = visual;
+  createCodeBlock(theme, 'CounterCode', counterExample).Parent = visual;
 
   const preview = createFrame({ Name: 'HomeResult', BackgroundTransparency: 1 });
   preview.unsafeElement.classList.add('pg-home-preview');

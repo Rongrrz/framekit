@@ -2,7 +2,10 @@ import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vitest/config';
 
+import { codeExamples } from './tooling/code-examples.ts';
+
 export default defineConfig({
+  plugins: [codeExamples()],
   appType: 'mpa',
   root: fileURLToPath(new URL('.', import.meta.url)),
   cacheDir: '../node_modules/.vite/playground',

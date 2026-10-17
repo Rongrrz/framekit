@@ -1,5 +1,9 @@
 import type { Frame, GuiElement, ObservableValue } from 'framekit';
 
+import cleanupExample from '../../examples/guide/cleanup.ts?example';
+import firstInterfaceExample from '../../examples/guide/first-interface.ts?example';
+import installExample from '../../examples/guide/install.sh?example';
+import mountPointExample from '../../examples/guide/mount-point.html?example';
 import type { SitePage } from '../router';
 import type { ThemeValue } from '../theme';
 import { createCodeBlock } from './code-block';
@@ -33,20 +37,7 @@ export const createGuidePage = (
     'FrameKit is currently a private package. Build and pack it in this repository, then install the generated archive in your application. The archive version follows package.json.',
   );
 
-  createCodeBlock(
-    theme,
-    'InstallCode',
-    [
-      '# In the FrameKit repository',
-      'npm ci',
-      'npm run build',
-      'npm pack',
-      '',
-      '# In your browser application',
-      'npm install /absolute/path/to/framekit-0.1.0.tgz',
-    ],
-    'Terminal',
-  ).Parent = shell.article;
+  createCodeBlock(theme, 'InstallCode', installExample, 'Terminal').Parent = shell.article;
 
   appendCallout(
     shell.article,
@@ -61,8 +52,7 @@ export const createGuidePage = (
     'Place this in the body of your HTML and load your application entry through your bundler. ScreenGui fills the viewport, regardless of the mount element’s dimensions. Create and mount it in browser code.',
   );
 
-  createCodeBlock(theme, 'MountPoint', ['<div id="app"></div>'], 'index.html').Parent =
-    shell.article;
+  createCodeBlock(theme, 'MountPoint', mountPointExample, 'index.html').Parent = shell.article;
 
   const counter = appendArticleSection(
     shell.article,
@@ -71,24 +61,7 @@ export const createGuidePage = (
     'Copy this into your entry module. Creation makes a real element; Parent attaches it to the ownership tree, and mount attaches the root to the document. Clicking updates the same button instance.',
   );
 
-  createCodeBlock(theme, 'FirstInterfaceCode', [
-    'import { createScreenGui, createTextButton,',
-    "  createObservableValue, watchOwnedValue, udim2FromOffset } from 'framekit';",
-    '',
-    'const app = createScreenGui();',
-    'const count = createObservableValue(0);',
-    'const button = createTextButton({',
-    "  Name: 'Counter', Text: 'Clicks: 0',",
-    '  Size: udim2FromOffset(220, 44),',
-    '  Position: udim2FromOffset(24, 24),',
-    '});',
-    'watchOwnedValue(button, count, (value) => {',
-    '  button.Text = `Clicks: ${value}`;',
-    '});',
-    'button.onClick(() => count.set(count.get() + 1));',
-    'button.Parent = app;',
-    "app.mount('#app');",
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'FirstInterfaceCode', firstInterfaceExample).Parent = shell.article;
 
   const cleanup = appendArticleSection(
     shell.article,
@@ -97,11 +70,7 @@ export const createGuidePage = (
     'Call app.destroy() when the feature is removed, for example in your framework’s unmount callback. The button, its native listener, and its value watcher are released recursively.',
   );
 
-  createCodeBlock(theme, 'CleanupCode', [
-    '// Continuing the counter example:',
-    'app.destroy();',
-    'console.log(app.isDestroyed()); // true',
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'CleanupCode', cleanupExample).Parent = shell.article;
 
   appendCallout(
     shell.article,

@@ -17,6 +17,9 @@ import {
   udim2FromOffset,
 } from 'framekit';
 
+import dialogBindingExample from '../../examples/controls/dialog-binding.ts?example';
+import menuBindingExample from '../../examples/controls/menu-binding.ts?example';
+import treeBindingExample from '../../examples/controls/tree-binding.ts?example';
 import type { SitePage } from '../router';
 import { bindThemeColors, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
@@ -93,11 +96,7 @@ export const createControlsPage = (
   });
 
   const menuBinding = bindMenu(trigger, menu, commands);
-  createCodeBlock(theme, 'MenuBindingCode', [
-    'const menuBinding = bindMenu(trigger, menu, commands);',
-    '// menuBinding.open(vector2(event.clientX, event.clientY)); // Context menu.',
-    '// menuBinding.dispose(); // Restores attributes and position; content stays yours.',
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'MenuBindingCode', menuBindingExample).Parent = shell.article;
 
   const dialogHeading = appendArticleSection(
     shell.article,
@@ -144,14 +143,7 @@ export const createControlsPage = (
   const modal = bindDialog(dialog, { initialFocus: close });
   opener.onClick(() => modal.open(opener));
   close.onClick(modal.close);
-  createCodeBlock(theme, 'DialogBindingCode', [
-    "const dialog = createFrame({ TagName: 'dialog' });",
-    "dialog.unsafeElement.setAttribute('aria-label', 'Confirm action');",
-    'const modal = bindDialog(dialog, { initialFocus: closeButton });',
-    'opener.onClick(() => modal.open(opener));',
-    'closeButton.onClick(modal.close);',
-    '// modal.dispose(); // Closes and releases listeners; keeps caller content.',
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'DialogBindingCode', dialogBindingExample).Parent = shell.article;
 
   const treeHeading = appendArticleSection(
     shell.article,
@@ -216,14 +208,7 @@ export const createControlsPage = (
     },
   });
 
-  createCodeBlock(theme, 'TreeBindingCode', [
-    'const stopTree = bindTreeView(tree, visibleRows, {',
-    '  onSelect: (node) => updateSelection(node),',
-    '  onToggle: (node, expanded) => updateExpansion(node, expanded),',
-    '});',
-    '// Publish depth-first rows: { node, label, level, selected?, expanded? }.',
-    '// Omit collapsed descendants. stopTree() restores original ARIA/tab stops.',
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'TreeBindingCode', treeBindingExample).Parent = shell.article;
   status.Parent = shell.article;
 
   const release = createButton(theme, {

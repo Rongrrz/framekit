@@ -36,11 +36,31 @@ and opening another tab. Route changes update the title and move focus to the ar
 - `components/docs-article.ts` owns article flow, sections, examples, outlines, and reading links.
 - `components/reference/` holds one API chapter per topic; `reference-content.ts` registers them
   and `reference-page.ts` renders them.
+- `examples/` holds readable TypeScript, HTML, and shell excerpts. The Node-only `tooling/` pipeline
+  prepares their display and clipboard output; `components/code-block.ts` renders it immediately.
 - `guide-page.ts`, `home.ts`, and `overlays-page.ts` own their specialized content and examples.
 
 The site uses Avenir Next when available, with Avenir and system sans fallbacks; code uses a
 system monospace stack. No font download is required. The layout reflows rather than scaling
 text into a fixed canvas. Desktop/mobile and light/dark transitions reuse existing instances.
+
+## Documentation examples
+
+Edit examples as ordinary files in `examples/`, preserving blank lines between logical blocks.
+Import them with `?example`, for example
+`import counterExample from '../../examples/home/counter.ts?example'`, then pass the result to
+`createCodeBlock`. The import returns formatted `source` and highlighted `html`; the Copy button
+uses the same source shown in the block. Keep displayed filenames meaningful for the reader.
+
+Vite runs Prettier and Shiki in Node during development and production builds. Example edits
+refresh the prepared output automatically. Invalid syntax fails with the example's filename;
+there is no generated directory to maintain or browser formatting download. The build rejects
+Prettier/Shiki modules in emitted browser chunks. Both code palettes are prepared together, so
+theme switches remain synchronous.
+
+These files are documentation excerpts and can reference surrounding application variables.
+They are excluded from standalone TypeScript and unused-variable lint checks; the repository
+formatter still checks their formatting, and the example loader parses their syntax.
 
 ## Inspector and collections
 

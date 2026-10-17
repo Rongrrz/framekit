@@ -1,5 +1,6 @@
 import { createLink, type Frame, type ObservableValue, udim2 } from 'framekit';
 
+import importsExample from '../../examples/api/imports.ts?example';
 import { documentationPages, pageHash, type SitePage } from '../router';
 import { bindThemeColors, fonts, type ThemeValue } from '../theme';
 import { createCodeBlock } from './code-block';
@@ -29,10 +30,7 @@ export const createApiPage = (theme: ThemeValue, route: ObservableValue<SitePage
     'Import runtime elements, values, modifiers, and helpers from framekit. Import inspection tools from framekit/devtools. Internal source modules are implementation details.',
   );
 
-  createCodeBlock(theme, 'ImportsCode', [
-    "import { createFrame, spring, watchOwnedValue } from 'framekit';",
-    "import { bindRuntimeInspector } from 'framekit/devtools';",
-  ]).Parent = shell.article;
+  createCodeBlock(theme, 'ImportsCode', importsExample).Parent = shell.article;
 
   const descriptions = {
     guide: 'Installation, mounting, and a complete counter.',
