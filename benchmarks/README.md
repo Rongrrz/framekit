@@ -3,6 +3,13 @@
 For the expanded production React comparison, including sparse updates, subscribed lifetimes,
 and live-layout changes, see [comparison/README.md](comparison/README.md).
 
+The [documentation/helper follow-up](helper-optimization-results.json) records before/after
+production JavaScript sizes and a focused tree-view diagnostic. The size comparison includes
+generated highlighted examples. Tree timings cover 1,000 sibling rows, ten source refreshes or
+100 keyboard moves, and eleven samples after two warmups; setup and teardown are excluded.
+Every sample verifies roving focus, target identity, attribute restoration, and DOM cleanup.
+These sequential local timings are diagnostic evidence, not CI thresholds or universal results.
+
 Run `npx playwright install chromium`, then `npm run benchmark`. This launches a local server,
 uses one headless Chromium worker, and replaces `benchmarks/baseline.json` with measured results.
 The report records the browser version, CPU, platform, timestamp, and repository revision. The

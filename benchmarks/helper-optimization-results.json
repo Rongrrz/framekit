@@ -1,0 +1,157 @@
+{
+  "baselineRevision": "0cf85862a1356439f6968b04edfdc1cd952a4b15",
+  "currentSourceSha256": "779bb2065352687edd54a8962d6849dc8aaeffb012fe4e201dcfcc42f561a665",
+  "methodology": {
+    "bundle": "Fresh Vite production builds. Sum all emitted JavaScript assets across the three Playground entries, including shared and lazy chunks. Excludes HTML, CSS, and images; not an initial-transfer or load-time measurement.",
+    "gzip": "Python gzip.compress, level 6, mtime 0, zlib 1.2.12; sum per-file compressed bytes.",
+    "tree": "Minified Chromium production diagnostic. Fixture setup and destruction excluded; final geometry read included, painting excluded. Sequential local before/after runs are diagnostic, not a statistical regression guarantee."
+  },
+  "playground": {
+    "before": {
+      "revision": "0cf85862a1356439f6968b04edfdc1cd952a4b15",
+      "files": [
+        {
+          "file": "assets/code-formatting-Bfl5i57L.js",
+          "bytes": 2033931,
+          "gzipBytes": 461035
+        },
+        {
+          "file": "assets/collections-BRipNV_u.js",
+          "bytes": 1959,
+          "gzipBytes": 1113
+        },
+        {
+          "file": "assets/docs-Cv-uZjTl.js",
+          "bytes": 80870,
+          "gzipBytes": 27641
+        },
+        {
+          "file": "assets/inbox-BSM-aaUl.js",
+          "bytes": 9383,
+          "gzipBytes": 4035
+        },
+        {
+          "file": "assets/padding--8nwEl4q.js",
+          "bytes": 4249,
+          "gzipBytes": 1626
+        },
+        {
+          "file": "assets/ui-DwXyryka.js",
+          "bytes": 44100,
+          "gzipBytes": 14480
+        },
+        {
+          "file": "assets/virtual-list-DWmsQxks.js",
+          "bytes": 8481,
+          "gzipBytes": 3522
+        }
+      ],
+      "totalBytes": 2182973,
+      "totalGzipBytes": 513452
+    },
+    "after": {
+      "files": [
+        {
+          "file": "assets/collections-BRipNV_u.js",
+          "bytes": 1959,
+          "gzipBytes": 1113
+        },
+        {
+          "file": "assets/docs-Dd2JE59I.js",
+          "bytes": 219485,
+          "gzipBytes": 34814
+        },
+        {
+          "file": "assets/inbox-BSM-aaUl.js",
+          "bytes": 9383,
+          "gzipBytes": 4035
+        },
+        {
+          "file": "assets/padding--8nwEl4q.js",
+          "bytes": 4249,
+          "gzipBytes": 1626
+        },
+        {
+          "file": "assets/ui-DwXyryka.js",
+          "bytes": 44100,
+          "gzipBytes": 14480
+        },
+        {
+          "file": "assets/virtual-list-DWmsQxks.js",
+          "bytes": 8481,
+          "gzipBytes": 3522
+        }
+      ],
+      "totalBytes": 287657,
+      "totalGzipBytes": 59590
+    },
+    "rawReductionPercent": 86.82,
+    "gzipReductionPercent": 88.39,
+    "browserToolingModules": "Build guard verified no emitted Prettier, Shiki, or @shikijs modules.",
+    "examples": 36
+  },
+  "treeView": {
+    "before": {
+      "browser": "156.0.8078.4",
+      "cpu": "Apple M5",
+      "sourceSha256": "4a40404af52f89de3dae486768b08fc547224681f8ef1fdd80732efd0887517a",
+      "methodology": "Minified production, 1x CPU, 1000 sibling rows, 11 samples after 2 warmups. Setup and teardown outside timing; final geometry read included, paint excluded. Verify one roving tab stop, keyboard target, attribute restoration and DOM cleanup after every sample. Single sequential run, not a statistical regression guarantee.",
+      "cases": [
+        {
+          "kind": "refresh",
+          "rows": 1000,
+          "operations": 10,
+          "samples": [
+            5.800000011920929, 5.5, 5.700000017881393, 6.300000011920929, 6.299999982118607,
+            6.299999982118607, 6.300000011920929, 5.699999988079071, 6, 5.800000011920929, 6
+          ],
+          "medianMs": 6,
+          "p95Ms": 6.300000011920929
+        },
+        {
+          "kind": "navigation",
+          "rows": 1000,
+          "operations": 100,
+          "samples": [
+            19, 19.69999998807907, 16.900000005960464, 19.100000023841858, 18.80000001192093,
+            19.19999998807907, 17, 19.19999998807907, 18.80000001192093, 19.400000005960464,
+            16.900000005960464
+          ],
+          "medianMs": 19,
+          "p95Ms": 19.69999998807907
+        }
+      ]
+    },
+    "after": {
+      "browser": "156.0.8078.4",
+      "cpu": "Apple M5",
+      "sourceSha256": "52c6140524326a99804702602f04456edec159de663f5511fc997a92ef9c993c",
+      "methodology": "Minified production, 1x CPU, 1000 sibling rows, 11 samples after 2 warmups. Setup and teardown outside timing; final geometry read included, paint excluded. Verify one roving tab stop, keyboard target, attribute restoration and DOM cleanup after every sample. Single sequential run, not a statistical regression guarantee.",
+      "cases": [
+        {
+          "kind": "refresh",
+          "rows": 1000,
+          "operations": 10,
+          "samples": [
+            4, 3.800000011920929, 4.199999988079071, 4.0999999940395355, 4, 3.7000000178813934,
+            3.7999999821186066, 3.7000000178813934, 3.5999999940395355, 3.5999999940395355,
+            3.600000023841858
+          ],
+          "medianMs": 3.7999999821186066,
+          "p95Ms": 4.199999988079071
+        },
+        {
+          "kind": "navigation",
+          "rows": 1000,
+          "operations": 100,
+          "samples": [
+            3.0999999940395355, 3, 3.199999988079071, 3.0999999940395355, 3, 3.2999999821186066,
+            3.0999999940395355, 3, 3.0999999940395355, 3.199999988079071, 3.0999999940395355
+          ],
+          "medianMs": 3.0999999940395355,
+          "p95Ms": 3.2999999821186066
+        }
+      ]
+    }
+  }
+}

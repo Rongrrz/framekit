@@ -58,13 +58,19 @@ covered by focused unit tests. These checks do not prove the absence of undiscov
 | Vitest, happy-dom                        | Keep for focused unit tests, with patched Vitest 5.                                               | Fast checks for state, validation, lifecycle, and DOM structure. DOM emulation cannot validate real layout or every vendor CSS behavior.                                                                       |
 | Playwright                               | Keep native browser coverage and production browser benchmarks.                                   | URL parsing, rendering, focus, overlays, cleanup, and security boundaries need actual browsers.                                                                                                                |
 | oxfmt, oxlint                            | Keep as repository formatter and linter.                                                          | Both are established and now updated; no reason to add a second repository formatter/linter.                                                                                                                   |
-| Prettier, Shiki                          | Keep scoped to Playground; next move static example formatting/highlighting to build time.        | They serve a different purpose from repository formatting, but readonly documentation does not need to ship formatting machinery to the browser. Do not put them in FrameKit's runtime dependencies.           |
+| Prettier, Shiki                          | Run static example formatting/highlighting in the Playground’s Node build pipeline.               | Generated output preserves syntax colors and clipboard text without shipping formatting machinery to the browser. Do not put them in FrameKit's runtime dependencies.                                          |
 | Runtime validation/sanitization packages | Add none for the current API.                                                                     | Existing typed property checks and literal-text rendering cover the current design. If rich HTML is introduced, design an explicit trust boundary and evaluate a maintained sanitizer then.                    |
 | Dependency maintenance                   | Keep CI advisory checks for both npm projects; dependency updates are reviewed manually.          | CI checks dependency advisories without creating automated dependency-update pull requests.                                                                                                                    |
 
-The final production Playground build emits a **2,033.93 kB minified / 465.81 kB gzip**
-`code-formatting` chunk. It is loaded on demand, and is separate from the library bundle.
-Build-time formatting/highlighting is the strongest concrete stack cleanup identified here.
+The original reviewed production Playground build emitted a **2,033.93 kB minified / 465.81 kB gzip**
+`code-formatting` chunk. The 2026-10-17 follow-up moves example formatting and highlighting into
+the Node build pipeline. Browser chunks now contain prepared example output, with a build guard
+against shipping Prettier/Shiki modules. Across all three Playground entries, total emitted
+JavaScript decreased from 2,182,973 to 287,657 bytes; summed per-file gzip decreased from 513,452
+to 59,590 bytes using the same Python gzip settings. This includes the additional generated
+markup, excludes HTML/CSS/images, and does not measure initial transfer or load time. The
+[raw measurements](../benchmarks/helper-optimization-results.json) also retain the tree-helper
+diagnostics and their limitations.
 
 Node support status: [official release schedule](https://nodejs.org/en/about/previous-releases).
 Final unit and build validation uses an isolated Node 24.22.0 installation. `.nvmrc` pins that
