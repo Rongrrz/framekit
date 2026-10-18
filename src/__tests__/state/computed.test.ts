@@ -2,6 +2,37 @@ import { createComputedValue, createObservableValue } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('computed values', () => {
+  it('releases every dependency after a failed cleanup and can be observed again', () => {
+    const first = createObservableValue(1);
+    const second = createObservableValue(2);
+    const derive = vi.fn(() => first.get() + second.get());
+    const failure = new Error('unsubscribe failed');
+    const source = {
+      get: first.get,
+      onChange: (listener: (value: number) => void) => {
+        const stop = first.onChange(listener);
+
+        return () => {
+          stop();
+          throw failure;
+        };
+      },
+    };
+
+    const total = createComputedValue([source, second], derive);
+    const stop = total.onChange(() => undefined);
+    expect(() => stop()).toThrow(failure);
+    derive.mockClear();
+    second.set(4);
+    expect(derive).not.toHaveBeenCalled();
+
+    const listener = vi.fn();
+    const stopAgain = total.onChange(listener);
+    first.set(3);
+    expect(listener).toHaveBeenCalledExactlyOnceWith(7);
+    expect(() => stopAgain()).toThrow(failure);
+  });
+
   it('derives a readonly value from explicit dependencies', () => {
     const price = createObservableValue(4);
     const quantity = createObservableValue(3);
@@ -88,7 +119,5 @@ describe('computed values', () => {
     expect(reportError).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'observer failed' }),
     );
-
-    vi.unstubAllGlobals();
   });
 });

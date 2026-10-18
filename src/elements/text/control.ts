@@ -1,3 +1,4 @@
+import { setOptionalAttribute } from '#internal/dom/attributes.js';
 import { createRealmAbortController } from '#internal/dom/environment.js';
 import { installFrameKitStyles } from '#internal/dom/stylesheet.js';
 import { emitNodeEvent } from '#internal/runtime/node/events.js';
@@ -94,8 +95,6 @@ export function createTextControl<
     lineHeight: '1.2',
   });
 
-  let applyingNativeInput = false;
-
   const node = createGuiObjectNode({
     className,
     element,
@@ -103,7 +102,7 @@ export function createTextControl<
     initialProperties,
 
     renderProperties: (properties, changedProperties) => {
-      renderTextControlProperties(element, properties, changedProperties, applyingNativeInput);
+      renderTextControlProperties(element, properties, changedProperties);
       renderProperties?.(properties, changedProperties);
     },
 
@@ -125,12 +124,10 @@ export function createTextControl<
   element.addEventListener(
     'input',
     (event) => {
-      applyingNativeInput = true;
+      setNodeProperties(node, { Text: element.value } as Partial<Properties>);
 
-      try {
-        setNodeProperties(node, { Text: element.value } as Partial<Properties>);
-      } finally {
-        applyingNativeInput = false;
+      if (node.isDestroyed()) {
+        return;
       }
 
       emitNodeEvent(
@@ -169,11 +166,11 @@ function renderTextControlProperties<Properties extends TextControlProperties>(
   element: NativeTextControl,
   properties: Readonly<Properties>,
   changedProperties: ReadonlySet<keyof Properties>,
-  applyingNativeInput: boolean,
 ): void {
   renderTextStyle(element, properties, changedProperties);
 
-  if (changedProperties.has('Text') && !applyingNativeInput) {
+  // Leave native selection and composition alone when the browser already has this value.
+  if (changedProperties.has('Text') && element.value !== properties.Text) {
     element.value = properties.Text;
   }
 
@@ -242,12 +239,4 @@ function textAlignment(alignment: TextStyleProperties['TextYAlignment']): string
   }
 
   return 'start';
-}
-
-function setOptionalAttribute(element: HTMLElement, name: string, value: string): void {
-  if (value) {
-    element.setAttribute(name, value);
-  } else {
-    element.removeAttribute(name);
-  }
 }

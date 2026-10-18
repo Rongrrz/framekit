@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.js';
 
 test('does not retain the theme tooltip after a pointer click and exit', async ({ page }) => {
   await page.goto('/playground/index.html#/api');
@@ -145,9 +145,6 @@ test('copies multiline examples and renders every code block with readable synta
 test('offers a working landing page and readable, linkable documentation at different widths', async ({
   page,
 }, info) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-
   for (const width of [1440, 1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/playground/index.html');
@@ -205,8 +202,6 @@ test('offers a working landing page and readable, linkable documentation at diff
     );
     await page.screenshot({ path: info.outputPath(`docs-${width}.png`) });
   }
-
-  expect(errors).toEqual([]);
 });
 
 test('opens each chapter directly and keeps navigation reachable after scrolling', async ({

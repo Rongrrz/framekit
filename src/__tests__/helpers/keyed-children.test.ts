@@ -7,6 +7,52 @@ import {
 } from 'framekit';
 import { expect, it, vi } from 'vitest';
 
+it('releases owned views even when the source fails to unsubscribe', () => {
+  const parent = createFrame();
+  const failure = new Error('source cleanup failed');
+  const destroyed = vi.fn();
+  const source = {
+    get: () => [1, 2],
+    onChange: () => () => {
+      throw failure;
+    },
+  };
+
+  const dispose = bindKeyedChildren(parent, source, {
+    key: (id) => id,
+    create: () => {
+      const node = createFrame();
+      node.onDestroy(destroyed);
+
+      return node;
+    },
+  });
+
+  expect(() => dispose()).toThrow(failure);
+  expect(parent.getChildren()).toEqual([]);
+  expect(destroyed).toHaveBeenCalledTimes(2);
+  expect(() => dispose()).not.toThrow();
+  parent.destroy();
+});
+
+it('rejects an ancestor returned by a factory without destroying caller-owned hierarchy', () => {
+  const ancestor = createFrame();
+  const parent = createFrame();
+  parent.Parent = ancestor;
+
+  expect(() =>
+    bindKeyedChildren(parent, createObservableValue([1]), {
+      key: (id) => id,
+      create: () => ancestor,
+    }),
+  ).toThrow(/ancestor/);
+
+  expect(ancestor.isDestroyed()).toBe(false);
+  expect(parent.Parent).toBe(ancestor);
+  expect(parent.getChildren()).toEqual([]);
+  ancestor.destroy();
+});
+
 it('retains keyed identities, updates views, orders children, and disposes exactly once', () => {
   const parent = createFrame();
   const layout = createUIListLayout();

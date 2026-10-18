@@ -1,3 +1,4 @@
+import { setOptionalAttribute } from '#internal/dom/attributes.js';
 import { createRealmAbortController } from '#internal/dom/environment.js';
 import { installFrameKitStyles } from '#internal/dom/stylesheet.js';
 import { emitNodeEvent } from '#internal/runtime/node/events.js';
@@ -123,11 +124,7 @@ export function renderButtonProperties(
   element.style.cursor = properties.Disabled ? 'not-allowed' : 'pointer';
   element.toggleAttribute('data-framekit-auto-button-color', properties.AutoButtonColor);
 
-  if (properties.AccessibleLabel === '') {
-    element.removeAttribute('aria-label');
-  } else {
-    element.setAttribute('aria-label', properties.AccessibleLabel);
-  }
+  setOptionalAttribute(element, 'aria-label', properties.AccessibleLabel);
 }
 
 /** Validates properties shared by every FrameKit button. */

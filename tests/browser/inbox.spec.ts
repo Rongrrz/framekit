@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.js';
 
 const settle = async (page: import('@playwright/test').Page): Promise<void> => {
   await page.evaluate(
@@ -12,9 +12,6 @@ const settle = async (page: import('@playwright/test').Page): Promise<void> => {
 test('keeps the inbox anchored through late images, font loading, expansion, and filtering', async ({
   page,
 }, info) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-
   let releaseImages = (): void => {};
 
   const imagesReady = new Promise<void>((resolve) => {
@@ -120,15 +117,11 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
       [...document.fonts].some((font) => font.family === 'FrameKitInboxReading'),
     ),
   ).toBe(false);
-  expect(errors).toEqual([]);
 });
 
 test('releases rows and pending image and font work when the screen is destroyed', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-
   let release = (): void => {};
 
   const imagesReady = new Promise<void>((resolve) => {
@@ -153,14 +146,11 @@ test('releases rows and pending image and font work when the screen is destroyed
   await settle(page);
   await expect(page.getByRole('option')).toHaveCount(0);
   await expect(page.getByRole('main')).toHaveCount(0);
-  expect(errors).toEqual([]);
 });
 
 test('brings a cached row back into view after its offscreen attachments change height', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 850, height: 650 });
   await page.goto('/playground/inbox.html');
 
@@ -179,5 +169,4 @@ test('brings a cached row back into view after its offscreen attachments change 
   await settle(page);
   await expect(last).toBeInViewport();
   await expect(last).toHaveAttribute('aria-selected', 'true');
-  expect(errors).toEqual([]);
 });

@@ -11,10 +11,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createStyleModifier } from '#internal/runtime/node/modifier.js';
 
-import { resetDocumentAfterEach } from '../../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('modifier attachment and validation', () => {
   it('rejects invalid parent node roles', () => {
     const parentModifier = createUICorner();

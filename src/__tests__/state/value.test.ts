@@ -56,8 +56,6 @@ describe('values', () => {
     expect(reportError).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'observer failed' }),
     );
-
-    vi.unstubAllGlobals();
   });
 
   it('leaves state unchanged when an updater throws', () => {

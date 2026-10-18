@@ -1,10 +1,6 @@
 import { createImageLabel } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('images', () => {
   it('uses a creation-only semantic wrapper tag', () => {
     const figure = createImageLabel({ TagName: 'figure' });

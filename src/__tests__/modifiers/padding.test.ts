@@ -1,10 +1,6 @@
 import { createFrame, createUIListLayout, createUIPadding, udim } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('UI padding', () => {
   it('applies, updates, and removes padding on its parent', () => {
     const frame = createFrame();

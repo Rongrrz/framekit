@@ -16,6 +16,58 @@ const { advance } = setupAnimationClock();
 const trackNode = destroyNodesAfterEach();
 
 describe('tweens', () => {
+  it('accepts structural values consistently with direct property assignments', () => {
+    const position = { ...udim2FromOffset(0, 0), tag: 'start' };
+    const goal = { ...udim2FromOffset(100, 50), tag: 'goal' };
+    const frame = trackNode(createFrame({ Position: position }));
+    const tween = createTween(frame, { Duration: 1, EasingStyle: 'Linear' }, { Position: goal });
+
+    tween.play();
+    advance(500);
+    expect(frame.Position).toEqual(udim2FromOffset(50, 25));
+    advance(500);
+    expect(frame.Position).toEqual(udim2FromOffset(100, 50));
+  });
+
+  it('keeps playback restarted by an observer on the old completion frame', () => {
+    const frame = trackNode(createFrame({ Rotation: 0 }));
+    const tween = createTween(frame, { Duration: 1, EasingStyle: 'Linear' }, { Rotation: 90 });
+    const completed = vi.fn();
+    let restarted = false;
+    tween.completed.subscribe(completed);
+    frame.onPropertyChanged('Rotation', (value) => {
+      if (value === 90 && !restarted) {
+        restarted = true;
+        tween.cancel();
+        frame.Rotation = 0;
+        tween.play();
+      }
+    });
+
+    tween.play();
+    advance(1000);
+    expect(tween.playbackState()).toBe('Playing');
+    advance(500);
+    expect(frame.Rotation).toBe(45);
+    advance(500);
+    expect(completed.mock.calls).toEqual([['Cancelled'], ['Completed']]);
+  });
+
+  it('honors a direct write of the animated value from a property observer', () => {
+    const frame = trackNode(createFrame({ Rotation: 0 }));
+    const tween = createTween(frame, { Duration: 1, EasingStyle: 'Linear' }, { Rotation: 90 });
+    frame.onPropertyChanged('Rotation', (value) => {
+      frame.Rotation = value;
+    });
+
+    tween.play();
+    advance(500);
+
+    expect(tween.playbackState()).toBe('Cancelled');
+    advance(500);
+    expect(frame.Rotation).toBe(45);
+  });
+
   it.each(['setter', 'patch'])(
     'lets an unchanged %s write cancel playback without a change event',
     (mode) => {

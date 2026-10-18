@@ -4,6 +4,27 @@ import { describe, expect, it, vi } from 'vitest';
 import { watchOwnedValue } from '../../helpers/owned-value.js';
 
 describe('owned value subscriptions', () => {
+  it('preserves initial delivery and cleanup failures without retaining ownership', () => {
+    const owner = createFrame();
+    const deliveryFailure = new Error('initial delivery failed');
+    const cleanupFailure = new Error('source cleanup failed');
+    const unsubscribe = vi.fn(() => {
+      throw cleanupFailure;
+    });
+
+    const source = { get: () => 1, onChange: () => unsubscribe };
+
+    expect(() =>
+      watchOwnedValue(owner, source, () => {
+        throw deliveryFailure;
+      }),
+    ).toThrow(expect.objectContaining({ errors: [deliveryFailure, cleanupFailure] }));
+
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(() => owner.destroy()).not.toThrow();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
   it('publishes immediately and stops when its owner is destroyed', () => {
     const owner = createFrame();
     const value = createObservableValue(1);

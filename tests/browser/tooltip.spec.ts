@@ -1,13 +1,10 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
 
 for (const followCursor of [false, true]) {
   test(`keeps keyboard descriptions accessible without retaining pointer focus (followCursor: ${followCursor})`, async ({
     page,
   }) => {
-    await page.goto('/tests/browser/index.html');
-    await page.waitForFunction(() => Boolean(window.framekit));
+    await openFrameKit(page);
     await page.evaluate((followCursor) => {
       const { createScreenGui, createTextButton, bindTooltip, udim2FromOffset } = window.framekit;
       const root = createScreenGui();

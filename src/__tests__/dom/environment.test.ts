@@ -12,10 +12,6 @@ import {
 } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('DOM ownership', () => {
   it('creates factory DOM and injected styles in the selected document', () => {
     const iframe = document.body.appendChild(document.createElement('iframe'));

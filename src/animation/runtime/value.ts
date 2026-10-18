@@ -68,47 +68,37 @@ export function assertCompatibleAnimationValues(
 }
 
 export function interpolateAnimationValue(
-  start: unknown,
-  goal: unknown,
+  start: DecomposedAnimationValue,
+  goal: DecomposedAnimationValue,
   alpha: number,
-  property: string,
 ): number | Color3 | Vector2 | UDim | UDim2 {
-  const from = decomposeAnimationValue(start, property);
-  const to = decomposeAnimationValue(goal, property);
-  assertCompatibleAnimationValues(from, to, property);
-
   return composeAnimationValue(
-    from.kind,
-    from.components.map((value, index) => value + (to.components[index]! - value) * alpha),
+    start.kind,
+    start.components.map((value, index) => value + (goal.components[index]! - value) * alpha),
   );
 }
 
 function isColor3(value: unknown): value is Color3 {
-  return hasOnlyNumericKeys(value, ['R', 'G', 'B']);
+  return hasNumericComponents(value, ['R', 'G', 'B']);
 }
 
 function isVector2(value: unknown): value is Vector2 {
-  return hasOnlyNumericKeys(value, ['X', 'Y']);
+  return hasNumericComponents(value, ['X', 'Y']);
 }
 
 function isUDim(value: unknown): value is UDim {
-  return hasOnlyNumericKeys(value, ['Scale', 'Offset']);
+  return hasNumericComponents(value, ['Scale', 'Offset']);
 }
 
 function isUDim2(value: unknown): value is UDim2 {
-  if (!isRecord(value) || Object.keys(value).length !== 2) {
-    return false;
-  }
-
-  return isUDim(value.X) && isUDim(value.Y);
+  return isRecord(value) && isUDim(value.X) && isUDim(value.Y);
 }
 
-function hasOnlyNumericKeys(value: unknown, keys: readonly string[]): boolean {
-  if (!isRecord(value) || Object.keys(value).length !== keys.length) {
-    return false;
-  }
-
-  return keys.every((key) => typeof value[key] === 'number' && Number.isFinite(value[key]));
+function hasNumericComponents(value: unknown, keys: readonly string[]): boolean {
+  return (
+    isRecord(value) &&
+    keys.every((key) => typeof value[key] === 'number' && Number.isFinite(value[key]))
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

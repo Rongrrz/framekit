@@ -1,6 +1,8 @@
 import { createFrame } from '#elements/frame.js';
 import type { GuiObject } from '#elements/gui-object.js';
 import type { ScrollingFrame } from '#elements/scrolling-frame.js';
+import { preserveAttributes } from '#internal/dom/attributes.js';
+import { runCleanups } from '#internal/errors.js';
 import { assertNonNegativeFinite, assertInteger } from '#internal/validation.js';
 import type { ObservableValue, ReadonlyObservableValue } from '#state/value.js';
 import { udim2 } from '#values/udim.js';
@@ -9,7 +11,11 @@ import { vector2 } from '#values/vector2.js';
 import type { KeyedChildrenOptions } from './keyed-children.js';
 import { watchOwnedValue } from './owned-value.js';
 import { bindVirtualListKeyboard } from './virtual-list-keyboard.js';
-import { observeVirtualRows, type RowMeasurement } from './virtual-list-measurement.js';
+import {
+  observeVirtualRows,
+  type RowMeasurement,
+  type RowObserver,
+} from './virtual-list-measurement.js';
 import {
   createVirtualListModel,
   type VirtualItemHeight,
@@ -58,24 +64,22 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     ScrollingDirection: viewport.ScrollingDirection,
   };
 
-  const attributes = ['role', 'tabindex', 'aria-activedescendant'];
-  const originalAttributes = attributes.map((name) => element.getAttribute(name));
+  const restoreAttributes = preserveAttributes(element, [
+    'role',
+    'tabindex',
+    'aria-activedescendant',
+  ]);
   const originalOverflowAnchor = element.style.getPropertyValue('overflow-anchor');
   const originalOverflowAnchorPriority = element.style.getPropertyPriority('overflow-anchor');
-  // The binding preserves anchors across data and size changes; native anchoring would apply twice.
-  element.style.setProperty('overflow-anchor', 'none');
 
   const content = createFrame(
     { Name: 'VirtualListContent', BackgroundTransparency: 1 },
     { ownerDocument: element.ownerDocument },
   );
 
-  content.Parent = viewport;
-  element.setAttribute('role', 'listbox');
-  element.tabIndex = 0;
-  viewport.setProperties({ AutomaticCanvasSize: 'None', ScrollingDirection: 'Y' });
-
   let disposed = false;
+  let observation: RowObserver | undefined;
+  let renderRows: (next: readonly VirtualListEntry<Item>[]) => void;
   let pendingScroll: Readonly<{ key: string | number; top: number }> | undefined;
   let scrollCorrection: Readonly<{ actual: number; desired: number }> | undefined;
 
@@ -111,8 +115,7 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     const previous = readAnchor();
     const resized = model.resize(element.clientWidth);
 
-    const request =
-      !resized && pendingScroll?.top === element.scrollTop ? pendingScroll : undefined;
+    const request = pendingScroll?.top === element.scrollTop ? pendingScroll : undefined;
 
     pendingScroll = undefined;
 
@@ -133,14 +136,6 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
       render();
     }
   };
-
-  const observation = observeVirtualRows(
-    element,
-    measured,
-    measured ? applyMeasurements : () => render(),
-  );
-
-  const renderRows = bindVirtualRows(viewport, content, model, options, observation);
 
   const render = (): void => {
     if (disposed || viewport.isDestroyed()) {
@@ -239,40 +234,54 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     disposed = true;
     pendingScroll = undefined;
     scrollCorrection = undefined;
-    unregisterDestroy();
-    stops.forEach((stop) => stop());
-    observation.dispose();
-    content.destroy();
-    model.replace([]);
+    runCleanups(
+      [
+        unregisterDestroy,
+        ...stops,
+        () => observation?.dispose(),
+        () => content.destroy(),
 
-    if (!viewport.isDestroyed()) {
-      viewport.setProperties(saved);
-    }
+        () => {
+          model.replace([]);
 
-    if (originalOverflowAnchor) {
-      element.style.setProperty(
-        'overflow-anchor',
-        originalOverflowAnchor,
-        originalOverflowAnchorPriority,
-      );
-    } else {
-      element.style.removeProperty('overflow-anchor');
-    }
+          if (!viewport.isDestroyed()) {
+            viewport.setProperties(saved);
+          }
+        },
 
-    attributes.forEach((name, index) => {
-      const value = originalAttributes[index];
+        () => {
+          if (originalOverflowAnchor) {
+            element.style.setProperty(
+              'overflow-anchor',
+              originalOverflowAnchor,
+              originalOverflowAnchorPriority,
+            );
+          } else {
+            element.style.removeProperty('overflow-anchor');
+          }
+        },
 
-      if (value === null || value === undefined) {
-        element.removeAttribute(name);
-      } else {
-        element.setAttribute(name, value);
-      }
-    });
+        restoreAttributes,
+      ],
+      'Multiple virtual list cleanups failed.',
+    );
   };
 
   const unregisterDestroy = viewport.onDestroy(dispose);
 
   try {
+    content.Parent = viewport;
+    element.setAttribute('role', 'listbox');
+    element.tabIndex = 0;
+    // The binding owns anchoring; allowing native anchoring would apply corrections twice.
+    element.style.setProperty('overflow-anchor', 'none');
+    viewport.setProperties({ AutomaticCanvasSize: 'None', ScrollingDirection: 'Y' });
+    observation = observeVirtualRows(
+      element,
+      measured,
+      measured ? applyMeasurements : () => render(),
+    );
+    renderRows = bindVirtualRows(viewport, content, model, options, observation);
     stops.push(watchOwnedValue(viewport, source, updateSource));
     stops.push(
       watchOwnedValue(viewport, options.selection, (selected) => {
@@ -287,7 +296,11 @@ export const bindVirtualList = <Item, Node extends GuiObject>(
     stops.push(viewport.on('scroll', render));
     stops.push(bindVirtualListKeyboard(viewport, options.selection, model, scrollToKey));
   } catch (error) {
-    dispose();
+    try {
+      dispose();
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Virtual list setup and cleanup failed.');
+    }
 
     throw error;
   }

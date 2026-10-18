@@ -3,8 +3,74 @@ import {
   createObservableValue,
   createScrollingFrame,
   createTextLabel,
+  udim2FromOffset,
 } from 'framekit';
 import { expect, it, vi } from 'vitest';
+
+import { setupAnimationClock } from '../support/animation-clock.js';
+import { installResizeObserver } from '../support/resize-observer.js';
+
+const clock = setupAnimationClock();
+
+it('restores caller state when observation cannot start', () => {
+  const viewport = createScrollingFrame({
+    ScrollingDirection: 'X',
+    CanvasSize: udim2FromOffset(300, 200),
+  });
+  viewport.unsafeElement.setAttribute('role', 'region');
+  viewport.unsafeElement.style.setProperty('overflow-anchor', 'auto', 'important');
+  vi.stubGlobal('ResizeObserver', undefined);
+
+  expect(() =>
+    bindVirtualList(viewport, createObservableValue([1]), {
+      itemHeight: 32,
+      key: (id) => id,
+      selection: createObservableValue<string | number | undefined>(undefined),
+      create: () => createTextLabel(),
+    }),
+  ).toThrow(/ResizeObserver/);
+
+  expect(viewport.getChildren()).toEqual([]);
+  expect(viewport.ScrollingDirection).toBe('X');
+  expect(viewport.CanvasSize).toEqual(udim2FromOffset(300, 200));
+  expect(viewport.unsafeElement.getAttribute('role')).toBe('region');
+  expect(viewport.unsafeElement.style.getPropertyValue('overflow-anchor')).toBe('auto');
+  expect(viewport.unsafeElement.style.getPropertyPriority('overflow-anchor')).toBe('important');
+  viewport.destroy();
+});
+
+it('restores the viewport and releases every row even when a row cleanup fails', () => {
+  const viewport = createScrollingFrame({ ScrollingDirection: 'X' });
+  const destroyed = vi.fn();
+  const failure = new Error('row cleanup failed');
+
+  const list = bindVirtualList(viewport, createObservableValue([1, 2]), {
+    itemHeight: 32,
+    key: (id) => id,
+    selection: createObservableValue<string | number | undefined>(undefined),
+    create: (id) => {
+      const row = createTextLabel();
+      row.onDestroy(() => {
+        destroyed(id);
+
+        if (id === 1) {
+          throw failure;
+        }
+      });
+
+      return row;
+    },
+  });
+
+  expect(() => list.dispose()).toThrow(failure);
+  expect(destroyed.mock.calls).toEqual([[1], [2]]);
+  expect(viewport.getChildren()).toEqual([]);
+  expect(viewport.ScrollingDirection).toBe('X');
+  expect(viewport.unsafeElement.hasAttribute('role')).toBe(false);
+  expect(viewport.unsafeElement.style.getPropertyValue('overflow-anchor')).toBe('');
+  expect(() => list.dispose()).not.toThrow();
+  viewport.destroy();
+});
 
 it('mounts a bounded window and releases views and subscriptions on disposal', () => {
   const viewport = createScrollingFrame();
@@ -163,5 +229,46 @@ it('preserves fractional scroll offsets when earlier rows are inserted', () => {
   source.set([-1, ...source.get()]);
   expect(viewport.unsafeElement.scrollTop).toBe(63.5);
   binding.dispose();
+  viewport.destroy();
+});
+
+it('keeps an estimated keyboard jump visible when its first measurements also resize the viewport', () => {
+  const resize = installResizeObserver();
+  const viewport = createScrollingFrame();
+  let width = 0;
+  Object.defineProperties(viewport.unsafeElement, {
+    clientWidth: { get: () => width },
+    clientHeight: { value: 180 },
+  });
+
+  const list = bindVirtualList(
+    viewport,
+    createObservableValue(Array.from({ length: 1000 }, (_, id) => id)),
+    {
+      itemHeight: { estimate: 48 },
+      overscan: 3,
+      key: (id) => id,
+      selection: createObservableValue<string | number | undefined>(0),
+      create: () => {
+        const row = createTextLabel();
+        Object.defineProperty(row.unsafeElement, 'offsetHeight', { value: 96 });
+
+        return row;
+      },
+    },
+  );
+
+  viewport.unsafeElement.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'End', cancelable: true }),
+  );
+  width = 320;
+  resize();
+  clock.advance();
+
+  const selected = viewport.unsafeElement.querySelector<HTMLElement>('[aria-selected="true"]')!;
+  const top = parseFloat(selected.style.top);
+  expect(top).toBeGreaterThanOrEqual(viewport.unsafeElement.scrollTop);
+  expect(top + 96).toBeLessThanOrEqual(viewport.unsafeElement.scrollTop + 180);
+  list.dispose();
   viewport.destroy();
 });

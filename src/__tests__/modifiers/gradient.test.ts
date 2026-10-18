@@ -12,10 +12,6 @@ import { describe, expect, it } from 'vitest';
 
 import { createDefaultGuiObjectProperties, createGuiObjectNode } from '#elements/gui-object.js';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('gradients', () => {
   it.each([createTextLabel, createTextButton])(
     'keeps text gradients active through text and paint edits (%#)',

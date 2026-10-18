@@ -3,7 +3,6 @@ import {
   createScreenGui,
   createTextButton,
   type FloatingPanelContext,
-  type Instance,
   type PopoverOptions,
   type ScreenGui,
   udim2FromOffset,
@@ -11,30 +10,20 @@ import {
   bindPopover,
   bindTooltip,
 } from 'framekit';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setupAnimationClock } from '../support/animation-clock.js';
+import { destroyNodesAfterEach } from '../support/node-cleanup.js';
 
 const clock = setupAnimationClock();
 
-const owners = new Set<Instance>();
+const trackNode = destroyNodesAfterEach();
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.stubGlobal('innerWidth', 800);
   vi.stubGlobal('innerHeight', 600);
   vi.stubGlobal('matchMedia', () => ({ matches: true }));
-});
-
-afterEach(() => {
-  for (const owner of owners) {
-    owner.destroy();
-  }
-
-  owners.clear();
-  document.body.replaceChildren();
-  vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 const pointer = (element: HTMLElement, type: string, pointerType = 'mouse'): void => {
@@ -75,7 +64,7 @@ const deferred = (): Readonly<{
 const fixture = () => {
   const root = createScreenGui();
   root.mount(document.body);
-  owners.add(root);
+  trackNode(root);
 
   const target = createTextButton({ Text: 'Actions' });
   target.Parent = root;
@@ -84,7 +73,7 @@ const fixture = () => {
   );
 
   const panel = createFrame({ Size: udim2FromOffset(160, 100), Visible: false });
-  owners.add(panel);
+  trackNode(panel);
   vi.spyOn(panel.unsafeElement, 'getBoundingClientRect').mockImplementation(
     () => new DOMRect(panel.Position.X.Offset, panel.Position.Y.Offset, 160, 100),
   );
@@ -284,7 +273,7 @@ describe('popovers', () => {
 
     const other = document.implementation.createHTMLDocument();
     const foreign = createFrame({}, { ownerDocument: other });
-    owners.add(foreign);
+    trackNode(foreign);
     expect(() => bindPopover(target, foreign)).toThrow(/target document/);
     expect(panel.Parent).toBeUndefined();
     expect(panel.Visible).toBe(false);

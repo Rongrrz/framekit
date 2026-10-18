@@ -1,10 +1,6 @@
 import { createFrame, createScreenGui, vector2 } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('GUI handles', () => {
   it('exposes properties as ordinary own accessors', () => {
     const frame = createFrame();

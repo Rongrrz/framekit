@@ -1,10 +1,44 @@
-import { expect, test } from '@playwright/test';
+import type { Instance } from 'framekit';
 
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
+
+for (const multiline of [false, true]) {
+  test(`native edits accept observer corrections and retain selection (multiline: ${multiline})`, async ({
+    page,
+  }) => {
+    await openFrameKit(page);
+    await page.evaluate((multiline) => {
+      const { createScreenGui, createTextArea, createTextInput } = window.framekit;
+      const root = createScreenGui();
+      const input = (multiline ? createTextArea : createTextInput)({ AccessibleLabel: 'Editor' });
+      input.Parent = root;
+      const textNode: Instance<{ Name: string; Text: string }> = input;
+      textNode.onPropertyChanged('Text', (text) => {
+        if (text === 'REMOVE') {
+          input.destroy();
+        } else {
+          input.Text = text.toUpperCase();
+        }
+      });
+      root.mount('#root');
+    }, multiline);
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await editor.fill('edited');
+    await expect(editor).toHaveValue('EDITED');
+    await editor.press('ArrowLeft');
+    await editor.press('X');
+    await expect(editor).toHaveValue('EDITEXD');
+    expect(await editor.evaluate((element) => (element as HTMLInputElement).selectionStart)).toBe(
+      6,
+    );
+    await editor.fill('REMOVE');
+    await expect(editor).toHaveCount(0);
+  });
+}
 
 test('font fitting stays bounded when host CSS overrides the measured font', async ({ page }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
 
   const result = await page.evaluate(() => {
     const { createScreenGui, createTextLabel, udim2FromOffset } = window.framekit;
@@ -52,8 +86,7 @@ test('font fitting stays bounded when host CSS overrides the measured font', asy
 test('text paint and outline survive edits and restore their defaults when removed', async ({
   page,
 }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
 
   const result = await page.evaluate(() => {
     const { createScreenGui, createTextLabel, createUIGradient, createUITextStroke } =
@@ -109,8 +142,7 @@ test('text paint and outline survive edits and restore their defaults when remov
 test('scaled text still fits after resize and restores its explicit size when disabled', async ({
   page,
 }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
 
   const result = await page.evaluate(async () => {
     const { createScreenGui, createTextLabel, udim2FromOffset } = window.framekit;

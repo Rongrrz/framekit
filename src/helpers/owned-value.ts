@@ -34,7 +34,11 @@ export const watchOwnedValue = <T>(
   try {
     listener(value.get());
   } catch (error) {
-    dispose();
+    try {
+      dispose();
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Owned value delivery and cleanup failed.');
+    }
 
     throw error;
   }

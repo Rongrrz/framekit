@@ -1,10 +1,7 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
 });
 
 test('disposes an open menu repeatedly and restores caller attributes, position, and listeners', async ({
@@ -99,9 +96,6 @@ for (const destroyOpener of [false, true]) {
   test(`closing and disposing a modal after opener destruction: ${destroyOpener}`, async ({
     page,
   }) => {
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-
     const result = await page.evaluate((destroyOpener) => {
       const { createFrame, createTextButton, bindDialog } = window.framekit;
       const opener = createTextButton({ Text: 'Open' });
@@ -134,7 +128,6 @@ for (const destroyOpener of [false, true]) {
     }, destroyOpener);
 
     expect(result).toEqual({ open: false, focusRestored: !destroyOpener, retained: true });
-    expect(errors).toEqual([]);
   });
 }
 

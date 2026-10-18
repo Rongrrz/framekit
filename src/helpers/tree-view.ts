@@ -1,3 +1,4 @@
+import { preserveAttributes } from '#internal/dom/attributes.js';
 import type { GuiElement } from '#internal/runtime/node/gui-node.js';
 import type { Unsubscribe } from '#state/signal.js';
 import type { ReadonlyObservableValue } from '#state/value.js';
@@ -28,8 +29,7 @@ export const bindTreeView = (
   options: TreeViewOptions,
 ): Unsubscribe => {
   const element = root.unsafeElement;
-  const role = element.getAttribute('role');
-  const rootTabIndex = element.getAttribute('tabindex');
+  const restoreRoot = preserveAttributes(element, ['role', 'tabindex']);
   let items: readonly TreeViewItem[] = [];
   let active: GuiElement | undefined;
   let focusWithin = false;
@@ -44,20 +44,11 @@ export const bindTreeView = (
     'aria-setsize',
   ];
 
-  const originals = new Map<GuiElement, (string | null)[]>();
+  const originals = new Map<GuiElement, () => void>();
   const typeahead = createTypeahead();
 
   const restore = (node: GuiElement): void => {
-    const saved = originals.get(node);
-    saved?.forEach((value, index) => {
-      const name = attributes[index]!;
-
-      if (value === null) {
-        node.unsafeElement.removeAttribute(name);
-      } else {
-        node.unsafeElement.setAttribute(name, value);
-      }
-    });
+    originals.get(node)?.();
     originals.delete(node);
   };
 
@@ -127,10 +118,7 @@ export const bindTreeView = (
       const child = item.node.unsafeElement;
 
       if (!originals.has(item.node)) {
-        originals.set(
-          item.node,
-          attributes.map((name) => child.getAttribute(name)),
-        );
+        originals.set(item.node, preserveAttributes(child, attributes));
       }
 
       child.setAttribute('role', 'treeitem');
@@ -283,17 +271,7 @@ export const bindTreeView = (
     items = [];
     active = undefined;
 
-    if (role === null) {
-      element.removeAttribute('role');
-    } else {
-      element.setAttribute('role', role);
-    }
-
-    if (rootTabIndex === null) {
-      element.removeAttribute('tabindex');
-    } else {
-      element.setAttribute('tabindex', rootTabIndex);
-    }
+    restoreRoot();
   };
 
   const unregisterDestroy = root.onDestroy(dispose);

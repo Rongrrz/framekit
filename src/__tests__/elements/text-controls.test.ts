@@ -4,14 +4,31 @@ import {
   createTextArea,
   createTextInput,
   createUICorner,
+  type Instance,
 } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('native text controls', () => {
+  it.each([createTextInput, createTextArea])(
+    'renders observer corrections during native editing without rewriting unchanged input',
+    (createControl) => {
+      const control = createControl();
+      const changed = vi.fn();
+      control.onTextChanged(changed);
+      const textNode: Instance<{ Name: string; Text: string }> = control;
+      textNode.onPropertyChanged('Text', (text) => {
+        control.Text = text.toUpperCase();
+      });
+      control.unsafeElement.value = 'edited';
+      control.unsafeElement.dispatchEvent(new InputEvent('input'));
+
+      expect(control.Text).toBe('EDITED');
+      expect(control.unsafeElement.value).toBe('EDITED');
+      expect(changed).toHaveBeenCalledExactlyOnceWith('EDITED', expect.any(InputEvent));
+      control.destroy();
+    },
+  );
+
   it('synchronizes a native input with Text and typed change events', () => {
     const input = createTextInput({
       PlaceholderText: 'Email address',

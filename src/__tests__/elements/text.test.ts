@@ -5,13 +5,9 @@ import {
   createTextInput,
   createTextLabel,
 } from 'framekit';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
-afterEach(() => vi.unstubAllGlobals());
+import { installResizeObserver } from '../support/resize-observer.js';
 
 describe('text labels', () => {
   it.each([1234, 10_000_000])(
@@ -154,18 +150,7 @@ describe('text labels', () => {
 
   it('scales text to the largest whole-pixel size that fits its bounds', () => {
     let availableWidth = 100;
-    let resizeText: ResizeObserverCallback | undefined;
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        public constructor(callback: ResizeObserverCallback) {
-          resizeText = callback;
-        }
-        public observe(): void {}
-        public disconnect(): void {}
-        public unobserve(): void {}
-      },
-    );
+    const resizeText = installResizeObserver();
 
     const label = createTextLabel({ Text: 'Scale me', TextSize: 24 });
     const text = label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')!;
@@ -191,7 +176,7 @@ describe('text labels', () => {
     expect(label.unsafeElement.style.fontSize).toBe('20px');
 
     availableWidth = 50;
-    resizeText?.([], {} as ResizeObserver);
+    resizeText();
 
     expect(text.style.fontSize).toBe('10px');
 

@@ -89,6 +89,13 @@ const append = (parent: Instance, child: Instance): void => {
     );
   }
 
+  if (
+    childState.kind === 'layout' &&
+    [...parentState.modifiers.values()].some((modifier) => getNodeState(modifier).kind === 'layout')
+  ) {
+    throw new Error(`${parentState.properties.Name} already has a layout modifier.`);
+  }
+
   const previousParent = childState.parent;
 
   const previousIndex = previousParent

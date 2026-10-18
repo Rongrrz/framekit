@@ -6,24 +6,19 @@ import {
   type Styles,
 } from '#internal/runtime/node/modifier.js';
 import { mergeProperties } from '#internal/runtime/systems/properties.js';
-import {
-  assertAllowedValue,
-  assertInteger,
-  assertNonNegativeFinite,
-} from '#internal/validation.js';
+import { assertInteger, assertNonNegativeFinite } from '#internal/validation.js';
 import { assertUDim2, udim2FromOffset, udimToCss, type UDim2 } from '#values/udim.js';
 
 import {
   resolveChildComparison,
   resolveHorizontalAlignment,
   resolveVerticalAlignment,
+  validateLayoutProperties,
+  type FillDirection,
+  type HorizontalAlignment,
+  type SortOrder,
+  type VerticalAlignment,
 } from './layout.js';
-import type {
-  FillDirection,
-  HorizontalAlignment,
-  SortOrder,
-  VerticalAlignment,
-} from './list-layout.js';
 
 /** Properties controlling automatic grid layout. */
 export type UIGridLayoutProperties = InstanceProperties & {
@@ -45,14 +40,6 @@ export type UIGridLayoutProperties = InstanceProperties & {
 
 /** An element-less grid layout for direct GUI children. */
 export type UIGridLayout = LayoutModifier<UIGridLayoutProperties>;
-
-const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
-
-const horizontalAlignments: readonly HorizontalAlignment[] = ['Left', 'Center', 'Right'];
-
-const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bottom'];
-
-const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a grid that gives each direct GUI child the same cell size. */
 export function createUIGridLayout(
@@ -121,10 +108,7 @@ function resolveGridLayout(properties: Readonly<UIGridLayoutProperties>): Layout
 function validateGridLayoutProperties(properties: Readonly<UIGridLayoutProperties>): void {
   assertUDim2(properties.CellSize, 'CellSize');
   assertUDim2(properties.CellPadding, 'CellPadding');
-  assertAllowedValue(properties.FillDirection, fillDirections, 'FillDirection');
+  validateLayoutProperties(properties);
   assertNonNegativeFinite(properties.FillDirectionMaxCells, 'FillDirectionMaxCells');
   assertInteger(properties.FillDirectionMaxCells, 'FillDirectionMaxCells');
-  assertAllowedValue(properties.HorizontalAlignment, horizontalAlignments, 'HorizontalAlignment');
-  assertAllowedValue(properties.VerticalAlignment, verticalAlignments, 'VerticalAlignment');
-  assertAllowedValue(properties.SortOrder, sortOrders, 'SortOrder');
 }

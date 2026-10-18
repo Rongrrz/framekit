@@ -1,10 +1,6 @@
 import { createFrame, createLink } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('links', () => {
   it('uses a native anchor with text styling and typed activation', () => {
     const link = createLink({

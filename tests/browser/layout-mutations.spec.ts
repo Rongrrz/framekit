@@ -1,13 +1,10 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
 
 for (const kind of ['list', 'grid']) {
   test(`active ${kind} front edits preserve geometry and focused selection without rewriting survivors`, async ({
     page,
   }) => {
-    await page.goto('/tests/browser/index.html');
-    await page.waitForFunction(() => Boolean(window.framekit));
+    await openFrameKit(page);
 
     const result = await page.evaluate((layoutKind) => {
       const {
@@ -114,8 +111,7 @@ for (const kind of ['list', 'grid']) {
   test(`active ${kind} wrapping follows sorted DOM order after insertion and removal`, async ({
     page,
   }) => {
-    await page.goto('/tests/browser/index.html');
-    await page.waitForFunction(() => Boolean(window.framekit));
+    await openFrameKit(page);
 
     const result = await page.evaluate((layoutKind) => {
       const {
@@ -187,8 +183,7 @@ for (const kind of ['list', 'grid']) {
   test(`active ${kind} removal updates geometry before cleanup and retains surviving focus`, async ({
     page,
   }) => {
-    await page.goto('/tests/browser/index.html');
-    await page.waitForFunction(() => Boolean(window.framekit));
+    await openFrameKit(page);
 
     const result = await page.evaluate((layoutKind) => {
       const {
@@ -270,8 +265,7 @@ for (const kind of ['list', 'grid']) {
   test(`active ${kind} insertion updates geometry immediately and preserves focused selection`, async ({
     page,
   }) => {
-    await page.goto('/tests/browser/index.html');
-    await page.waitForFunction(() => Boolean(window.framekit));
+    await openFrameKit(page);
 
     const result = await page.evaluate((layoutKind) => {
       const {

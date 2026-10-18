@@ -53,7 +53,7 @@ export function createSpringBinding<Properties extends InstanceProperties>(
 
   const springsByProperty = new Map<keyof Properties, PropertySpringState>();
   const animationPatch: Partial<Properties> = {};
-  const settledProperties: (keyof Properties)[] = [];
+  const settledProperties = new Map<keyof Properties, number[]>();
   const springSolution: SpringSolution = { value: 0, velocity: 0 };
   const completedEmitter = createSignalEmitter<[]>();
   const completed = readonlySignal(completedEmitter);
@@ -161,11 +161,11 @@ export function createSpringBinding<Properties extends InstanceProperties>(
 
     const deltaTimeSeconds = Math.max(0, (timestampMs - previousTimestampMs) / 1000);
     previousTimestampMs = timestampMs;
-    settledProperties.length = 0;
+    settledProperties.clear();
 
     for (const [property, springState] of springsByProperty) {
       if (advancePropertySpring(springState, deltaTimeSeconds, springSolution)) {
-        settledProperties.push(property);
+        settledProperties.set(property, springState.goalComponents);
       }
 
       animationPatch[property] = composeAnimationValue(
@@ -182,16 +182,26 @@ export function createSpringBinding<Properties extends InstanceProperties>(
       throw error;
     }
 
-    for (const property of settledProperties) {
+    for (const [property, goal] of settledProperties) {
+      // Property observers can stop or retarget a spring while its final value is rendered.
+      if (springsByProperty.get(property)?.goalComponents !== goal) {
+        settledProperties.delete(property);
+
+        continue;
+      }
+
       springsByProperty.delete(property);
       delete animationPatch[property];
     }
 
-    runner.release(settledProperties);
+    runner.release([...settledProperties.keys()]);
 
     if (springsByProperty.size === 0) {
       cancelFrame();
-      emitSignalSafely(completedEmitter);
+
+      if (settledProperties.size > 0) {
+        emitSignalSafely(completedEmitter);
+      }
     }
   }
 

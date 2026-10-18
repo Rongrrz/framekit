@@ -1,10 +1,6 @@
 import { createFrame, createImageButton, createTextButton } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('buttons', () => {
   it('uses a semantic button, typed events, and lifecycle cleanup', () => {
     const button = createTextButton();

@@ -1,10 +1,7 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
   await page.evaluate(() => {
     const {
       bindVirtualList,
@@ -118,9 +115,6 @@ test.beforeEach(async ({ page }) => {
 test('measures wrapped rows and preserves anchors across expansion, prepend, and width changes', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-
   const list = page.getByRole('listbox', { name: 'Measured rows' });
   await page.getByRole('button', { name: 'Jump', exact: true }).click();
 
@@ -161,7 +155,6 @@ test('measures wrapped rows and preserves anchors across expansion, prepend, and
     .toBeGreaterThan(height);
   await expect.poll(relativeTop).toBeCloseTo(-7, 0);
   expect(await list.getByRole('option').count()).toBeLessThan(24);
-  expect(errors).toEqual([]);
 });
 
 test('keeps selection and keyboard navigation independent of mounted measured views and cleans up', async ({
@@ -230,8 +223,7 @@ test('lets a caller scroll override an estimated keyboard jump before measuremen
 test('does not accumulate scroll drift while earlier rows resize by fractional pixels', async ({
   page,
 }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
   await page.evaluate(() => {
     const {
       createScrollingFrame,

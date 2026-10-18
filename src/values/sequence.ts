@@ -1,3 +1,4 @@
+import { snapshotPropertyValue } from '#internal/snapshot.js';
 import { assertFiniteNumber } from '#internal/validation.js';
 
 import { assertColor3, type Color3 } from './color3.js';
@@ -28,13 +29,13 @@ export function colorSequence(
 ): ColorSequence {
   const values = [first, second, ...remaining];
 
-  const keypoints = isColorSequenceKeypoint(first)
-    ? values.map(asColorKeypoint)
-    : evenlySpace(values.map(asColor));
+  const keypoints = snapshotPropertyValue(
+    isColorSequenceKeypoint(first) ? values.map(asColorKeypoint) : evenlySpace(values.map(asColor)),
+  );
 
   assertColorSequence(keypoints);
 
-  return Object.freeze(keypoints.map((keypoint) => Object.freeze(keypoint)));
+  return keypoints;
 }
 
 /** Creates a number sequence from evenly spaced values or explicit keypoints. */
@@ -45,12 +46,13 @@ export function numberSequence(
 ): NumberSequence {
   const values = [first, second, ...remaining];
 
-  const keypoints =
-    typeof first === 'number' ? evenlySpace(values.map(asNumber)) : values.map(asNumberKeypoint);
+  const keypoints = snapshotPropertyValue(
+    typeof first === 'number' ? evenlySpace(values.map(asNumber)) : values.map(asNumberKeypoint),
+  );
 
   assertNumberSequence(keypoints);
 
-  return Object.freeze(keypoints.map((keypoint) => Object.freeze(keypoint)));
+  return keypoints;
 }
 
 export function assertColorSequence(value: unknown): asserts value is ColorSequence {

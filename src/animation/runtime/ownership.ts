@@ -1,6 +1,9 @@
 import { throwCollectedErrors } from '#internal/errors.js';
 import type { Instance, InstanceProperties } from '#internal/runtime/node/instance.js';
-import { subscribeToPropertyWrite } from '#internal/runtime/systems/properties.js';
+import {
+  setNodeProperties,
+  subscribeToPropertyWrite,
+} from '#internal/runtime/systems/properties.js';
 import type { Unsubscribe } from '#state/signal.js';
 
 export type AnimationOwner = {
@@ -13,8 +16,6 @@ type PropertyClaim = Readonly<{
 }>;
 
 const claimsByNode = new WeakMap<Instance, Map<PropertyKey, PropertyClaim>>();
-
-const writesByNode = new WeakMap<Instance, Map<PropertyKey, unknown>>();
 
 export function claimAnimationProperties<Properties extends InstanceProperties>(
   node: Instance<Properties>,
@@ -85,36 +86,7 @@ export function applyAnimationProperties<Properties extends InstanceProperties>(
     }
   }
 
-  const writes = getOrCreateNodeWrites(node);
-  const hasNestedWrites = writes.size > 0;
-
-  const previousWrites = hasNestedWrites
-    ? properties.map((property) => ({
-        property,
-        hadValue: writes.has(property),
-        value: writes.get(property),
-      }))
-    : undefined;
-
-  for (const property of properties) {
-    writes.set(property, constrainedPatch[property]);
-  }
-
-  try {
-    node.setProperties(constrainedPatch);
-  } finally {
-    if (previousWrites) {
-      for (const previous of previousWrites) {
-        if (previous.hadValue) {
-          writes.set(previous.property, previous.value);
-        } else {
-          writes.delete(previous.property);
-        }
-      }
-    } else {
-      writes.clear();
-    }
-  }
+  setNodeProperties(node, constrainedPatch, owner);
 }
 
 const unitIntervalProperties = new Set<PropertyKey>([
@@ -166,8 +138,8 @@ function createPropertyClaim<Properties extends InstanceProperties>(
   property: keyof Properties,
   owner: AnimationOwner,
 ): PropertyClaim {
-  const unsubscribe = subscribeToPropertyWrite(node, property, (value) => {
-    if (isAnimationWrite(node, property, value)) {
+  const unsubscribe = subscribeToPropertyWrite(node, property, (_value, writer) => {
+    if (writer === owner) {
       return;
     }
 
@@ -216,25 +188,6 @@ function getOrCreateNodeClaims(node: Instance): Map<PropertyKey, PropertyClaim> 
   claimsByNode.set(node, created);
 
   return created;
-}
-
-function getOrCreateNodeWrites(node: Instance): Map<PropertyKey, unknown> {
-  const existing = writesByNode.get(node);
-
-  if (existing) {
-    return existing;
-  }
-
-  const created = new Map<PropertyKey, unknown>();
-  writesByNode.set(node, created);
-
-  return created;
-}
-
-function isAnimationWrite(node: Instance, property: PropertyKey, value: unknown): boolean {
-  const writes = writesByNode.get(node);
-
-  return writes?.has(property) === true && Object.is(writes.get(property), value);
 }
 
 /** Optional diagnostics copy claims without exposing mutable ownership maps. */

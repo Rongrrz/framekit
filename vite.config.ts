@@ -29,5 +29,7 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     include: ['src/__tests__/**/*.test.ts'],
+    setupFiles: ['src/__tests__/support/setup.ts'],
+    sequence: { hooks: 'stack' },
   },
 });

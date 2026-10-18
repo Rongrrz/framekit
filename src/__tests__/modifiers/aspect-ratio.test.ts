@@ -1,10 +1,6 @@
 import { createFrame, createUIAspectRatioConstraint, udim2FromOffset } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('UI aspect ratio constraints', () => {
   it('fits within the requested size using the dominant axis', () => {
     const frame = createFrame({ Size: udim2FromOffset(200, 100) });

@@ -7,13 +7,7 @@ import {
   udim2FromOffset,
   vector2,
 } from 'framekit';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
-afterEach(() => vi.unstubAllGlobals());
+import { describe, expect, it, vi } from 'vitest';
 
 describe('scrolling frames', () => {
   it('uses a creation-only semantic host tag', () => {

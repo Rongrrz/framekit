@@ -19,6 +19,7 @@ export function bindHoverScale(
   const unsubscribeEnter = node.onMouseEnter(() => spring(scale, { Scale: hoveredScale }));
   const unsubscribeLeave = node.onMouseLeave(() => spring(scale, { Scale: 1 }));
   const unregisterDestroy = node.onDestroy(dispose);
+  const unregisterScaleDestroy = scale.onDestroy(dispose);
   let active = true;
 
   function dispose(): void {
@@ -30,6 +31,7 @@ export function bindHoverScale(
     unsubscribeEnter();
     unsubscribeLeave();
     unregisterDestroy();
+    unregisterScaleDestroy();
 
     if (!scale.isDestroyed()) {
       spring(scale).stop('Scale');

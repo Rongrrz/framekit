@@ -12,7 +12,12 @@ import {
 import { prepareAnimationGoal } from '../runtime/goal.js';
 import { createAnimationRunner } from '../runtime/runner.js';
 import type { AnimationGoal } from '../runtime/types.js';
-import { interpolateAnimationValue } from '../runtime/value.js';
+import {
+  assertCompatibleAnimationValues,
+  decomposeAnimationValue,
+  interpolateAnimationValue,
+  type DecomposedAnimationValue,
+} from '../runtime/value.js';
 import {
   assertEasingDirection,
   assertEasingStyle,
@@ -95,7 +100,7 @@ export function createTween<Properties extends InstanceProperties>(
   let playbackState: TweenPlaybackState = 'Idle';
   let startedAtMs = 0;
   let elapsedBeforePauseMs = 0;
-  let startValues: Partial<Properties> = {};
+  let startValues = new Map<keyof Properties, DecomposedAnimationValue>();
   const animationPatch: Partial<Properties> = {};
 
   const runner = createAnimationRunner(node, {
@@ -127,14 +132,16 @@ export function createTween<Properties extends InstanceProperties>(
     if (playbackState === 'Paused') {
       startedAtMs = performance.now() - elapsedBeforePauseMs;
     } else {
-      startValues = {};
-
       const latest = getPropertiesSnapshot(node);
+      const starts = new Map<keyof Properties, DecomposedAnimationValue>();
 
-      for (const property of goalKeys) {
-        startValues[property] = latest[property];
+      for (const { property, goal } of preparedGoal) {
+        const start = decomposeAnimationValue(latest[property], String(property));
+        assertCompatibleAnimationValues(start, goal, String(property));
+        starts.set(property, start);
       }
 
+      startValues = starts;
       elapsedBeforePauseMs = 0;
       startedAtMs = performance.now();
     }
@@ -235,12 +242,11 @@ export function createTween<Properties extends InstanceProperties>(
       resolvedOptions.EasingDirection,
     );
 
-    for (const { property, goalValue } of preparedGoal) {
+    for (const { property, goal } of preparedGoal) {
       animationPatch[property] = interpolateAnimationValue(
-        startValues[property],
-        goalValue,
+        startValues.get(property)!,
+        goal,
         easedProgress,
-        String(property),
       ) as Properties[keyof Properties];
     }
 
@@ -248,8 +254,12 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function complete(): void {
+    const completingValues = startValues;
     applyProgressOrCancel(finalProgress);
-    finish('Completed');
+
+    if (startValues === completingValues) {
+      finish('Completed');
+    }
   }
 
   function finish(nextState: 'Completed' | 'Cancelled'): void {

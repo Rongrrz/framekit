@@ -19,6 +19,10 @@ export const observeVirtualRows = (
   const Constructor =
     viewport.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
 
+  if (typeof Constructor !== 'function') {
+    throw new Error('Virtual lists require ResizeObserver.');
+  }
+
   const rows = new WeakMap<Element, Key>();
   const pending = new Map<Key, number>();
   let frame: number | undefined;

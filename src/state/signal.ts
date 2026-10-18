@@ -19,28 +19,22 @@ export type SignalEmitter<Arguments extends unknown[] = []> = Signal<Arguments> 
 
 /** Creates a standalone synchronous signal with explicit publishing methods. */
 export function createSignalEmitter<Arguments extends unknown[] = []>(): SignalEmitter<Arguments> {
-  const listeners = new Set<(...args: Arguments) => void>();
+  const listeners = new Set<{ listener: (...args: Arguments) => void }>();
 
   return Object.freeze({
     subscribe: (listener) => {
-      listeners.add(listener);
-
-      let active = true;
+      const subscription = { listener };
+      listeners.add(subscription);
 
       return () => {
-        if (!active) {
-          return;
-        }
-
-        active = false;
-        listeners.delete(listener);
+        listeners.delete(subscription);
       };
     },
 
     emit: (...args) => {
       const errors: unknown[] = [];
 
-      for (const listener of Array.from(listeners)) {
+      for (const { listener } of Array.from(listeners)) {
         try {
           listener(...args);
         } catch (error) {
@@ -51,7 +45,9 @@ export function createSignalEmitter<Arguments extends unknown[] = []>(): SignalE
       throwCollectedErrors(errors, 'Multiple signal listeners failed.');
     },
 
-    clear: () => listeners.clear(),
+    clear: () => {
+      listeners.clear();
+    },
   });
 }
 

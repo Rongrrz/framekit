@@ -1,10 +1,6 @@
 import { createFrame, createUIGridLayout, udim2FromOffset } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('UI grid layouts', () => {
   it('lays out and sorts direct GUI children in equal-sized cells', () => {
     const frame = createFrame();

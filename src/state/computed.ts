@@ -1,3 +1,5 @@
+import { runCleanups } from '#internal/errors.js';
+
 import { createSignalEmitter, emitSignalSafely, type Unsubscribe } from './signal.js';
 import type { ReadonlyObservableValue } from './value.js';
 
@@ -30,11 +32,9 @@ export function createComputedValue<T>(
   };
 
   const stopObservingSources = (): void => {
-    for (const unsubscribe of sourceUnsubscribes) {
-      unsubscribe();
-    }
-
+    const unsubscribes = sourceUnsubscribes;
     sourceUnsubscribes = [];
+    runCleanups(unsubscribes, 'Multiple computed dependencies failed to unsubscribe.');
   };
 
   const startObservingSources = (): void => {
@@ -47,8 +47,13 @@ export function createComputedValue<T>(
         unsubscribes.push(source.onChange(recompute));
       }
     } catch (error) {
-      for (const unsubscribe of unsubscribes) {
-        unsubscribe();
+      try {
+        runCleanups(unsubscribes, 'Multiple computed dependencies failed to unsubscribe.');
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [error, cleanupError],
+          'Computed subscription and cleanup failed.',
+        );
       }
 
       throw error;

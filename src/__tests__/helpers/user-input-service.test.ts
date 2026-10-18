@@ -1,11 +1,5 @@
 import { createFrame, createTextButton, createTextInput, createUserInputService } from 'framekit';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
-afterEach(() => vi.restoreAllMocks());
+import { describe, expect, it, vi } from 'vitest';
 
 const press = (
   target: EventTarget,

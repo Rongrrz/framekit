@@ -23,10 +23,11 @@ type PropertyCommit<Properties extends InstanceProperties> = Readonly<{
 export function setNodeProperties<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   patch: Partial<Properties>,
+  writer?: object,
 ): void {
   const propertySnapshot = snapshotPropertyValue(patch);
   const requestedProperties = Object.keys(propertySnapshot) as (keyof Properties)[];
-  applyPropertyPatch(node, propertySnapshot, requestedProperties);
+  applyPropertyPatch(node, propertySnapshot, requestedProperties, writer);
 }
 
 /** Direct setters only snapshot their value; their patch envelope is created inside the runtime. */
@@ -45,11 +46,12 @@ function applyPropertyPatch<Properties extends InstanceProperties>(
   node: Instance<Properties>,
   propertySnapshot: Partial<Properties>,
   requestedProperties: readonly (keyof Properties)[],
+  writer?: object,
 ): void {
   const commit = commitPropertyPatch(node, propertySnapshot, requestedProperties);
 
   for (const property of requestedProperties) {
-    emitNodeEvent(node, getPropertyWriteEventKey(property), propertySnapshot[property]);
+    emitNodeEvent(node, getPropertyWriteEventKey(property), propertySnapshot[property], writer);
   }
 
   if (commit) {
@@ -64,7 +66,7 @@ export function subscribeToPropertyWrite<
 >(
   node: Instance<Properties>,
   property: Property,
-  listener: (value: Properties[Property]) => void,
+  listener: (value: Properties[Property], writer: object | undefined) => void,
 ): Unsubscribe {
   return subscribeToNodeEvent(node, getPropertyWriteEventKey(property), listener);
 }

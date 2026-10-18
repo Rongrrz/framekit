@@ -1,10 +1,6 @@
 import { createFrame, createScreenGui } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('screen GUIs', () => {
   it('preserves its previous mount when new DOM placement fails', () => {
     const previous = document.body.appendChild(document.createElement('main'));

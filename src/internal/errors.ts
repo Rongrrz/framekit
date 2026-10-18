@@ -9,6 +9,21 @@ export function throwCollectedErrors(errors: readonly unknown[], message: string
   }
 }
 
+/** Releases independent resources even when an earlier cleanup fails. */
+export function runCleanups(cleanups: Iterable<() => void>, message: string): void {
+  const errors: unknown[] = [];
+
+  for (const cleanup of cleanups) {
+    try {
+      cleanup();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+
+  throwCollectedErrors(errors, message);
+}
+
 /** Reports an observer failure without changing the outcome of the operation it observed. */
 export function reportObserverError(error: unknown): void {
   const reporter = Reflect.get(globalThis, 'reportError');

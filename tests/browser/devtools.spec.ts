@@ -1,6 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test, type Page } from './fixtures.js';
 
 const inspectorFor = (page: Page) =>
   page.getByRole('complementary', { name: 'FrameKit runtime inspector' });
@@ -8,8 +6,6 @@ const inspectorFor = (page: Page) =>
 test('opens and closes the inspector without changing the host URL or history', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/playground/index.html?preview=desktop#/guide');
   await expect(inspectorFor(page)).toHaveCount(0);
 
@@ -43,7 +39,6 @@ test('opens and closes the inspector without changing the host URL or history', 
   await page.keyboard.press('F8');
   await expect(inspector).toHaveCount(0);
   await expect(page).toHaveURL(originalUrl);
-  expect(errors).toEqual([]);
 });
 
 test('searches collapsed paths, navigates ancestors and selection history, and filters readable properties', async ({
@@ -196,8 +191,7 @@ test('does not serve separate debugging or workbench entries', async ({ request 
 test('the same inspector binding inspects an independent FrameKit project and releases on root destruction', async ({
   page,
 }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekitDevtools));
+  await openFrameKit(page);
   await page.evaluate(() => {
     const { createScreenGui, createTextButton, createUICorner, udim2FromOffset } = window.framekit;
     const app = createScreenGui({ Name: 'Independent project' });
@@ -346,8 +340,7 @@ test('moves the floating inspector and resizes from all eight directions', async
 });
 
 test('supports a shortcut without a launcher and removes it with the root', async ({ page }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekitDevtools));
+  await openFrameKit(page);
   await page.evaluate(() => {
     const root = window.framekit.createScreenGui();
     const destroy = window.framekit.createTextButton({ Text: 'Destroy inspected root' });

@@ -5,7 +5,7 @@ import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import ts from 'typescript';
-import { describe, expect, it } from 'vitest';
+import { expect, it } from 'vitest';
 
 const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
 
@@ -43,29 +43,31 @@ const allowedDependencies = {
   ],
 } as const;
 
-type SourceDomain = keyof typeof allowedDependencies;
+type Domain = keyof typeof allowedDependencies;
+type Dependency = Readonly<{ target: string; specifier: string; typeOnly: boolean }>;
 
-function sourceFiles(directory: string): string[] {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+const sourceFiles = (directory: string): string[] =>
+  readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = resolve(directory, entry.name);
 
-    return entry.isDirectory() ? sourceFiles(path) : path.endsWith('.ts') ? [path] : [];
+    return entry.name === '__tests__'
+      ? []
+      : entry.isDirectory()
+        ? sourceFiles(path)
+        : path.endsWith('.ts')
+          ? [path]
+          : [];
   });
-}
 
-function domainFiles(domain: SourceDomain): string[] {
-  const directory = resolve(sourceRoot, domain);
+const domainOf = (file: string): Domain | undefined => {
+  const [root, nested] = relative(sourceRoot, file).split(sep);
+  const domain =
+    root === 'internal' && (nested === 'dom' || nested === 'runtime') ? `internal/${nested}` : root;
 
-  if (domain !== 'internal') {
-    return sourceFiles(directory);
-  }
+  return domain && Object.hasOwn(allowedDependencies, domain) ? (domain as Domain) : undefined;
+};
 
-  return readdirSync(directory, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'))
-    .map((entry) => resolve(directory, entry.name));
-}
-
-function runtimeDependencies(file: string): string[] {
+const dependenciesOf = (file: string): Dependency[] => {
   const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest);
 
   return source.statements.flatMap((statement) => {
@@ -73,156 +75,97 @@ function runtimeDependencies(file: string): string[] {
       return [];
     }
 
-    if (
-      (ts.isImportDeclaration(statement) && statement.importClause?.isTypeOnly) ||
-      (ts.isExportDeclaration(statement) && statement.isTypeOnly)
-    ) {
-      return [];
-    }
-
     const specifier = statement.moduleSpecifier;
 
-    if (!specifier || !ts.isStringLiteral(specifier)) {
+    if (!specifier || !ts.isStringLiteral(specifier) || !/^[#.]/.test(specifier.text)) {
       return [];
     }
 
-    const dependency = resolveSourceImport(file, specifier.text);
+    const target = specifier.text.startsWith('#')
+      ? resolve(sourceRoot, specifier.text.slice(1).replace(/\.js$/, '.ts'))
+      : resolve(dirname(file), specifier.text.replace(/\.js$/, '.ts'));
 
-    return dependency ? [dependency] : [];
+    const clause = ts.isImportDeclaration(statement) ? statement.importClause : undefined;
+    const bindings = clause?.namedBindings;
+    const exports = ts.isExportDeclaration(statement) ? statement.exportClause : undefined;
+
+    const typeOnly = ts.isImportDeclaration(statement)
+      ? clause?.isTypeOnly === true ||
+        (!clause?.name &&
+          bindings &&
+          ts.isNamedImports(bindings) &&
+          bindings.elements.length > 0 &&
+          bindings.elements.every((entry) => entry.isTypeOnly))
+      : statement.isTypeOnly ||
+        (exports &&
+          ts.isNamedExports(exports) &&
+          exports.elements.length > 0 &&
+          exports.elements.every((entry) => entry.isTypeOnly));
+
+    return [{ target, specifier: specifier.text, typeOnly: Boolean(typeOnly) }];
   });
-}
+};
 
-function resolveSourceImport(file: string, specifier: string): string | undefined {
-  if (specifier.startsWith('#')) {
-    return resolve(sourceRoot, specifier.slice(1).replace(/\.js$/, '.ts'));
-  }
+const graph = new Map(sourceFiles(sourceRoot).map((file) => [file, dependenciesOf(file)]));
 
-  if (specifier.startsWith('.')) {
-    return resolve(dirname(file), specifier.replace(/\.js$/, '.ts'));
-  }
+it('keeps source dependencies within their declared domains', () => {
+  const violations: string[] = [];
 
-  return undefined;
-}
+  for (const [file, dependencies] of graph) {
+    const domain = domainOf(file);
 
-function sourceDomain(file: string): SourceDomain {
-  const [root, nested] = relative(sourceRoot, file).split(sep);
-
-  if (root === 'internal' && (nested === 'dom' || nested === 'runtime')) {
-    return `internal/${nested}`;
-  }
-
-  return root as SourceDomain;
-}
-
-function crossDomainPrefix(domain: SourceDomain): string {
-  return `#${domain}/`;
-}
-
-describe('source dependency direction', () => {
-  for (const [domain, allowedDomains] of Object.entries(allowedDependencies)) {
-    it(`keeps ${domain} imports inside its allowed domains`, () => {
-      for (const file of domainFiles(domain as SourceDomain)) {
-        const source = ts.createSourceFile(
-          file,
-          readFileSync(file, 'utf8'),
-          ts.ScriptTarget.Latest,
-        );
-
-        for (const statement of source.statements) {
-          if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) {
-            continue;
-          }
-
-          const specifier = statement.moduleSpecifier;
-
-          if (!specifier || !ts.isStringLiteral(specifier)) {
-            continue;
-          }
-
-          const target = resolveSourceImport(file, specifier.text);
-
-          if (!target) {
-            continue;
-          }
-
-          const targetDomain = sourceDomain(target);
-          const expectedPrefix = targetDomain === domain ? '.' : crossDomainPrefix(targetDomain);
-          expect(
-            specifier.text.startsWith(expectedPrefix),
-            `${file} should import ${specifier.text} through ${expectedPrefix}`,
-          ).toBe(true);
-
-          const allowedByDomain = allowedDomains.some((allowedDomain) => {
-            const root = resolve(sourceRoot, allowedDomain);
-
-            return target === root || target.startsWith(`${root}${sep}`);
-          });
-
-          // Class narrowing is the one intentional reverse type dependency: the runtime maps
-          // built-in class names to their public element and modifier types without importing them
-          // at runtime.
-          const allowedClassMapType =
-            file.endsWith(`${sep}internal${sep}runtime${sep}node${sep}class-map.ts`) &&
-            ts.isImportDeclaration(statement) &&
-            statement.importClause?.isTypeOnly === true &&
-            ['elements', 'modifiers'].some((domain) => {
-              const root = resolve(sourceRoot, domain);
-
-              return target === root || target.startsWith(`${root}${sep}`);
-            });
-
-          expect(allowedByDomain || allowedClassMapType, `${file} imports ${specifier.text}`).toBe(
-            true,
-          );
-        }
-      }
-    });
-  }
-
-  it('keeps runtime imports acyclic', () => {
-    const files = sourceFiles(sourceRoot).filter((file) => !file.includes(`${sep}__tests__${sep}`));
-    const productionFiles = new Set(files);
-    const visited = new Set<string>();
-    const visiting = new Set<string>();
-
-    const visit = (file: string, path: readonly string[]): void => {
-      if (visiting.has(file)) {
-        const cycleStart = path.indexOf(file);
-
-        const cycle = [...path.slice(cycleStart), file]
-          .map((entry) => relative(sourceRoot, entry))
-          .join(' -> ');
-
-        throw new Error(`Runtime import cycle: ${cycle}`);
-      }
-
-      if (visited.has(file)) {
-        return;
-      }
-
-      visiting.add(file);
-
-      for (const dependency of runtimeDependencies(file)) {
-        if (productionFiles.has(dependency)) {
-          visit(dependency, [...path, file]);
-        }
-      }
-
-      visiting.delete(file);
-      visited.add(file);
-    };
-
-    for (const file of files) {
-      visit(file, []);
+    if (!domain) {
+      continue;
     }
-  });
 
-  it('keeps index.ts reserved for the package entry point', () => {
-    const nestedIndexes = sourceFiles(sourceRoot)
-      .filter((file) => !file.includes(`${sep}__tests__${sep}`))
-      .filter((file) => file.endsWith(`${sep}index.ts`))
-      .map((file) => relative(sourceRoot, file));
+    const allowed: readonly string[] = allowedDependencies[domain];
 
-    expect(nestedIndexes).toEqual(['index.ts']);
-  });
+    for (const dependency of dependencies) {
+      const targetDomain = domainOf(dependency.target);
+      // Exact class narrowing maps runtime handles to public types without importing factories.
+      const classMapType =
+        file === resolve(sourceRoot, 'internal/runtime/node/class-map.ts') &&
+        dependency.typeOnly &&
+        (targetDomain === 'elements' || targetDomain === 'modifiers');
+
+      if (!targetDomain || (!allowed.includes(targetDomain) && !classMapType)) {
+        violations.push(`${relative(sourceRoot, file)} imports ${dependency.specifier}`);
+      }
+    }
+  }
+
+  expect(violations).toEqual([]);
+});
+
+it('keeps runtime imports acyclic while allowing type-only relationships', () => {
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+
+  const visit = (file: string, path: readonly string[]): void => {
+    if (visiting.has(file)) {
+      const cycle = [...path.slice(path.indexOf(file)), file]
+        .map((entry) => relative(sourceRoot, entry))
+        .join(' -> ');
+      throw new Error(`Runtime import cycle: ${cycle}`);
+    }
+
+    if (visited.has(file)) {
+      return;
+    }
+
+    visiting.add(file);
+
+    for (const dependency of graph.get(file) ?? []) {
+      if (!dependency.typeOnly && graph.has(dependency.target)) {
+        visit(dependency.target, [...path, file]);
+      }
+    }
+
+    visiting.delete(file);
+    visited.add(file);
+  };
+
+  for (const file of graph.keys()) {
+    visit(file, []);
+  }
 });

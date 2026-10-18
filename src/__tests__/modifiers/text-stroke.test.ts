@@ -9,10 +9,6 @@ import { describe, expect, it } from 'vitest';
 
 import { createStyleModifier } from '#internal/runtime/node/modifier.js';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('text strokes', () => {
   it('preserves typography style owners during text edits and restores the current base', () => {
     const label = createTextLabel({ Text: 'Before', TextSize: 18 });

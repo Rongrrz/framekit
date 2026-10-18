@@ -1,10 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.js';
 
 test('documents working menu, modal, tree, and explicit binding cleanup on desktop and mobile', async ({
   page,
 }, info) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/playground/index.html#/controls');
   await expect(
@@ -78,5 +76,4 @@ test('documents working menu, modal, tree, and explicit binding cleanup on deskt
       .getByRole('main')
       .evaluate((element) => element.scrollWidth <= element.clientWidth + 1),
   ).toBe(true);
-  expect(errors).toEqual([]);
 });

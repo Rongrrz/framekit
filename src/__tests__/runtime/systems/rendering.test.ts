@@ -12,10 +12,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { createDefaultGuiObjectProperties, createGuiObjectNode } from '#elements/gui-object.js';
 import { createLayoutModifier, createStyleModifier } from '#internal/runtime/node/modifier.js';
 
-import { resetDocumentAfterEach } from '../../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('composing base and modifier styles', () => {
   it('recomputes parent layout only when layout inputs change', () => {
     const parent = createFrame();

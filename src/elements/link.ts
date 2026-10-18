@@ -1,3 +1,4 @@
+import { setOptionalAttribute } from '#internal/dom/attributes.js';
 import {
   createRealmAbortController,
   resolveOwnerDocument,
@@ -119,13 +120,5 @@ function validateLinkDestination(href: string, ownerDocument: Document): void {
 
   if (!allowedLinkProtocols.has(url.protocol)) {
     throw new TypeError(`Unsupported link URL protocol "${url.protocol}".`);
-  }
-}
-
-function setOptionalAttribute(element: HTMLElement, name: string, value: string): void {
-  if (value) {
-    element.setAttribute(name, value);
-  } else {
-    element.removeAttribute(name);
   }
 }

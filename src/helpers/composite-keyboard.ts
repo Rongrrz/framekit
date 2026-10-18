@@ -34,6 +34,10 @@ export const createTypeahead = (): ((
 
     const query = [...prefix].every((letter) => letter === prefix[0]) ? prefix[0]! : prefix;
 
+    if (query.length > 1 && labels[current]?.trim().toLocaleLowerCase().startsWith(query)) {
+      return current;
+    }
+
     for (let offset = 1; offset <= labels.length; offset += 1) {
       const index = (current + offset) % labels.length;
 

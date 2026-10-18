@@ -5,7 +5,11 @@ import type { ObservableValue } from '#state/value.js';
 import { udim2 } from '#values/udim.js';
 
 import { isTextEntry } from './composite-keyboard.js';
-import { bindKeyedChildren, type KeyedChildrenOptions } from './keyed-children.js';
+import {
+  bindKeyedChildren,
+  validateChildView,
+  type KeyedChildrenOptions,
+} from './keyed-children.js';
 import type { RowObserver } from './virtual-list-measurement.js';
 import type { VirtualListModel, VirtualListEntry } from './virtual-list-model.js';
 
@@ -34,14 +38,7 @@ export const bindVirtualRows = <Item, Node extends GuiObject>(
       create: (entry) => {
         const node = options.create(entry.item);
 
-        if (
-          node.isDestroyed() ||
-          node.Parent ||
-          node.unsafeElement === element ||
-          [...views.values()].includes(node)
-        ) {
-          throw new TypeError('A virtual row factory must return a unique, live, unattached view.');
-        }
+        validateChildView(content, node, new Set(views.values()));
 
         if (!node.unsafeElement.id) {
           nextRowId += 1;

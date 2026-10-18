@@ -4,36 +4,25 @@ import {
   createTextButton,
   type Frame,
   type GuiObject,
-  type Instance,
   type ScreenGui,
   type TextButton,
   udim2FromOffset,
   vector2,
   bindTooltip,
 } from 'framekit';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setupAnimationClock } from '../support/animation-clock.js';
+import { destroyNodesAfterEach } from '../support/node-cleanup.js';
 
 const clock = setupAnimationClock();
 
-const owners = new Set<Instance>();
+const trackNode = destroyNodesAfterEach();
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.stubGlobal('innerWidth', 800);
   vi.stubGlobal('innerHeight', 600);
-});
-
-afterEach(() => {
-  for (const owner of owners) {
-    owner.destroy();
-  }
-
-  owners.clear();
-  document.body.replaceChildren();
-  vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 const rect = (x: number, y: number, width: number, height: number): DOMRect =>
@@ -58,8 +47,8 @@ const fixture = (): Readonly<{
   const root = createScreenGui();
   const target = createTextButton();
   const tooltip = createFrame({ Size: udim2FromOffset(80, 40) });
-  owners.add(root);
-  owners.add(tooltip);
+  trackNode(root);
+  trackNode(tooltip);
   root.mount(document.body);
   target.Parent = root;
 
@@ -481,7 +470,7 @@ describe('tooltips', () => {
     const ownerDocument = iframe.contentDocument!;
     const root = createScreenGui({}, { ownerDocument });
     const target = createTextButton({}, { ownerDocument });
-    owners.add(root);
+    trackNode(root);
     root.mount(ownerDocument.body);
     target.Parent = root;
 
@@ -506,7 +495,7 @@ describe('tooltips', () => {
     tooltip.Parent = undefined;
 
     const button = createTextButton();
-    owners.add(button);
+    trackNode(button);
     expect(() => bindTooltip(target, button)).toThrow(/non-interactive/);
 
     const foreign = createFrame(
@@ -514,7 +503,7 @@ describe('tooltips', () => {
       { ownerDocument: document.implementation.createHTMLDocument() },
     );
 
-    owners.add(foreign);
+    trackNode(foreign);
     expect(() => bindTooltip(target, foreign)).toThrow(/target document/);
     tooltip.destroy();
     expect(() => bindTooltip(target, tooltip)).toThrow(/destroyed/);

@@ -1,12 +1,8 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, test } from './fixtures.js';
 
 test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable scroll anchors', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/playground/collections.html');
 
   const list = page.getByRole('listbox', { name: 'Virtual collection' });
@@ -37,7 +33,6 @@ test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable
 
   expect(after.top).toBe(before.top + 32);
   expect(after.active).toBe(before.active);
-  expect(errors).toEqual([]);
 });
 
 test('keeps native focus on the viewport when the selected option scrolls out of view', async ({

@@ -1,4 +1,5 @@
 import type { GuiObject } from '#elements/gui-object.js';
+import { preserveAttributes } from '#internal/dom/attributes.js';
 import { installFrameKitStyles } from '#internal/dom/stylesheet.js';
 import type { GuiElement } from '#internal/runtime/node/gui-node.js';
 import { udim2FromOffset } from '#values/udim.js';
@@ -41,18 +42,17 @@ export const bindMenu = (
 
   const typeahead = createTypeahead();
 
-  const savedTrigger = ['aria-haspopup', 'aria-expanded', 'aria-controls'].map((name) =>
-    trigger.unsafeElement.getAttribute(name),
-  );
-
-  const savedMenu = ['role', 'popover'].map((name) => element.getAttribute(name));
-
-  const savedItems = items.map((item) =>
-    ['role', 'tabindex'].map((name) => item.unsafeElement.getAttribute(name)),
+  const restoreTrigger = preserveAttributes(trigger.unsafeElement, [
+    'aria-haspopup',
+    'aria-expanded',
+    'aria-controls',
+  ]);
+  const restoreMenu = preserveAttributes(element, ['role', 'popover', 'id']);
+  const restoreItems = items.map((item) =>
+    preserveAttributes(item.unsafeElement, ['role', 'tabindex']),
   );
 
   const originalPosition = menu.Position;
-  const originalId = element.getAttribute('id');
 
   if (!element.id) {
     do {
@@ -227,22 +227,6 @@ export const bindMenu = (
     }),
   ];
 
-  const restore = (
-    target: HTMLElement,
-    names: readonly string[],
-    values: readonly (string | null)[],
-  ): void => {
-    names.forEach((name, index) => {
-      const value = values[index];
-
-      if (value === null || value === undefined) {
-        target.removeAttribute(name);
-      } else {
-        target.setAttribute(name, value);
-      }
-    });
-  };
-
   const dispose = (): void => {
     if (disposed) {
       return;
@@ -253,22 +237,9 @@ export const bindMenu = (
     unregisterMenu();
     close(element.contains(element.ownerDocument.activeElement));
     stops.forEach((stop) => stop());
-    restore(
-      trigger.unsafeElement,
-      ['aria-haspopup', 'aria-expanded', 'aria-controls'],
-      savedTrigger,
-    );
-    restore(element, ['role', 'popover'], savedMenu);
-
-    if (originalId === null) {
-      element.removeAttribute('id');
-    } else {
-      element.id = originalId;
-    }
-
-    items.forEach((item, index) =>
-      restore(item.unsafeElement, ['role', 'tabindex'], savedItems[index]!),
-    );
+    restoreTrigger();
+    restoreMenu();
+    restoreItems.forEach((restore) => restore());
 
     if (!menu.isDestroyed()) {
       menu.Position = originalPosition;

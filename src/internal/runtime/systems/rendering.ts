@@ -122,25 +122,22 @@ function renderLayouts(node: Instance): void {
 
   const guiNode = node as GuiElement;
   const children = state.children.filter(isGuiNode);
-  let parentStyles: Styles = {};
-  let childStyles: Styles = {};
-  let compareChildren: LayoutStyles['compareChildren'] | undefined;
+  let layout: LayoutStyles | undefined;
 
   for (const modifier of state.modifiers.values()) {
     const modifierState = getNodeState(modifier);
 
     if (modifierState.kind === 'layout') {
-      const resolved = modifierState.resolveLayout(modifierState.properties);
-      parentStyles = composeStyles(parentStyles, resolved.parent);
-      childStyles = composeStyles(childStyles, resolved.child);
-      compareChildren = resolved.compareChildren;
+      layout = modifierState.resolveLayout(modifierState.properties);
+      break;
     }
   }
 
   const previousChildren = layoutsByNode.get(node)?.children ?? [];
   const currentChildren = new Set(children);
   const ordered = [...children];
-  const compare = compareChildren;
+  const compare = layout?.compareChildren;
+  const childStyles: Styles = layout ? { ...layout.child, order: '0' } : {};
 
   if (compare) {
     const propertiesByChild = new Map(
@@ -152,13 +149,12 @@ function renderLayouts(node: Instance): void {
     );
     // DOM order already matches visual, reading, and tab order. A neutral CSS order also
     // overrides any lower style layer without renumbering siblings after every edit.
-    childStyles = { ...childStyles, order: '0' };
     layoutsByNode.set(node, { child: childStyles, compareChildren: compare, children: ordered });
   } else {
     layoutsByNode.delete(node);
   }
 
-  setStyleLayer(guiNode.unsafeElement, 'layout', parentStyles);
+  setStyleLayer(guiNode.unsafeElement, 'layout', layout?.parent ?? {});
 
   for (const child of previousChildren) {
     if ((!compare || !currentChildren.has(child)) && !getNodeState(child).destroyed) {

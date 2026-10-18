@@ -1,10 +1,7 @@
 import { bindResponsiveLayout, createFrame } from 'framekit';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
+import { installResizeObserver } from '../support/resize-observer.js';
 
 describe('responsive layouts', () => {
   it('switches responsive layouts only when the breakpoint is crossed', () => {
@@ -141,14 +138,13 @@ describe('responsive layouts', () => {
       breakpoint: breakpoints[0],
       previousBreakpoint: undefined,
     });
-    expect(resizeObserver.observe).toHaveBeenCalledWith(container.unsafeElement);
 
     bounds.width = 479;
-    resizeObserver.trigger();
+    resizeObserver();
     expect(compact).toHaveBeenCalledOnce();
 
     bounds.width = 480;
-    resizeObserver.trigger();
+    resizeObserver();
     expect(medium).toHaveBeenCalledWith({
       width: 480,
       height: 300,
@@ -157,7 +153,7 @@ describe('responsive layouts', () => {
     });
 
     bounds.width = 900;
-    resizeObserver.trigger();
+    resizeObserver();
     expect(wide).toHaveBeenCalledWith({
       width: 900,
       height: 300,
@@ -174,7 +170,7 @@ describe('responsive layouts', () => {
     const owner = createFrame();
     const bounds = stubBounds(owner.unsafeElement, 400, 300);
     const compact = vi.fn();
-    const wide = vi.fn(() => resizeObserver.trigger());
+    const wide = vi.fn(() => resizeObserver());
 
     bindResponsiveLayout(owner, {
       observe: owner,
@@ -182,7 +178,7 @@ describe('responsive layouts', () => {
     });
 
     bounds.width = 800;
-    resizeObserver.trigger();
+    resizeObserver();
 
     expect(compact).toHaveBeenCalledOnce();
     expect(wide).toHaveBeenCalledOnce();
@@ -192,33 +188,36 @@ describe('responsive layouts', () => {
   it('disconnects container observation on disposal or destruction', () => {
     const explicitlyDisposedObserver = installResizeObserver();
     const firstOwner = createFrame();
-    stubBounds(firstOwner.unsafeElement, 400, 300);
+    const firstBounds = stubBounds(firstOwner.unsafeElement, 400, 300);
 
     const firstApply = vi.fn();
 
     const dispose = bindResponsiveLayout(firstOwner, {
       observe: firstOwner,
-      breakpoints: [{ apply: firstApply }],
+      breakpoints: [{ maxWidth: 600, apply: firstApply }, { apply: firstApply }],
     });
 
     dispose();
     dispose();
-    explicitlyDisposedObserver.trigger();
-    expect(explicitlyDisposedObserver.disconnect).toHaveBeenCalled();
+    firstBounds.width = 800;
+    explicitlyDisposedObserver();
     expect(firstApply).toHaveBeenCalledOnce();
     firstOwner.destroy();
 
     const destroyedContainerObserver = installResizeObserver();
     const secondOwner = createFrame();
     const container = createFrame();
-    stubBounds(container.unsafeElement, 400, 300);
+    const applied = vi.fn();
+    const bounds = stubBounds(container.unsafeElement, 400, 300);
     bindResponsiveLayout(secondOwner, {
       observe: container,
-      breakpoints: [{ apply: vi.fn() }],
+      breakpoints: [{ maxWidth: 600, apply: applied }, { apply: applied }],
     });
 
     container.destroy();
-    expect(destroyedContainerObserver.disconnect).toHaveBeenCalledOnce();
+    bounds.width = 800;
+    destroyedContainerObserver();
+    expect(applied).toHaveBeenCalledOnce();
     secondOwner.destroy();
   });
 
@@ -279,62 +278,8 @@ type MutableBounds = { width: number; height: number };
 const stubBounds = (element: HTMLElement, width: number, height: number): MutableBounds => {
   const bounds = { width, height };
   vi.spyOn(element, 'getBoundingClientRect').mockImplementation(
-    () =>
-      ({
-        width: bounds.width,
-        height: bounds.height,
-        top: 0,
-        right: bounds.width,
-        bottom: bounds.height,
-        left: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      }) satisfies DOMRect,
+    () => new DOMRect(0, 0, bounds.width, bounds.height),
   );
 
   return bounds;
-};
-
-const installResizeObserver = (): Readonly<{
-  trigger: () => void;
-  observe: ReturnType<typeof vi.fn>;
-  disconnect: ReturnType<typeof vi.fn>;
-}> => {
-  let connected = false;
-
-  const observe = vi.fn(() => {
-    connected = true;
-  });
-
-  const disconnect = vi.fn(() => {
-    connected = false;
-  });
-
-  const unobserve = vi.fn();
-  let callback: ResizeObserverCallback | undefined;
-
-  class TestResizeObserver implements ResizeObserver {
-    public constructor(nextCallback: ResizeObserverCallback) {
-      callback = nextCallback;
-    }
-
-    public readonly observe = observe;
-    public readonly disconnect = disconnect;
-    public readonly unobserve = unobserve;
-  }
-
-  const callbackObserver = { observe, disconnect, unobserve } satisfies ResizeObserver;
-  vi.stubGlobal('ResizeObserver', TestResizeObserver);
-
-  return {
-    trigger: (): void => {
-      if (connected) {
-        callback?.([], callbackObserver);
-      }
-    },
-
-    observe,
-    disconnect,
-  };
 };

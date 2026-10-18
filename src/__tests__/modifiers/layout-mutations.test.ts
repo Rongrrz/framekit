@@ -3,10 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createStyleModifier } from '#internal/runtime/node/modifier.js';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe.each([createUIListLayout, createUIGridLayout])(
   'active layout mutations (%#)',
   (createLayout) => {
@@ -312,29 +308,35 @@ describe.each([createUIListLayout, createUIGridLayout])(
   },
 );
 
-it('composes list and grid child rules and switches to the remaining layout', () => {
+it('gives child layout to one modifier and switches cleanly when it is replaced', () => {
   const parent = createFrame();
+  const other = createFrame();
   const list = createUIListLayout({ SortOrder: 'Name' });
   const grid = createUIGridLayout();
   list.Parent = parent;
-  grid.Parent = parent;
+  grid.Parent = other;
 
   const first = createFrame({ Name: 'Zebra', LayoutOrder: 1 });
   const second = createFrame({ Name: 'Alpha', LayoutOrder: 2 });
   first.Parent = parent;
   second.Parent = parent;
 
+  expect(() => (grid.Parent = parent)).toThrow(/already has a layout/);
+  expect(grid.Parent).toBe(other);
+  expect(other.unsafeElement.style.display).toBe('grid');
+  expect([...parent.unsafeElement.children]).toEqual([second.unsafeElement, first.unsafeElement]);
+
+  list.Parent = undefined;
+  grid.Parent = parent;
+
+  expect(parent.unsafeElement.style.display).toBe('grid');
+  expect(other.unsafeElement.style.display).toBe('');
   expect([...parent.unsafeElement.children]).toEqual([first.unsafeElement, second.unsafeElement]);
-  expect(second.unsafeElement.style.flexShrink).toBe('0');
+  expect(second.unsafeElement.style.flexShrink).toBe('');
   expect(second.unsafeElement.style.width).toBe('100%');
   grid.destroy();
-
-  const middle = createFrame({ Name: 'Middle' });
-  middle.Parent = parent;
-
-  expect([...parent.unsafeElement.children]).toEqual(
-    [second, middle, first].map((child) => child.unsafeElement),
-  );
-  expect(middle.unsafeElement.style.width).toBe('100px');
+  expect(second.unsafeElement.style.width).toBe('100px');
   parent.destroy();
+  other.destroy();
+  list.destroy();
 });

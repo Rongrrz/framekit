@@ -5,26 +5,21 @@ import {
   type LayoutStyles,
 } from '#internal/runtime/node/modifier.js';
 import { mergeProperties } from '#internal/runtime/systems/properties.js';
-import { assertAllowedValue, assertBoolean } from '#internal/validation.js';
+import { assertBoolean } from '#internal/validation.js';
 import { assertUDim, udim, udimToCss, type UDim } from '#values/udim.js';
 
 import {
   resolveChildComparison,
   resolveHorizontalAlignment,
   resolveVerticalAlignment,
+  validateLayoutProperties,
+  type FillDirection,
+  type HorizontalAlignment,
+  type SortOrder,
+  type VerticalAlignment,
 } from './layout.js';
 
-/** Primary axis used to arrange children. */
-export type FillDirection = 'Horizontal' | 'Vertical';
-
-/** Horizontal alignment of arranged children. */
-export type HorizontalAlignment = 'Left' | 'Center' | 'Right';
-
-/** Vertical alignment of arranged children. */
-export type VerticalAlignment = 'Top' | 'Center' | 'Bottom';
-
-/** Property used to sort children before layout. */
-export type SortOrder = 'LayoutOrder' | 'Name';
+export type { FillDirection, HorizontalAlignment, SortOrder, VerticalAlignment } from './layout.js';
 
 /** Properties controlling automatic list layout. */
 export type UIListLayoutProperties = InstanceProperties & {
@@ -44,14 +39,6 @@ export type UIListLayoutProperties = InstanceProperties & {
 
 /** An element-less layout node for direct GUI children. */
 export type UIListLayout = LayoutModifier<UIListLayoutProperties>;
-
-const fillDirections: readonly FillDirection[] = ['Horizontal', 'Vertical'];
-
-const horizontalAlignments: readonly HorizontalAlignment[] = ['Left', 'Center', 'Right'];
-
-const verticalAlignments: readonly VerticalAlignment[] = ['Top', 'Center', 'Bottom'];
-
-const sortOrders: readonly SortOrder[] = ['LayoutOrder', 'Name'];
 
 /** Creates a list layout that arranges its parent's direct GUI children. */
 export function createUIListLayout(
@@ -105,10 +92,7 @@ function resolveListLayout(properties: Readonly<UIListLayoutProperties>): Layout
 }
 
 function validateListLayoutProperties(properties: Readonly<UIListLayoutProperties>): void {
-  assertAllowedValue(properties.FillDirection, fillDirections, 'FillDirection');
-  assertAllowedValue(properties.HorizontalAlignment, horizontalAlignments, 'HorizontalAlignment');
-  assertAllowedValue(properties.VerticalAlignment, verticalAlignments, 'VerticalAlignment');
-  assertAllowedValue(properties.SortOrder, sortOrders, 'SortOrder');
+  validateLayoutProperties(properties);
   assertBoolean(properties.Wraps, 'Wraps');
   assertUDim(properties.Padding, 'Padding');
 }

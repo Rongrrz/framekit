@@ -1,10 +1,6 @@
 import { createFrame, createUIScale, udim2FromOffset } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('visual scaling', () => {
   it('scales visually without changing requested size', () => {
     const frame = createFrame();

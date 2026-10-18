@@ -1,12 +1,9 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
 
 test('separates focused control keys from application input and preserves text editing', async ({
   page,
 }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
   await page.evaluate(() => {
     const {
       createScreenGui,

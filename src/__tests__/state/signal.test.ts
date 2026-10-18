@@ -2,27 +2,43 @@ import { createSignalEmitter } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('signals', () => {
-  it.each([{ failure: undefined }, { failure: null }, { failure: false }, { failure: 0 }])(
-    'preserves a thrown $failure value while notifying later listeners',
-    ({ failure }) => {
-      expect.assertions(2);
+  it('owns each subscription independently, including repeated listener functions', () => {
+    const event = createSignalEmitter<[number]>();
+    const listener = vi.fn();
+    const stop = event.subscribe(listener);
+    event.subscribe(listener);
+    event.emit(1);
+    stop();
+    stop();
+    event.emit(2);
 
-      const event = createSignalEmitter();
-      const later = vi.fn();
-      event.subscribe(() => {
-        throw failure;
-      });
-      event.subscribe(later);
+    expect(listener.mock.calls).toEqual([[1], [1], [2]]);
+  });
 
-      try {
-        event.emit();
-      } catch (error) {
-        expect(error).toBe(failure);
-      }
+  it.each([
+    { failure: undefined },
+    { failure: null },
+    { failure: false },
+    { failure: 0 },
+    { failure: new Error('listener failed') },
+  ])('preserves a thrown $failure value while notifying later listeners', ({ failure }) => {
+    expect.assertions(2);
 
-      expect(later).toHaveBeenCalledOnce();
-    },
-  );
+    const event = createSignalEmitter();
+    const later = vi.fn();
+    event.subscribe(() => {
+      throw failure;
+    });
+    event.subscribe(later);
+
+    try {
+      event.emit();
+    } catch (error) {
+      expect(error).toBe(failure);
+    }
+
+    expect(later).toHaveBeenCalledOnce();
+  });
 
   it('preserves nested emissions when a sole listener replaces itself', () => {
     const event = createSignalEmitter<[number]>();
@@ -41,22 +57,6 @@ describe('signals', () => {
     expect(received).toEqual(['first:1', 'replacement:2', 'replacement:3']);
   });
 
-  it('rethrows the same failure from a sole listener', () => {
-    expect.assertions(1);
-
-    const event = createSignalEmitter();
-    const failure = new Error('listener failed');
-    event.subscribe(() => {
-      throw failure;
-    });
-
-    try {
-      event.emit();
-    } catch (error) {
-      expect(error).toBe(failure);
-    }
-  });
-
   it('subscribes with an idempotent unsubscribe function', () => {
     const event = createSignalEmitter<[number]>();
 
@@ -73,6 +73,34 @@ describe('signals', () => {
     expect(listener).toHaveBeenCalledOnce();
     expect(listener).toHaveBeenCalledWith(1);
   });
+
+  it.each(['clear', 'unsubscribe'] as const)(
+    'keeps a new registration when an old unsubscribe runs after %s',
+    (cleanup) => {
+      const event = createSignalEmitter<[number]>();
+      const listener = vi.fn();
+      const unsubscribeOld = event.subscribe(listener);
+
+      if (cleanup === 'clear') {
+        event.clear();
+      } else {
+        unsubscribeOld();
+      }
+
+      event.emit(1);
+
+      expect(listener).not.toHaveBeenCalled();
+
+      const unsubscribeNew = event.subscribe(listener);
+      unsubscribeOld();
+      unsubscribeOld();
+      event.emit(2);
+      unsubscribeNew();
+      event.emit(3);
+
+      expect(listener.mock.calls).toEqual([[2]]);
+    },
+  );
 
   it('uses an emission snapshot and can clear every subscriber', () => {
     const event = createSignalEmitter();
@@ -93,19 +121,6 @@ describe('signals', () => {
 
     expect(firstSubscriber).toHaveBeenCalledTimes(2);
     expect(lateSubscriber).toHaveBeenCalledOnce();
-  });
-
-  it('notifies later subscribers when an earlier subscriber fails', () => {
-    const event = createSignalEmitter();
-    const laterSubscriber = vi.fn();
-
-    event.subscribe(() => {
-      throw new Error('first failed');
-    });
-    event.subscribe(laterSubscriber);
-
-    expect(() => event.emit()).toThrow(/first failed/);
-    expect(laterSubscriber).toHaveBeenCalledOnce();
   });
 
   it('keeps removed listeners in the current emission but not the next one', () => {

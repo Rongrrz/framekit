@@ -6,6 +6,17 @@ import { setupAnimationClock } from '../support/animation-clock.js';
 const { settle } = setupAnimationClock();
 
 describe('hover scale', () => {
+  it('stops reacting when the caller destroys the scale independently', () => {
+    const frame = createFrame();
+    const scale = createUIScale();
+    scale.Parent = frame;
+    bindHoverScale(frame, scale);
+    scale.destroy();
+
+    expect(() => frame.unsafeElement.dispatchEvent(new MouseEvent('mouseenter'))).not.toThrow();
+    frame.destroy();
+  });
+
   it('controls an explicitly owned scale only while bound', () => {
     const frame = createFrame();
     const scale = createUIScale();

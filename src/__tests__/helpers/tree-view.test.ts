@@ -94,13 +94,10 @@ it('selects the deepest row for a nested DOM target and rejects hidden descendan
   expect(onSelect).toHaveBeenCalledExactlyOnceWith(child);
   expect(child.unsafeElement.tabIndex).toBe(0);
 
-  const reported = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  const reported = vi.fn();
+  vi.stubGlobal('reportError', reported);
   source.set([{ ...rows[0]!, expanded: false }, rows[1]!]);
-  expect(reported).toHaveBeenCalledWith(
-    'Unhandled FrameKit observer error.',
-    expect.any(TypeError),
-  );
-  reported.mockRestore();
+  expect(reported).toHaveBeenCalledExactlyOnceWith(expect.any(TypeError));
   expect(folder.unsafeElement.getAttribute('aria-expanded')).toBe('true');
   stop();
   root.destroy();

@@ -8,10 +8,6 @@ import {
 } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('UI list layouts', () => {
   it('preserves independent parent and child layouts through updates and detachment', () => {
     const article = createFrame();

@@ -32,7 +32,6 @@ const messagesByKind = {
 
 type PreparedAnimationProperty<Properties extends InstanceProperties> = Readonly<{
   property: keyof Properties;
-  goalValue: unknown;
   start: DecomposedAnimationValue;
   goal: DecomposedAnimationValue;
 }>;
@@ -81,7 +80,7 @@ export function prepareAnimationGoal<Properties extends InstanceProperties>(
       const preparedGoal = decomposeAnimationValue(goalValue, propertyName);
       assertCompatibleAnimationValues(start, preparedGoal, propertyName);
 
-      return { property, goalValue, start, goal: preparedGoal };
+      return { property, start, goal: preparedGoal };
     } catch (error) {
       if (!(error instanceof TypeError)) {
         throw error;

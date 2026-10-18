@@ -1,10 +1,7 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
   await page.evaluate(() => {
     const {
       createScreenGui,
@@ -159,6 +156,81 @@ test('menu navigation skips disabled commands, supports typeahead, and restores 
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('menu')).toBeHidden();
 });
+
+for (const kind of ['tree', 'menu'] as const) {
+  test(`${kind} typeahead refines matching prefixes and cycles repeated letters`, async ({
+    page,
+  }) => {
+    await page.clock.install();
+    await page.evaluate((kind) => {
+      const {
+        createScreenGui,
+        createFrame,
+        createTextButton,
+        createUIListLayout,
+        createObservableValue,
+        bindTreeView,
+        bindMenu,
+        udim2FromOffset,
+      } = window.framekit;
+
+      const gui = createScreenGui();
+      const control = createFrame({ Size: udim2FromOffset(200, 96) });
+      control.unsafeElement.dataset.testid = 'typeahead-control';
+      control.Parent = gui;
+      createUIListLayout().Parent = control;
+
+      const rows = ['Apple', 'Apricot', 'Banana'].map((Text) => {
+        const row = createTextButton({ Text, Size: udim2FromOffset(200, 32) });
+        row.Parent = control;
+
+        return row;
+      });
+
+      gui.mount('#root');
+
+      if (kind === 'tree') {
+        bindTreeView(
+          control,
+          createObservableValue(rows.map((node) => ({ node, label: node.Text, level: 1 }))),
+          { onSelect: () => undefined, onToggle: () => undefined },
+        );
+      } else {
+        const trigger = createTextButton({ Text: 'Fruit actions' });
+        trigger.Parent = gui;
+        bindMenu(trigger, control, rows).open();
+      }
+
+      rows[2]!.focus();
+    }, kind);
+
+    const control = page.getByTestId('typeahead-control');
+    const role = kind === 'tree' ? 'treeitem' : 'menuitem';
+    const apple = control.getByRole(role, { name: 'Apple', exact: true });
+    const apricot = control.getByRole(role, { name: 'Apricot', exact: true });
+
+    for (const key of ['a', 'p', 'p']) {
+      await page.keyboard.press(key);
+      await expect(apple).toBeFocused();
+    }
+
+    await page.clock.fastForward(701);
+    await page.keyboard.press('a');
+    await expect(apricot).toBeFocused();
+    await page.keyboard.press('p');
+    await expect(apricot).toBeFocused();
+    await page.keyboard.press('p');
+    await expect(apple).toBeFocused();
+
+    await page.clock.fastForward(701);
+    await page.keyboard.press('a');
+    await expect(apricot).toBeFocused();
+    await page.keyboard.press('a');
+    await expect(apple).toBeFocused();
+    await page.keyboard.press('a');
+    await expect(apricot).toBeFocused();
+  });
+}
 
 test('nested native dialogs contain focus and restore the opener one Escape at a time', async ({
   page,

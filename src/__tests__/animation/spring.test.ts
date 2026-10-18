@@ -19,6 +19,27 @@ const { advance, settle } = setupAnimationClock();
 const trackNode = destroyNodesAfterEach();
 
 describe('spring animations', () => {
+  it('retains a goal retargeted by an observer on the settling frame', () => {
+    const frame = trackNode(createFrame({ Rotation: 0 }));
+    const controller = spring(frame);
+    const completed = vi.fn();
+    controller.completed.subscribe(completed);
+    frame.onPropertyChanged('Rotation', (value) => {
+      if (value === 90) {
+        spring(frame, { Rotation: 180 });
+      }
+    });
+
+    spring(frame, { Rotation: 90 });
+    advance(10_000);
+
+    expect(controller.isAnimating()).toBe(true);
+    expect(completed).not.toHaveBeenCalled();
+    settle();
+    expect(frame.Rotation).toBe(180);
+    expect(completed).toHaveBeenCalledOnce();
+  });
+
   it('retains one spring controller per node', () => {
     const frame = trackNode(createFrame());
     const controller = spring(frame);

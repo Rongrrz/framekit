@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 
 type AnimationClock = Readonly<{
   advance(milliseconds?: number): void;
@@ -28,10 +28,6 @@ export function setupAnimationClock(): AnimationClock {
       return frameId;
     });
     vi.stubGlobal('cancelAnimationFrame', (frameId: number) => pendingFrames.delete(frameId));
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
   });
 
   function advance(milliseconds = frameDuration): void {

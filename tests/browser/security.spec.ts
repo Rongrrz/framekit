@@ -1,10 +1,7 @@
-import { expect, test } from '@playwright/test';
-
-import type {} from './harness.js';
+import { expect, openFrameKit, test } from './fixtures.js';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/tests/browser/index.html');
-  await page.waitForFunction(() => Boolean(window.framekit));
+  await openFrameKit(page);
 });
 
 test('keeps hostile text literal through rendering, stroke, and updates', async ({ page }) => {

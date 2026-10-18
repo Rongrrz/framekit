@@ -9,10 +9,6 @@ import {
 } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('frames', () => {
   it('keeps prepared defaults independent across instances, documents, tags, and destruction', () => {
     const firstDocument = document.implementation.createHTMLDocument();

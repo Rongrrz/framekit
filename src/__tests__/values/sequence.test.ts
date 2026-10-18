@@ -2,6 +2,42 @@ import { color3FromRGB, colorSequence, numberSequence } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
 describe('sequences', () => {
+  it('evaluates accessor-backed keypoints once before validating their snapshot', () => {
+    let reads = 0;
+    const first = {
+      get Time() {
+        reads += 1;
+
+        return 0;
+      },
+      Value: 0,
+    };
+
+    const sequence = numberSequence(first, { Time: 1, Value: 1 });
+    expect(reads).toBe(1);
+    expect(sequence).toEqual([
+      { Time: 0, Value: 0 },
+      { Time: 1, Value: 1 },
+    ]);
+  });
+
+  it('snapshots caller keypoints and colors without freezing caller data', () => {
+    const color = { R: 20, G: 40, B: 60 };
+    const first = { Time: 0, Value: color };
+    const last = { Time: 1, Value: color };
+    const colors = colorSequence(first, last);
+    const number = { Time: 0, Value: 0 };
+    const numbers = numberSequence(number, { Time: 1, Value: 1 });
+
+    first.Time = 0.5;
+    color.R = 200;
+    number.Value = 100;
+
+    expect(colors[0]).toEqual({ Time: 0, Value: { R: 20, G: 40, B: 60 } });
+    expect(numbers[0]).toEqual({ Time: 0, Value: 0 });
+    expect(Object.isFrozen(colors[0]!.Value)).toBe(true);
+  });
+
   it('creates immutable uniform and explicit sequences', () => {
     const red = color3FromRGB(255, 0, 0);
     const green = color3FromRGB(0, 255, 0);

@@ -1,10 +1,6 @@
 import { createFrame } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
-import { resetDocumentAfterEach } from '../../support/reset-document.js';
-
-resetDocumentAfterEach();
-
 describe('DOM cleanup', () => {
   it('removes an owned DOM subtree once while cleaning externally moved descendants', () => {
     const root = createFrame();
@@ -28,6 +24,42 @@ describe('DOM cleanup', () => {
 });
 
 describe('resource cleanup', () => {
+  it('closes the whole subtree before cleanup can reenter or change its ownership', () => {
+    const root = createFrame();
+    const first = createFrame();
+    const second = createFrame();
+    const outsider = createFrame();
+    const cleaned = vi.fn();
+    first.Parent = root;
+    second.Parent = root;
+    second.onDestroy(cleaned);
+
+    first.onDestroy(() => {
+      expect([root, first, second].every((node) => node.isDestroyed())).toBe(true);
+      expect(() => (outsider.Parent = root)).toThrow(/destroyed/);
+      expect(() => (second.Parent = outsider)).toThrow(/destroyed/);
+      root.destroy();
+    });
+
+    root.destroy();
+
+    expect(cleaned).toHaveBeenCalledOnce();
+    expect(outsider.getChildren()).toEqual([]);
+    outsider.destroy();
+  });
+
+  it('gives each cleanup registration its own unsubscribe handle', () => {
+    const node = createFrame();
+    const cleanup = vi.fn();
+    const stop = node.onDestroy(cleanup);
+    node.onDestroy(cleanup);
+    stop();
+    stop();
+    node.destroy();
+
+    expect(cleanup).toHaveBeenCalledOnce();
+  });
+
   it('reports every cleanup failure after destroying the complete subtree', () => {
     const root = createFrame();
     const child = createFrame();

@@ -1,5 +1,6 @@
-import { throwCollectedErrors } from '#internal/errors.js';
+import { runCleanups, throwCollectedErrors } from '#internal/errors.js';
 import type { GuiElement } from '#internal/runtime/node/gui-node.js';
+import type { Instance } from '#internal/runtime/node/instance.js';
 import type { Unsubscribe } from '#state/signal.js';
 import type { ReadonlyObservableValue } from '#state/value.js';
 
@@ -36,12 +37,13 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
 
     disposed = true;
     pending = undefined;
-    unregisterDestroy();
-    stopWatching();
 
     const owned = [...views.values()];
     views.clear();
-    destroyViews(owned);
+    runCleanups(
+      [unregisterDestroy, stopWatching, () => destroyViews(owned)],
+      'Multiple keyed children cleanups failed.',
+    );
   };
 
   const unregisterDestroy = parent.onDestroy(dispose);
@@ -69,11 +71,7 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
         } else {
           node = options.create(item);
 
-          if (node === parent || node.isDestroyed() || node.Parent || identities.has(node)) {
-            throw new TypeError(
-              'A keyed child factory must return a unique, live, unattached view.',
-            );
-          }
+          validateChildView(parent, node, identities);
 
           created.push(node);
           identities.add(node);
@@ -140,7 +138,11 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
       stopWatching();
     }
   } catch (error) {
-    dispose();
+    try {
+      dispose();
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Keyed children setup and cleanup failed.');
+    }
 
     throw error;
   }
@@ -148,16 +150,26 @@ export const bindKeyedChildren = <Item, Node extends GuiElement>(
   return dispose;
 };
 
-const destroyViews = (nodes: readonly GuiElement[]): void => {
-  const errors: unknown[] = [];
-
-  for (const node of nodes) {
-    try {
-      node.destroy();
-    } catch (error) {
-      errors.push(error);
-    }
+/** Checks ownership before a collection adds attributes, listeners, or cleanup to a view. */
+export const validateChildView = (
+  parent: GuiElement,
+  node: GuiElement,
+  existing: ReadonlySet<GuiElement>,
+): void => {
+  if (node.isDestroyed() || node.Parent || existing.has(node)) {
+    throw new TypeError('A child factory must return a unique, live, unattached view.');
   }
 
-  throwCollectedErrors(errors, 'Multiple keyed child cleanups failed.');
+  for (let ancestor: Instance | undefined = parent; ancestor; ancestor = ancestor.Parent) {
+    if (ancestor === node) {
+      throw new TypeError('A child factory cannot return its parent or an ancestor.');
+    }
+  }
+};
+
+const destroyViews = (nodes: readonly GuiElement[]): void => {
+  runCleanups(
+    nodes.map((node) => () => node.destroy()),
+    'Multiple keyed child cleanups failed.',
+  );
 };
