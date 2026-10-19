@@ -1,4 +1,25 @@
 /* Site layout is fluid; FrameKit owns the instances, behavior, and theme colors. */
+.pg-scroll-progress {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    visibility 0s linear 180ms;
+}
+
+.pg-scroll-progress[aria-hidden='false'] {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pg-scroll-progress {
+    transition: none;
+  }
+}
+
 .pg-content,
 .pg-route {
   position: relative !important;

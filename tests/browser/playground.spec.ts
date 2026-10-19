@@ -5,6 +5,7 @@ for (const width of [1440, 390]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: width === 390 ? 'reduce' : 'no-preference' });
     await page.goto('/playground/index.html#/guide');
 
     const main = page.getByRole('main');
@@ -26,6 +27,7 @@ for (const width of [1440, 390]) {
       element.scrollTop = 200;
     });
     await expect(progress).toBeVisible();
+    await expect(progress).toHaveCSS('opacity', '1');
     expect((await navigation.boundingBox())!.y).toBe(0);
     await main.evaluate((element) => {
       element.scrollTop = element.scrollHeight;

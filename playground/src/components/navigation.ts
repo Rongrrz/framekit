@@ -115,9 +115,9 @@ export const createNavigation = (
     Size: udim2(1, 0, 0, 2),
     Position: udim2FromOffset(0, 62),
     ZIndex: 101,
-    Visible: false,
   });
 
+  track.unsafeElement.classList.add('pg-scroll-progress');
   track.unsafeElement.setAttribute('role', 'progressbar');
   track.unsafeElement.setAttribute('aria-label', 'Reading progress');
   track.unsafeElement.setAttribute('aria-valuemin', '0');
@@ -134,7 +134,7 @@ export const createNavigation = (
     const maximum = Math.max(1, page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight);
     const fraction = Math.min(1, Math.max(0, scrolled / maximum));
 
-    track.Visible = scrolled >= 160;
+    track.unsafeElement.setAttribute('aria-hidden', String(scrolled < 160));
     progress.Size = udim2FromScale(fraction, 1);
     track.unsafeElement.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
   };
