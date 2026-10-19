@@ -3,7 +3,6 @@ import {
   bindVirtualList,
   createFrame,
   createObservableValue,
-  createScreenGui,
   createScrollingFrame,
   createTextInput,
   createUIListLayout,
@@ -12,17 +11,19 @@ import {
   udim2FromOffset,
   watchOwnedValue,
   type Frame,
-  type ScreenGui,
 } from 'framekit';
 
-import { bindThemeColors, fonts, themes } from '../theme';
+import { bindThemeColors, fonts, type ThemeValue } from '../theme';
 import { createButton, createText } from '../ui';
 import { createMessageView, type Message, type MessageView } from './message';
 
 /** A persistent inbox exercises measured collection views with native input and late content. */
-export const createInbox = (): ScreenGui => {
-  const app = createScreenGui({ Name: 'InboxApplication' });
-  const theme = createObservableValue(themes.dark);
+export const createInbox = (theme: ThemeValue): Frame => {
+  const app = createFrame({
+    Name: 'InboxExample',
+    Size: udim2(1, 0, 1, 0),
+    BackgroundTransparency: 1,
+  });
 
   const data: Message[] = Array.from({ length: 2000 }, (_, id) => ({
     id,
@@ -33,7 +34,7 @@ export const createInbox = (): ScreenGui => {
   }));
 
   const main = createFrame({
-    TagName: 'main',
+    TagName: 'section',
     Size: udim2(1, -32, 1, -32),
     Position: udim2FromOffset(16, 16),
   });
@@ -198,25 +199,30 @@ export const createInbox = (): ScreenGui => {
       viewport.focus();
     }
   });
-  action('Destroy inbox', () => app.destroy());
   query.onTextChanged(publish);
   watchOwnedValue(app, selection, updateStatus);
+
+  const arrangeActions = (height: number): void => {
+    actions.Size = udim2(1, 0, 0, height);
+    viewport.setProperties({
+      Position: udim2FromOffset(0, 112 + height),
+      Size: udim2(1, 0, 1, -160 - height),
+    });
+  };
+
   bindResponsiveLayout(app, {
     observe: main,
     breakpoints: [
       {
-        maxWidth: 599,
-
-        apply: () => {
-          actions.Size = udim2(1, 0, 0, 136);
-          viewport.setProperties({ Position: udim2FromOffset(0, 248), Size: udim2(1, 0, 1, -296) });
-        },
+        maxWidth: 343,
+        apply: () => arrangeActions(184),
       },
       {
-        apply: () => {
-          actions.Size = udim2(1, 0, 0, 88);
-          viewport.setProperties({ Position: udim2FromOffset(0, 200), Size: udim2(1, 0, 1, -248) });
-        },
+        maxWidth: 695,
+        apply: () => arrangeActions(88),
+      },
+      {
+        apply: () => arrangeActions(40),
       },
     ],
   });

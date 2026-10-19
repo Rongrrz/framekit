@@ -31,7 +31,7 @@ export const stateChapter = {
       title: 'Virtualize large collections',
       body: 'bindVirtualList mounts only the visible window plus overscan. Use a fixed pixel itemHeight or { estimate: 48 } for measured rows with different heights. Key-based selection lives in application data even when an offscreen view is destroyed.',
       code: virtualizeLargeCollectionsExample,
-      note: 'Use a dedicated ScrollingFrame. Arrow keys, Home, End, PageUp, and PageDown move selection. Source updates preserve the first visible key and its offset when it survives. See collections.html for the 100,000-row demo, or collections.html?heights=variable for wrapped and expandable measured rows. With measured heights, use AutomaticSize: Y for wrapped text or set an explicit row height. Unseen rows use estimates until mounted.',
+      note: 'Use a dedicated ScrollingFrame. Arrow keys, Home, End, PageUp, and PageDown move selection. Source updates preserve the first visible key and its offset when it survives. Open Examples for the 100,000-row fixed and measured collection demos. With measured heights, use AutomaticSize: Y for wrapped text or set an explicit row height. Unseen rows use estimates until mounted.',
     },
   ],
 } as const satisfies ReferenceChapter;

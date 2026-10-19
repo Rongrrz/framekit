@@ -23,12 +23,14 @@ export const documentationPages = [
 
 export type DocsPage = (typeof documentationPages)[number]['page'];
 
-export type SitePage = 'home' | DocsPage;
+export const sitePages = [...documentationPages, { page: 'examples', label: 'Examples' }] as const;
+
+export type SitePage = 'home' | (typeof sitePages)[number]['page'];
 
 export const pageHash = (page: SitePage): string => (page === 'home' ? '#/' : `#/${page}`);
 
 export const resolveInitialPage = (): SitePage =>
-  documentationPages.find(({ page }) => pageHash(page) === window.location.hash)?.page ?? 'home';
+  sitePages.find(({ page }) => pageHash(page) === window.location.hash)?.page ?? 'home';
 
 export const bindHashRouter = (owner: Instance, route: ObservableValue<SitePage>): void => {
   const listenerController = new AbortController();

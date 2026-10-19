@@ -62,7 +62,7 @@ export const createNavigation = (
     label: 'Docs',
     name: 'GuideNavButton',
     size: udim2FromOffset(74, 36),
-    position: udim2(1, -382, 0, 14),
+    position: udim2(1, -478, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
@@ -72,7 +72,7 @@ export const createNavigation = (
     label: 'Reference',
     name: 'ApiNavButton',
     size: udim2FromOffset(90, 36),
-    position: udim2(1, -302, 0, 14),
+    position: udim2(1, -398, 0, 14),
     background: 'canvas',
     foreground: 'textMuted',
     textSize: typeScale.small,
@@ -88,12 +88,24 @@ export const createNavigation = (
     textSize: typeScale.small,
   });
 
+  const examples = createButton(theme, {
+    label: 'Examples',
+    name: 'ExamplesNavButton',
+    size: udim2FromOffset(90, 36),
+    position: udim2(1, -302, 0, 14),
+    background: 'canvas',
+    foreground: 'textMuted',
+    textSize: typeScale.small,
+  });
+
   guide.onClick(() => navigate('guide'));
   api.onClick(() => navigate('api'));
+  examples.onClick(() => navigate('examples'));
   source.onClick(() => window.open(repositoryUrl, '_blank', 'noopener,noreferrer'));
   guide.Parent = navigation;
   api.Parent = navigation;
   source.Parent = navigation;
+  examples.Parent = navigation;
 
   const themeToggle = createButton(theme, {
     label: '☀  Light',
@@ -144,15 +156,28 @@ export const createNavigation = (
   const updateNavigation = (): void => {
     const palette = theme.get();
     guide.TextColor3 =
-      route.get() !== 'home' && route.get() !== 'api' ? palette.accent : palette.textMuted;
+      route.get() !== 'home' && route.get() !== 'api' && route.get() !== 'examples'
+        ? palette.accent
+        : palette.textMuted;
     api.TextColor3 = route.get() === 'api' ? palette.accent : palette.textMuted;
+    examples.TextColor3 = route.get() === 'examples' ? palette.accent : palette.textMuted;
   };
 
   watchOwnedValue(navigation, route, updateNavigation);
-  watchOwnedValue(navigation, mode, (currentMode) => {
-    themeToggle.Text = currentMode === 'dark' ? '☀  Light' : '◐  Dark';
+  const updateThemeToggle = (): void => {
+    const currentMode = mode.get();
+    themeToggle.Text =
+      layout.get() === 'mobile'
+        ? currentMode === 'dark'
+          ? '☀'
+          : '◐'
+        : currentMode === 'dark'
+          ? '☀  Light'
+          : '◐  Dark';
     themeToggle.AccessibleLabel = `Switch to ${currentMode === 'dark' ? 'light' : 'dark'} mode`;
-  });
+  };
+  watchOwnedValue(navigation, mode, updateThemeToggle);
+  watchOwnedValue(navigation, layout, updateThemeToggle);
   watchOwnedValue(navigation, theme, updateNavigation);
   bindLayoutProperties(navigation, layout, brand, {
     desktop: { Visible: true },
@@ -160,13 +185,18 @@ export const createNavigation = (
   });
 
   bindLayoutProperties(navigation, layout, guide, {
-    desktop: { Position: udim2(1, -382, 0, 14), Size: udim2FromOffset(74, 36) },
-    mobile: { Position: udim2FromOffset(60, 14), Size: udim2FromOffset(62, 36) },
+    desktop: { Position: udim2(1, -478, 0, 14), Size: udim2FromOffset(74, 36) },
+    mobile: { Position: udim2FromOffset(60, 14), Size: udim2FromOffset(54, 36) },
   });
 
   bindLayoutProperties(navigation, layout, api, {
+    desktop: { Position: udim2(1, -398, 0, 14), Size: udim2FromOffset(90, 36) },
+    mobile: { Position: udim2FromOffset(116, 14), Size: udim2FromOffset(76, 36) },
+  });
+
+  bindLayoutProperties(navigation, layout, examples, {
     desktop: { Position: udim2(1, -302, 0, 14), Size: udim2FromOffset(90, 36) },
-    mobile: { Position: udim2FromOffset(126, 14), Size: udim2FromOffset(90, 36) },
+    mobile: { Position: udim2FromOffset(194, 14), Size: udim2FromOffset(70, 36) },
   });
 
   bindLayoutProperties(navigation, layout, source, {
@@ -176,7 +206,7 @@ export const createNavigation = (
 
   bindLayoutProperties(navigation, layout, themeToggle, {
     desktop: { Position: udim2(1, -122, 0, 14), Size: udim2FromOffset(104, 36) },
-    mobile: { Position: udim2(1, -92, 0, 14), Size: udim2FromOffset(80, 36) },
+    mobile: { Position: udim2(1, -54, 0, 14), Size: udim2FromOffset(40, 36) },
   });
 
   return navigation;

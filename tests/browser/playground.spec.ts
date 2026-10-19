@@ -1,5 +1,52 @@
 import { expect, test } from './fixtures.js';
 
+test('shares navigation and theme across examples while resetting each demo on entry', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.addInitScript(() => window.localStorage.setItem('framekit-playground-theme', 'dark'));
+  await page.goto('/playground/index.html');
+
+  const navigation = page.getByRole('navigation', { name: 'Primary', exact: true });
+  const originalNavigation = await navigation.elementHandle();
+  await navigation.getByRole('button', { name: 'Examples', exact: true }).click();
+  await expect(page).toHaveURL(/#\/examples$/);
+  await expect(page.getByRole('heading', { name: 'Examples', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Insert at top', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('100,001 items');
+  await page.getByRole('button', { name: 'Reset example', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('100,000 items');
+
+  const fixed = page.getByRole('tab', { name: 'Fixed rows', exact: true });
+  await fixed.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Measured rows', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Expand selected', exact: true })).toBeVisible();
+  await page.keyboard.press('End');
+  await expect(page.getByRole('tab', { name: 'Inbox', exact: true })).toBeFocused();
+  await expect(page.getByRole('listbox', { name: 'Virtual collection', exact: true })).toHaveCount(
+    0,
+  );
+
+  const inbox = page.getByRole('listbox', { name: 'Inbox messages', exact: true });
+  await expect(inbox).toBeVisible();
+  await page.getByRole('searchbox', { name: 'Filter inbox', exact: true }).fill('no-such-message');
+  await expect(page.getByRole('status')).toContainText('0 messages');
+  await navigation.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(inbox).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await navigation.getByRole('button', { name: 'Docs', exact: true }).click();
+  await expect(inbox).toHaveCount(0);
+  await navigation.getByRole('button', { name: 'Examples', exact: true }).click();
+  await expect(page.getByRole('searchbox', { name: 'Filter inbox', exact: true })).toHaveValue('');
+  await expect(page.getByRole('status')).toContainText('2000 messages');
+  await expect(inbox).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  expect(await navigation.evaluate((node, original) => node === original, originalNavigation)).toBe(
+    true,
+  );
+
+  await originalNavigation?.dispose();
+});
+
 test('does not retain the theme tooltip after a pointer click and exit', async ({ page }) => {
   await page.goto('/playground/index.html#/api');
 

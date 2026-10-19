@@ -3,7 +3,7 @@ import { expect, test } from './fixtures.js';
 test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable scroll anchors', async ({
   page,
 }) => {
-  await page.goto('/playground/collections.html');
+  await page.goto('/playground/index.html#/examples');
 
   const list = page.getByRole('listbox', { name: 'Virtual collection' });
   await expect(list.getByRole('option', { name: 'Row 0', exact: true })).toBeVisible();
@@ -38,7 +38,7 @@ test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable
 test('keeps native focus on the viewport when the selected option scrolls out of view', async ({
   page,
 }) => {
-  await page.goto('/playground/collections.html');
+  await page.goto('/playground/index.html#/examples');
 
   const list = page.getByRole('listbox');
   await list.focus();

@@ -246,26 +246,24 @@ test('the same inspector binding inspects an independent FrameKit project and re
   ).toBe(false);
 });
 
-for (const [entry, root] of [
-  ['index.html', 'FrameKitPlayground'],
-  ['collections.html', 'CollectionStressTest'],
-] as const) {
-  test(`uses the shared devtools launcher to inspect ${entry}`, async ({ page }) => {
-    await page.goto(`/playground/${entry}`);
-    await page.getByRole('button', { name: 'Debug', exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/playground/${entry}$`));
+test('uses one inspector and application root across integrated examples', async ({ page }) => {
+  await page.goto('/playground/index.html#/examples');
+  await page.getByRole('tab', { name: 'Inbox', exact: true }).click();
+  await page.getByRole('button', { name: 'Debug', exact: true }).click();
 
-    const inspector = inspectorFor(page);
-    await expect(inspector).toBeVisible();
-    await expect(
-      inspector.getByRole('treeitem', { name: `${root} (ScreenGui)`, exact: true }),
-    ).toBeVisible();
-    await inspector.getByRole('button', { name: 'Close runtime inspector' }).click();
-    await expect(page).toHaveURL(new RegExp(`/playground/${entry}$`));
-    await expect(inspector).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Debug', exact: true })).toBeFocused();
-  });
-}
+  const inspector = inspectorFor(page);
+  await expect(inspector).toBeVisible();
+  await expect(
+    inspector.getByRole('treeitem', { name: 'FrameKitPlayground (ScreenGui)', exact: true }),
+  ).toBeVisible();
+  await inspector.getByRole('searchbox', { name: 'Search runtime hierarchy' }).fill('InboxExample');
+  await expect(
+    inspector.getByRole('treeitem', { name: 'InboxExample (Frame)', exact: true }),
+  ).toBeVisible();
+  await inspector.getByRole('button', { name: 'Close runtime inspector' }).click();
+  await expect(page).toHaveURL(/index.html#\/examples$/);
+  await expect(page.getByRole('button', { name: 'Debug', exact: true })).toBeFocused();
+});
 
 test('moves the floating inspector and resizes from all eight directions', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 1000 });

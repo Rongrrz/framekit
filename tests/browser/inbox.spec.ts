@@ -29,7 +29,8 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
     await route.continue();
   });
   await page.setViewportSize({ width: 850, height: 900 });
-  await page.goto('/playground/inbox.html');
+  await page.goto('/playground/index.html#/examples');
+  await page.getByRole('tab', { name: 'Inbox', exact: true }).click();
 
   const list = page.getByRole('listbox', { name: 'Inbox messages' });
   await expect(list.getByRole('option').first()).toBeVisible();
@@ -110,8 +111,9 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
       .getByRole('main')
       .evaluate((element) => element.scrollWidth <= element.clientWidth + 1),
   ).toBe(true);
-  await page.getByRole('button', { name: 'Destroy inbox' }).click();
-  await expect(page.getByRole('main')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Docs', exact: true }).click();
+  await expect(page.getByRole('main', { name: 'FrameKit examples', exact: true })).toBeHidden();
+  await expect(page.getByRole('navigation', { name: 'Primary', exact: true })).toBeVisible();
   expect(
     await page.evaluate(() =>
       [...document.fonts].some((font) => font.family === 'FrameKitInboxReading'),
@@ -119,9 +121,7 @@ test('keeps the inbox anchored through late images, font loading, expansion, and
   ).toBe(false);
 });
 
-test('releases rows and pending image and font work when the screen is destroyed', async ({
-  page,
-}) => {
+test('releases rows and pending image and font work when leaving the example', async ({ page }) => {
   let release = (): void => {};
 
   const imagesReady = new Promise<void>((resolve) => {
@@ -138,21 +138,24 @@ test('releases rows and pending image and font work when the screen is destroyed
     await imagesReady;
     await route.continue();
   });
-  await page.goto('/playground/inbox.html');
+  await page.goto('/playground/index.html#/examples');
+  await page.getByRole('tab', { name: 'Inbox', exact: true }).click();
   await page.getByRole('button', { name: 'Load attachments' }).click();
   await page.getByRole('button', { name: 'Load reading font' }).click();
-  await page.getByRole('button', { name: 'Destroy inbox' }).click();
+  await page.getByRole('button', { name: 'Docs', exact: true }).click();
   release();
   await settle(page);
   await expect(page.getByRole('option')).toHaveCount(0);
-  await expect(page.getByRole('main')).toHaveCount(0);
+  await expect(page.getByRole('main', { name: 'FrameKit examples', exact: true })).toBeHidden();
+  await expect(page.getByRole('navigation', { name: 'Primary', exact: true })).toBeVisible();
 });
 
 test('brings a cached row back into view after its offscreen attachments change height', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 850, height: 650 });
-  await page.goto('/playground/inbox.html');
+  await page.goto('/playground/index.html#/examples');
+  await page.getByRole('tab', { name: 'Inbox', exact: true }).click();
 
   const list = page.getByRole('listbox', { name: 'Inbox messages' });
   const last = list.locator('[data-message-id="1999"]');

@@ -6,7 +6,7 @@ import { codeExamples } from './tooling/code-examples.ts';
 
 export default defineConfig({
   plugins: [codeExamples()],
-  appType: 'mpa',
+  appType: 'spa',
   root: fileURLToPath(new URL('.', import.meta.url)),
   cacheDir: '../node_modules/.vite/playground',
   resolve: {
@@ -24,13 +24,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    rollupOptions: {
-      input: {
-        docs: fileURLToPath(new URL('index.html', import.meta.url)),
-        collections: fileURLToPath(new URL('collections.html', import.meta.url)),
-        inbox: fileURLToPath(new URL('inbox.html', import.meta.url)),
-      },
-    },
   },
   test: {
     environment: 'happy-dom',

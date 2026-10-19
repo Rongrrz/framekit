@@ -180,7 +180,8 @@ test('keeps selection and keyboard navigation independent of mounted measured vi
 test('demonstrates 100,000 measured rows with wrapped content and expansion in the playground', async ({
   page,
 }) => {
-  await page.goto('/playground/collections.html?heights=variable');
+  await page.goto('/playground/index.html#/examples');
+  await page.getByRole('tab', { name: 'Measured rows', exact: true }).click();
 
   const list = page.getByRole('listbox', { name: 'Virtual collection' });
   const row = list.getByRole('option').first();

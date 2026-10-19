@@ -66,7 +66,8 @@ export const createPageShell = (theme: ThemeValue, route: ObservableValue<SitePa
   }));
   content.Parent = page;
   page.Parent = app;
-  watchOwnedValue(app, route, () => {
+  watchOwnedValue(app, route, (current) => {
+    page.Visible = current !== 'examples';
     page.CanvasPosition = vector2(0, 0);
   });
 
