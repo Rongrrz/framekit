@@ -26,8 +26,13 @@ export function renderTextSize(
     return;
   }
 
-  const availableWidth = element.clientWidth;
-  const availableHeight = element.clientHeight;
+  const style = element.ownerDocument.defaultView?.getComputedStyle(element);
+  const horizontalPadding =
+    (parseFloat(style?.paddingLeft ?? '') || 0) + (parseFloat(style?.paddingRight ?? '') || 0);
+  const verticalPadding =
+    (parseFloat(style?.paddingTop ?? '') || 0) + (parseFloat(style?.paddingBottom ?? '') || 0);
+  const availableWidth = element.clientWidth - horizontalPadding;
+  const availableHeight = element.clientHeight - verticalPadding;
 
   if (availableWidth <= 0 || availableHeight <= 0) {
     setStyle(element, 'font-size', `${properties.TextSize}px`);
@@ -36,6 +41,7 @@ export function renderTextSize(
   }
 
   const maximumSize = Math.max(1, Math.floor(availableHeight));
+  const fits = measureTextFit(element, availableWidth, horizontalPadding > 0);
 
   if (!properties.TextWrapped) {
     const estimatedSize = estimateUnwrappedTextSize(
@@ -46,13 +52,13 @@ export function renderTextSize(
     );
 
     if (estimatedSize !== undefined) {
-      renderEstimatedTextSize(element, Math.min(maximumSize, estimatedSize), maximumSize);
+      renderEstimatedTextSize(element, Math.min(maximumSize, estimatedSize), maximumSize, fits);
 
       return;
     }
   }
 
-  fitTextSize(element, 1, maximumSize, 1);
+  fitTextSize(element, 1, maximumSize, 1, fits);
 }
 
 /** Recalculates scaled text when browser layout changes without adding work to ordinary text. */
@@ -129,23 +135,33 @@ function renderScaledTextEntries(
   }
 }
 
-function textFits(element: HTMLElement): boolean {
-  return (
+function measureTextFit(
+  element: HTMLElement,
+  availableWidth: number,
+  padded: boolean,
+): () => boolean {
+  // Flex text can paint into its own padding without increasing scrollWidth.
+  // Native input controls have no child text; their scroll metrics include the editor content.
+  const range = padded && element.hasChildNodes() ? element.ownerDocument.createRange() : undefined;
+  range?.selectNodeContents(element);
+
+  return () =>
     element.scrollWidth <= element.clientWidth + 1 &&
-    element.scrollHeight <= element.clientHeight + 1
-  );
+    element.scrollHeight <= element.clientHeight + 1 &&
+    (!range || range.getBoundingClientRect().width <= availableWidth + 1);
 }
 
 function renderEstimatedTextSize(
   element: HTMLElement,
   estimatedSize: number,
   maximumSize: number,
+  fits: () => boolean,
 ): void {
   let fittedSize = Math.max(1, estimatedSize);
   setStyle(element, 'font-size', `${fittedSize}px`);
 
-  if (!textFits(element)) {
-    fitTextSize(element, 1, fittedSize - 1, 1);
+  if (!fits()) {
+    fitTextSize(element, 1, fittedSize - 1, 1, fits);
 
     return;
   }
@@ -153,7 +169,7 @@ function renderEstimatedTextSize(
   if (fittedSize < maximumSize) {
     setStyle(element, 'font-size', `${fittedSize + 1}px`);
 
-    if (!textFits(element)) {
+    if (!fits()) {
       setStyle(element, 'font-size', `${fittedSize}px`);
 
       return;
@@ -164,7 +180,7 @@ function renderEstimatedTextSize(
 
   // Estimates can diverge from DOM metrics (including browser font-size clamping).
   // Never refine pixel by pixel: layout work must grow logarithmically with the bounds.
-  fitTextSize(element, fittedSize + 1, maximumSize, fittedSize);
+  fitTextSize(element, fittedSize + 1, maximumSize, fittedSize, fits);
 }
 
 function fitTextSize(
@@ -172,12 +188,13 @@ function fitTextSize(
   smallestCandidate: number,
   largestCandidate: number,
   fittedSize: number,
+  fits: () => boolean,
 ): void {
   while (smallestCandidate <= largestCandidate) {
     const candidate = Math.floor((smallestCandidate + largestCandidate) / 2);
     setStyle(element, 'font-size', `${candidate}px`);
 
-    if (textFits(element)) {
+    if (fits()) {
       fittedSize = candidate;
       smallestCandidate = candidate + 1;
     } else {
@@ -209,15 +226,18 @@ function estimateUnwrappedTextSize(
   textMeasureContext.font = `${properties.FontWeight} ${measurementSize}px ${properties.FontFamily}`;
 
   const lines = properties.Text.split('\n');
-  let widestLine = 0;
+  let widthLimit = availableHeight;
 
   for (const line of lines) {
-    widestLine = Math.max(widestLine, textMeasureContext.measureText(line).width);
+    const widthAtOnePixel = textMeasureContext.measureText(line).width / measurementSize;
+    const spacing = Math.max(0, line.length - 1) * properties.LetterSpacing;
+
+    if (widthAtOnePixel > 0) {
+      widthLimit = Math.min(widthLimit, (availableWidth + 1 - spacing) / widthAtOnePixel);
+    }
   }
 
-  const widthAtOnePixel = widestLine / measurementSize;
-  const widthLimit = widthAtOnePixel > 0 ? (availableWidth + 1) / widthAtOnePixel : availableHeight;
-  const heightLimit = (availableHeight + 1) / (lines.length * 1.2);
+  const heightLimit = (availableHeight + 1) / (lines.length * properties.LineHeight);
 
   return Math.max(1, Math.floor(Math.min(widthLimit, heightLimit)));
 }

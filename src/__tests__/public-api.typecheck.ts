@@ -18,6 +18,7 @@ import {
   createUserInputService,
   createTween,
   createUIGridLayout,
+  createUIFlexItem,
   createUIScale,
   type FloatingPanelHook,
   type ComputedValue,
@@ -45,6 +46,13 @@ import {
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
   const article = createFrame({ TagName: 'article', Name: 'Profile' });
+  createTextLabel({ LineHeight: 1.5, LetterSpacing: -0.5, TextSelectable: true }).Parent = article;
+  const flexible = createUIFlexItem({ Weight: 2 });
+  flexible.Parent = article;
+  // @ts-expect-error Layout mechanics remain internal to FrameKit.
+  flexible.setProperties({ flexGrow: 2 });
+  // @ts-expect-error Flexible sizing does not add CSS properties to frames.
+  article.setProperties({ flexBasis: 'auto' });
   createTextLabel({ Text: 'Profile', TextTagName: 'h2' }).Parent = article;
   createScrollingFrame({ TagName: 'main' });
   // @ts-expect-error Tag selection is in the initial property object, not DOM options.

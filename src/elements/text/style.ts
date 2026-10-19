@@ -2,7 +2,9 @@ import { setStyle } from '#internal/dom/styles.js';
 import {
   assertAllowedValue,
   assertBoolean,
+  assertFiniteNumber,
   assertNonNegativeFinite,
+  assertPositiveFinite,
   assertString,
   assertUnitInterval,
 } from '#internal/validation.js';
@@ -26,6 +28,10 @@ export type TextStyleProperties = {
   TextTransparency: number;
   /** Font size in pixels. */
   TextSize: number;
+  /** Line height as a multiple of the rendered text size. */
+  LineHeight: number;
+  /** Additional space between characters in pixels. */
+  LetterSpacing: number;
   /** Whether text uses the largest whole-pixel size that fits its bounds. */
   TextScaled: boolean;
   /** Whether text wraps within its bounds. */
@@ -62,6 +68,8 @@ export function createDefaultTextStyleProperties(): TextStyleProperties {
     TextColor3: color3FromRGB(0, 0, 0),
     TextTransparency: 0,
     TextSize: 14,
+    LineHeight: 1.2,
+    LetterSpacing: 0,
     TextScaled: false,
     TextWrapped: false,
     TextXAlignment: 'Center',
@@ -100,10 +108,20 @@ export function renderTextStyle(
     setStyle(element, 'font-weight', String(properties.FontWeight));
   }
 
+  if (!changedProperties || changedProperties.has('LineHeight')) {
+    setStyle(element, 'line-height', String(properties.LineHeight));
+  }
+
+  if (!changedProperties || changedProperties.has('LetterSpacing')) {
+    setStyle(element, 'letter-spacing', `${properties.LetterSpacing}px`);
+  }
+
   if (
     !changedProperties ||
     changedProperties.has('Text') ||
     changedProperties.has('TextSize') ||
+    changedProperties.has('LineHeight') ||
+    changedProperties.has('LetterSpacing') ||
     changedProperties.has('TextScaled') ||
     changedProperties.has('TextWrapped') ||
     changedProperties.has('FontFamily') ||
@@ -120,6 +138,8 @@ export function validateTextStyleProperties(properties: Readonly<TextStyleProper
   assertColor3(properties.TextColor3, 'TextColor3');
   assertUnitInterval(properties.TextTransparency, 'TextTransparency');
   assertNonNegativeFinite(properties.TextSize, 'TextSize');
+  assertPositiveFinite(properties.LineHeight, 'LineHeight');
+  assertFiniteNumber(properties.LetterSpacing, 'LetterSpacing');
   assertBoolean(properties.TextScaled, 'TextScaled');
   assertBoolean(properties.TextWrapped, 'TextWrapped');
   assertString(properties.FontFamily, 'FontFamily');

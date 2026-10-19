@@ -3,6 +3,8 @@ import {
   type GuiElement,
   type ObservableValue,
   bindTooltip,
+  createUIFlexItem,
+  udim2,
   udim2FromOffset,
 } from 'framekit';
 
@@ -106,9 +108,10 @@ const appendTooltipExamples = (
         Size: udim2FromOffset(216, 44),
       },
       mobile: {
-        Size: udim2FromOffset(358, 44),
+        Size: udim2(1, 0, 0, 44),
       },
     });
+    createUIFlexItem().Parent = button;
     button.Parent = row;
 
     return button;

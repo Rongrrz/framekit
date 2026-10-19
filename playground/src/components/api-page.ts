@@ -3,6 +3,7 @@ import { createLink, type Frame, type ObservableValue, udim2 } from 'framekit';
 import importsExample from '../../examples/api/imports.ts?example';
 import { documentationPages, pageHash, type SitePage } from '../router';
 import { bindThemeColors, fonts, type ThemeValue } from '../theme';
+import { addPadding } from '../ui';
 import { createCodeBlock } from './code-block';
 import {
   appendArticleTitle,
@@ -51,13 +52,16 @@ export const createApiPage = (theme: ThemeValue, route: ObservableValue<SitePage
       Href: pageHash(entry.page),
       FontFamily: fonts.sans,
       TextSize: 15,
+      LineHeight: 1.7,
       TextWrapped: true,
       TextXAlignment: 'Left',
       BackgroundTransparency: 1,
-      Size: udim2(1, 0, 0, 74),
+      Size: udim2(1, 0, 0, 0),
+      AutomaticSize: 'Y',
     });
 
     link.unsafeElement.classList.add('pg-reference-link');
+    addPadding(link, 12, 20);
     bindThemeColors(link, theme, (palette) => ({ TextColor3: palette.text }));
     link.Parent = shell.article;
   }

@@ -7,6 +7,7 @@ import {
   udim2FromOffset,
   type ObservableValue,
   bindPopover,
+  createUIFlexItem,
 } from 'framekit';
 
 import popoverHooksExample from '../../examples/popover/popover-hooks.ts?example';
@@ -56,9 +57,10 @@ export const appendPopoverExamples = (
         Size: udim2FromOffset(332, 44),
       },
       mobile: {
-        Size: udim2FromOffset(358, 44),
+        Size: udim2(1, 0, 0, 44),
       },
     });
+    createUIFlexItem().Parent = trigger;
     trigger.Parent = row;
 
     const panel = createSurface(theme, {

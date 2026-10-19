@@ -36,6 +36,8 @@ export function syncTextStrokeHost(
   setStyle(host, 'font-family', properties.FontFamily);
   setStyle(host, 'font-weight', String(properties.FontWeight));
   setStyle(host, 'font-size', renderedFontSize);
+  setStyle(host, 'line-height', String(properties.LineHeight));
+  setStyle(host, 'letter-spacing', `${properties.LetterSpacing}px`);
   setStyle(host, 'white-space', properties.TextWrapped ? 'pre-wrap' : 'pre');
   setStyle(host, 'text-align', properties.TextXAlignment.toLowerCase());
   setStyle(host, textStrokeJustifyProperty, horizontalFlexAlignment[properties.TextXAlignment]);

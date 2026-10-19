@@ -332,7 +332,7 @@ it('gives child layout to one modifier and switches cleanly when it is replaced'
   expect(parent.unsafeElement.style.display).toBe('grid');
   expect(other.unsafeElement.style.display).toBe('');
   expect([...parent.unsafeElement.children]).toEqual([first.unsafeElement, second.unsafeElement]);
-  expect(second.unsafeElement.style.flexShrink).toBe('');
+  expect(second.unsafeElement.style.flexShrink).toBe('0');
   expect(second.unsafeElement.style.width).toBe('100%');
   grid.destroy();
   expect(second.unsafeElement.style.width).toBe('100px');

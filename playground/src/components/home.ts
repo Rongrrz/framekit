@@ -12,7 +12,7 @@ import {
 import counterExample from '../../examples/home/counter.ts?example';
 import { createRoutedPage, pageHash, type SitePage } from '../router';
 import { bindThemeColors, fonts, type ThemeValue } from '../theme';
-import { createButton } from '../ui';
+import { addPadding, createButton } from '../ui';
 import { createCodeBlock } from './code-block';
 import { appendArticleTitle, appendFlowText } from './docs-shell';
 
@@ -147,6 +147,7 @@ export const createHomePage = (
       Href: pageHash(destination),
       FontFamily: fonts.sans,
       TextSize: 15,
+      LineHeight: 1.5,
       TextWrapped: true,
       TextXAlignment: 'Left',
       TextYAlignment: 'Top',
@@ -154,6 +155,7 @@ export const createHomePage = (
     });
 
     link.unsafeElement.classList.add('pg-learning-card');
+    addPadding(link, 20);
     bindThemeColors(link, theme, (palette) => ({
       TextColor3: palette.text,
       BackgroundColor3: palette.surface,

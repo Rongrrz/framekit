@@ -138,6 +138,9 @@ export type {
 export { createUICorner } from './modifiers/corner.js';
 export type { UICorner, UICornerProperties } from './modifiers/corner.js';
 
+export { createUIFlexItem } from './modifiers/flex-item.js';
+export type { UIFlexItem, UIFlexItemProperties } from './modifiers/flex-item.js';
+
 export { createUIGradient } from './modifiers/gradient.js';
 export type { GradientTarget, UIGradient, UIGradientProperties } from './modifiers/gradient.js';
 

@@ -32,10 +32,10 @@ describe('documentation spacing', () => {
     for (const label of labels) {
       expect(label.AutomaticSize).toBe('Y');
       expect(label.TextWrapped).toBe(true);
-      expect(
-        label.unsafeElement.querySelector<HTMLElement>('[data-framekit-text]')?.style.position,
-      ).toBe('static');
+      expect(label.TextSelectable).toBe(true);
     }
+
+    expect(labels.map((label) => label.LineHeight)).toEqual([1.25, 1.5]);
 
     parent.destroy();
   });

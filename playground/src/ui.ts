@@ -5,6 +5,8 @@ import {
   createTextLabel,
   createUICorner,
   createUIStroke,
+  createUIPadding,
+  udim,
   type Frame,
   type GuiElement,
   type TextButton,
@@ -30,6 +32,8 @@ type TextOptions = Readonly<{
   position?: UDim2;
   color?: ThemeToken | Color3;
   textSize?: number;
+  lineHeight?: number;
+  letterSpacing?: number;
   scaled?: boolean;
   weight?: string | number;
   xAlignment?: TextXAlignment;
@@ -49,6 +53,7 @@ type ButtonOptions = Readonly<{
   textSize?: number;
   scaled?: boolean;
   font?: string;
+  radius?: number;
 }>;
 
 type SurfaceOptions = Readonly<{
@@ -73,6 +78,8 @@ export const createText = (theme: ThemeValue, options: TextOptions): TextLabel =
     Text: options.text,
     TextColor3: usesThemeColor ? themeColor(theme, color) : color,
     TextSize: options.textSize ?? typeScale.body,
+    LineHeight: options.lineHeight ?? 1.2,
+    LetterSpacing: options.letterSpacing ?? 0,
     TextScaled: options.scaled ?? false,
     TextWrapped: options.wrapped ?? false,
     TextXAlignment: options.xAlignment ?? 'Left',
@@ -100,6 +107,16 @@ export const addRoundedBorder = (
   const stroke = createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
   bindThemeColors(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
   stroke.Parent = instance;
+};
+
+/** Applies symmetric inner spacing through the same modifier used by application code. */
+export const addPadding = (instance: GuiElement, vertical: number, horizontal = vertical): void => {
+  createUIPadding({
+    PaddingTop: udim(0, vertical),
+    PaddingBottom: udim(0, vertical),
+    PaddingLeft: udim(0, horizontal),
+    PaddingRight: udim(0, horizontal),
+  }).Parent = instance;
 };
 
 export const createSurface = (theme: ThemeValue, options: SurfaceOptions): Frame => {
@@ -140,7 +157,7 @@ export const createButton = (theme: ThemeValue, options: ButtonOptions): TextBut
     BackgroundColor3: palette[background],
     TextColor3: palette[foreground],
   }));
-  addRoundedBorder(theme, button, 11, background);
+  addRoundedBorder(theme, button, options.radius ?? 11, background);
 
   return button;
 };

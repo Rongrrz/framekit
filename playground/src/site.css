@@ -107,19 +107,6 @@
   width: 100% !important;
   height: auto !important;
   min-width: 0;
-  gap: 14px !important;
-}
-
-.pg-article [role='heading'][aria-level='1'] {
-  letter-spacing: -1.4px;
-}
-
-.pg-article > [role='heading'][aria-level='2'] {
-  letter-spacing: -0.5px;
-}
-
-.pg-article > [data-framekit='TextLabel'] {
-  user-select: text !important;
 }
 
 .pg-code-source pre {
@@ -150,50 +137,15 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
   background-color: var(--shiki-dark-bg) !important;
 }
 
-.pg-outline > * {
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
-  width: 100% !important;
-  height: auto !important;
-  min-height: 32px;
-  text-align: left;
-  margin-bottom: 4px !important;
-}
-
 .pg-outline > button {
   border-left: 1px solid var(--pg-border) !important;
-  border-radius: 0 !important;
-  padding: 8px 12px !important;
-}
-
-.pg-outline > button [data-framekit-text] {
-  position: static !important;
-  display: block !important;
-  white-space: normal !important;
-  line-height: 1.5;
-}
-
-.pg-examples {
-  flex-wrap: wrap !important;
-}
-
-.pg-examples > button {
-  flex: 1 1 160px !important;
-  width: auto !important;
 }
 
 .pg-reference-link {
   min-height: 84px;
-  padding: 16px 20px !important;
   border: 1px solid var(--pg-border);
   border-radius: 8px;
   text-decoration: none;
-}
-
-.pg-reference-link [data-framekit-text] {
-  inset: 12px 20px !important;
-  line-height: 1.7 !important;
 }
 
 .pg-reference-link:hover {
@@ -201,24 +153,11 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
 }
 
 .pg-article-navigation {
-  position: relative !important;
-  width: 100% !important;
-  height: auto !important;
-  display: flex !important;
-  flex-wrap: wrap;
-  gap: 12px;
   border-top: 1px solid var(--pg-border);
-  padding-top: 24px;
   margin-top: 32px !important;
 }
 
 .pg-reading-link {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  width: auto !important;
-  height: 44px !important;
-  flex: 1 1 220px;
   text-decoration: none;
 }
 
@@ -330,11 +269,6 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
   border: 1px solid var(--pg-border);
   border-radius: 10px;
   text-decoration: none;
-}
-
-.pg-learning-card [data-framekit-text] {
-  inset: 20px !important;
-  line-height: 1.5 !important;
 }
 
 .pg-learning-card:hover {

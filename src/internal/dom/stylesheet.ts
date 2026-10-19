@@ -70,7 +70,10 @@ const sharedStyles = `
     white-space: inherit;
     text-align: inherit;
     font: inherit;
-    line-height: 1.2;
+    line-height: inherit;
+    letter-spacing: inherit;
+    padding: inherit;
+    box-sizing: border-box;
     -webkit-text-fill-color: transparent;
     -webkit-text-stroke-color: var(--framekit-text-stroke-color, transparent);
     -webkit-text-stroke-width: var(--framekit-text-stroke-width, 0px);

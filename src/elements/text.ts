@@ -3,7 +3,7 @@ import { buttonEventMethods, type GuiMethodTable } from '#internal/runtime/node/
 import type { GuiElement, PropertyRenderer } from '#internal/runtime/node/gui-node.js';
 import type { PropertyValidator } from '#internal/runtime/node/registry.js';
 import { getNodeProperties } from '#internal/runtime/systems/properties.js';
-import { assertAllowedValue } from '#internal/validation.js';
+import { assertAllowedValue, assertBoolean } from '#internal/validation.js';
 
 import {
   initializeButtonElement,
@@ -33,7 +33,11 @@ import {
 export type { TextXAlignment, TextYAlignment } from './text/style.js';
 
 /** Properties shared by text labels and text buttons. */
-export type TextLabelProperties = GuiObjectProperties & TextStyleProperties;
+export type TextLabelProperties = GuiObjectProperties &
+  TextStyleProperties & {
+    /** Whether users can select and copy the displayed text. */
+    TextSelectable: boolean;
+  };
 
 /** Semantic HTML elements that can carry a text label's content. */
 export type TextTagName = (typeof textTagNames)[number];
@@ -132,6 +136,7 @@ export function createDefaultTextProperties(): TextLabelProperties {
     ...createDefaultGuiObjectProperties(),
     Name: 'TextLabel',
     ...createDefaultTextStyleProperties(),
+    TextSelectable: false,
   };
 }
 
@@ -153,8 +158,10 @@ export function createTextNode<Properties extends TextLabelProperties>(
     inset: '0',
     display: 'flex',
     pointerEvents: 'none',
-    lineHeight: '1.2',
     margin: '0',
+    boxSizing: 'border-box',
+    padding: 'inherit',
+    minWidth: '0',
   });
   element.prepend(text);
   initializeTextGradient(element, text);
@@ -170,6 +177,12 @@ export function createTextNode<Properties extends TextLabelProperties>(
       if (changedProperties.has('AutomaticSize')) {
         // Intrinsic text must participate in layout for the host to follow wrapped content.
         text.style.position = properties.AutomaticSize === 'None' ? 'absolute' : 'relative';
+        text.style.padding = properties.AutomaticSize === 'None' ? 'inherit' : '0';
+      }
+
+      if (changedProperties.has('TextSelectable')) {
+        text.style.userSelect = properties.TextSelectable ? 'text' : 'none';
+        text.style.pointerEvents = properties.TextSelectable ? 'auto' : 'none';
       }
 
       if (changedProperties.has('Text')) {
@@ -216,6 +229,7 @@ function validateTextProperties(
   properties: Readonly<TextLabelProperties | TextButtonProperties>,
 ): void {
   validateTextStyleProperties(properties);
+  assertBoolean(properties.TextSelectable, 'TextSelectable');
 
   if ('Disabled' in properties) {
     validateButtonProperties(properties);

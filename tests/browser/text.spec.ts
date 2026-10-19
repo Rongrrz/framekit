@@ -2,6 +2,94 @@ import type { Instance } from 'framekit';
 
 import { expect, openFrameKit, test } from './fixtures.js';
 
+test('padded text contributes its wrapped height to nested automatic layouts and remains selectable', async ({
+  page,
+}) => {
+  await openFrameKit(page);
+
+  const result = await page.evaluate(() => {
+    const {
+      createFrame,
+      createScreenGui,
+      createTextLabel,
+      createUIListLayout,
+      createUIPadding,
+      udim,
+      udim2,
+    } = window.framekit;
+    const root = createScreenGui();
+    const column = createFrame({ Size: udim2(0, 360, 0, 0), AutomaticSize: 'Y' });
+    column.Parent = root;
+    createUIListLayout().Parent = column;
+    createUIPadding({
+      PaddingTop: udim(0, 12),
+      PaddingBottom: udim(0, 12),
+      PaddingLeft: udim(0, 12),
+      PaddingRight: udim(0, 12),
+    }).Parent = column;
+
+    const label = createTextLabel({
+      Text: 'Selectable paragraph with wrapped content. '.repeat(6),
+      TextTagName: 'p',
+      TextSelectable: true,
+      TextWrapped: true,
+      TextXAlignment: 'Left',
+      TextYAlignment: 'Top',
+      TextSize: 20,
+      LineHeight: 1.5,
+      Size: udim2(1, 0, 0, 0),
+      AutomaticSize: 'Y',
+    });
+    label.Parent = column;
+    const padding = createUIPadding({
+      PaddingTop: udim(0, 6),
+      PaddingBottom: udim(0, 6),
+      PaddingLeft: udim(0, 10),
+      PaddingRight: udim(0, 10),
+    });
+    padding.Parent = label;
+    root.mount('#root');
+
+    const text = label.unsafeElement.querySelector('p')!;
+    const geometry = () => ({
+      column: column.AbsoluteSize.Y,
+      label: label.AbsoluteSize.Y,
+      left: text.getBoundingClientRect().left - label.AbsolutePosition.X,
+      top: text.getBoundingClientRect().top - label.AbsolutePosition.Y,
+    });
+    const initial = geometry();
+    label.LineHeight = 2;
+    const taller = geometry();
+    column.Size = udim2(0, 220, 0, 0);
+    label.LetterSpacing = 1;
+    const narrower = geometry();
+    padding.destroy();
+    const unpadded = geometry();
+
+    return {
+      initial,
+      taller,
+      narrower,
+      unpadded,
+      lineHeight: getComputedStyle(text).lineHeight,
+      spacing: getComputedStyle(text).letterSpacing,
+    };
+  });
+
+  expect(result.initial.left).toBe(10);
+  expect(result.initial.top).toBe(6);
+  expect(result.initial.column).toBe(result.initial.label + 24);
+  expect(result.taller.label).toBeGreaterThan(result.initial.label);
+  expect(result.narrower.label).toBeGreaterThan(result.taller.label);
+  expect(result.narrower.column).toBe(result.narrower.label + 24);
+  expect(result.unpadded.left).toBe(0);
+  expect(result.unpadded.top).toBe(0);
+  expect(result.lineHeight).toBe('40px');
+  expect(result.spacing).toBe('1px');
+  await page.getByText(/^Selectable paragraph/).dblclick();
+  expect(await page.evaluate(() => window.getSelection()?.toString().length)).toBeGreaterThan(0);
+});
+
 for (const multiline of [false, true]) {
   test(`native edits accept observer corrections and retain selection (multiline: ${multiline})`, async ({
     page,
@@ -145,17 +233,26 @@ test('scaled text still fits after resize and restores its explicit size when di
   await openFrameKit(page);
 
   const result = await page.evaluate(async () => {
-    const { createScreenGui, createTextLabel, udim2FromOffset } = window.framekit;
+    const { createScreenGui, createTextLabel, createUIPadding, udim, udim2FromOffset } =
+      window.framekit;
     const gui = createScreenGui();
 
     const label = createTextLabel({
       Text: 'Example label',
       TextScaled: true,
       TextSize: 19,
+      LineHeight: 1.8,
+      LetterSpacing: 2,
       FontFamily: 'monospace',
       Size: udim2FromOffset(200, 40),
     });
 
+    createUIPadding({
+      PaddingLeft: udim(0, 8),
+      PaddingRight: udim(0, 8),
+      PaddingTop: udim(0, 4),
+      PaddingBottom: udim(0, 4),
+    }).Parent = label;
     label.Parent = gui;
     gui.mount('#root');
 
@@ -176,6 +273,11 @@ test('scaled text still fits after resize and restores its explicit size when di
 
     const fits =
       text.scrollWidth <= text.clientWidth + 1 && text.scrollHeight <= text.clientHeight + 1;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const glyphs = range.getBoundingClientRect();
+    const bounds = text.getBoundingClientRect();
+    const fitsPadding = glyphs.left >= bounds.left + 8 - 1 && glyphs.right <= bounds.right - 8 + 1;
 
     label.TextScaled = false;
     label.Text = 'Updated without scaling';
@@ -187,12 +289,13 @@ test('scaled text still fits after resize and restores its explicit size when di
     const empty = text.style.fontSize;
     gui.destroy();
 
-    return { large, small, fits, explicit, empty };
+    return { large, small, fits, fitsPadding, explicit, empty };
   });
 
   expect(result.small).toBeGreaterThan(0);
   expect(result.large).toBeGreaterThan(result.small);
   expect(result.fits).toBe(true);
+  expect(result.fitsPadding).toBe(true);
   expect(result.explicit).toBe('19px');
   expect(result.empty).toBe('19px');
 });

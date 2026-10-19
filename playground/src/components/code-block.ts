@@ -71,7 +71,6 @@ export const createCodeBlock = (
   copy.onClick(() => {
     void copyCommand(copy, source, 'Copy');
   });
-  block.unsafeElement.style.marginTop = '4px';
 
   return block;
 };

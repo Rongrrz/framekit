@@ -125,7 +125,7 @@ export const createDocsShell = (
   });
 
   article.unsafeElement.classList.add('pg-article');
-  createUIListLayout({ Padding: udim(0, 12) }).Parent = article;
+  createUIListLayout({ Padding: udim(0, 14) }).Parent = article;
 
   const outline = createFrame({
     Name: `${name}Outline`,

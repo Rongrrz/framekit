@@ -1,5 +1,116 @@
 import { expect, openFrameKit, test } from './fixtures.js';
 
+test('flexible list children share spare space, shrink, and return to their preferred sizes', async ({
+  page,
+}) => {
+  await openFrameKit(page);
+
+  const result = await page.evaluate(() => {
+    const {
+      createFrame,
+      createScreenGui,
+      createUIListLayout,
+      createUIFlexItem,
+      createUIPadding,
+      udim,
+      udim2FromOffset,
+    } = window.framekit;
+    const root = createScreenGui();
+    const row = createFrame({ Size: udim2FromOffset(400, 60) });
+    row.Parent = root;
+    createUIListLayout({ FillDirection: 'Horizontal', Padding: udim(0, 8) }).Parent = row;
+    createUIPadding({ PaddingLeft: udim(0, 10), PaddingRight: udim(0, 10) }).Parent = row;
+
+    const first = createFrame({ Size: udim2FromOffset(80, 32) });
+    const second = createFrame({ Size: udim2FromOffset(80, 32) });
+    const fixed = createFrame({ Size: udim2FromOffset(40, 32) });
+    const firstFlex = createUIFlexItem();
+    const secondFlex = createUIFlexItem({ Weight: 3 });
+    firstFlex.Parent = first;
+    secondFlex.Parent = second;
+    first.Parent = row;
+    second.Parent = row;
+    fixed.Parent = row;
+    root.mount('#root');
+
+    const widths = () => [first.AbsoluteSize.X, second.AbsoluteSize.X, fixed.AbsoluteSize.X];
+    const wide = widths();
+    row.Size = udim2FromOffset(160, 60);
+    const narrow = widths();
+    row.Size = udim2FromOffset(400, 60);
+    secondFlex.Weight = 1;
+    const equal = widths();
+    firstFlex.destroy();
+    const detached = widths();
+    const preferred = first.Size.X.Offset;
+    root.destroy();
+
+    return { wide, narrow, equal, detached, preferred };
+  });
+
+  expect(result).toEqual({
+    wide: [121, 203, 40],
+    narrow: [42, 42, 40],
+    equal: [162, 162, 40],
+    detached: [80, 244, 40],
+    preferred: 80,
+  });
+});
+
+test('wrapped flexible rows grow their automatic height without stretching fixed children', async ({
+  page,
+}) => {
+  await openFrameKit(page);
+
+  const result = await page.evaluate(() => {
+    const {
+      createFrame,
+      createScreenGui,
+      createUIListLayout,
+      createUIFlexItem,
+      createUIPadding,
+      udim,
+      udim2FromOffset,
+    } = window.framekit;
+    const root = createScreenGui();
+    const row = createFrame({ Size: udim2FromOffset(400, 0), AutomaticSize: 'Y' });
+    row.Parent = root;
+    createUIListLayout({ FillDirection: 'Horizontal', Wraps: true, Padding: udim(0, 8) }).Parent =
+      row;
+    createUIPadding({
+      PaddingTop: udim(0, 10),
+      PaddingBottom: udim(0, 10),
+      PaddingLeft: udim(0, 10),
+      PaddingRight: udim(0, 10),
+    }).Parent = row;
+
+    const children = Array.from({ length: 2 }, () => {
+      const child = createFrame({ Size: udim2FromOffset(160, 40) });
+      createUIFlexItem().Parent = child;
+      child.Parent = row;
+      return child;
+    });
+    root.mount('#root');
+
+    const geometry = () => ({
+      height: row.AbsoluteSize.Y,
+      widths: children.map((child) => child.AbsoluteSize.X),
+      heights: children.map((child) => child.AbsoluteSize.Y),
+    });
+    const wide = geometry();
+    row.Size = udim2FromOffset(260, 0);
+    const wrapped = geometry();
+    root.destroy();
+
+    return { wide, wrapped };
+  });
+
+  expect(result).toEqual({
+    wide: { height: 60, widths: [186, 186], heights: [40, 40] },
+    wrapped: { height: 108, widths: [240, 240], heights: [40, 40] },
+  });
+});
+
 for (const kind of ['list', 'grid']) {
   test(`active ${kind} front edits preserve geometry and focused selection without rewriting survivors`, async ({
     page,
