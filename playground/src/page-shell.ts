@@ -27,7 +27,7 @@ type PageShell = Readonly<{
 
 const appName = 'FrameKitPlayground';
 
-export const navigationHeight = 64;
+const navigationHeight = 64;
 
 const scrollSpringOptions = {
   tension: 150,
@@ -66,8 +66,7 @@ export const createPageShell = (theme: ThemeValue, route: ObservableValue<SitePa
   }));
   content.Parent = page;
   page.Parent = app;
-  watchOwnedValue(app, route, (current) => {
-    page.Visible = current !== 'examples';
+  watchOwnedValue(app, route, () => {
     page.CanvasPosition = vector2(0, 0);
   });
 

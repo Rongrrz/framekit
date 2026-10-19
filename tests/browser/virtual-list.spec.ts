@@ -1,10 +1,47 @@
-import { expect, test } from './fixtures.js';
+import { expect, openFrameKit, test } from './fixtures.js';
+
+test.beforeEach(async ({ page }) => {
+  await openFrameKit(page);
+  await page.evaluate(() => {
+    const {
+      bindVirtualList,
+      createObservableValue,
+      createScreenGui,
+      createScrollingFrame,
+      createTextButton,
+      createTextLabel,
+      udim2FromOffset,
+    } = window.framekit;
+
+    const gui = createScreenGui();
+    const viewport = createScrollingFrame({
+      Size: udim2FromOffset(320, 480),
+      Position: udim2FromOffset(0, 60),
+    });
+    viewport.unsafeElement.setAttribute('aria-label', 'Virtual collection');
+    viewport.Parent = gui;
+
+    const data = createObservableValue(Array.from({ length: 100_000 }, (_, id) => id));
+    bindVirtualList(viewport, data, {
+      itemHeight: 32,
+      selection: createObservableValue<string | number | undefined>(0),
+      key: (id) => id,
+      create: () => createTextLabel(),
+      update: (row, id) => {
+        row.Text = `Row ${id.toLocaleString('en-US')}`;
+      },
+    });
+
+    const insert = createTextButton({ Text: 'Insert at top' });
+    insert.Parent = gui;
+    insert.onClick(() => data.update((items) => [-1, ...items]));
+    gui.mount('#root');
+  });
+});
 
 test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable scroll anchors', async ({
   page,
 }) => {
-  await page.goto('/playground/index.html#/examples');
-
   const list = page.getByRole('listbox', { name: 'Virtual collection' });
   await expect(list.getByRole('option', { name: 'Row 0', exact: true })).toBeVisible();
   expect(await list.getByRole('option').count()).toBeLessThan(32);
@@ -38,8 +75,6 @@ test('virtualizes 100,000 items with bounded DOM, keyboard selection, and stable
 test('keeps native focus on the viewport when the selected option scrolls out of view', async ({
   page,
 }) => {
-  await page.goto('/playground/index.html#/examples');
-
   const list = page.getByRole('listbox');
   await list.focus();
   await list.evaluate((element) => {

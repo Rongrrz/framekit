@@ -7,7 +7,6 @@ import {
 
 import { createApiPage } from './components/api-page';
 import { createControlsPage } from './components/controls-page';
-import { createExamplesPage } from './components/examples-page';
 import { createGuidePage } from './components/guide-page';
 import { createHomePage } from './components/home';
 import { createNavigation } from './components/navigation';
@@ -16,7 +15,7 @@ import { referenceChapters } from './components/reference-content';
 import { createReferencePage } from './components/reference-page';
 import { mobileBreakpoint, type PlaygroundLayout } from './layout';
 import { createPageShell } from './page-shell';
-import { bindHashRouter, sitePages, navigateToPage, resolveInitialPage } from './router';
+import { bindHashRouter, documentationPages, navigateToPage, resolveInitialPage } from './router';
 import {
   bindDocumentTheme,
   bindThemePalette,
@@ -56,11 +55,10 @@ export const createPlaygroundApp = (
   createOverlaysPage(layout, palette, route, scrollTo).Parent = content;
   createControlsPage(palette, route, scrollTo).Parent = content;
   createNavigation(page, route, navigate, layout, theme, palette).Parent = app;
-  createExamplesPage(palette, route).Parent = app;
 
   const previousTitle = document.title;
   watchOwnedValue(app, route, (page) => {
-    const label = sitePages.find((entry) => entry.page === page)?.label;
+    const label = documentationPages.find((entry) => entry.page === page)?.label;
     document.title = label ? `${label} · FrameKit` : 'FrameKit · Typed UI objects for the web';
   });
 

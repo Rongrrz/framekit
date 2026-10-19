@@ -17,7 +17,6 @@ describe('playground router', () => {
     ['#/layout', 'layout'],
     ['#/overlays', 'overlays'],
     ['#/controls', 'controls'],
-    ['#/examples', 'examples'],
     ['#/unknown', 'home'],
   ] as const)('resolves %s to %s', (hash, page) => {
     window.history.replaceState(null, '', window.location.pathname + hash);

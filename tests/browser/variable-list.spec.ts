@@ -177,31 +177,6 @@ test('keeps selection and keyboard navigation independent of mounted measured vi
   await expect(page.locator('[data-framekit="ScrollingFrame"]')).not.toHaveAttribute('role');
 });
 
-test('demonstrates 100,000 measured rows with wrapped content and expansion in the playground', async ({
-  page,
-}) => {
-  await page.goto('/playground/index.html#/examples');
-  await page.getByRole('tab', { name: 'Measured rows', exact: true }).click();
-
-  const list = page.getByRole('listbox', { name: 'Virtual collection' });
-  const row = list.getByRole('option').first();
-  await expect(row).toBeVisible();
-
-  const height = await row.evaluate((element) => element.getBoundingClientRect().height);
-  await page.getByRole('button', { name: 'Expand selected' }).click();
-  await expect
-    .poll(() => row.evaluate((element) => element.getBoundingClientRect().height))
-    .toBeGreaterThan(height);
-  await list.focus();
-  await page.keyboard.press('End');
-  await expect(list.getByRole('option').filter({ hasText: 'Row 99,999' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
-  await expect(list.getByRole('option').filter({ hasText: 'Row 99,999' })).toBeInViewport();
-  expect(await list.getByRole('option').count()).toBeLessThan(64);
-});
-
 test('lets a caller scroll override an estimated keyboard jump before measurement', async ({
   page,
 }) => {
