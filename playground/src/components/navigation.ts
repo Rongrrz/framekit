@@ -115,7 +115,13 @@ export const createNavigation = (
     Size: udim2(1, 0, 0, 2),
     Position: udim2FromOffset(0, 62),
     ZIndex: 101,
+    Visible: false,
   });
+
+  track.unsafeElement.setAttribute('role', 'progressbar');
+  track.unsafeElement.setAttribute('aria-label', 'Reading progress');
+  track.unsafeElement.setAttribute('aria-valuemin', '0');
+  track.unsafeElement.setAttribute('aria-valuemax', '100');
 
   const progress = createFrame({ Name: 'ScrollProgress', Size: udim2FromScale(0, 1) });
   bindThemeColors(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
@@ -123,23 +129,18 @@ export const createNavigation = (
   progress.Parent = track;
   track.Parent = navigation;
 
-  const listenerController = new AbortController();
-  page.unsafeElement.addEventListener(
-    'scroll',
-    () => {
-      const maximum = Math.max(
-        1,
-        page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight,
-      );
+  const updateProgress = (): void => {
+    const scrolled = page.unsafeElement.scrollTop;
+    const maximum = Math.max(1, page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight);
+    const fraction = Math.min(1, Math.max(0, scrolled / maximum));
 
-      progress.Size = udim2FromScale(
-        Math.min(1, Math.max(0, page.unsafeElement.scrollTop / maximum)),
-        1,
-      );
-    },
-    { passive: true, signal: listenerController.signal },
-  );
-  navigation.onDestroy(() => listenerController.abort());
+    track.Visible = scrolled >= 160;
+    progress.Size = udim2FromScale(fraction, 1);
+    track.unsafeElement.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
+  };
+
+  navigation.onDestroy(page.on('scroll', updateProgress, { passive: true }));
+  watchOwnedValue(navigation, route, updateProgress);
 
   const updateNavigation = (): void => {
     const palette = theme.get();

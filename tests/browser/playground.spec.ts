@@ -1,5 +1,51 @@
 import { expect, test } from './fixtures.js';
 
+for (const width of [1440, 390]) {
+  test(`reveals reading progress after scrolling while keeping navigation fixed at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/playground/index.html#/guide');
+
+    const main = page.getByRole('main');
+    const navigation = page.getByRole('navigation', { name: 'Primary', exact: true });
+    const progress = page.getByRole('progressbar', {
+      name: 'Reading progress',
+      includeHidden: true,
+    });
+
+    await expect(progress).toBeHidden();
+    expect((await navigation.boundingBox())!.y).toBe(0);
+    await main.evaluate((element) => {
+      element.scrollTop = 100;
+    });
+    await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(100);
+    await expect(progress).toBeHidden();
+    expect((await navigation.boundingBox())!.y).toBe(0);
+    await main.evaluate((element) => {
+      element.scrollTop = 200;
+    });
+    await expect(progress).toBeVisible();
+    expect((await navigation.boundingBox())!.y).toBe(0);
+    await main.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect(progress).toHaveAttribute('aria-valuenow', '100');
+    await main.evaluate((element) => {
+      element.scrollTop = 100;
+    });
+    await expect(progress).toBeHidden();
+    await main.evaluate((element) => {
+      element.scrollTop = 300;
+    });
+    await expect(progress).toBeVisible();
+    await navigation.getByRole('button', { name: 'Reference', exact: true }).click();
+    await expect(page).toHaveURL(/#\/api$/);
+    await expect(progress).toBeHidden();
+    expect((await navigation.boundingBox())!.y).toBe(0);
+  });
+}
+
 test('does not retain the theme tooltip after a pointer click and exit', async ({ page }) => {
   await page.goto('/playground/index.html#/api');
 
