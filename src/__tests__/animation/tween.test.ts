@@ -16,6 +16,23 @@ const { advance } = setupAnimationClock();
 const trackNode = destroyNodesAfterEach();
 
 describe('tweens', () => {
+  it('disposes playback without destroying the target or retaining property ownership', () => {
+    const frame = trackNode(createFrame({ Rotation: 0 }));
+    const tween = createTween(frame, { Duration: 1 }, { Rotation: 90 });
+    const completed = vi.fn();
+    tween.completed.subscribe(completed);
+    tween.play();
+    advance(100);
+    tween.dispose();
+    tween.dispose();
+    expect(completed.mock.calls).toEqual([['Cancelled']]);
+    expect(() => tween.play()).toThrow(/disposed/);
+    frame.Rotation = 50;
+    advance(1000);
+    expect(frame.Rotation).toBe(50);
+    expect(frame.isDestroyed()).toBe(false);
+  });
+
   it('accepts structural values consistently with direct property assignments', () => {
     const position = { ...udim2FromOffset(0, 0), tag: 'start' };
     const goal = { ...udim2FromOffset(100, 50), tag: 'goal' };

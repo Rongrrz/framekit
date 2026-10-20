@@ -1,4 +1,5 @@
 import { setStyle } from '#internal/dom/styles.js';
+import { installFrameKitStyles } from '#internal/dom/stylesheet.js';
 import type { GuiMethodTable } from '#internal/runtime/node/gui-events.js';
 import {
   createGuiNode,
@@ -104,6 +105,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
   initialRenderProperties,
 }: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
   if (initialRenderProperties === undefined) {
+    installFrameKitStyles({ ownerDocument: element.ownerDocument });
     element.dataset.framekit = className;
     setStyle(element, 'position', element.tagName === 'DIALOG' ? 'fixed' : 'absolute');
     setStyle(element, 'box-sizing', 'border-box');

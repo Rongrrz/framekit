@@ -18,6 +18,7 @@ export type AnimationRunner<Properties extends InstanceProperties> = {
   isScheduled(): boolean;
   isDestroyed(): boolean;
   assertUsable(message: string): void;
+  dispose(): void;
 };
 
 type AnimationRunnerOptions<Properties extends InstanceProperties> = Readonly<{
@@ -33,6 +34,7 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
 ): AnimationRunner<Properties> {
   const claimedProperties = new Set<keyof Properties>();
   let scheduled = false;
+  let disposed = false;
 
   const owner: AnimationOwner = {
     cancelPropertyFromConflict: (property) =>
@@ -78,19 +80,28 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
   }
 
   function assertUsable(message: string): void {
-    if (lifecycle.isDestroyed(node)) {
+    if (disposed || lifecycle.isDestroyed(node)) {
       throw new Error(message);
     }
   }
 
-  lifecycle.onDestroy(node, () => {
+  function dispose(): void {
+    if (disposed) {
+      return;
+    }
+
+    disposed = true;
+    unregisterDestroy();
+
     try {
       options.onDestroy();
     } finally {
       cancelFrame();
       release([...claimedProperties]);
     }
-  });
+  }
+
+  const unregisterDestroy = lifecycle.onDestroy(node, dispose);
 
   return Object.freeze({
     claim,
@@ -99,7 +110,8 @@ export function createAnimationRunner<Properties extends InstanceProperties>(
     schedule,
     cancelFrame,
     isScheduled: () => scheduled,
-    isDestroyed: () => lifecycle.isDestroyed(node),
+    isDestroyed: () => disposed || lifecycle.isDestroyed(node),
     assertUsable,
+    dispose,
   });
 }

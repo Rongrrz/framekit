@@ -66,6 +66,8 @@ export type Tween = {
   pause(): void;
   /** Stops playback and emits the Cancelled state. */
   cancel(): void;
+  /** Permanently releases playback, listeners, and ownership while keeping the instance alive. */
+  dispose(): void;
   /** Returns the current playback state. */
   playbackState(): TweenPlaybackState;
   /** Emits when playback completes or is cancelled. */
@@ -274,10 +276,17 @@ export function createTween<Properties extends InstanceProperties>(
   }
 
   function assertUsable(): void {
-    runner.assertUsable(`${initialName} has been destroyed.`);
+    runner.assertUsable(`${initialName} has been destroyed or the tween has been disposed.`);
   }
 
-  return Object.freeze({ play, pause, cancel, playbackState: () => playbackState, completed });
+  return Object.freeze({
+    play,
+    pause,
+    cancel,
+    dispose: runner.dispose,
+    playbackState: () => playbackState,
+    completed,
+  });
 }
 
 function resolveTweenOptions(options: TweenOptions): ResolvedTweenOptions {

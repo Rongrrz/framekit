@@ -23,6 +23,7 @@ export const bindDialog = (node: GuiElement, options: DialogOptions = {}): Dialo
   installFrameKitStyles({ ownerDocument: element.ownerDocument });
 
   let opener: HTMLElement | undefined;
+  let previousFocus: Element | null = null;
   let disposed = false;
 
   const restoreFocus = (): void => {
@@ -31,6 +32,7 @@ export const bindDialog = (node: GuiElement, options: DialogOptions = {}): Dialo
     }
 
     opener = undefined;
+    previousFocus = null;
   };
 
   const close = (): void => {
@@ -44,7 +46,19 @@ export const bindDialog = (node: GuiElement, options: DialogOptions = {}): Dialo
   const stops = [
     node.on('close', () => {
       if (!dialog.open) {
-        restoreFocus();
+        const active = element.ownerDocument.activeElement;
+
+        // Native close is queued. Preserve focus deliberately moved after the dialog closed.
+        if (
+          active === previousFocus ||
+          active === element.ownerDocument.body ||
+          dialog.contains(active)
+        ) {
+          restoreFocus();
+        } else {
+          opener = undefined;
+          previousFocus = null;
+        }
       }
     }),
     // Escape belongs to the native topmost dialog, not document-level popover handlers.
@@ -92,8 +106,8 @@ export const bindDialog = (node: GuiElement, options: DialogOptions = {}): Dialo
         throw new TypeError('The dialog opener must be live and belong to the same document.');
       }
 
-      opener =
-        trigger?.unsafeElement ?? (element.ownerDocument.activeElement as HTMLElement | undefined);
+      previousFocus = element.ownerDocument.activeElement;
+      opener = trigger?.unsafeElement ?? (previousFocus as HTMLElement | undefined);
       dialog.showModal();
       options.initialFocus?.focus();
     },

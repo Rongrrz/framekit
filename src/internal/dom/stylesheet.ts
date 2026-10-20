@@ -35,6 +35,10 @@ export function installFrameKitStyles(options: StyleOptions = {}): void {
 }
 
 const sharedStyles = `
+  [data-framekit]:focus-visible {
+    outline: var(--framekit-focus-outline, revert);
+    outline-offset: var(--framekit-focus-offset, revert);
+  }
   [data-framekit][popover]:not(:popover-open),
   dialog[data-framekit]:not([open]) {
     display: none !important;

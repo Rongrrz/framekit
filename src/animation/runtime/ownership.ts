@@ -91,6 +91,7 @@ export function applyAnimationProperties<Properties extends InstanceProperties>(
 
 const unitIntervalProperties = new Set<PropertyKey>([
   'BackgroundTransparency',
+  'GroupTransparency',
   'ImageTransparency',
   'PlaceholderTransparency',
   'ScrollBarImageTransparency',

@@ -4,6 +4,7 @@ import {
   createScreenGui,
   createScrollingFrame,
   createUIListLayout,
+  createUIFocusRing,
   type Frame,
   type GuiElement,
   type ScreenGui,
@@ -39,6 +40,9 @@ const scrollSpringOptions = {
 /** Native flow determines page height; scrolling stays owned by the FrameKit root. */
 export const createPageShell = (theme: ThemeValue, route: ObservableValue<SitePage>): PageShell => {
   const app = createScreenGui({ Name: appName, DisplayOrder: 10 });
+  const focusRing = createUIFocusRing();
+  bindThemeColors(focusRing, theme, (palette) => ({ Color: palette.accent }));
+  focusRing.Parent = app;
 
   const page = createScrollingFrame({
     Name: `${appName}Page`,
@@ -56,7 +60,6 @@ export const createPageShell = (theme: ThemeValue, route: ObservableValue<SitePa
     BackgroundTransparency: 1,
   });
 
-  content.unsafeElement.classList.add('pg-content');
   page.unsafeElement.setAttribute('role', 'main');
   page.unsafeElement.setAttribute('aria-label', 'FrameKit documentation');
 

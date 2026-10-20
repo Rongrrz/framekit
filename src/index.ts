@@ -18,6 +18,9 @@ export type {
 export { createFrame } from './elements/frame.js';
 export type { Frame, FrameOptions, FrameProperties, FrameTagName } from './elements/frame.js';
 
+export { createCanvasGroup } from './elements/canvas-group.js';
+export type { CanvasGroup, CanvasGroupProperties } from './elements/canvas-group.js';
+
 export type { AutomaticSize, GuiObject, GuiObjectProperties } from './elements/gui-object.js';
 
 export { createImageButton, createImageLabel } from './elements/image.js';
@@ -93,6 +96,9 @@ export { bindHoverScale } from './helpers/hover-scale.js';
 
 export { bindSticky } from './helpers/sticky.js';
 export type { StickyOptions } from './helpers/sticky.js';
+
+export { bindVisibility } from './helpers/visibility.js';
+export type { VisibilityOptions } from './helpers/visibility.js';
 
 export { bindPopover } from './helpers/popover.js';
 export type { PopoverOptions } from './helpers/popover.js';
@@ -171,6 +177,9 @@ export type { UISizeConstraint, UISizeConstraintProperties } from './modifiers/s
 
 export { createUIShadow } from './modifiers/shadow.js';
 export type { UIShadow, UIShadowProperties } from './modifiers/shadow.js';
+
+export { createUIFocusRing } from './modifiers/focus-ring.js';
+export type { UIFocusRing, UIFocusRingProperties } from './modifiers/focus-ring.js';
 
 export { createUIStroke } from './modifiers/stroke.js';
 export type {

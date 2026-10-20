@@ -1,3 +1,4 @@
+import type { CanvasGroup } from '#elements/canvas-group.js';
 import type { Frame } from '#elements/frame.js';
 import type { ImageButton, ImageLabel } from '#elements/image.js';
 import type { Link } from '#elements/link.js';
@@ -9,6 +10,7 @@ import type { TextButton, TextLabel } from '#elements/text.js';
 import type { UIAspectRatioConstraint } from '#modifiers/aspect-ratio.js';
 import type { UICorner } from '#modifiers/corner.js';
 import type { UIFlexItem } from '#modifiers/flex-item.js';
+import type { UIFocusRing } from '#modifiers/focus-ring.js';
 import type { UIGradient } from '#modifiers/gradient.js';
 import type { UIGridLayout } from '#modifiers/grid-layout.js';
 import type { UIListLayout } from '#modifiers/list-layout.js';
@@ -20,6 +22,7 @@ import type { UIStroke } from '#modifiers/stroke.js';
 import type { UITextStroke } from '#modifiers/text-stroke.js';
 
 type InstanceTypes = {
+  CanvasGroup: CanvasGroup;
   Frame: Frame;
   ImageButton: ImageButton;
   ImageLabel: ImageLabel;
@@ -33,6 +36,7 @@ type InstanceTypes = {
   UIAspectRatioConstraint: UIAspectRatioConstraint;
   UICorner: UICorner;
   UIFlexItem: UIFlexItem;
+  UIFocusRing: UIFocusRing;
   UIGradient: UIGradient;
   UIGridLayout: UIGridLayout;
   UIListLayout: UIListLayout;

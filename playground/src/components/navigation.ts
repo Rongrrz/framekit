@@ -1,6 +1,9 @@
 import {
   watchOwnedValue,
   createFrame,
+  createCanvasGroup,
+  createObservableValue,
+  bindVisibility,
   type Frame,
   type ScrollingFrame,
   udim2,
@@ -110,14 +113,13 @@ export const createNavigation = (
   themeToggle.Parent = navigation;
   bindTooltip(themeToggle, 'Switch between light and dark themes', { placement: 'bottom' });
 
-  const track = createFrame({
+  const track = createCanvasGroup({
     Name: 'ScrollProgressTrack',
     Size: udim2(1, 0, 0, 2),
     Position: udim2FromOffset(0, navigationHeight - 2),
     ZIndex: 101,
   });
 
-  track.unsafeElement.classList.add('pg-scroll-progress');
   track.unsafeElement.setAttribute('role', 'progressbar');
   track.unsafeElement.setAttribute('aria-label', 'Reading progress');
   track.unsafeElement.setAttribute('aria-valuemin', '0');
@@ -128,13 +130,15 @@ export const createNavigation = (
   bindThemeColors(progress, theme, (palette) => ({ BackgroundColor3: palette.accent }));
   progress.Parent = track;
   track.Parent = navigation;
+  const progressVisible = createObservableValue(false);
+  bindVisibility(track, progressVisible);
 
   const updateProgress = (): void => {
     const scrolled = page.unsafeElement.scrollTop;
     const maximum = Math.max(1, page.unsafeElement.scrollHeight - page.unsafeElement.clientHeight);
     const fraction = Math.min(1, Math.max(0, scrolled / maximum));
 
-    track.unsafeElement.setAttribute('aria-hidden', String(scrolled < 160));
+    progressVisible.set(scrolled >= 160);
     progress.Size = udim2FromScale(fraction, 1);
     track.unsafeElement.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
   };

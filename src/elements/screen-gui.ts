@@ -1,5 +1,6 @@
 import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
 import { setStyle } from '#internal/dom/styles.js';
+import { installFrameKitStyles } from '#internal/dom/stylesheet.js';
 import { guiEventMethods } from '#internal/runtime/node/gui-events.js';
 import { createGuiNode, type GuiElement } from '#internal/runtime/node/gui-node.js';
 import type { InstanceProperties } from '#internal/runtime/node/instance.js';
@@ -53,6 +54,7 @@ export function createScreenGui(
   options: DomOptions = {},
 ): ScreenGui {
   const element = resolveOwnerDocument(options).createElement('div');
+  installFrameKitStyles({ ownerDocument: element.ownerDocument });
   element.dataset.framekit = 'ScreenGui';
   Object.assign(element.style, {
     position: 'fixed',

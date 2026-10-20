@@ -22,6 +22,9 @@ import {
   createUISizeConstraint,
   bindSticky,
   createUIStroke,
+  createUIFocusRing,
+  createCanvasGroup,
+  bindVisibility,
   createUIScale,
   type FloatingPanelHook,
   type ComputedValue,
@@ -54,6 +57,12 @@ function verifyPublicTypeContracts(): void {
   createUISizeConstraint({ MaxSize: vector2(320, 480) }).Parent = article;
   bindSticky(article, { inset: 24 });
   createUIStroke({ BorderStrokeSide: 'Top' }).Parent = article;
+  createUIFocusRing({ Thickness: 2, Offset: 3 }).Parent = article;
+  const group = createCanvasGroup({ GroupTransparency: 0.5 });
+  bindVisibility(group, createObservableValue(true));
+  createTween(group, { Duration: 1 }, { GroupTransparency: 0 }).dispose();
+  // @ts-expect-error Fades require a group with transparency independent of its descendants.
+  bindVisibility(article, createObservableValue(true));
   // @ts-expect-error Placement behavior requires a GUI object.
   bindSticky(createUIScale());
   flexible.Parent = article;

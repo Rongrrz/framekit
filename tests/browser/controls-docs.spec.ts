@@ -39,7 +39,9 @@ test('documents working menu, modal, tree, and explicit binding cleanup on deskt
 
   const tree = page.getByRole('tree', { name: 'Example files' });
   await tree.getByRole('treeitem', { name: 'Project', exact: true }).focus();
+  await expect(tree.getByRole('treeitem', { name: 'Project', exact: true })).toBeFocused();
   await page.keyboard.press('ArrowDown');
+  await expect(tree.getByRole('treeitem', { name: 'Readme', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(tree.getByRole('treeitem', { name: 'Readme', exact: true })).toHaveAttribute(
     'aria-selected',

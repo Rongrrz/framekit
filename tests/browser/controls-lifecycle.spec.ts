@@ -4,6 +4,34 @@ test.beforeEach(async ({ page }) => {
   await openFrameKit(page);
 });
 
+test('a queued native dialog close does not steal subsequently moved focus', async ({ page }) => {
+  const focused = await page.evaluate(async () => {
+    const { createFrame, createTextButton, bindDialog } = window.framekit;
+    const opener = createTextButton();
+    const next = createTextButton();
+    const dialog = createFrame({ TagName: 'dialog' });
+    const close = createTextButton();
+    close.Parent = dialog;
+    document.body.append(opener.unsafeElement, next.unsafeElement, dialog.unsafeElement);
+    opener.focus();
+    bindDialog(dialog, { initialFocus: close }).open(opener);
+    const closed = new Promise<void>((resolve) =>
+      dialog.on('close', () => resolve(), { once: true }),
+    );
+    (dialog.unsafeElement as HTMLDialogElement).close();
+    next.focus();
+    await closed;
+    const retained = document.activeElement === next.unsafeElement;
+    dialog.destroy();
+    opener.destroy();
+    next.destroy();
+
+    return retained;
+  });
+
+  expect(focused).toBe(true);
+});
+
 test('disposes an open menu repeatedly and restores caller attributes, position, and listeners', async ({
   page,
 }) => {
