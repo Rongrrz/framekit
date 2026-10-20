@@ -30,7 +30,6 @@ export const createNavigation = (
   const navigation = createFrame({
     Name: 'Navigation',
     Size: udim2(1, 0, 0, navigationHeight),
-    BackgroundTransparency: 0.05,
     ZIndex: 100,
   });
 

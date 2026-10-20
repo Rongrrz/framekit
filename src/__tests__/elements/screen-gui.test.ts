@@ -2,6 +2,21 @@ import { createFrame, createScreenGui } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('screen GUIs', () => {
+  it('owns native appearance without changing the containing document', () => {
+    const gui = createScreenGui();
+    expect(gui.ColorScheme).toBe('System');
+    expect(gui.unsafeElement.style.colorScheme).toBe('light dark');
+    gui.ColorScheme = 'Dark';
+    expect(gui.unsafeElement.style.colorScheme).toBe('dark');
+    expect(document.documentElement.style.colorScheme).toBe('');
+    expect(() => gui.setProperties({ ColorScheme: 'unknown', Enabled: false } as never)).toThrow(
+      /ColorScheme/,
+    );
+    expect(gui.Enabled).toBe(true);
+    expect(gui.ColorScheme).toBe('Dark');
+    gui.destroy();
+  });
+
   it('preserves its previous mount when new DOM placement fails', () => {
     const previous = document.body.appendChild(document.createElement('main'));
     const rejected = document.body.appendChild(document.createElement('aside'));

@@ -16,7 +16,7 @@ describe('Playground code blocks', () => {
     vi.stubGlobal('navigator', { clipboard: { writeText } });
 
     const block = createCodeBlock(createObservableValue(themes.dark), 'Example', counterExample);
-    const code = block.unsafeElement.querySelector('pre.shiki code')!;
+    const code = block.unsafeElement.querySelector('pre')!;
     const copy = block.findFirstChild('ExampleCopy') as TextButton;
 
     expect(code.textContent).toBe(counterExample.source);

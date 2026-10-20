@@ -12,37 +12,38 @@ type KeyboardScrollIntent = Readonly<{
   distance: 'Line' | 'Page';
 }>;
 
-/** Forwards unsupported keyboard axes to the nearest scrolling ancestor that accepts them. */
+/** Scrolls focused regions consistently and forwards unsupported axes to a scrolling ancestor. */
 export const connectKeyboardScrolling = (node: ScrollingFrame): void => {
   const listeners = createRealmAbortController(node.unsafeElement);
-  node.unsafeElement.addEventListener(
-    'keydown',
-    (event) => forwardUnsupportedKeyboardScroll(node, event),
-    { signal: listeners.signal },
-  );
+  node.unsafeElement.addEventListener('keydown', (event) => handleKeyboardScroll(node, event), {
+    signal: listeners.signal,
+  });
   lifecycle.onDestroy(node, () => listeners.abort());
 };
 
-const forwardUnsupportedKeyboardScroll = (node: ScrollingFrame, event: KeyboardEvent): void => {
+const handleKeyboardScroll = (node: ScrollingFrame, event: KeyboardEvent): void => {
   if (
     event.target !== node.unsafeElement ||
     event.defaultPrevented ||
     event.altKey ||
     event.ctrlKey ||
-    event.metaKey
+    event.metaKey ||
+    (event.shiftKey && event.key !== ' ')
   ) {
     return;
   }
 
   const intent = resolveKeyboardScrollIntent(event);
 
-  if (!intent || acceptsScrollAxis(node, intent.axis)) {
+  if (!intent) {
     return;
   }
 
-  const ancestor = findScrollingAncestor(node, intent.axis);
+  const target = acceptsScrollAxis(node, intent.axis)
+    ? node
+    : findScrollingAncestor(node, intent.axis);
 
-  if (!ancestor) {
+  if (!target) {
     return;
   }
 
@@ -50,12 +51,22 @@ const forwardUnsupportedKeyboardScroll = (node: ScrollingFrame, event: KeyboardE
     intent.distance === 'Line'
       ? 40
       : intent.axis === 'X'
-        ? ancestor.unsafeElement.clientWidth
-        : ancestor.unsafeElement.clientHeight;
+        ? target.unsafeElement.clientWidth
+        : target.unsafeElement.clientHeight;
 
   const offset = intent.direction * distance;
   event.preventDefault();
-  ancestor.scrollBy(intent.axis === 'X' ? vector2(offset, 0) : vector2(0, offset));
+  const current = target.CanvasPosition;
+  const maximum = target.MaxCanvasPosition;
+  const next =
+    intent.axis === 'X'
+      ? vector2(Math.max(0, Math.min(maximum.X, current.X + offset)), current.Y)
+      : vector2(current.X, Math.max(0, Math.min(maximum.Y, current.Y + offset)));
+
+  // A key at a scroll boundary must not cancel a running CanvasPosition animation.
+  if (next.X !== current.X || next.Y !== current.Y) {
+    target.scrollTo(next);
+  }
 };
 
 const resolveKeyboardScrollIntent = (event: KeyboardEvent): KeyboardScrollIntent | undefined => {

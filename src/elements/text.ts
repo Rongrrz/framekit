@@ -19,6 +19,11 @@ import {
   type GuiObjectProperties,
 } from './gui-object.js';
 import { initializeTextGradient } from './text/gradient.js';
+import {
+  createRichTextContent,
+  updateRichTextColors,
+  type RichTextContent,
+} from './text/rich-text.js';
 import { bindTextScaleResize } from './text/sizing.js';
 import { initializeTextStrokeHost, syncTextStrokeHost } from './text/stroke.js';
 import {
@@ -40,6 +45,8 @@ export type TextLabelProperties = GuiObjectProperties &
     TextSelectable: boolean;
     /** Whether the text is underlined. Links enable this by default. */
     TextUnderline: boolean;
+    /** Enables b, i, u, s, br, and font colors (#RRGGBB or #RRGGBBAA) in Text. Other tags stay literal. */
+    RichText: boolean;
   };
 
 /** Semantic HTML elements that can carry a text label's content. */
@@ -141,6 +148,7 @@ export function createDefaultTextProperties(): TextLabelProperties {
     ...createDefaultTextStyleProperties(),
     TextSelectable: false,
     TextUnderline: false,
+    RichText: false,
   };
 }
 
@@ -170,6 +178,7 @@ export function createTextNode<Properties extends TextLabelProperties>(
   element.prepend(text);
   initializeTextGradient(element, text);
   initializeTextStrokeHost(element);
+  let richContent: RichTextContent | undefined;
 
   const node = createGuiObjectNode({
     className,
@@ -193,14 +202,33 @@ export function createTextNode<Properties extends TextLabelProperties>(
         setStyle(element, 'text-decoration-line', properties.TextUnderline ? 'underline' : 'none');
       }
 
-      if (changedProperties.has('Text')) {
-        text.textContent = properties.Text;
+      const contentChanged = changedProperties.has('Text') || changedProperties.has('RichText');
+
+      if (contentChanged) {
+        element.toggleAttribute('data-framekit-rich-text', properties.RichText);
+        richContent = properties.RichText
+          ? createRichTextContent(element.ownerDocument, properties.Text)
+          : undefined;
+
+        if (richContent) {
+          text.replaceChildren(richContent.element);
+        } else {
+          text.textContent = properties.Text;
+        }
       }
 
-      renderTextStyle(text, properties, changedProperties);
+      if (richContent && (contentChanged || changedProperties.has('TextTransparency'))) {
+        updateRichTextColors(richContent, properties.TextTransparency);
+      }
 
-      if (hasTextStyleChange(changedProperties)) {
-        syncTextStrokeHost(element, properties, text.style.fontSize);
+      renderTextStyle(
+        text,
+        properties,
+        changedProperties.has('RichText') ? undefined : changedProperties,
+      );
+
+      if (contentChanged || hasTextStyleChange(changedProperties)) {
+        syncTextStrokeHost(element, properties, text.style.fontSize, text.textContent ?? '');
       }
 
       if (changedProperties.has('TextXAlignment')) {
@@ -227,7 +255,7 @@ export function createTextNode<Properties extends TextLabelProperties>(
   bindTextScaleResize(node, element, () => {
     const properties = getNodeProperties(node);
     renderTextStyle(text, properties);
-    syncTextStrokeHost(element, properties, text.style.fontSize);
+    syncTextStrokeHost(element, properties, text.style.fontSize, text.textContent ?? '');
   });
 
   return node;
@@ -239,6 +267,7 @@ function validateTextProperties(
   validateTextStyleProperties(properties);
   assertBoolean(properties.TextSelectable, 'TextSelectable');
   assertBoolean(properties.TextUnderline, 'TextUnderline');
+  assertBoolean(properties.RichText, 'RichText');
 
   if ('Disabled' in properties) {
     validateButtonProperties(properties);

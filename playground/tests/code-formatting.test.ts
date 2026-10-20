@@ -1,3 +1,4 @@
+import { createTextLabel } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
 import { prepareCode } from '../tooling/code-formatting';
@@ -9,13 +10,14 @@ describe('build-time code preparation', () => {
     ['example.ts', '// A comment\nconst title = `Count: ${count + 1}`;'],
   ])('highlights %s as literal text with both palettes', async (filename, source) => {
     const example = await prepareCode(source, filename);
-    const container = document.createElement('div');
-    container.innerHTML = example.html;
-
-    expect(container.querySelector('code')!.textContent).toBe(example.source);
-    expect(container.querySelector('script')).toBeNull();
-    expect(example.html).toContain('--shiki-dark:');
-    expect(container.querySelectorAll('code span[style]').length).toBeGreaterThan(1);
+    for (const palette of [example.light, example.dark]) {
+      const label = createTextLabel({ Text: palette.text, RichText: true });
+      expect(label.unsafeElement.textContent).toBe(example.source);
+      expect(label.unsafeElement.querySelector('script')).toBeNull();
+      expect(label.unsafeElement.querySelectorAll('span[style]').length).toBeGreaterThan(1);
+      expect(palette.background).toMatch(/^#[\da-f]{6}$/i);
+      label.destroy();
+    }
   });
 
   it('preserves logical blank lines while formatting indentation and line endings', async () => {

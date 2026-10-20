@@ -5,6 +5,7 @@ import {
   type Instance,
   type InstanceProperties,
   type ObservableValue,
+  type ScreenGui,
 } from 'framekit';
 
 export type ThemeMode = 'dark' | 'light';
@@ -92,13 +93,6 @@ const documentThemeColors = {
   light: '#f5f7fa',
 } satisfies Readonly<Record<ThemeMode, string>>;
 
-const documentPaletteProperties = [
-  '--pg-canvas',
-  '--pg-border',
-  '--pg-focus',
-  '--pg-selection-text',
-] as const;
-
 /** Applies colors from the shared palette for the lifetime of the instance. */
 export const bindThemeColors = <Properties extends InstanceProperties>(
   instance: Instance<Properties>,
@@ -118,12 +112,6 @@ export const bindThemePalette = (
 ): void => {
   watchOwnedValue(owner, mode, (nextMode) => {
     palette.set(themes[nextMode]);
-  });
-  watchOwnedValue(owner, palette, applyDocumentPalette);
-  owner.onDestroy(() => {
-    for (const property of documentPaletteProperties) {
-      document.documentElement.style.removeProperty(property);
-    }
   });
 };
 
@@ -145,13 +133,14 @@ export const resolveInitialTheme = (): ThemeMode => {
 };
 
 /** Keeps DOM-only styling and persistence synchronized with the FrameKit theme value. */
-export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeMode>): void => {
+export const bindDocumentTheme = (owner: ScreenGui, theme: ObservableValue<ThemeMode>): void => {
   const root = document.documentElement;
   const themeColorMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   const previousTheme = root.getAttribute('data-framekit-theme');
   const previousThemeColor = themeColorMeta?.content;
 
   watchOwnedValue(owner, theme, (mode) => {
+    owner.ColorScheme = mode === 'dark' ? 'Dark' : 'Light';
     root.setAttribute('data-framekit-theme', mode);
 
     if (themeColorMeta) {
@@ -176,50 +165,4 @@ export const bindDocumentTheme = (owner: Instance, theme: ObservableValue<ThemeM
       themeColorMeta.content = previousThemeColor;
     }
   });
-};
-
-const applyDocumentPalette = (palette: ThemePalette): void => {
-  const root = document.documentElement.style;
-  root.setProperty('--pg-canvas', colorToCss(palette.canvas));
-  root.setProperty('--pg-border', colorToCss(palette.border));
-  root.setProperty('--pg-focus', colorToCss(palette.accent));
-  root.setProperty('--pg-selection-text', colorToCss(palette.onAccent));
-};
-
-const colorToCss = (color: Color3, alpha = 1): string =>
-  `rgb(${color.R} ${color.G} ${color.B} / ${alpha})`;
-
-/** Installs the DOM styling needed for fonts, scrollbars, and focus states. */
-export const installPlaygroundStyles = (): void => {
-  if (document.querySelector('[data-framekit-playground-styles]')) {
-    return;
-  }
-
-  const style = document.createElement('style');
-  style.dataset.framekitPlaygroundStyles = '';
-  style.textContent = `
-    :root {
-      color-scheme: dark;
-      font-synthesis: none;
-      --pg-canvas: #0a0d12;
-      --pg-border: rgb(48 61 76);
-      --pg-focus: #76edad;
-    }
-    :root[data-framekit-theme="light"] {
-      color-scheme: light;
-      --pg-canvas: #f5f7fa;
-      --pg-border: rgb(207 216 226);
-      --pg-focus: #129962;
-    }
-    * { box-sizing: border-box; }
-    html, body, #root {
-      width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--pg-canvas);
-    }
-    body { font-family: ${fonts.sans}; }
-    ::selection { color: var(--pg-selection-text); background: var(--pg-focus); }
-    @media (prefers-reduced-motion: reduce) {
-      * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
-    }
-  `;
-  document.head.append(style);
 };

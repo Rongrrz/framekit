@@ -35,6 +35,12 @@ export function installFrameKitStyles(options: StyleOptions = {}): void {
 }
 
 const sharedStyles = `
+  [data-framekit]::selection,
+  [data-framekit] ::selection {
+    color: var(--framekit-selection-text, revert);
+    background-color: var(--framekit-selection-background, revert);
+    -webkit-text-fill-color: currentcolor;
+  }
   [data-framekit]:focus-visible {
     outline: var(--framekit-focus-outline, revert);
     outline-offset: var(--framekit-focus-offset, revert);
@@ -86,6 +92,9 @@ const sharedStyles = `
   [data-framekit="ScrollingFrame"] {
     scrollbar-color: var(--framekit-scrollbar-color) transparent;
     scrollbar-gutter: stable;
+  }
+  [data-framekit-rich-text]::before {
+    content: none;
   }
   [data-framekit="ScrollingFrame"]::-webkit-scrollbar {
     width: var(--framekit-scrollbar-thickness);

@@ -38,13 +38,16 @@ describe('scrolling frames', () => {
     expect(scrolling.unsafeElement.style.overscrollBehaviorY).toBe('auto');
   });
 
-  it('hands unsupported keyboard scrolling to the nearest eligible ancestor', () => {
+  it('scrolls its own axis and hands unsupported axes to the nearest eligible ancestor', () => {
     const page = createScrollingFrame({ ScrollingDirection: 'Y' });
     const section = createFrame();
     const code = createScrollingFrame({ ScrollingDirection: 'X' });
     section.Parent = page;
     code.Parent = section;
     Object.defineProperty(page.unsafeElement, 'clientHeight', { configurable: true, value: 480 });
+    Object.defineProperty(page.unsafeElement, 'scrollHeight', { configurable: true, value: 2000 });
+    Object.defineProperty(code.unsafeElement, 'clientWidth', { configurable: true, value: 200 });
+    Object.defineProperty(code.unsafeElement, 'scrollWidth', { configurable: true, value: 600 });
     page.unsafeElement.scrollTop = 120;
     page.unsafeElement.dispatchEvent(new Event('scroll'));
 
@@ -68,8 +71,19 @@ describe('scrolling frames', () => {
 
     code.unsafeElement.dispatchEvent(arrowRight);
 
-    expect(arrowRight.defaultPrevented).toBe(false);
+    expect(arrowRight.defaultPrevented).toBe(true);
+    expect(code.CanvasPosition).toEqual(vector2(40, 0));
     expect(page.CanvasPosition).toEqual(vector2(0, 600));
+
+    const selectRight = new KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    code.unsafeElement.dispatchEvent(selectRight);
+    expect(selectRight.defaultPrevented).toBe(false);
+    expect(code.CanvasPosition).toEqual(vector2(40, 0));
 
     const input = document.createElement('input');
     code.unsafeElement.append(input);
@@ -217,7 +231,7 @@ describe('scrolling frames', () => {
     expect(tweenTarget.CanvasPosition).toEqual(vector2(30, 0));
   });
 
-  it('waits for keyboard scrolling to change CanvasPosition before interrupting animation', () => {
+  it('keeps animation ownership when a child handles a key or the focused region is at its boundary', () => {
     vi.stubGlobal(
       'requestAnimationFrame',
       vi.fn(() => 1),
@@ -233,6 +247,9 @@ describe('scrolling frames', () => {
 
     spring(scrolling, { CanvasPosition: vector2(0, 200) });
     child.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' }));
+    scrolling.unsafeElement.dispatchEvent(
+      new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'ArrowUp' }),
+    );
 
     expect(scrolling.unsafeElement.tabIndex).toBe(0);
     expect(controller.isAnimating()).toBe(true);

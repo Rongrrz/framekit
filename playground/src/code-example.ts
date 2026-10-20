@@ -1,5 +1,12 @@
-/** Prepared by Vite from a repository example; HTML is escaped by the Node-only highlighter. */
+/** Prepared literal source and RichText palettes; formatting runs only during development/build. */
 export type CodeExample = Readonly<{
   source: string;
-  html: string;
+  light: CodePalette;
+  dark: CodePalette;
+}>;
+
+type CodePalette = Readonly<{
+  text: string;
+  foreground: string;
+  background: string;
 }>;

@@ -43,7 +43,8 @@ export function renderTextSize(
   const maximumSize = Math.max(1, Math.floor(availableHeight));
   const fits = measureTextFit(element, availableWidth, horizontalPadding > 0);
 
-  if (!properties.TextWrapped) {
+  // Formatted spans can change glyph metrics; use their rendered geometry instead of a plain-text estimate.
+  if (!properties.TextWrapped && element.childElementCount === 0) {
     const estimatedSize = estimateUnwrappedTextSize(
       properties,
       availableWidth,

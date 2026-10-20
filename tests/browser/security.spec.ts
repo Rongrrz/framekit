@@ -4,38 +4,42 @@ test.beforeEach(async ({ page }) => {
   await openFrameKit(page);
 });
 
-test('keeps hostile text literal through rendering, stroke, and updates', async ({ page }) => {
-  const result = await page.evaluate(() => {
-    const { createScreenGui, createTextLabel, createUITextStroke } = window.framekit;
-    const gui = createScreenGui();
-    const payload = '<svg onload="document.documentElement.dataset.injected=1"></svg>';
-    const label = createTextLabel({ Text: payload });
-    label.Parent = gui;
-    createUITextStroke().Parent = label;
-    gui.mount('#root');
+for (const RichText of [false, true]) {
+  test(`keeps hostile text literal through rendering, stroke, and updates (rich text: ${RichText})`, async ({
+    page,
+  }) => {
+    const result = await page.evaluate((RichText) => {
+      const { createScreenGui, createTextLabel, createUITextStroke } = window.framekit;
+      const gui = createScreenGui();
+      const payload = '<svg onload="document.documentElement.dataset.injected=1"></svg>';
+      const label = createTextLabel({ Text: payload, RichText });
+      label.Parent = gui;
+      createUITextStroke().Parent = label;
+      gui.mount('#root');
 
-    const initialText = label.unsafeElement.querySelector('[data-framekit-text]')!.textContent;
-    label.Text = '</span><img src=x onerror="document.documentElement.dataset.injected=1">';
+      const initialText = label.unsafeElement.querySelector('[data-framekit-text]')!.textContent;
+      label.Text = '</span><img src=x onerror="document.documentElement.dataset.injected=1">';
 
-    const updatedText = label.unsafeElement.querySelector('[data-framekit-text]')!.textContent;
+      const updatedText = label.unsafeElement.querySelector('[data-framekit-text]')!.textContent;
 
-    const result = {
-      initialText,
-      updatedText,
-      injectedElements: label.unsafeElement.querySelectorAll('svg, img, script').length,
-      injected: document.documentElement.dataset.injected,
-    };
+      const result = {
+        initialText,
+        updatedText,
+        injectedElements: label.unsafeElement.querySelectorAll('svg, img, script').length,
+        injected: document.documentElement.dataset.injected,
+      };
 
-    gui.destroy();
+      gui.destroy();
 
-    return result;
+      return result;
+    }, RichText);
+
+    expect(result.initialText).toContain('<svg onload=');
+    expect(result.updatedText).toContain('<img src=x onerror=');
+    expect(result.injectedElements).toBe(0);
+    expect(result.injected).toBeUndefined();
   });
-
-  expect(result.initialText).toContain('<svg onload=');
-  expect(result.updatedText).toContain('<img src=x onerror=');
-  expect(result.injectedElements).toBe(0);
-  expect(result.injected).toBeUndefined();
-});
+}
 
 test('rejects obfuscated executable URLs before changing links or images', async ({ page }) => {
   const result = await page.evaluate(() => {

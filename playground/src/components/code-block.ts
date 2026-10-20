@@ -1,8 +1,18 @@
-import { createScrollingFrame, type Frame, udim2, udim2FromOffset } from 'framekit';
+import {
+  color3FromHex,
+  createTextLabel,
+  createUIPadding,
+  createScrollingFrame,
+  watchOwnedValue,
+  type Frame,
+  udim,
+  udim2,
+  udim2FromOffset,
+} from 'framekit';
 
 import { copyCommand } from '../behaviors/copy-button';
 import type { CodeExample } from '../code-example';
-import { bindThemeColors, fonts, themeColor, type ThemeValue } from '../theme';
+import { bindThemeColors, fonts, themeColor, themes, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
 
 /** A Playground code example with native text selection and a shared display/copy source. */
@@ -12,7 +22,7 @@ export const createCodeBlock = (
   example: CodeExample,
   filename = 'example.ts',
 ): Frame => {
-  const { source, html } = example;
+  const { source } = example;
 
   const block = createSurface(theme, {
     name,
@@ -59,13 +69,33 @@ export const createCodeBlock = (
   scroll.unsafeElement.setAttribute('aria-label', `${name} code example`);
   bindThemeColors(scroll, theme, (palette) => ({ ScrollBarImageColor3: palette.textFaint }));
 
-  const document = scroll.unsafeElement.ownerDocument;
-  const content = document.createElement('div');
-  content.className = 'pg-code-source';
-
-  // Only the build pipeline produces this escaped, syntax-highlighted markup.
-  content.innerHTML = html;
-  scroll.unsafeElement.append(content);
+  const content = createTextLabel({
+    Name: `${name}Source`,
+    TextTagName: 'pre',
+    RichText: true,
+    TextSelectable: true,
+    TextXAlignment: 'Left',
+    TextYAlignment: 'Top',
+    TextSize: 13,
+    LineHeight: 22 / 13,
+    FontFamily: fonts.mono,
+    FontWeight: 400,
+    AutomaticSize: 'XY',
+    BackgroundTransparency: 1,
+  });
+  createUIPadding({
+    PaddingTop: udim(0, 16),
+    PaddingBottom: udim(0, 16),
+    PaddingLeft: udim(0, 20),
+    PaddingRight: udim(0, 20),
+  }).Parent = content;
+  watchOwnedValue(content, theme, (palette) => {
+    const code = palette === themes.dark ? example.dark : example.light;
+    content.setProperties({ Text: code.text, TextColor3: color3FromHex(code.foreground) });
+    scroll.BackgroundTransparency = 0;
+    scroll.BackgroundColor3 = color3FromHex(code.background);
+  });
+  content.Parent = scroll;
   scroll.Parent = block;
 
   copy.onClick(() => {

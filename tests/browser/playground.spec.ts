@@ -69,7 +69,7 @@ test('switches the page and code palette immediately in both directions', async 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.addInitScript(() => window.localStorage.setItem('framekit-playground-theme', 'dark'));
   await page.goto('/playground/index.html#/api');
-  await expect(page.getByRole('article').locator('pre.shiki')).toBeVisible();
+  await expect(page.getByRole('article').locator('pre')).toBeVisible();
 
   for (const mode of ['light', 'dark', 'light'] as const) {
     const colors = await page
@@ -90,7 +90,7 @@ test('switches the page and code palette immediately in both directions', async 
           mode: document.documentElement.dataset.framekitTheme,
           page: getComputedStyle(main).backgroundColor,
           block: getComputedStyle(block).backgroundColor,
-          code: getComputedStyle(code).backgroundColor,
+          code: getComputedStyle(code.closest('[data-framekit="ScrollingFrame"]')!).backgroundColor,
         };
       });
 
@@ -131,10 +131,10 @@ test('copies multiline examples and renders every code block with readable synta
   const blockCount = await blocks.count();
   expect(blockCount).toBeGreaterThan(30);
   // All routes are persistent: this covers formatting and highlighting in every chapter and home.
-  await expect(page.locator('.pg-code-block pre.shiki')).toHaveCount(blockCount);
+  await expect(page.locator('.pg-code-block pre')).toHaveCount(blockCount);
 
   const example = page.getByRole('article').locator('.pg-code-block').first();
-  const code = example.locator('pre code');
+  const code = example.locator('pre');
   const source = (await code.textContent())!;
   expect(source).toContain("from 'framekit';\n\n");
   expect(source).toContain("\n  Text: 'Your profile',\n  TextSize: 24,\n");
@@ -163,7 +163,7 @@ test('copies multiline examples and renders every code block with readable synta
       await page.getByRole('button', { name: `Switch to ${mode} mode` }).click();
     }
 
-    await expect(example.locator('pre')).toHaveCSS(
+    await expect(example.getByLabel('elements1Code code example')).toHaveCSS(
       'background-color',
       mode === 'dark' ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)',
     );

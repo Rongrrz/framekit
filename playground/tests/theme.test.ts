@@ -1,4 +1,4 @@
-import { createFrame, createObservableValue } from 'framekit';
+import { createFrame, createScreenGui, createObservableValue } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -28,20 +28,14 @@ describe('theme palette', () => {
 
     mode.set('light');
     expect(palette.get()).toBe(themes.light);
-    expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe(
-      'rgb(245 247 250 / 1)',
-    );
     mode.set('dark');
     expect(palette.get()).toBe(themes.dark);
-    expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe(
-      'rgb(10 13 18 / 1)',
-    );
     expect(changes.mock.calls.map(([next]) => next)).toEqual([themes.light, themes.dark]);
     stop();
     owner.destroy();
   });
 
-  it('releases its palette and document subscriptions on destruction', () => {
+  it('releases its palette subscription on destruction', () => {
     const owner = createFrame();
     const mode = createObservableValue<ThemeMode>('dark');
     const palette = createObservableValue(themes.dark);
@@ -50,9 +44,6 @@ describe('theme palette', () => {
     owner.destroy();
     mode.set('dark');
     expect(palette.get()).toBe(themes.light);
-    expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe('');
-    palette.set(themes.dark);
-    expect(document.documentElement.style.getPropertyValue('--pg-canvas')).toBe('');
   });
 });
 
@@ -96,13 +87,15 @@ describe('document theme', () => {
       meta.content = '#123456';
       document.head.append(meta);
 
-      const owner = createFrame();
+      const owner = createScreenGui();
       const mode = createObservableValue<ThemeMode>('dark');
       bindDocumentTheme(owner, mode);
       expect(meta.content).toBe('#0a0d12');
+      expect(owner.ColorScheme).toBe('Dark');
       mode.set('light');
       expect(document.documentElement.getAttribute('data-framekit-theme')).toBe('light');
       expect(meta.content).toBe('#f5f7fa');
+      expect(owner.ColorScheme).toBe('Light');
       expect(window.localStorage.getItem('framekit-playground-theme')).toBe('light');
       owner.destroy();
       mode.set('dark');
@@ -117,7 +110,7 @@ describe('document theme', () => {
       throw new Error('denied');
     });
 
-    const owner = createFrame();
+    const owner = createScreenGui();
     const mode = createObservableValue<ThemeMode>('dark');
     expect(() => bindDocumentTheme(owner, mode)).not.toThrow();
     mode.set('light');

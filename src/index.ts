@@ -38,7 +38,7 @@ export { createLink } from './elements/link.js';
 export type { Link, LinkProperties, LinkTarget } from './elements/link.js';
 
 export { createScreenGui } from './elements/screen-gui.js';
-export type { ScreenGui, ScreenGuiProperties } from './elements/screen-gui.js';
+export type { ColorScheme, ScreenGui, ScreenGuiProperties } from './elements/screen-gui.js';
 
 export { createScrollingFrame } from './elements/scrolling-frame.js';
 export type {
@@ -192,6 +192,9 @@ export type {
 export { createUITextStroke } from './modifiers/text-stroke.js';
 export type { UITextStroke, UITextStrokeProperties } from './modifiers/text-stroke.js';
 
+export { createUITextSelection } from './modifiers/text-selection.js';
+export type { UITextSelection, UITextSelectionProperties } from './modifiers/text-selection.js';
+
 export { createSignalEmitter } from './state/signal.js';
 export type { Signal, SignalEmitter, Unsubscribe } from './state/signal.js';
 
@@ -203,6 +206,8 @@ export type { ObservableValue, ReadonlyObservableValue } from './state/value.js'
 
 export { color3FromHex, color3FromRGB } from './values/color3.js';
 export type { Color3 } from './values/color3.js';
+
+export { escapeRichText } from './values/rich-text.js';
 
 export { colorSequence, numberSequence } from './values/sequence.js';
 export type {

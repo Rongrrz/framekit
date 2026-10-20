@@ -7,7 +7,10 @@ import type { InstanceProperties } from '#internal/runtime/node/instance.js';
 import { getActiveNodeState } from '#internal/runtime/node/registry.js';
 import * as lifecycle from '#internal/runtime/systems/lifecycle.js';
 import { mergeProperties } from '#internal/runtime/systems/properties.js';
-import { assertBoolean, assertInteger } from '#internal/validation.js';
+import { assertAllowedValue, assertBoolean, assertInteger } from '#internal/validation.js';
+
+/** Native controls and scrollbars follow the system or an explicit light/dark appearance. */
+export type ColorScheme = 'System' | 'Light' | 'Dark';
 
 /** Properties controlling a full-viewport GUI root. */
 export type ScreenGuiProperties = InstanceProperties & {
@@ -15,6 +18,8 @@ export type ScreenGuiProperties = InstanceProperties & {
   Enabled: boolean;
   /** Stacking order relative to other mounted ScreenGuis. */
   DisplayOrder: number;
+  /** Native browser appearance for this GUI's subtree. Defaults to System. */
+  ColorScheme: ColorScheme;
 };
 
 /** Mounting operations unique to ScreenGui roots. */
@@ -69,7 +74,7 @@ export function createScreenGui(
   const gui = createGuiNode({
     className: 'ScreenGui',
     properties: mergeProperties(
-      { Name: 'ScreenGui', Enabled: true, DisplayOrder: 0 },
+      { Name: 'ScreenGui', Enabled: true, DisplayOrder: 0, ColorScheme: 'System' },
       initialProperties,
     ),
     element,
@@ -81,6 +86,14 @@ export function createScreenGui(
 
       if (changedProperties.has('DisplayOrder')) {
         setStyle(element, 'z-index', String(properties.DisplayOrder));
+      }
+
+      if (changedProperties.has('ColorScheme')) {
+        setStyle(
+          element,
+          'color-scheme',
+          properties.ColorScheme === 'System' ? 'light dark' : properties.ColorScheme.toLowerCase(),
+        );
       }
     },
 
@@ -97,6 +110,7 @@ export function createScreenGui(
 function validateScreenGuiProperties(properties: Readonly<ScreenGuiProperties>): void {
   assertBoolean(properties.Enabled, 'Enabled');
   assertInteger(properties.DisplayOrder, 'DisplayOrder');
+  assertAllowedValue(properties.ColorScheme, ['System', 'Light', 'Dark'], 'ColorScheme');
 }
 
 /** Mounts a full-viewport ScreenGui beneath the supplied DOM owner. */

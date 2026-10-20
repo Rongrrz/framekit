@@ -31,8 +31,9 @@ export function syncTextStrokeHost(
   host: HTMLElement,
   properties: Readonly<TextStyleProperties>,
   renderedFontSize: string,
+  renderedText = properties.Text,
 ): void {
-  host.dataset.framekitTextContent = properties.Text;
+  host.dataset.framekitTextContent = renderedText;
   setStyle(host, 'font-family', properties.FontFamily);
   setStyle(host, 'font-weight', String(properties.FontWeight));
   setStyle(host, 'font-size', renderedFontSize);

@@ -5,6 +5,7 @@ import {
   createScrollingFrame,
   createUIListLayout,
   createUIFocusRing,
+  createUITextSelection,
   type Frame,
   type GuiElement,
   type ScreenGui,
@@ -43,6 +44,12 @@ export const createPageShell = (theme: ThemeValue, route: ObservableValue<SitePa
   const focusRing = createUIFocusRing();
   bindThemeColors(focusRing, theme, (palette) => ({ Color: palette.accent }));
   focusRing.Parent = app;
+  const selection = createUITextSelection();
+  bindThemeColors(selection, theme, (palette) => ({
+    TextColor3: palette.onAccent,
+    BackgroundColor3: palette.accent,
+  }));
+  selection.Parent = app;
 
   const page = createScrollingFrame({
     Name: `${appName}Page`,

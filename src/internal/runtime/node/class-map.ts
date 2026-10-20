@@ -19,6 +19,7 @@ import type { UIScale } from '#modifiers/scale.js';
 import type { UIShadow } from '#modifiers/shadow.js';
 import type { UISizeConstraint } from '#modifiers/size-constraint.js';
 import type { UIStroke } from '#modifiers/stroke.js';
+import type { UITextSelection } from '#modifiers/text-selection.js';
 import type { UITextStroke } from '#modifiers/text-stroke.js';
 
 type InstanceTypes = {
@@ -46,6 +47,7 @@ type InstanceTypes = {
   UIShadow: UIShadow;
   UIStroke: UIStroke;
   UITextStroke: UITextStroke;
+  UITextSelection: UITextSelection;
 };
 
 /** Concrete built-in class names supported by hierarchy type guards. */

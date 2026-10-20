@@ -25,6 +25,8 @@ import {
   createUIFocusRing,
   createCanvasGroup,
   bindVisibility,
+  createUITextSelection,
+  escapeRichText,
   createUIScale,
   type FloatingPanelHook,
   type ComputedValue,
@@ -58,6 +60,12 @@ function verifyPublicTypeContracts(): void {
   bindSticky(article, { inset: 24 });
   createUIStroke({ BorderStrokeSide: 'Top' }).Parent = article;
   createUIFocusRing({ Thickness: 2, Offset: 3 }).Parent = article;
+  createTextLabel({ RichText: true, Text: `<b>${escapeRichText('Ready <now>')}</b>` }).Parent =
+    article;
+  createUITextSelection({ BackgroundColor3: color3FromRGB(20, 100, 180) }).Parent = article;
+  createScreenGui({ ColorScheme: 'Dark' });
+  // @ts-expect-error Browser appearance uses a focused set of supported schemes.
+  createScreenGui({ ColorScheme: 'Custom' });
   const group = createCanvasGroup({ GroupTransparency: 0.5 });
   bindVisibility(group, createObservableValue(true));
   createTween(group, { Duration: 1 }, { GroupTransparency: 0 }).dispose();

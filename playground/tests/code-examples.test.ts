@@ -44,7 +44,6 @@ describe('Vite example imports', () => {
     }
 
     expect(chunk.code).toContain('export const count = 1;');
-    expect(chunk.code).toContain('shiki');
     expect(Object.keys(chunk.modules)).not.toContainEqual(expect.stringMatching(/node_modules/));
   });
 
