@@ -1,6 +1,7 @@
 import {
   watchOwnedValue,
   createFrame,
+  createUIListLayout,
   type Frame,
   type Instance,
   udim2,
@@ -56,7 +57,7 @@ export const createRoutedPage = (
   const frame = createFrame({ Name: name, BackgroundTransparency: 1 });
   frame.Size = udim2(1, 0, 0, 0);
   frame.AutomaticSize = 'Y';
-  frame.unsafeElement.classList.add('pg-route');
+  createUIListLayout({ HorizontalAlignment: 'Center' }).Parent = frame;
   watchOwnedValue(frame, route, (currentPage) => {
     frame.Visible = currentPage === page;
 

@@ -109,6 +109,8 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
     setStyle(element, 'box-sizing', 'border-box');
     setStyle(element, 'margin', '0');
     setStyle(element, 'flex-shrink', '0');
+    setStyle(element, 'min-width', '0');
+    setStyle(element, 'min-height', '0');
   }
 
   return createGuiNode({

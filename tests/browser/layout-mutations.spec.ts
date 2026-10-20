@@ -1,5 +1,136 @@
 import { expect, openFrameKit, test } from './fixtures.js';
 
+test('size constraints compose with flexible rows and grids without rewriting preferred geometry', async ({
+  page,
+}) => {
+  await openFrameKit(page);
+
+  const result = await page.evaluate(() => {
+    const {
+      createFrame,
+      createScreenGui,
+      createUIListLayout,
+      createUIGridLayout,
+      createUIFlexItem,
+      createUISizeConstraint,
+      udim,
+      udim2FromOffset,
+      vector2,
+    } = window.framekit;
+    const root = createScreenGui();
+    const row = createFrame({ Size: udim2FromOffset(400, 0), AutomaticSize: 'Y' });
+    const list = createUIListLayout({ FillDirection: 'Horizontal', Padding: udim(0, 8) });
+    list.Parent = row;
+    row.Parent = root;
+    const bounded = createFrame({ Size: udim2FromOffset(400, 200) });
+    bounded.Parent = row;
+    const flexible = createFrame({ Size: udim2FromOffset(0, 30) });
+    createUIFlexItem().Parent = flexible;
+    flexible.Parent = row;
+    const constraint = createUISizeConstraint({
+      MinSize: vector2(100, 30),
+      MaxSize: vector2(240, 90),
+    });
+    constraint.Parent = bounded;
+    root.mount('#root');
+
+    const maximum = {
+      width: bounded.AbsoluteSize.X,
+      height: row.AbsoluteSize.Y,
+      remaining: flexible.AbsoluteSize.X,
+    };
+    bounded.Size = udim2FromOffset(20, 10);
+    const minimum = {
+      width: bounded.AbsoluteSize.X,
+      height: bounded.AbsoluteSize.Y,
+      remaining: flexible.AbsoluteSize.X,
+    };
+    list.destroy();
+    createUIGridLayout({ CellSize: udim2FromOffset(160, 80), FillDirectionMaxCells: 2 }).Parent =
+      row;
+    constraint.MaxSize = vector2(120, 40);
+    const grid = { width: bounded.AbsoluteSize.X, height: bounded.AbsoluteSize.Y };
+    constraint.Parent = undefined;
+    const released = {
+      width: bounded.AbsoluteSize.X,
+      height: bounded.AbsoluteSize.Y,
+      preferred: bounded.Size,
+    };
+    constraint.destroy();
+    root.destroy();
+
+    return { maximum, minimum, grid, released };
+  });
+
+  expect(result.maximum).toEqual({ width: 240, height: 90, remaining: 152 });
+  expect(result.minimum).toEqual({ width: 100, height: 30, remaining: 292 });
+  expect(result.grid).toEqual({ width: 120, height: 40 });
+  expect(result.released).toEqual({
+    width: 160,
+    height: 80,
+    preferred: { X: { Scale: 0, Offset: 20 }, Y: { Scale: 0, Offset: 10 } },
+  });
+});
+
+test('responsive container layouts can change content height without resize-observer loops', async ({
+  page,
+}) => {
+  await openFrameKit(page);
+
+  const result = await page.evaluate(async () => {
+    const {
+      bindResponsiveLayout,
+      createFrame,
+      createScreenGui,
+      createUIListLayout,
+      udim2FromOffset,
+    } = window.framekit;
+    const errors: string[] = [];
+    const record = (event: ErrorEvent): void => {
+      errors.push(event.message);
+    };
+    window.addEventListener('error', record);
+    const root = createScreenGui();
+    const container = createFrame({ Size: udim2FromOffset(400, 0), AutomaticSize: 'Y' });
+    createUIListLayout().Parent = container;
+    const child = createFrame({ Size: udim2FromOffset(100, 20) });
+    child.Parent = container;
+    container.Parent = root;
+    bindResponsiveLayout(container, {
+      observe: container,
+      breakpoints: [
+        {
+          maxWidth: 450,
+          apply: () => {
+            child.Size = udim2FromOffset(100, 20);
+          },
+        },
+        {
+          apply: () => {
+            child.Size = udim2FromOffset(100, 80);
+          },
+        },
+      ],
+    });
+    root.mount('#root');
+    const settle = async (): Promise<void> => {
+      for (let frame = 0; frame < 4; frame += 1) {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      }
+    };
+    await settle();
+    container.Size = udim2FromOffset(600, 0);
+    await settle();
+    const height = container.AbsoluteSize.Y;
+    root.destroy();
+    window.removeEventListener('error', record);
+
+    return { errors, height };
+  });
+
+  expect(result).toEqual({ errors: [], height: 80 });
+});
+
 test('flexible list children share spare space, shrink, and return to their preferred sizes', async ({
   page,
 }) => {

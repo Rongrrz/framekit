@@ -19,6 +19,7 @@ import {
   createTween,
   createUIGridLayout,
   createUIFlexItem,
+  createUISizeConstraint,
   createUIScale,
   type FloatingPanelHook,
   type ComputedValue,
@@ -48,6 +49,7 @@ function verifyPublicTypeContracts(): void {
   const article = createFrame({ TagName: 'article', Name: 'Profile' });
   createTextLabel({ LineHeight: 1.5, LetterSpacing: -0.5, TextSelectable: true }).Parent = article;
   const flexible = createUIFlexItem({ Weight: 2 });
+  createUISizeConstraint({ MaxSize: vector2(320, 480) }).Parent = article;
   flexible.Parent = article;
   // @ts-expect-error Layout mechanics remain internal to FrameKit.
   flexible.setProperties({ flexGrow: 2 });

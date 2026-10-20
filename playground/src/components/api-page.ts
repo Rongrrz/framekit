@@ -50,6 +50,7 @@ export const createApiPage = (theme: ThemeValue, route: ObservableValue<SitePage
     const link = createLink({
       Text: `${entry.label}  →\n${descriptions[entry.page]}`,
       Href: pageHash(entry.page),
+      TextUnderline: false,
       FontFamily: fonts.sans,
       TextSize: 15,
       LineHeight: 1.7,

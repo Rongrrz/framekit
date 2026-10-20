@@ -3,6 +3,7 @@ import {
   createFrame,
   createScreenGui,
   createScrollingFrame,
+  createUIListLayout,
   type Frame,
   type GuiElement,
   type ScreenGui,
@@ -64,6 +65,8 @@ export const createPageShell = (theme: ThemeValue, route: ObservableValue<SitePa
     BackgroundColor3: palette.canvas,
     ScrollBarImageColor3: palette.textFaint,
   }));
+  createUIListLayout({ HorizontalAlignment: 'Center' }).Parent = page;
+  createUIListLayout({ HorizontalAlignment: 'Center' }).Parent = content;
   content.Parent = page;
   page.Parent = app;
   watchOwnedValue(app, route, () => {

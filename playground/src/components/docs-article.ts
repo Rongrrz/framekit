@@ -224,6 +224,7 @@ export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: Doc
     const link = createLink({
       Text: `${label} / ${entry.label} →`,
       Href: pageHash(entry.page),
+      TextUnderline: false,
       FontFamily: fonts.sans,
       TextSize: 14,
       TextXAlignment: 'Left',

@@ -25,7 +25,7 @@ export type ViewportResponsiveLayoutOptions = Readonly<{
   desktop: () => void;
 }>;
 
-/** Container-based responsive layout configuration. */
+/** Container-based layout. Initial application is synchronous; resize changes run next frame. */
 export type ContainerResponsiveLayoutOptions = Readonly<{
   observe: GuiElement;
   breakpoints: readonly [ResponsiveLayoutBreakpoint, ...ResponsiveLayoutBreakpoint[]];
@@ -167,17 +167,41 @@ function bindContainerLayout(
     return noop;
   }
 
-  const observer = new ResizeObserverConstructor(updateLayout);
+  let frame: number | undefined;
+  let disposed = false;
+  const observer = new ResizeObserverConstructor(() => {
+    if (frame !== undefined || disposed) {
+      return;
+    }
+
+    // Applying a breakpoint may resize the observed container. Defer writes out of
+    // observer delivery so that normal content-height changes do not create a resize loop.
+    frame = ownerWindow.requestAnimationFrame(() => {
+      frame = undefined;
+      updateLayout();
+    });
+  });
   observer.observe(observed.unsafeElement);
+
+  const dispose = (): void => {
+    if (disposed) {
+      return;
+    }
+
+    disposed = true;
+    observer.disconnect();
+
+    if (frame !== undefined) {
+      ownerWindow.cancelAnimationFrame(frame);
+      frame = undefined;
+    }
+
+    unregisterOwnerDestroy();
+    unregisterContainerDestroy();
+  };
 
   const unregisterOwnerDestroy = owner.onDestroy(dispose);
   const unregisterContainerDestroy = observed === owner ? noop : observed.onDestroy(dispose);
-
-  function dispose(): void {
-    observer.disconnect();
-    unregisterOwnerDestroy();
-    unregisterContainerDestroy();
-  }
 
   return dispose;
 }

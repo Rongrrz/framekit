@@ -56,6 +56,7 @@ export function createLink(
     {
       ...createDefaultTextProperties(),
       Name: 'Link',
+      TextUnderline: true,
       Href: '',
       Target: '_self',
       Rel: '',

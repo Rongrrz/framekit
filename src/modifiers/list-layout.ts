@@ -85,8 +85,6 @@ function resolveListLayout(properties: Readonly<UIListLayoutProperties>): Layout
       left: 'auto',
       top: 'auto',
       transform: 'none',
-      'min-width': '0',
-      'min-height': '0',
     },
     compareChildren: resolveChildComparison(properties.SortOrder),
   };

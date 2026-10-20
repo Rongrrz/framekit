@@ -25,6 +25,9 @@ describe('links', () => {
       'Read the guide',
     );
     expect(onClick).toHaveBeenCalledOnce();
+    expect(link.TextUnderline).toBe(true);
+    link.TextUnderline = false;
+    expect(link.unsafeElement.style.textDecorationLine).toBe('none');
   });
 
   it('updates and clears native navigation attributes', () => {

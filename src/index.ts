@@ -163,6 +163,9 @@ export type { UIPadding, UIPaddingProperties } from './modifiers/padding.js';
 export { createUIScale } from './modifiers/scale.js';
 export type { UIScale, UIScaleProperties } from './modifiers/scale.js';
 
+export { createUISizeConstraint } from './modifiers/size-constraint.js';
+export type { UISizeConstraint, UISizeConstraintProperties } from './modifiers/size-constraint.js';
+
 export { createUIShadow } from './modifiers/shadow.js';
 export type { UIShadow, UIShadowProperties } from './modifiers/shadow.js';
 

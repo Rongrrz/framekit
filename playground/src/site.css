@@ -20,20 +20,6 @@
   }
 }
 
-.pg-content,
-.pg-route {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  width: 100% !important;
-  height: auto !important;
-  min-width: 0;
-}
-
-.pg-route[style*='display: none'] {
-  display: none !important;
-}
-
 .pg-docs {
   position: relative !important;
   width: min(1380px, 100%) !important;
@@ -71,7 +57,6 @@
   height: 38px !important;
   display: block;
   border-radius: 6px;
-  text-decoration: none;
 }
 
 .pg-topic-link {
@@ -145,7 +130,6 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
   min-height: 84px;
   border: 1px solid var(--pg-border);
   border-radius: 8px;
-  text-decoration: none;
 }
 
 .pg-reference-link:hover {
@@ -155,124 +139,6 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
 .pg-article-navigation {
   border-top: 1px solid var(--pg-border);
   margin-top: 32px !important;
-}
-
-.pg-reading-link {
-  text-decoration: none;
-}
-
-.pg-home {
-  position: relative !important;
-  width: min(1260px, 100%) !important;
-  height: auto !important;
-  margin: 0 auto !important;
-  padding: 72px 40px 64px;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 64px 72px;
-  align-items: center;
-}
-
-.pg-home-hero,
-.pg-home-code,
-.pg-learning,
-.pg-learning-cards,
-.pg-home-actions,
-.pg-home-preview {
-  position: relative !important;
-  width: 100% !important;
-  height: auto !important;
-  min-width: 0;
-}
-
-.pg-home-hero {
-  display: flex !important;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.pg-home-hero > *,
-.pg-home-code > *,
-.pg-learning > *,
-.pg-home-preview > * {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-}
-
-.pg-hero-title [data-framekit-text] {
-  font-size: clamp(42px, 4.7vw, 68px) !important;
-  line-height: 1.06;
-  letter-spacing: -2.6px;
-  font-weight: 650 !important;
-}
-
-.pg-home-hero > [data-framekit='TextLabel']:nth-child(3) [data-framekit-text] {
-  font-size: 18px !important;
-  line-height: 1.7;
-}
-
-.pg-home-actions {
-  display: flex !important;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 4px 0 !important;
-}
-
-.pg-home-actions > button {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-}
-
-.pg-home-code {
-  border: 1px solid var(--pg-border);
-  border-radius: 12px;
-  overflow: hidden !important;
-}
-
-.pg-home-code > [data-framekit='Frame']:first-child {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-.pg-home-preview {
-  border-top: 1px solid var(--pg-border);
-  padding: 20px;
-  display: flex !important;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.pg-learning {
-  grid-column: 1 / -1;
-  border-top: 1px solid var(--pg-border);
-  padding-top: 42px;
-}
-
-.pg-learning > [data-framekit='TextLabel'] {
-  margin-bottom: 12px !important;
-}
-
-.pg-learning-cards {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 28px !important;
-}
-
-.pg-learning-card {
-  position: relative !important;
-  width: 100% !important;
-  height: 200px !important;
-  border: 1px solid var(--pg-border);
-  border-radius: 10px;
-  text-decoration: none;
-}
-
-.pg-learning-card:hover {
-  border-color: var(--pg-focus);
 }
 
 .pg-content :focus-visible,
@@ -290,19 +156,6 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
 
   .pg-outline {
     display: none !important;
-  }
-
-  .pg-home {
-    gap: 40px;
-    padding-top: 48px;
-  }
-
-  .pg-learning-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .pg-learning-card {
-    height: 176px !important;
   }
 }
 
@@ -332,20 +185,6 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
   .pg-menu-open .pg-docs-sidebar {
     display: block !important;
   }
-
-  .pg-home {
-    grid-template-columns: 1fr;
-    max-width: 780px;
-    padding: 40px 24px;
-  }
-
-  .pg-home-hero {
-    gap: 20px;
-  }
-
-  .pg-hero-title [data-framekit-text] {
-    font-size: 52px !important;
-  }
 }
 
 @media (max-width: 480px) {
@@ -355,27 +194,6 @@ html[data-framekit-theme='dark'] .pg-code-source .shiki span {
 
   .pg-article [role='heading'][aria-level='1'] [data-framekit-text] {
     font-size: 34px !important;
-  }
-
-  .pg-home {
-    padding: 36px 20px;
-  }
-
-  .pg-hero-title [data-framekit-text] {
-    font-size: 44px !important;
-  }
-
-  .pg-home-actions > button {
-    flex: 1 1 100%;
-    width: 100% !important;
-  }
-
-  .pg-learning-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .pg-learning-card {
-    height: 166px !important;
   }
 }
 

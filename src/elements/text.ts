@@ -1,4 +1,5 @@
 import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
+import { setStyle } from '#internal/dom/styles.js';
 import { buttonEventMethods, type GuiMethodTable } from '#internal/runtime/node/gui-events.js';
 import type { GuiElement, PropertyRenderer } from '#internal/runtime/node/gui-node.js';
 import type { PropertyValidator } from '#internal/runtime/node/registry.js';
@@ -37,6 +38,8 @@ export type TextLabelProperties = GuiObjectProperties &
   TextStyleProperties & {
     /** Whether users can select and copy the displayed text. */
     TextSelectable: boolean;
+    /** Whether the text is underlined. Links enable this by default. */
+    TextUnderline: boolean;
   };
 
 /** Semantic HTML elements that can carry a text label's content. */
@@ -137,6 +140,7 @@ export function createDefaultTextProperties(): TextLabelProperties {
     Name: 'TextLabel',
     ...createDefaultTextStyleProperties(),
     TextSelectable: false,
+    TextUnderline: false,
   };
 }
 
@@ -185,6 +189,10 @@ export function createTextNode<Properties extends TextLabelProperties>(
         text.style.pointerEvents = properties.TextSelectable ? 'auto' : 'none';
       }
 
+      if (changedProperties.has('TextUnderline')) {
+        setStyle(element, 'text-decoration-line', properties.TextUnderline ? 'underline' : 'none');
+      }
+
       if (changedProperties.has('Text')) {
         text.textContent = properties.Text;
       }
@@ -230,6 +238,7 @@ function validateTextProperties(
 ): void {
   validateTextStyleProperties(properties);
   assertBoolean(properties.TextSelectable, 'TextSelectable');
+  assertBoolean(properties.TextUnderline, 'TextUnderline');
 
   if ('Disabled' in properties) {
     validateButtonProperties(properties);

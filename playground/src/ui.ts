@@ -6,6 +6,7 @@ import {
   createUICorner,
   createUIStroke,
   createUIPadding,
+  createUISizeConstraint,
   udim,
   type Frame,
   type GuiElement,
@@ -15,6 +16,10 @@ import {
   type TextYAlignment,
   type UDim2,
   udim2FromOffset,
+  udim2,
+  vector2,
+  watchOwnedValue,
+  type UISizeConstraint,
 } from 'framekit';
 
 import {
@@ -117,6 +122,43 @@ export const addPadding = (instance: GuiElement, vertical: number, horizontal = 
     PaddingLeft: udim(0, horizontal),
     PaddingRight: udim(0, horizontal),
   }).Parent = instance;
+};
+
+/** Keeps a full-width container bounded without changing its preferred Size. */
+export const constrainWidth = (instance: GuiElement, maximum: number): UISizeConstraint => {
+  const constraint = createUISizeConstraint({ MaxSize: vector2(maximum, Number.MAX_SAFE_INTEGER) });
+  constraint.Parent = instance;
+
+  return constraint;
+};
+
+export const createDivider = (theme: ThemeValue): Frame => {
+  const divider = createFrame({ Name: 'Divider', Size: udim2(1, 0, 0, 1) });
+  bindThemeColors(divider, theme, (palette) => ({ BackgroundColor3: palette.border }));
+
+  return divider;
+};
+
+/** A link's border stays owned by its instance across pointer and theme changes. */
+export const addLinkBorder = (theme: ThemeValue, instance: GuiElement, radius: number): void => {
+  createUICorner({ CornerRadius: radius }).Parent = instance;
+  const stroke = createUIStroke({ Thickness: 1, BorderStrokePosition: 'Inner' });
+  stroke.Parent = instance;
+  let hovered = false;
+
+  const update = (): void => {
+    stroke.Color = theme.get()[hovered ? 'accent' : 'border'];
+  };
+
+  instance.onMouseEnter(() => {
+    hovered = true;
+    update();
+  });
+  instance.onMouseLeave(() => {
+    hovered = false;
+    update();
+  });
+  watchOwnedValue(instance, theme, update);
 };
 
 export const createSurface = (theme: ThemeValue, options: SurfaceOptions): Frame => {

@@ -98,6 +98,7 @@ export const createDocsShell = (
     const link = createLink({
       Text: entry.label,
       Href: pageHash(entry.page),
+      TextUnderline: false,
       FontFamily: fonts.sans,
       TextSize: 14,
       TextXAlignment: 'Left',

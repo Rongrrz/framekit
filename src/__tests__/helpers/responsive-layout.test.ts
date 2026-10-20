@@ -1,7 +1,10 @@
 import { bindResponsiveLayout, createFrame } from 'framekit';
 import { describe, expect, it, vi } from 'vitest';
 
+import { setupAnimationClock } from '../support/animation-clock.js';
 import { installResizeObserver } from '../support/resize-observer.js';
+
+const clock = setupAnimationClock();
 
 describe('responsive layouts', () => {
   it('switches responsive layouts only when the breakpoint is crossed', () => {
@@ -141,10 +144,12 @@ describe('responsive layouts', () => {
 
     bounds.width = 479;
     resizeObserver();
+    clock.advance();
     expect(compact).toHaveBeenCalledOnce();
 
     bounds.width = 480;
     resizeObserver();
+    clock.advance();
     expect(medium).toHaveBeenCalledWith({
       width: 480,
       height: 300,
@@ -154,6 +159,7 @@ describe('responsive layouts', () => {
 
     bounds.width = 900;
     resizeObserver();
+    clock.advance();
     expect(wide).toHaveBeenCalledWith({
       width: 900,
       height: 300,
@@ -179,8 +185,37 @@ describe('responsive layouts', () => {
 
     bounds.width = 800;
     resizeObserver();
+    clock.advance();
 
     expect(compact).toHaveBeenCalledOnce();
+    expect(wide).toHaveBeenCalledOnce();
+    owner.destroy();
+  });
+
+  it('applies the latest width when multiple container changes arrive before the next frame', () => {
+    const resize = installResizeObserver();
+    const owner = createFrame();
+    const bounds = stubBounds(owner.unsafeElement, 400, 300);
+    const compact = vi.fn();
+    const medium = vi.fn();
+    const wide = vi.fn();
+    bindResponsiveLayout(owner, {
+      observe: owner,
+      breakpoints: [
+        { maxWidth: 479, apply: compact },
+        { maxWidth: 899, apply: medium },
+        { apply: wide },
+      ],
+    });
+
+    bounds.width = 500;
+    resize();
+    bounds.width = 900;
+    resize();
+    clock.advance();
+
+    expect(compact).toHaveBeenCalledOnce();
+    expect(medium).not.toHaveBeenCalled();
     expect(wide).toHaveBeenCalledOnce();
     owner.destroy();
   });
@@ -197,10 +232,11 @@ describe('responsive layouts', () => {
       breakpoints: [{ maxWidth: 600, apply: firstApply }, { apply: firstApply }],
     });
 
-    dispose();
-    dispose();
     firstBounds.width = 800;
     explicitlyDisposedObserver();
+    dispose();
+    dispose();
+    clock.advance();
     expect(firstApply).toHaveBeenCalledOnce();
     firstOwner.destroy();
 
@@ -214,9 +250,10 @@ describe('responsive layouts', () => {
       breakpoints: [{ maxWidth: 600, apply: applied }, { apply: applied }],
     });
 
-    container.destroy();
     bounds.width = 800;
     destroyedContainerObserver();
+    container.destroy();
+    clock.advance();
     expect(applied).toHaveBeenCalledOnce();
     secondOwner.destroy();
   });

@@ -15,6 +15,7 @@ import type { UIListLayout } from '#modifiers/list-layout.js';
 import type { UIPadding } from '#modifiers/padding.js';
 import type { UIScale } from '#modifiers/scale.js';
 import type { UIShadow } from '#modifiers/shadow.js';
+import type { UISizeConstraint } from '#modifiers/size-constraint.js';
 import type { UIStroke } from '#modifiers/stroke.js';
 import type { UITextStroke } from '#modifiers/text-stroke.js';
 
@@ -37,6 +38,7 @@ type InstanceTypes = {
   UIListLayout: UIListLayout;
   UIPadding: UIPadding;
   UIScale: UIScale;
+  UISizeConstraint: UISizeConstraint;
   UIShadow: UIShadow;
   UIStroke: UIStroke;
   UITextStroke: UITextStroke;

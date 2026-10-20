@@ -94,7 +94,7 @@ describe('playground application', () => {
     vi.stubGlobal('innerWidth', 640);
     window.dispatchEvent(new Event('resize'));
     expect(app.findFirstChild('HomeCodeVisual', true)).toBe(visual);
-    expect(visual.unsafeElement.classList.contains('pg-home-code')).toBe(true);
+    expect(visual.Parent?.Name).toBe('HomeIntroduction');
     expect((app.findFirstChild('BrandName', true) as TextLabel).Visible).toBe(false);
     app.destroy();
   });
