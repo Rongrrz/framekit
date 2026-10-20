@@ -1,5 +1,7 @@
 import {
+  setAccessibility,
   bindResponsiveLayout,
+  observeSize,
   bindSticky,
   createFrame,
   createLink,
@@ -84,7 +86,7 @@ export const createDocsShell = (
     ScrollingDirection: 'Y',
     ScrollBarThickness: 8,
   });
-  sidebar.unsafeElement.setAttribute('aria-label', 'Documentation topics');
+  setAccessibility(sidebar, { label: 'Documentation topics' });
   createUIListLayout().Parent = sidebar;
   createUIPadding({ PaddingBottom: udim(0, 8) }).Parent = sidebar;
   const sidebarLimit = createUISizeConstraint();
@@ -98,17 +100,14 @@ export const createDocsShell = (
     position: udim2FromOffset(0, 0),
     textSize: 14,
   });
-  const sidebarId = `pg-topics-${pageName}`;
-  sidebar.unsafeElement.id = sidebarId;
-  menu.unsafeElement.setAttribute('aria-controls', sidebarId);
-  menu.unsafeElement.setAttribute('aria-expanded', 'false');
+  setAccessibility(menu, { controls: sidebar, expanded: false });
   let expanded = false;
 
   const updateMenu = (): void => {
     const compact = columnLayout.FillDirection === 'Vertical';
     menu.Visible = compact;
     sidebar.Visible = !compact || expanded;
-    menu.unsafeElement.setAttribute('aria-expanded', String(expanded));
+    setAccessibility(menu, { expanded });
   };
 
   menu.onClick(() => {
@@ -168,7 +167,7 @@ export const createDocsShell = (
     watchOwnedValue(link, theme, update);
 
     if (selected) {
-      link.unsafeElement.setAttribute('aria-current', 'page');
+      setAccessibility(link, { current: 'page' });
     }
 
     link.Parent = sidebar;
@@ -194,7 +193,7 @@ export const createDocsShell = (
     ScrollingDirection: 'Y',
     ScrollBarThickness: 8,
   });
-  outline.unsafeElement.setAttribute('aria-label', 'On this page');
+  setAccessibility(outline, { label: 'On this page' });
   createUIPadding({ PaddingBottom: udim(0, 8) }).Parent = outline;
   const outlineLimit = createUISizeConstraint();
   outlineLimit.Parent = outline;
@@ -207,13 +206,13 @@ export const createDocsShell = (
   columns.Parent = content;
   content.Parent = page;
   let unstick: Unsubscribe | undefined;
-  const viewport = page.unsafeElement.ownerDocument.defaultView;
+  let viewportHeight = 0;
 
   const updateHeight = (): void => {
     const maximum =
       columnLayout.FillDirection === 'Vertical'
         ? Number.MAX_SAFE_INTEGER
-        : Math.max(0, (viewport?.innerHeight ?? 0) - navigationHeight - 48);
+        : Math.max(0, viewportHeight - navigationHeight - 48);
     const size = vector2(Number.MAX_SAFE_INTEGER, maximum);
     sidebarLimit.MaxSize = size;
     outlineLimit.MaxSize = size;
@@ -256,10 +255,14 @@ export const createDocsShell = (
     }
   };
 
-  if (viewport) {
-    viewport.addEventListener('resize', updateHeight);
-    page.onDestroy(() => viewport.removeEventListener('resize', updateHeight));
-  }
+  observeSize(
+    page,
+    (size) => {
+      viewportHeight = size.Y;
+      updateHeight();
+    },
+    'Viewport',
+  );
 
   bindResponsiveLayout(content, {
     observe: page,

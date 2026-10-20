@@ -74,6 +74,10 @@ describe('packed package consumers', () => {
       const doubled = api.createComputedValue([value], () => value.get() * 2);
       value.set(2);
       console.log(JSON.stringify({
+        observeSize: typeof api.observeSize,
+        setAccessibility: typeof api.setAccessibility,
+        bindDraggable: typeof api.bindDraggable,
+        bindResizable: typeof api.bindResizable,
         bindPopover: typeof api.bindPopover,
         bindTooltip: typeof api.bindTooltip,
         createSignalEmitter: typeof api.createSignalEmitter,
@@ -99,6 +103,10 @@ describe('packed package consumers', () => {
     );
 
     expect(JSON.parse(output)).toEqual({
+      observeSize: 'function',
+      setAccessibility: 'function',
+      bindDraggable: 'function',
+      bindResizable: 'function',
       bindPopover: 'function',
       bindTooltip: 'function',
       createSignalEmitter: 'function',

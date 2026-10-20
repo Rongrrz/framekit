@@ -1,5 +1,6 @@
 import type { GuiObject } from '#elements/gui-object.js';
 import { createScreenGui } from '#elements/screen-gui.js';
+import { removeStyle, setStyle } from '#internal/dom/styles.js';
 import type { GuiElement } from '#internal/runtime/node/gui-node.js';
 import { udim2FromOffset } from '#values/udim.js';
 import { vector2 } from '#values/vector2.js';
@@ -22,6 +23,7 @@ export type FloatingPanelPortal = Readonly<{
   show(): void;
   hide(): void;
   setExpanded(expanded: boolean): void;
+  syncAppearance(): void;
   dispose(): void;
 }>;
 
@@ -104,6 +106,33 @@ export const createFloatingPanelPortal = (
   // Modal dialogs make outside content inert even when it enters the top layer.
   layer.mount(element.closest('dialog') ?? document.body ?? document.documentElement);
 
+  const syncAppearance = (): void => {
+    const appearance = window.getComputedStyle(element);
+    layer.ColorScheme =
+      appearance.colorScheme === 'dark'
+        ? 'Dark'
+        : appearance.colorScheme === 'light'
+          ? 'Light'
+          : 'System';
+
+    // Portals leave the owner's DOM subtree. Bridge only FrameKit's inherited decorations;
+    // modifiers on the content retain precedence and normal descendant inheritance.
+    for (const property of [
+      '--framekit-focus-outline',
+      '--framekit-focus-offset',
+      '--framekit-selection-text',
+      '--framekit-selection-background',
+    ]) {
+      const value = appearance.getPropertyValue(property).trim();
+
+      if (value) {
+        setStyle(layerElement, property, value);
+      } else {
+        removeStyle(layerElement, property);
+      }
+    }
+  };
+
   if (!relationAlreadyPresent) {
     element.setAttribute(relation, [element.getAttribute(relation), id].filter(Boolean).join(' '));
   }
@@ -117,6 +146,7 @@ export const createFloatingPanelPortal = (
       return;
     }
 
+    syncAppearance();
     layer.Enabled = true;
 
     if (supportsPopover) {
@@ -190,6 +220,7 @@ export const createFloatingPanelPortal = (
     show,
     hide,
     setExpanded,
+    syncAppearance,
     dispose,
   });
 };

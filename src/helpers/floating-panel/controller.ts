@@ -77,6 +77,7 @@ export const createFloatingPanelController = (
   };
 
   const position = (updatePlacement = true): boolean => {
+    portal.syncAppearance();
     const bounds = target.getBoundingClientRect();
 
     if (!target.isConnected || (bounds.width === 0 && bounds.height === 0)) {

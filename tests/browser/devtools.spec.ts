@@ -139,6 +139,8 @@ test('resizes with keyboard and pointer, and uses navigable tabs on a compact sc
 
   const after = await inspector.boundingBox();
   expect(after!.width).toBeGreaterThan(before!.width + 40);
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await expect(separator).toHaveAttribute('aria-valuemax', '1568');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(inspector.getByRole('tab', { name: 'Hierarchy', exact: true })).toHaveAttribute(
     'aria-selected',

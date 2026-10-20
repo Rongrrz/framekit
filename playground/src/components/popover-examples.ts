@@ -1,4 +1,5 @@
 import {
+  setAccessibility,
   type FloatingPanelContext,
   type Frame,
   type PopoverOptions,
@@ -39,7 +40,7 @@ export const appendPopoverExamples = (
     wrapped: true,
   });
 
-  status.unsafeElement.setAttribute('role', 'status');
+  setAccessibility(status, { role: 'status' });
 
   const row = createExampleRow(article, layout);
   let count = 0;
@@ -70,7 +71,7 @@ export const appendPopoverExamples = (
       radius: 12,
     });
 
-    panel.unsafeElement.setAttribute('aria-label', `${label} actions`);
+    setAccessibility(panel, { label: `${label} actions` });
 
     const actions = [
       [

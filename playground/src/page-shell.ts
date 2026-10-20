@@ -1,4 +1,5 @@
 import {
+  setAccessibility,
   watchOwnedValue,
   createFrame,
   createScreenGui,
@@ -67,8 +68,7 @@ export const createPageShell = (theme: ThemeValue, route: ObservableValue<SitePa
     BackgroundTransparency: 1,
   });
 
-  page.unsafeElement.setAttribute('role', 'main');
-  page.unsafeElement.setAttribute('aria-label', 'FrameKit documentation');
+  setAccessibility(page, { role: 'main', label: 'FrameKit documentation' });
 
   bindThemeColors(page, theme, (palette) => ({
     BackgroundColor3: palette.canvas,

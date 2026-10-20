@@ -3,6 +3,8 @@ import type { GuiElement } from '#internal/runtime/node/gui-node.js';
 import { assertNonNegativeFinite } from '#internal/validation.js';
 import type { Unsubscribe } from '#state/signal.js';
 
+import { observeSize } from './observe-size.js';
+
 /** Size and breakpoint details supplied when a container layout becomes active. */
 export type ResponsiveLayoutContext = Readonly<{
   width: number;
@@ -121,89 +123,35 @@ function bindContainerLayout(
 
   validateBreakpoints(options.breakpoints);
 
-  const ownerWindow = owner.unsafeElement.ownerDocument.defaultView;
-
-  if (!ownerWindow) {
-    throw new Error('Responsive layout requires a document with a window.');
-  }
-
-  const ResizeObserverConstructor = ownerWindow.ResizeObserver ?? globalThis.ResizeObserver;
-
-  if (typeof ResizeObserverConstructor !== 'function') {
-    throw new Error('Container responsive layout requires ResizeObserver.');
-  }
-
   let currentBreakpointIndex: number | undefined;
 
-  const updateLayout = (): void => {
-    const bounds = observed.unsafeElement.getBoundingClientRect();
+  return observeSize(
+    owner,
+    (size) => {
+      const nextBreakpointIndex = options.breakpoints.findIndex(
+        ({ maxWidth }) => maxWidth === undefined || size.X <= maxWidth,
+      );
 
-    const nextBreakpointIndex = options.breakpoints.findIndex(
-      ({ maxWidth }) => maxWidth === undefined || bounds.width <= maxWidth,
-    );
+      if (nextBreakpointIndex === currentBreakpointIndex) {
+        return;
+      }
 
-    if (nextBreakpointIndex === currentBreakpointIndex) {
-      return;
-    }
+      const previousBreakpoint =
+        currentBreakpointIndex === undefined
+          ? undefined
+          : options.breakpoints[currentBreakpointIndex];
 
-    const previousBreakpoint =
-      currentBreakpointIndex === undefined
-        ? undefined
-        : options.breakpoints[currentBreakpointIndex];
-
-    const breakpoint = options.breakpoints[nextBreakpointIndex]!;
-    currentBreakpointIndex = nextBreakpointIndex;
-    breakpoint.apply({
-      width: bounds.width,
-      height: bounds.height,
-      breakpoint,
-      previousBreakpoint,
-    });
-  };
-
-  updateLayout();
-
-  if (owner.isDestroyed() || observed.isDestroyed()) {
-    return noop;
-  }
-
-  let frame: number | undefined;
-  let disposed = false;
-  const observer = new ResizeObserverConstructor(() => {
-    if (frame !== undefined || disposed) {
-      return;
-    }
-
-    // Applying a breakpoint may resize the observed container. Defer writes out of
-    // observer delivery so that normal content-height changes do not create a resize loop.
-    frame = ownerWindow.requestAnimationFrame(() => {
-      frame = undefined;
-      updateLayout();
-    });
-  });
-  observer.observe(observed.unsafeElement);
-
-  const dispose = (): void => {
-    if (disposed) {
-      return;
-    }
-
-    disposed = true;
-    observer.disconnect();
-
-    if (frame !== undefined) {
-      ownerWindow.cancelAnimationFrame(frame);
-      frame = undefined;
-    }
-
-    unregisterOwnerDestroy();
-    unregisterContainerDestroy();
-  };
-
-  const unregisterOwnerDestroy = owner.onDestroy(dispose);
-  const unregisterContainerDestroy = observed === owner ? noop : observed.onDestroy(dispose);
-
-  return dispose;
+      const breakpoint = options.breakpoints[nextBreakpointIndex]!;
+      currentBreakpointIndex = nextBreakpointIndex;
+      breakpoint.apply({
+        width: size.X,
+        height: size.Y,
+        breakpoint,
+        previousBreakpoint,
+      });
+    },
+    observed,
+  );
 }
 
 function validateBreakpoints(

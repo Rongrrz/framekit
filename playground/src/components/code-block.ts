@@ -1,4 +1,5 @@
 import {
+  setAccessibility,
   color3FromHex,
   createTextLabel,
   createUIPadding,
@@ -66,7 +67,7 @@ export const createCodeBlock = (
     ScrollBarImageColor3: themeColor(theme, 'textFaint'),
   });
 
-  scroll.unsafeElement.setAttribute('aria-label', `${name} code example`);
+  setAccessibility(scroll, { label: `${name} code example` });
   bindThemeColors(scroll, theme, (palette) => ({ ScrollBarImageColor3: palette.textFaint }));
 
   const content = createTextLabel({

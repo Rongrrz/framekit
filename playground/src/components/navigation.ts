@@ -1,4 +1,5 @@
 import {
+  setAccessibility,
   watchOwnedValue,
   createFrame,
   createCanvasGroup,
@@ -33,8 +34,7 @@ export const createNavigation = (
     ZIndex: 100,
   });
 
-  navigation.unsafeElement.setAttribute('role', 'navigation');
-  navigation.unsafeElement.setAttribute('aria-label', 'Primary');
+  setAccessibility(navigation, { role: 'navigation', label: 'Primary' });
   bindThemeColors(navigation, theme, (palette) => ({ BackgroundColor3: palette.canvas }));
 
   const mark = createButton(theme, {
@@ -119,10 +119,12 @@ export const createNavigation = (
     ZIndex: 101,
   });
 
-  track.unsafeElement.setAttribute('role', 'progressbar');
-  track.unsafeElement.setAttribute('aria-label', 'Reading progress');
-  track.unsafeElement.setAttribute('aria-valuemin', '0');
-  track.unsafeElement.setAttribute('aria-valuemax', '100');
+  setAccessibility(track, {
+    role: 'progressbar',
+    label: 'Reading progress',
+    valueMin: 0,
+    valueMax: 100,
+  });
 
   const progress = createFrame({ Name: 'ScrollProgress', Size: udim2FromScale(0, 1) });
   bindThemeColors(track, theme, (palette) => ({ BackgroundColor3: palette.border }));
@@ -139,7 +141,7 @@ export const createNavigation = (
 
     progressVisible.set(scrolled >= 160);
     progress.Size = udim2FromScale(fraction, 1);
-    track.unsafeElement.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
+    setAccessibility(track, { valueNow: Math.round(fraction * 100) });
   };
 
   navigation.onDestroy(page.on('scroll', updateProgress, { passive: true }));

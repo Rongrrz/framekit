@@ -92,6 +92,14 @@ export type { KeyedChildrenOptions } from './helpers/keyed-children.js';
 
 export { watchOwnedValue } from './helpers/owned-value.js';
 
+export { setAccessibility } from './helpers/accessibility.js';
+export type { AccessibilityProperties } from './helpers/accessibility.js';
+
+export { bindDraggable, bindResizable } from './helpers/drag-resize.js';
+export type { DragOptions, ResizeOptions, ResizeEdge } from './helpers/drag-resize.js';
+
+export { observeSize } from './helpers/observe-size.js';
+
 export { bindHoverScale } from './helpers/hover-scale.js';
 
 export { bindSticky } from './helpers/sticky.js';

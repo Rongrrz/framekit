@@ -1,4 +1,5 @@
 import {
+  setAccessibility,
   createFrame,
   createLink,
   createUIListLayout,
@@ -140,8 +141,7 @@ export const appendArticleTitle = (
     textSize: typeScale.body,
   });
   heading.LetterSpacing = -1.4;
-  heading.unsafeElement.setAttribute('role', 'heading');
-  heading.unsafeElement.setAttribute('aria-level', '1');
+  setAccessibility(heading, { role: 'heading', level: 1, focusable: false });
   bindResponsiveLayout(heading, {
     observe: parent,
     breakpoints: [
@@ -182,8 +182,7 @@ export const appendArticleSection = (
 
   createUIPadding({ PaddingTop: udim(0, 28) }).Parent = heading;
   heading.LetterSpacing = -0.5;
-  heading.unsafeElement.setAttribute('role', 'heading');
-  heading.unsafeElement.setAttribute('aria-level', '2');
+  setAccessibility(heading, { role: 'heading', level: 2 });
   appendFlowText(parent, theme, {
     text: body,
     size: udim2FromScale(1, 0),
@@ -238,7 +237,7 @@ export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: Doc
   const border = createUIStroke({ BorderStrokeSide: 'Top', BorderStrokePosition: 'Inner' });
   bindThemeColors(border, theme, (palette) => ({ Color: palette.border }));
   border.Parent = footer;
-  footer.unsafeElement.setAttribute('aria-label', 'Continue reading');
+  setAccessibility(footer, { label: 'Continue reading' });
   createUIListLayout({ FillDirection: 'Horizontal', Wraps: true, Padding: udim(0, 12) }).Parent =
     footer;
   createUIPadding({ PaddingTop: udim(0, 24) }).Parent = footer;

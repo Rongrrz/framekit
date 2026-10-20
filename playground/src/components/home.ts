@@ -1,4 +1,5 @@
 import {
+  setAccessibility,
   createFrame,
   createLink,
   createObservableValue,
@@ -98,8 +99,7 @@ export const createHomePage = (
     },
     1.06,
   );
-  heading.unsafeElement.setAttribute('role', 'heading');
-  heading.unsafeElement.setAttribute('aria-level', '1');
+  setAccessibility(heading, { role: 'heading', level: 1, focusable: false });
   appendFlowText(
     hero,
     theme,

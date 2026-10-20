@@ -1,5 +1,9 @@
 import {
   bindHoverScale,
+  observeSize,
+  setAccessibility,
+  bindDraggable,
+  bindResizable,
   bindKeyedChildren,
   bindVirtualList,
   watchOwnedValue,
@@ -56,6 +60,19 @@ function verifyPublicTypeContracts(): void {
   const article = createFrame({ TagName: 'article', Name: 'Profile' });
   createTextLabel({ LineHeight: 1.5, LetterSpacing: -0.5, TextSelectable: true }).Parent = article;
   const flexible = createUIFlexItem({ Weight: 2 });
+  observeSize(article, (size) => size.X.toFixed());
+  observeSize(article, (size) => size.Y.toFixed(), 'Viewport');
+  setAccessibility(article, { role: 'heading', level: 1, controls: article, focusable: false });
+  bindDraggable(article, { handle: article, inset: 8 });
+  bindResizable(article, { handle: article, edge: 'TopLeft' });
+  // @ts-expect-error Size observation requires a DOM-backed GUI.
+  observeSize(flexible, () => {});
+  // @ts-expect-error Relationships use instances, not caller-managed DOM IDs.
+  setAccessibility(article, { controls: 'panel' });
+  // @ts-expect-error Progress values stay numeric.
+  setAccessibility(article, { valueNow: '100' });
+  // @ts-expect-error Resize handles use named edges.
+  bindResizable(article, { handle: article, edge: 'nw' });
   createUISizeConstraint({ MaxSize: vector2(320, 480) }).Parent = article;
   bindSticky(article, { inset: 24 });
   createUIStroke({ BorderStrokeSide: 'Top' }).Parent = article;

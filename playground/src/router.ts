@@ -67,7 +67,6 @@ export const createRoutedPage = (
       );
 
       if (heading) {
-        heading.tabIndex = -1;
         heading.focus({ preventScroll: true });
       }
     }

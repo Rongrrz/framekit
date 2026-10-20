@@ -1,4 +1,5 @@
 import {
+  setAccessibility,
   bindDialog,
   bindMenu,
   bindTreeView,
@@ -55,7 +56,7 @@ export const createControlsPage = (
     wrapped: true,
   });
 
-  status.unsafeElement.setAttribute('role', 'status');
+  setAccessibility(status, { role: 'status' });
 
   const menuHeading = appendArticleSection(
     shell.article,
@@ -123,7 +124,7 @@ export const createControlsPage = (
 
   createUICorner({ CornerRadius: 16 }).Parent = dialog;
   createUIShadow({ Offset: vector2(0, 24), BlurRadius: 80, Transparency: 0.73 }).Parent = dialog;
-  dialog.unsafeElement.setAttribute('aria-label', 'Example dialog');
+  setAccessibility(dialog, { label: 'Example dialog' });
   bindThemeColors(dialog, theme, (palette) => ({ BackgroundColor3: palette.surfaceRaised }));
   dialog.Parent = shell.page;
   createText(theme, {
@@ -154,7 +155,7 @@ export const createControlsPage = (
   );
 
   const tree = createSurface(theme, { name: 'ExampleTree', size: udim2(1, 0, 0, 132) });
-  tree.unsafeElement.setAttribute('aria-label', 'Example files');
+  setAccessibility(tree, { label: 'Example files' });
   tree.Parent = shell.article;
   createUIListLayout().Parent = tree;
 
