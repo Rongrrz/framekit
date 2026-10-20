@@ -4,6 +4,8 @@ import {
   createUIListLayout,
   createUIFlexItem,
   createUIPadding,
+  createUIStroke,
+  bindResponsiveLayout,
   type Frame,
   type GuiElement,
   type TextLabel,
@@ -86,6 +88,8 @@ export const appendOutline = (
       foreground: 'textMuted',
       textSize: typeScale.caption,
       radius: 0,
+      border: 'border',
+      borderSide: 'Left',
     });
 
     link.setProperties({
@@ -138,6 +142,22 @@ export const appendArticleTitle = (
   heading.LetterSpacing = -1.4;
   heading.unsafeElement.setAttribute('role', 'heading');
   heading.unsafeElement.setAttribute('aria-level', '1');
+  bindResponsiveLayout(heading, {
+    observe: parent,
+    breakpoints: [
+      {
+        maxWidth: 480,
+        apply: () => {
+          heading.TextSize = 34;
+        },
+      },
+      {
+        apply: () => {
+          heading.TextSize = typeScale.page;
+        },
+      },
+    ],
+  });
 
   return heading;
 };
@@ -207,7 +227,17 @@ export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: Doc
     TagName: 'nav',
   });
 
-  footer.unsafeElement.classList.add('pg-article-navigation');
+  const section = createFrame({
+    Name: 'ArticleNavigationSection',
+    BackgroundTransparency: 1,
+    Size: udim2FromScale(1, 0),
+    AutomaticSize: 'Y',
+  });
+  createUIPadding({ PaddingTop: udim(0, 32) }).Parent = section;
+  createUIListLayout().Parent = section;
+  const border = createUIStroke({ BorderStrokeSide: 'Top', BorderStrokePosition: 'Inner' });
+  bindThemeColors(border, theme, (palette) => ({ Color: palette.border }));
+  border.Parent = footer;
   footer.unsafeElement.setAttribute('aria-label', 'Continue reading');
   createUIListLayout({ FillDirection: 'Horizontal', Wraps: true, Padding: udim(0, 12) }).Parent =
     footer;
@@ -233,10 +263,10 @@ export const appendPageNavigation = (parent: Frame, theme: ThemeValue, page: Doc
     });
 
     createUIFlexItem().Parent = link;
-    link.unsafeElement.classList.add('pg-reading-link');
     bindThemeColors(link, theme, (palette) => ({ TextColor3: palette.accent }));
     link.Parent = footer;
   }
 
-  footer.Parent = parent;
+  footer.Parent = section;
+  section.Parent = parent;
 };

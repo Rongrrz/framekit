@@ -16,6 +16,7 @@ import {
   vector2,
 } from 'framekit';
 
+import { navigationHeight } from './layout';
 import type { SitePage } from './router';
 import { bindThemeColors, scrollbarThickness, themeColor, type ThemeValue } from './theme';
 
@@ -27,8 +28,6 @@ type PageShell = Readonly<{
 }>;
 
 const appName = 'FrameKitPlayground';
-
-const navigationHeight = 64;
 
 const scrollSpringOptions = {
   tension: 150,

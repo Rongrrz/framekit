@@ -1,4 +1,4 @@
-export type StyleLayer = 'modifier' | 'layout' | 'parent-layout';
+export type StyleLayer = 'modifier' | 'layout' | 'parent-layout' | 'placement';
 
 export type StyleValues = Readonly<{ [property: string]: string | undefined }>;
 
@@ -9,6 +9,7 @@ type ElementStyleState = {
   modifier: StyleValues;
   layout: StyleValues;
   'parent-layout': StyleValues;
+  placement: StyleValues;
   fallback: StyleRecord;
   rendered: StyleRecord;
 };
@@ -129,6 +130,7 @@ function getStyleState(element: HTMLElement): ElementStyleState {
     modifier: emptyStyles,
     layout: emptyStyles,
     'parent-layout': emptyStyles,
+    placement: emptyStyles,
     fallback: Object.create(null) as Record<string, string>,
     rendered: Object.create(null) as Record<string, string>,
   };
@@ -181,6 +183,7 @@ function resolveStyleValue(state: ElementStyleState, property: string): string |
 
   // A container's own layout must not replace its placement in its parent's layout.
   return (
+    state.placement[property] ??
     state['parent-layout'][property] ??
     state.layout[property] ??
     state.modifier[property] ??

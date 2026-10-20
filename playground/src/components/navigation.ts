@@ -10,7 +10,7 @@ import {
   bindTooltip,
 } from 'framekit';
 
-import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
+import { bindLayoutProperties, navigationHeight, type PlaygroundLayout } from '../layout';
 import { repositoryUrl } from '../links';
 import type { SitePage } from '../router';
 import { bindThemeColors, fonts, typeScale, type ThemeMode, type ThemeValue } from '../theme';
@@ -26,7 +26,7 @@ export const createNavigation = (
 ): Frame => {
   const navigation = createFrame({
     Name: 'Navigation',
-    Size: udim2(1, 0, 0, 64),
+    Size: udim2(1, 0, 0, navigationHeight),
     BackgroundTransparency: 0.05,
     ZIndex: 100,
   });
@@ -113,7 +113,7 @@ export const createNavigation = (
   const track = createFrame({
     Name: 'ScrollProgressTrack',
     Size: udim2(1, 0, 0, 2),
-    Position: udim2FromOffset(0, 62),
+    Position: udim2FromOffset(0, navigationHeight - 2),
     ZIndex: 101,
   });
 

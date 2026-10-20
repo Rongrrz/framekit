@@ -280,6 +280,49 @@ test('opens each chapter directly and keeps navigation reachable after scrolling
   }
 });
 
+test('keeps documentation topics reachable in short windows and restores the compact menu after resizing', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 500 });
+  await page.goto('/playground/index.html#/guide');
+  const topics = page.getByRole('navigation', { name: 'Documentation topics' });
+  const main = page.getByRole('main');
+  await main.evaluate((element) => {
+    element.scrollTop = 500;
+  });
+  await expect.poll(async () => (await topics.boundingBox())!.y).toBe(88);
+  expect((await topics.boundingBox())!.height).toBeLessThanOrEqual(388);
+  const last = topics.getByRole('link', { name: 'Runtime inspector', exact: true });
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeVisible();
+  expect(await topics.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await main.evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  const browse = page.getByRole('button', { name: 'Browse documentation' });
+  await expect(browse).toBeVisible();
+  await expect(topics).toBeHidden();
+  await browse.click();
+  await expect(topics).toBeVisible();
+  await expect(browse).toHaveAttribute('aria-expanded', 'true');
+  await page.setViewportSize({ width: 1440, height: 500 });
+  await expect(browse).toBeHidden();
+  await main.evaluate((element) => {
+    element.scrollTop = 600;
+  });
+  await expect.poll(async () => (await topics.boundingBox())!.y).toBe(88);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await main.evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  await expect(browse).toBeVisible();
+  await expect(browse).toHaveAttribute('aria-expanded', 'true');
+  await browse.click();
+  await expect(topics).toBeHidden();
+});
+
 test('the overlay chapter demonstrates usable keyboard and pointer interactions', async ({
   page,
 }) => {

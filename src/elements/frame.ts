@@ -1,5 +1,5 @@
 import { resolveOwnerDocument, type DomOptions } from '#internal/dom/environment.js';
-import { createStyledElementFactory } from '#internal/dom/styles.js';
+import { createStyledElementFactory, setStyle } from '#internal/dom/styles.js';
 import type { GuiElement } from '#internal/runtime/node/gui-node.js';
 import { assertAllowedValue } from '#internal/validation.js';
 
@@ -65,6 +65,11 @@ function createFrameElement(ownerDocument: Document, tagName: FrameTagName): HTM
       defaultProperties: defaultFrameProperties,
       initialProperties: {},
     });
+
+    if (tagName === 'dialog') {
+      setStyle(node.unsafeElement, 'padding', '0');
+      setStyle(node.unsafeElement, 'border', '0');
+    }
 
     createElement = createStyledElementFactory(node.unsafeElement);
     node.destroy();

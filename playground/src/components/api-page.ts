@@ -1,9 +1,16 @@
-import { createLink, type Frame, type ObservableValue, udim2 } from 'framekit';
+import {
+  createLink,
+  createUISizeConstraint,
+  type Frame,
+  type ObservableValue,
+  udim2,
+  vector2,
+} from 'framekit';
 
 import importsExample from '../../examples/api/imports.ts?example';
 import { documentationPages, pageHash, type SitePage } from '../router';
 import { bindThemeColors, fonts, type ThemeValue } from '../theme';
-import { addPadding } from '../ui';
+import { addPadding, addLinkBorder } from '../ui';
 import { createCodeBlock } from './code-block';
 import {
   appendArticleTitle,
@@ -61,7 +68,8 @@ export const createApiPage = (theme: ThemeValue, route: ObservableValue<SitePage
       AutomaticSize: 'Y',
     });
 
-    link.unsafeElement.classList.add('pg-reference-link');
+    addLinkBorder(theme, link, 8);
+    createUISizeConstraint({ MinSize: vector2(0, 84) }).Parent = link;
     addPadding(link, 12, 20);
     bindThemeColors(link, theme, (palette) => ({ TextColor3: palette.text }));
     link.Parent = shell.article;

@@ -164,7 +164,7 @@ function renderLayouts(node: Instance): void {
 
   if (compare) {
     for (const child of ordered) {
-      setStyleLayer(child.unsafeElement, 'parent-layout', childStyles);
+      renderChildLayout(child, childStyles);
     }
   }
 
@@ -213,7 +213,7 @@ export function renderInsertedChild(parent: Instance, child: Instance): void {
 
   // Record the child before touching DOM so normal hierarchy rollback can clear its layer.
   layout.children.splice(start, 0, child);
-  setStyleLayer(child.unsafeElement, 'parent-layout', layout.child);
+  renderChildLayout(child, layout.child);
   placeElement(
     (parent as GuiElement).unsafeElement,
     child.unsafeElement,
@@ -245,6 +245,15 @@ export function renderRemovedChild(parent: Instance, child: Instance): void {
 
   layout.children.splice(index, 1);
   setStyleLayer(child.unsafeElement, 'parent-layout', {});
+}
+
+function renderChildLayout(child: GuiElement, styles: Styles): void {
+  // Native dialogs occupy the top layer, even when their logical parent arranges its children.
+  setStyleLayer(
+    child.unsafeElement,
+    'parent-layout',
+    child.unsafeElement.tagName === 'DIALOG' ? {} : styles,
+  );
 }
 
 function getLayoutChildProperties(child: GuiElement): LayoutChild {

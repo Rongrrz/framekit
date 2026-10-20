@@ -91,6 +91,9 @@ export { watchOwnedValue } from './helpers/owned-value.js';
 
 export { bindHoverScale } from './helpers/hover-scale.js';
 
+export { bindSticky } from './helpers/sticky.js';
+export type { StickyOptions } from './helpers/sticky.js';
+
 export { bindPopover } from './helpers/popover.js';
 export type { PopoverOptions } from './helpers/popover.js';
 
@@ -170,7 +173,12 @@ export { createUIShadow } from './modifiers/shadow.js';
 export type { UIShadow, UIShadowProperties } from './modifiers/shadow.js';
 
 export { createUIStroke } from './modifiers/stroke.js';
-export type { BorderStrokePosition, UIStroke, UIStrokeProperties } from './modifiers/stroke.js';
+export type {
+  BorderStrokePosition,
+  BorderStrokeSide,
+  UIStroke,
+  UIStrokeProperties,
+} from './modifiers/stroke.js';
 
 export { createUITextStroke } from './modifiers/text-stroke.js';
 export type { UITextStroke, UITextStrokeProperties } from './modifiers/text-stroke.js';

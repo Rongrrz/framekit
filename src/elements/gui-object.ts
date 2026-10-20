@@ -105,7 +105,7 @@ export function createGuiObjectNode<Properties extends GuiObjectProperties>({
 }: GuiObjectNodeOptions<Properties>): GuiObject<Properties> {
   if (initialRenderProperties === undefined) {
     element.dataset.framekit = className;
-    setStyle(element, 'position', 'absolute');
+    setStyle(element, 'position', element.tagName === 'DIALOG' ? 'fixed' : 'absolute');
     setStyle(element, 'box-sizing', 'border-box');
     setStyle(element, 'margin', '0');
     setStyle(element, 'flex-shrink', '0');
@@ -160,7 +160,7 @@ function renderGuiObject(
   }
 
   if (changedProperties.has('Position')) {
-    setStyle(element, 'position', 'absolute');
+    setStyle(element, 'position', element.tagName === 'DIALOG' ? 'fixed' : 'absolute');
     setStyle(element, 'left', udimToCss(properties.Position.X));
     setStyle(element, 'top', udimToCss(properties.Position.Y));
   }

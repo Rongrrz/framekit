@@ -16,6 +16,9 @@ import { assertColor3, color3FromRGB, color3ToCss, type Color3 } from '#values/c
 /** Where a stroke is drawn relative to its GUI parent's edge. */
 export type BorderStrokePosition = 'Inner' | 'Center' | 'Outer';
 
+/** Edges decorated by a stroke. */
+export type BorderStrokeSide = 'All' | 'Top' | 'Right' | 'Bottom' | 'Left';
+
 /** Properties for a border stroke around a GUI parent. */
 export type UIStrokeProperties = InstanceProperties & {
   /** Whether the modifier currently affects its parent. */
@@ -28,6 +31,8 @@ export type UIStrokeProperties = InstanceProperties & {
   Thickness: number;
   /** Placement relative to the parent's edge. */
   BorderStrokePosition: BorderStrokePosition;
+  /** Draws the full outline or a single edge. */
+  BorderStrokeSide: BorderStrokeSide;
 };
 
 /** An element-less border-stroke modifier. */
@@ -47,6 +52,7 @@ export function createUIStroke(initialProperties: Partial<UIStrokeProperties> = 
         Transparency: 0,
         Thickness: 1,
         BorderStrokePosition: 'Outer',
+        BorderStrokeSide: 'All',
       },
       initialProperties,
     ),
@@ -63,17 +69,39 @@ function resolveStrokeShadow(properties: Readonly<UIStrokeProperties>): string {
   const thickness = properties.Thickness;
   const color = color3ToCss(properties.Color, properties.Transparency);
 
+  const shadow = (inner: boolean, width: number): string => {
+    if (properties.BorderStrokeSide === 'All') {
+      return `${inner ? 'inset ' : ''}0px 0px 0px ${width}px ${color}`;
+    }
+
+    const offset = inner ? -width : width;
+    const x =
+      properties.BorderStrokeSide === 'Left'
+        ? -offset
+        : properties.BorderStrokeSide === 'Right'
+          ? offset
+          : 0;
+    const y =
+      properties.BorderStrokeSide === 'Top'
+        ? -offset
+        : properties.BorderStrokeSide === 'Bottom'
+          ? offset
+          : 0;
+
+    return `${inner ? 'inset ' : ''}${x}px ${y}px 0px 0px ${color}`;
+  };
+
   if (properties.BorderStrokePosition === 'Inner') {
-    return `inset 0px 0px 0px ${thickness}px ${color}`;
+    return shadow(true, thickness);
   }
 
   if (properties.BorderStrokePosition === 'Outer') {
-    return `0px 0px 0px ${thickness}px ${color}`;
+    return shadow(false, thickness);
   }
 
   const halfThickness = thickness / 2;
 
-  return `inset 0px 0px 0px ${halfThickness}px ${color}, 0px 0px 0px ${halfThickness}px ${color}`;
+  return `${shadow(true, halfThickness)}, ${shadow(false, halfThickness)}`;
 }
 
 function validateStrokeProperties(properties: Readonly<UIStrokeProperties>): void {
@@ -82,6 +110,11 @@ function validateStrokeProperties(properties: Readonly<UIStrokeProperties>): voi
     properties.BorderStrokePosition,
     borderStrokePositions,
     'BorderStrokePosition',
+  );
+  assertAllowedValue(
+    properties.BorderStrokeSide,
+    ['All', 'Top', 'Right', 'Bottom', 'Left'],
+    'BorderStrokeSide',
   );
   assertNonNegativeFinite(properties.Thickness, 'Thickness');
   assertColor3(properties.Color, 'Color');

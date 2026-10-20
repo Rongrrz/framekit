@@ -6,6 +6,7 @@ import {
   createObservableValue,
   createUIListLayout,
   createUICorner,
+  createUIShadow,
   createUIPadding,
   type Frame,
   type GuiElement,
@@ -120,8 +121,8 @@ export const createControlsPage = (
     AnchorPoint: vector2(0.5, 0.5),
   });
 
-  dialog.unsafeElement.classList.add('pg-example-dialog');
   createUICorner({ CornerRadius: 16 }).Parent = dialog;
+  createUIShadow({ Offset: vector2(0, 24), BlurRadius: 80, Transparency: 0.73 }).Parent = dialog;
   dialog.unsafeElement.setAttribute('aria-label', 'Example dialog');
   bindThemeColors(dialog, theme, (palette) => ({ BackgroundColor3: palette.surfaceRaised }));
   dialog.Parent = shell.page;

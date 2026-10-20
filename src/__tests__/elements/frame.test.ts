@@ -2,6 +2,7 @@ import {
   color3FromRGB,
   createFrame,
   createUIGridLayout,
+  createUIListLayout,
   udim2,
   udim2FromOffset,
   udim2FromScale,
@@ -10,6 +11,26 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 
 describe('frames', () => {
+  it('keeps native dialog geometry independent of parent layouts and browser defaults', () => {
+    const parent = createFrame();
+    const list = createUIListLayout();
+    list.Parent = parent;
+    const dialog = createFrame({ TagName: 'dialog', Position: udim2FromScale(0.5, 0.5) });
+    dialog.Parent = parent;
+    expect(dialog.unsafeElement.style.position).toBe('fixed');
+    expect(dialog.unsafeElement.style.left).toBe('50%');
+    expect(dialog.unsafeElement.style.padding).toBe('0px');
+    expect(dialog.unsafeElement.style.borderWidth).toBe('0px');
+
+    list.destroy();
+    createUIGridLayout().Parent = parent;
+    dialog.Position = udim2FromOffset(40, 60);
+    expect(dialog.unsafeElement.style.position).toBe('fixed');
+    expect(dialog.unsafeElement.style.top).toBe('60px');
+    expect(dialog.unsafeElement.style.width).toBe('100px');
+    parent.destroy();
+  });
+
   it('keeps prepared defaults independent across instances, documents, tags, and destruction', () => {
     const firstDocument = document.implementation.createHTMLDocument();
     const secondDocument = document.implementation.createHTMLDocument();

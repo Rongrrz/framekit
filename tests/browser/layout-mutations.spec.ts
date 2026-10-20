@@ -1,5 +1,51 @@
 import { expect, openFrameKit, test } from './fixtures.js';
 
+test('sticky placement holds its layout slot while scrolling and releases back into normal flow', async ({
+  page,
+}) => {
+  await openFrameKit(page);
+  await page.evaluate(() => {
+    const {
+      bindSticky,
+      createFrame,
+      createScreenGui,
+      createScrollingFrame,
+      createUIListLayout,
+      createTextButton,
+      udim2FromOffset,
+      udim2,
+    } = window.framekit;
+    const root = createScreenGui();
+    const viewport = createScrollingFrame({
+      Size: udim2FromOffset(320, 200),
+      Position: udim2FromOffset(0, 60),
+      ScrollingDirection: 'Y',
+    });
+    viewport.Parent = root;
+    const content = createFrame({ Size: udim2(1, 0, 0, 0), AutomaticSize: 'Y' });
+    createUIListLayout({ FillDirection: 'Horizontal' }).Parent = content;
+    content.Parent = viewport;
+    const sticky = createFrame({ TagName: 'nav', Size: udim2FromOffset(80, 80) });
+    sticky.unsafeElement.setAttribute('aria-label', 'Sticky navigation');
+    sticky.Parent = content;
+    createFrame({ Size: udim2FromOffset(200, 1000) }).Parent = content;
+    const release = bindSticky(sticky, { inset: 12 });
+    const button = createTextButton({ Text: 'Release sticky' });
+    button.onClick(release);
+    button.Parent = root;
+    root.mount('#root');
+  });
+
+  const viewport = page.locator('[data-framekit="ScrollingFrame"]');
+  const sticky = page.getByRole('navigation', { name: 'Sticky navigation' });
+  await viewport.evaluate((element) => {
+    element.scrollTop = 160;
+  });
+  await expect.poll(async () => (await sticky.boundingBox())!.y).toBe(72);
+  await page.getByRole('button', { name: 'Release sticky' }).click();
+  await expect.poll(async () => (await sticky.boundingBox())!.y).toBe(-100);
+});
+
 test('size constraints compose with flexible rows and grids without rewriting preferred geometry', async ({
   page,
 }) => {

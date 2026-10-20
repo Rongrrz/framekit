@@ -20,6 +20,7 @@ import {
   vector2,
   watchOwnedValue,
   type UISizeConstraint,
+  type BorderStrokeSide,
 } from 'framekit';
 
 import {
@@ -59,6 +60,8 @@ type ButtonOptions = Readonly<{
   scaled?: boolean;
   font?: string;
   radius?: number;
+  border?: ThemeToken;
+  borderSide?: BorderStrokeSide;
 }>;
 
 type SurfaceOptions = Readonly<{
@@ -106,10 +109,16 @@ export const addRoundedBorder = (
   radius: number,
   strokeColor: ThemeToken = 'border',
   thickness = 1,
+  side: BorderStrokeSide = 'All',
 ): void => {
   createUICorner({ CornerRadius: radius }).Parent = instance;
 
-  const stroke = createUIStroke({ Color: themeColor(theme, strokeColor), Thickness: thickness });
+  const stroke = createUIStroke({
+    Color: themeColor(theme, strokeColor),
+    Thickness: thickness,
+    BorderStrokeSide: side,
+    BorderStrokePosition: 'Inner',
+  });
   bindThemeColors(stroke, theme, (palette) => ({ Color: palette[strokeColor] }));
   stroke.Parent = instance;
 };
@@ -199,7 +208,14 @@ export const createButton = (theme: ThemeValue, options: ButtonOptions): TextBut
     BackgroundColor3: palette[background],
     TextColor3: palette[foreground],
   }));
-  addRoundedBorder(theme, button, options.radius ?? 11, background);
+  addRoundedBorder(
+    theme,
+    button,
+    options.radius ?? 11,
+    options.border ?? background,
+    1,
+    options.borderSide ?? 'All',
+  );
 
   return button;
 };

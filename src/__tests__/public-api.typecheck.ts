@@ -20,6 +20,8 @@ import {
   createUIGridLayout,
   createUIFlexItem,
   createUISizeConstraint,
+  bindSticky,
+  createUIStroke,
   createUIScale,
   type FloatingPanelHook,
   type ComputedValue,
@@ -50,6 +52,10 @@ function verifyPublicTypeContracts(): void {
   createTextLabel({ LineHeight: 1.5, LetterSpacing: -0.5, TextSelectable: true }).Parent = article;
   const flexible = createUIFlexItem({ Weight: 2 });
   createUISizeConstraint({ MaxSize: vector2(320, 480) }).Parent = article;
+  bindSticky(article, { inset: 24 });
+  createUIStroke({ BorderStrokeSide: 'Top' }).Parent = article;
+  // @ts-expect-error Placement behavior requires a GUI object.
+  bindSticky(createUIScale());
   flexible.Parent = article;
   // @ts-expect-error Layout mechanics remain internal to FrameKit.
   flexible.setProperties({ flexGrow: 2 });
