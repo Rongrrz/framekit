@@ -6,6 +6,7 @@ import { codeExamples } from '../../playground/tooling/code-examples.ts';
 
 export default defineConfig({
   appType: 'mpa',
+  optimizeDeps: { entries: ['tests/browser/index.html', 'playground/index.html'] },
   plugins: [
     codeExamples(),
     {
