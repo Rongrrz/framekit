@@ -52,6 +52,16 @@ test('documents working menu, modal, tree, and explicit binding cleanup on deskt
   await expect(tree.getByRole('treeitem')).toHaveCount(1);
   await page.keyboard.press('ArrowRight');
   await expect(tree.getByRole('treeitem')).toHaveCount(3);
+  const checkbox = page.getByRole('checkbox', { name: 'Enable shadows' });
+  await checkbox.click();
+  await expect(checkbox).toBeChecked();
+  const slider = page.getByRole('slider', { name: 'Example volume' });
+  await slider.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(slider).toHaveAttribute('aria-valuenow', '55');
+  await page.getByRole('tab', { name: 'General', exact: true }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tabpanel', { name: 'Advanced', exact: true })).toBeVisible();
   await tree.scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath('controls-desktop.png') });
   await page.setViewportSize({ width: 390, height: 900 });
@@ -73,6 +83,9 @@ test('documents working menu, modal, tree, and explicit binding cleanup on deskt
   await expect(trigger).toBeDisabled();
   await expect(opener).toBeDisabled();
   await expect(page.getByRole('tree')).toHaveCount(0);
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+  await expect(page.getByRole('slider')).toHaveCount(0);
+  await expect(page.getByRole('tablist')).toHaveCount(0);
   expect(
     await page
       .getByRole('main')

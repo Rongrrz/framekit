@@ -1,5 +1,8 @@
 import {
   setAccessibility,
+  bindCheckbox,
+  bindSlider,
+  bindTabs,
   bindDialog,
   bindMenu,
   bindTreeView,
@@ -9,6 +12,7 @@ import {
   createUICorner,
   createUIShadow,
   createUIPadding,
+  watchOwnedValue,
   type Frame,
   type GuiElement,
   type ObservableValue,
@@ -19,6 +23,7 @@ import {
   udim2FromOffset,
 } from 'framekit';
 
+import composedHelpersExample from '../../examples/controls/composed-helpers.ts?example';
 import dialogBindingExample from '../../examples/controls/dialog-binding.ts?example';
 import menuBindingExample from '../../examples/controls/menu-binding.ts?example';
 import treeBindingExample from '../../examples/controls/tree-binding.ts?example';
@@ -211,6 +216,91 @@ export const createControlsPage = (
   });
 
   createCodeBlock(theme, 'TreeBindingCode', treeBindingExample).Parent = shell.article;
+
+  const helpersHeading = appendArticleSection(
+    shell.article,
+    theme,
+    'Checkboxes, sliders & tabs',
+    'Helpers compose existing instances. This checkbox and slider thumb are TextButtons; tab panels are Frames. Your observable values own state and your objects own appearance. Space toggles the checkbox; arrows change the slider or activate another tab.',
+  );
+
+  const checked = createObservableValue(false);
+  const checkbox = createButton(theme, {
+    label: 'Shadows disabled',
+    size: udim2FromOffset(220, 44),
+    position: udim2FromOffset(0, 0),
+  });
+  checkbox.AccessibleLabel = 'Enable shadows';
+  checkbox.Parent = shell.article;
+  const stopCheckbox = bindCheckbox(checkbox, checked);
+  watchOwnedValue(checkbox, checked, (enabled) => {
+    checkbox.Text = enabled ? '✓ Shadows enabled' : 'Shadows disabled';
+  });
+
+  const volume = createObservableValue(50);
+  const volumeLabel = createText(theme, { text: '', size: udim2(1, 0, 0, 32) });
+  volumeLabel.Parent = shell.article;
+  watchOwnedValue(volumeLabel, volume, (value) => {
+    volumeLabel.Text = `Volume: ${value}`;
+  });
+  const sliderSurface = createFrame({
+    Name: 'VolumeSlider',
+    Size: udim2(1, 0, 0, 52),
+    BackgroundTransparency: 1,
+  });
+  sliderSurface.Parent = shell.article;
+  const track = createSurface(theme, {
+    name: 'VolumeTrack',
+    size: udim2(1, -32, 0, 12),
+    position: udim2FromOffset(16, 20),
+    radius: 6,
+  });
+  track.Parent = sliderSurface;
+  const thumb = createButton(theme, {
+    label: '',
+    size: udim2FromOffset(28, 36),
+    position: udim2FromOffset(0, 0),
+    background: 'accent',
+  });
+  thumb.AccessibleLabel = 'Example volume';
+  thumb.Parent = track;
+  const stopSlider = bindSlider(track, thumb, { value: volume, step: 5 });
+
+  const tablist = createFrame({
+    Name: 'SettingsTabs',
+    Size: udim2(1, 0, 0, 44),
+    BackgroundTransparency: 1,
+  });
+  setAccessibility(tablist, { label: 'Example settings' });
+  tablist.Parent = shell.article;
+  const selection = createObservableValue('General');
+  const tabs = ['General', 'Advanced'].map((key, index) => {
+    const tab = createButton(theme, {
+      label: key,
+      size: udim2FromOffset(120, 44),
+      position: udim2FromOffset(index * 128, 0),
+    });
+    tab.Parent = tablist;
+    const panel = createSurface(theme, {
+      name: `${key}Panel`,
+      size: udim2(1, 0, 0, 72),
+      radius: 12,
+    });
+    panel.Parent = shell.article;
+    createText(theme, {
+      text: `${key} settings stay alive when you switch tabs.`,
+      wrapped: true,
+      size: udim2(1, -24, 1, -16),
+      position: udim2FromOffset(12, 8),
+    }).Parent = panel;
+    watchOwnedValue(tab, selection, (value) => {
+      tab.FontWeight = value === key ? 800 : 450;
+    });
+
+    return { key, tab, panel };
+  });
+  const stopTabs = bindTabs(tablist, tabs, { selection });
+  createCodeBlock(theme, 'ComposedHelpersCode', composedHelpersExample).Parent = shell.article;
   status.Parent = shell.article;
 
   const release = createButton(theme, {
@@ -224,6 +314,9 @@ export const createControlsPage = (
     menuBinding.dispose();
     modal.dispose();
     stopTree();
+    stopCheckbox();
+    stopSlider();
+    stopTabs();
     menu.Visible = false;
     opener.Disabled = true;
     trigger.Disabled = true;
@@ -244,6 +337,7 @@ export const createControlsPage = (
       { label: 'Menus', target: menuHeading },
       { label: 'Dialogs', target: dialogHeading },
       { label: 'Trees', target: treeHeading },
+      { label: 'Composed controls', target: helpersHeading },
     ],
     scrollTo,
   );

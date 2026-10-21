@@ -249,6 +249,41 @@ detaching or unmounting the owner retains the service.
 The application still chooses labels, selection policy, and what each command does. Browser
 checks do not replace a manual assistive-technology review for the finished application.
 
+### Composed controls
+
+Core instances stay small and close to the engine-style object model. A checkbox, slider, or
+tab set is a helper over ordinary buttons and frames, not another instance class. Their parts
+retain their `ClassName`, hierarchy, style modifiers, and lifecycle. Supply accessible labels;
+use owned watchers to derive appearance from application state.
+
+- `bindCheckbox(button, checked)` accepts an existing TextButton or ImageButton and an
+  `ObservableValue<boolean>`. Native button activation toggles that value once. The helper
+  reflects `aria-checked` and `button.Disabled`; it does not create a check indicator.
+- `bindSlider(track, thumb, { value, min?, max?, step?, orientation? })` accepts a GUI track,
+  its directly parented TextButton or ImageButton thumb, and an `ObservableValue<number>`.
+  Defaults are 0–100, step 1, and `'Horizontal'`; `'Vertical'` increases upwards. Use an
+  unrotated track without a layout modifier controlling the thumb. The binding owns thumb
+  `Position` and `AnchorPoint`, centering it on the track edges at the endpoints. Track clicks,
+  captured pointer dragging, arrows, Page Up/Down, and Home/End update the value. Dragging
+  preserves the grab offset. `thumb.Disabled` blocks interaction and cancels capture.
+  Programmatic values must be finite and within the range; user input snaps to steps from
+  `min`, with both endpoints reachable. Caller styling and value state remain independent.
+- `bindTabs(tablist, items, { selection, orientation? })` accepts fixed `{ key, tab, panel }`
+  entries with unique string or number keys and an `ObservableValue` selecting a supplied key.
+  Buttons belong inside the tablist; panels belong outside it and must not contain each other
+  or the tablist. Arrows on the configured axis wrap past disabled buttons and activate the
+  next tab. Home/End choose the first/last enabled tab. Defaults to `'Horizontal'`.
+  Programmatic selection switches panels without recreating them; focus in content being
+  hidden returns to an enabled tab. Panels are focusable for keyboard entry. Disabled buttons
+  cannot be activated by the user; application state may still select their panels. Rebind if
+  the set of tabs changes.
+
+Each binding returns an idempotent disposer and releases itself when any supplied part is
+destroyed. Disposal restores owned attributes, slider geometry/touch behavior, or original panel
+visibility without destroying caller instances or resetting application state. Detaching retains
+the binding. Do not reparent managed parts or bind competing behaviors to the same control.
+Try the live examples in the playground's Controls chapter.
+
 ## Large collections
 
 `bindVirtualList(viewport, source, options)` owns a content frame and the viewport's canvas

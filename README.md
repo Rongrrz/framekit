@@ -33,6 +33,11 @@ Runtime APIs are available from `framekit`. Optional inspection tools use `frame
 | Helpers     | Tooltips, popovers, hover scale, and responsive layouts                                |
 | Values      | `Color3`, `UDim`, `UDim2`, `Vector2`, and sequences                                    |
 
+Core instances provide the small building vocabulary. Built-in helpers compose those instances:
+`bindCheckbox` adds checked state to a button, `bindSlider` binds a frame track and button thumb,
+and `bindTabs` connects buttons to content panels. Helpers add interaction and accessibility;
+they keep application state explicit and do not introduce instance classes or a visual theme.
+
 Properties are typed, validated, and applied immediately:
 
 ```ts

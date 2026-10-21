@@ -87,6 +87,14 @@ export type { MenuController } from './helpers/menu.js';
 export { bindDialog } from './helpers/dialog.js';
 export type { DialogController, DialogOptions } from './helpers/dialog.js';
 
+export { bindCheckbox } from './helpers/checkbox.js';
+
+export { bindSlider } from './helpers/slider.js';
+export type { SliderOptions } from './helpers/slider.js';
+
+export { bindTabs } from './helpers/tabs.js';
+export type { TabItem, TabsOptions } from './helpers/tabs.js';
+
 export { bindKeyedChildren } from './helpers/keyed-children.js';
 export type { KeyedChildrenOptions } from './helpers/keyed-children.js';
 

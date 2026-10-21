@@ -74,6 +74,9 @@ describe('packed package consumers', () => {
       const doubled = api.createComputedValue([value], () => value.get() * 2);
       value.set(2);
       console.log(JSON.stringify({
+        bindCheckbox: typeof api.bindCheckbox,
+        bindSlider: typeof api.bindSlider,
+        bindTabs: typeof api.bindTabs,
         observeSize: typeof api.observeSize,
         setAccessibility: typeof api.setAccessibility,
         bindDraggable: typeof api.bindDraggable,
@@ -103,6 +106,9 @@ describe('packed package consumers', () => {
     );
 
     expect(JSON.parse(output)).toEqual({
+      bindCheckbox: 'function',
+      bindSlider: 'function',
+      bindTabs: 'function',
       observeSize: 'function',
       setAccessibility: 'function',
       bindDraggable: 'function',

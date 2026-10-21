@@ -1,4 +1,7 @@
 import {
+  bindCheckbox,
+  bindSlider,
+  bindTabs,
   bindHoverScale,
   observeSize,
   setAccessibility,
@@ -58,6 +61,20 @@ import {
 /** Never executed: TypeScript must reject every marked call during the normal typecheck. */
 function verifyPublicTypeContracts(): void {
   const article = createFrame({ TagName: 'article', Name: 'Profile' });
+  const checkbox = createTextButton();
+  bindCheckbox(checkbox, createObservableValue(false));
+  const thumb = createTextButton();
+  thumb.Parent = article;
+  bindSlider(article, thumb, { value: createObservableValue(50), step: 5 });
+  bindTabs(article, [{ key: 'profile', tab: checkbox, panel: createFrame() }], {
+    selection: createObservableValue('profile'),
+  });
+  // @ts-expect-error Checkbox helpers require an existing button, not a new instance class.
+  bindCheckbox(article, createObservableValue(false));
+  // @ts-expect-error Slider values remain numeric.
+  bindSlider(article, thumb, { value: createObservableValue('50') });
+  // @ts-expect-error Helpers do not add instance classes to the hierarchy.
+  article.isA('Slider');
   createTextLabel({ LineHeight: 1.5, LetterSpacing: -0.5, TextSelectable: true }).Parent = article;
   const flexible = createUIFlexItem({ Weight: 2 });
   observeSize(article, (size) => size.X.toFixed());
