@@ -30,3 +30,30 @@
 input[aria-invalid='true'] {
   outline: 1px solid #f3a49d;
 }
+
+[data-project-card] {
+  transition: box-shadow 120ms ease;
+}
+
+[data-project-card]:hover {
+  box-shadow: 0 0 0 1px #73867d;
+}
+
+[data-explorer-id] {
+  user-select: none;
+  cursor: grab;
+}
+
+[data-dragging],
+[data-dragging] [data-explorer-id] {
+  cursor: grabbing;
+}
+
+[data-drop-inside] {
+  outline: 2px solid #aff1d1;
+  outline-offset: -2px;
+}
+
+[data-explorer-overlay] {
+  pointer-events: none;
+}

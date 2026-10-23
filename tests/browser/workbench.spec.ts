@@ -1,6 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
-import { createSampleDocument } from '../../project-workbench/src/document';
+import { expect, test, type Page } from '@playwright/test';
 
 const runtimeErrors = new WeakMap<Page, string[]>();
 
@@ -10,6 +10,7 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto('/project-workbench/index.html');
+  await page.getByRole('button', { name: 'Create Welcome card', exact: true }).click();
 });
 
 test.afterEach(async ({ page }) => {
@@ -107,7 +108,7 @@ test('inserts, renames, reparents, duplicates, and deletes through the editor', 
   );
 });
 
-test('resizes panels, restores the document and layout, and exports source and JSON', async ({
+test('resizes panels, restores the project and layout, and exports only source code', async ({
   page,
 }) => {
   const splitter = page.getByRole('separator', { name: 'Explorer width' });
@@ -129,9 +130,9 @@ test('resizes panels, restores the document and layout, and exports source and J
   await page.getByRole('button', { name: 'Download .ts' }).click();
   expect((await sourceDownload).suggestedFilename()).toMatch(/\.ts$/);
   await page.getByRole('button', { name: 'Close export' }).click();
-  const jsonDownload = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save JSON', exact: true }).click();
-  expect((await jsonDownload).suggestedFilename()).toMatch(/\.json$/);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Saved in this browser');
+  await expect(page.getByRole('button', { name: /JSON/ })).toHaveCount(0);
 });
 
 test('keeps the three panels and file commands reachable on compact screens', async ({ page }) => {
@@ -197,45 +198,16 @@ test('shows formatted highlighted code in persistent themes and downloads the di
   await page.screenshot({ path: '/tmp/framekit-workbench-code-mobile.png' });
 });
 
-test('imports JSON atomically, keeps invalid editing buffers, and can undo a successful import', async ({
-  page,
-}) => {
-  const before = page.locator('[data-scene-id="headline"]');
-  await before.click();
+test('keeps invalid editing buffers without saving incomplete values', async ({ page }) => {
+  const headline = page.locator('[data-scene-id="headline"]');
+  await headline.click();
   const rotation = page.getByRole('textbox', { name: 'Rotation', exact: true });
   await rotation.fill('-');
   await rotation.press('Enter');
   await expect(rotation).toHaveAttribute('aria-invalid', 'true');
-  await expect(before).toHaveCSS('rotate', '0deg');
+  await expect(headline).toHaveCSS('rotate', '0deg');
   await rotation.press('Escape');
   await expect(rotation).toHaveValue('0');
-
-  const invalidChooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Open', exact: true }).click();
-  await (
-    await invalidChooser
-  ).setFiles({
-    name: 'invalid.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from('{"version":99}'),
-  });
-  await expect(page.getByRole('status')).toContainText('Could not open file');
-  await expect(before).toContainText('Make something persistent.');
-
-  const imported = createSampleDocument();
-  const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Open', exact: true }).click();
-  await (
-    await chooser
-  ).setFiles({
-    name: 'imported.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(JSON.stringify({ ...imported, name: 'Imported canvas', nodes: [] })),
-  });
-  await expect(page.locator('[data-scene-id]')).toHaveCount(0);
-  await expect(page.getByRole('status')).toContainText('Opened imported.json');
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(before).toContainText('Make something persistent.');
 });
 
 test('edits multiline content and selects property values from dropdown menus', async ({
@@ -341,4 +313,222 @@ test('releases its GUI, modal, and owned observers when destroyed', async ({ pag
   expect(result.recordsAfterDestruction).toBeGreaterThan(0);
   expect(result.laterMutations).toBe(0);
 });
-import { readFile } from 'node:fs/promises';
+
+test('creates projects from templates, manages the library, and keeps project histories separate', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Projects home' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open First canvas', exact: true })).toBeVisible();
+  await page.screenshot({ path: '/tmp/framekit-projects-home.png' });
+  await page.getByRole('button', { name: 'Create Dashboard', exact: true }).click();
+  await expect(page.getByRole('treeitem', { name: 'Navigation', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
+  await page.getByRole('button', { name: 'Options for Dashboard', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Rename project', exact: true }).click();
+  const name = page.getByRole('textbox', { name: 'Project name', exact: true });
+  await expect(name).toBeFocused();
+  await name.fill('Mission control');
+  await name.press('Enter');
+  await expect(
+    page.getByRole('button', { name: 'Open Mission control', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Options for Mission control', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Duplicate project', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Open Mission control copy', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Options for Mission control copy', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete project', exact: true }).click();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Open Mission control copy', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Options for Mission control copy', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete project', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Delete project?' })
+    .getByRole('button', { name: 'Delete', exact: true })
+    .click();
+  await expect(
+    page.getByRole('button', { name: 'Open Mission control copy', exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole('textbox', { name: 'Search projects', exact: true }).fill('first');
+  await expect(page.getByRole('button', { name: 'Open Mission control', exact: true })).toHaveCount(
+    0,
+  );
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Open First canvas', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Open First canvas', exact: true }).click();
+  await expect(page.locator('[data-scene-id="headline"]')).toContainText(
+    'Make something persistent.',
+  );
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+  await page.goBack();
+  await expect(page.getByRole('region', { name: 'Projects home' })).toBeVisible();
+  await page.goForward();
+  await expect(page.getByRole('treeitem', { name: 'Headline', exact: true })).toBeVisible();
+});
+
+test('starts on an empty project home and offers templates on a compact screen', async ({
+  page,
+}) => {
+  await page.evaluate(() => localStorage.clear());
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/project-workbench/index.html');
+  await expect(page.getByRole('region', { name: 'Projects home' })).toBeVisible();
+  await expect(page.getByText('Your projects will live here.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Create Settings panel', exact: true }).click();
+  await expect(page.locator('[data-scene-id="settings"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Blank canvas', exact: true }).click();
+  await expect(page.locator('[data-scene-id]')).toHaveCount(0);
+  await page.getByRole('button', { name: '+ Insert', exact: true }).click();
+  await page.getByRole('button', { name: 'Add Frame', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('Frame');
+});
+
+const dragLayer = async (
+  page: Page,
+  source: string,
+  target: string,
+  placement: 'inside' | 'before' | 'after' = 'inside',
+): Promise<void> => {
+  const from = page.getByRole('treeitem', { name: source, exact: true });
+  const to =
+    target === 'Canvas root'
+      ? page.getByRole('button', { name: target, exact: true })
+      : page.getByRole('treeitem', { name: target, exact: true });
+  await from.scrollIntoViewIfNeeded();
+  const start = (await from.boundingBox())!;
+  await to.scrollIntoViewIfNeeded();
+  const end = (await to.boundingBox())!;
+  await page.mouse.move(start.x + 100, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    end.x + 100,
+    end.y + (placement === 'before' ? 3 : placement === 'after' ? end.height - 3 : end.height / 2),
+    { steps: 12 },
+  );
+  await page.mouse.up();
+};
+
+test('drags branches into parents, between siblings, and onto the canvas with undo and stable objects', async ({
+  page,
+}) => {
+  const headline = page.locator('[data-scene-id="headline"]');
+  const original = await headline.elementHandle();
+  await dragLayer(page, 'Headline', 'Feature panel');
+  await expect(page.getByRole('treeitem', { name: 'Headline', exact: true })).toHaveAttribute(
+    'aria-level',
+    '3',
+  );
+  expect(await headline.evaluate((element, previous) => element === previous, original)).toBe(true);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('treeitem', { name: 'Headline', exact: true })).toHaveAttribute(
+    'aria-level',
+    '2',
+  );
+  await dragLayer(page, 'Feature panel', 'Headline', 'before');
+  const order = await page.getByRole('treeitem').allTextContents();
+  expect(order.findIndex((text) => text.includes('Feature panel'))).toBeLessThan(
+    order.findIndex((text) => text.includes('Headline')),
+  );
+  await dragLayer(page, 'Feature panel', 'Canvas root');
+  await expect(page.getByRole('treeitem', { name: 'Feature panel', exact: true })).toHaveAttribute(
+    'aria-level',
+    '1',
+  );
+  await expect(page.getByRole('treeitem', { name: 'Feature title', exact: true })).toHaveAttribute(
+    'aria-level',
+    '2',
+  );
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('treeitem', { name: 'Feature panel', exact: true })).toHaveAttribute(
+    'aria-level',
+    '2',
+  );
+  await dragLayer(page, 'Welcome card', 'Feature panel');
+  await expect(page.getByRole('treeitem', { name: 'Welcome card', exact: true })).toHaveAttribute(
+    'aria-level',
+    '1',
+  );
+});
+
+test('renames with F2, reorders with the keyboard, and exposes context actions', async ({
+  page,
+}) => {
+  const headline = page.getByRole('treeitem', { name: 'Headline', exact: true });
+  await headline.click();
+  await headline.press('F2');
+  const rename = page.getByRole('textbox', { name: 'Rename object', exact: true });
+  await expect(rename).toBeFocused();
+  await rename.fill('Main heading');
+  await rename.press('Enter');
+  const renamed = page.getByRole('treeitem', { name: 'Main heading', exact: true });
+  await expect(renamed).toHaveAttribute('aria-selected', 'true');
+  await renamed.press('Alt+ArrowUp');
+  const order = await page.getByRole('treeitem').allTextContents();
+  expect(order.findIndex((text) => text.includes('Main heading'))).toBeLessThan(
+    order.findIndex((text) => text.includes('Eyebrow')),
+  );
+  await renamed.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Rename', exact: true }).click();
+  await expect(rename).toBeFocused();
+  await rename.fill('Discard this');
+  await rename.press('Escape');
+  await expect(renamed).toBeVisible();
+  await renamed.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Show / hide', exact: true }).click();
+  await expect(page.locator('[data-scene-id="headline"]')).toBeHidden();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.locator('[data-scene-id="headline"]')).toBeVisible();
+});
+
+test('copies and cuts branches with shortcuts while keeping property text editing native', async ({
+  page,
+}) => {
+  const feature = page.getByRole('treeitem', { name: 'Feature panel', exact: true });
+  await feature.click();
+  await feature.press('ControlOrMeta+c');
+  await page.getByRole('button', { name: 'Canvas root', exact: true }).click();
+  await page.getByRole('button', { name: 'Canvas root', exact: true }).press('ControlOrMeta+v');
+  const copy = page.getByRole('treeitem', { name: 'Feature panel copy', exact: true });
+  await expect(copy).toHaveAttribute('aria-level', '1');
+  await expect(copy).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(copy).toHaveCount(0);
+  const headline = page.getByRole('treeitem', { name: 'Headline', exact: true });
+  await headline.click();
+  await headline.press('ControlOrMeta+x');
+  await feature.click();
+  await feature.press('ControlOrMeta+v');
+  await expect(headline).toHaveAttribute('aria-level', '3');
+  await headline.click();
+  const text = page.getByRole('textbox', { name: 'Text', exact: true });
+  await text.fill('Keep this editing buffer');
+  await text.press('ControlOrMeta+a');
+  await text.press('ControlOrMeta+x');
+  await expect(text).toHaveValue('');
+  await expect(headline).toBeVisible();
+});
+
+test('expands hovered branches during a drag and cancels with Escape', async ({ page }) => {
+  const feature = page.getByRole('treeitem', { name: 'Feature panel', exact: true });
+  await feature.click({ position: { x: 26, y: 17 } });
+  await expect(page.getByRole('treeitem', { name: 'Feature title', exact: true })).toHaveCount(0);
+  const headline = page.getByRole('treeitem', { name: 'Headline', exact: true });
+  const start = (await headline.boundingBox())!;
+  const end = (await feature.boundingBox())!;
+  await page.mouse.move(start.x + 100, start.y + 17);
+  await page.mouse.down();
+  await page.mouse.move(end.x + 100, end.y + 17, { steps: 10 });
+  await expect(feature).toHaveAttribute('data-drop-inside', '');
+  await expect(page.getByRole('treeitem', { name: 'Feature title', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  await expect(headline).toHaveAttribute('aria-level', '2');
+  await expect(page.locator('[data-drop-inside]')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+});

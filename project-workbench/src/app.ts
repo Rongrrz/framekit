@@ -14,11 +14,13 @@ import {
 
 import { createCodeDialog } from './code-dialog';
 import { createCommandPalette, type Command } from './commands';
-import { descendantIds } from './document';
+import { descendantIds, type SceneDocument } from './document';
 import { createEditor } from './editor';
-import { bindWorkbenchFiles, restoreWorkbench } from './files';
+import { bindWorkbenchFiles, restoreWorkspace } from './files';
 import { createHierarchy } from './hierarchy';
 import { createScenePreview } from './preview';
+import { createProjectHome } from './project-home';
+import { createProjectLibrary } from './projects';
 import { createProperties } from './properties';
 import { definitionFor, nodeDefinitions, type NodeType } from './schema';
 import { button, colors, label, panel, round, stack } from './ui';
@@ -26,11 +28,12 @@ import { createWorkspace, defaultWorkspace } from './workspace';
 
 /** Creates a standalone FrameKit application with an explicit, reversible scene document. */
 export const createWorkbench = (): ScreenGui => {
-  const restored = restoreWorkbench();
-  const editor = createEditor(restored.document);
-  const preferences = createObservableValue(restored.workspace);
+  const library = createProjectLibrary();
+  const editor = createEditor();
+  const preferences = createObservableValue(restoreWorkspace());
+  let activeProjectId: string | null = null;
   const interacting = createObservableValue(false);
-  const status = createObservableValue(restored.message);
+  const status = createObservableValue('Select an object to start editing.');
   const app = createScreenGui({ Name: 'FrameKitWorkbench', ColorScheme: 'Dark' });
   createUIFocusRing({ Color: colors.accent, Thickness: 2, Offset: 2 }).Parent = app;
   const report = (message: string): void => status.set(message);
@@ -61,23 +64,30 @@ export const createWorkbench = (): ScreenGui => {
   documentTitle.Position = udim2FromOffset(176, 10);
   documentTitle.Size = udim2(1, -440, 0, 32);
   const topActions = panel('File actions', header);
-  topActions.Position = udim2(1, -230, 0, 10);
-  topActions.Size = udim2FromOffset(214, 32);
+  topActions.Position = udim2(1, -248, 0, 10);
+  topActions.Size = udim2FromOffset(232, 32);
   stack(topActions, 6, true);
   const files = bindWorkbenchFiles(app, editor, preferences, report);
   const code = createCodeDialog(app, editor, files.download, report);
-  const open = button(topActions, 'Open', files.open, 52);
-  open.unsafeElement.title = 'Open a Workbench JSON document';
-  button(
-    topActions,
-    'Save JSON',
-    () => files.download(JSON.stringify(editor.state.get().document, null, 2), 'json'),
-    88,
-  );
+  const save = (): void => {
+    (document.activeElement as HTMLElement | null)?.blur();
+
+    if (activeProjectId) {
+      library.save(activeProjectId, editor.state.get().document);
+      report(library.error.get() ?? 'Saved in this browser.');
+    }
+  };
+  const showHome = (): void => {
+    window.location.hash = '/';
+    renderRoute();
+  };
+  const projectsButton = button(topActions, 'Projects', showHome, 88);
+  projectsButton.AccessibleLabel = 'Back to projects';
+  button(topActions, 'Save', () => perform(save), 64);
   const exportButton = button(topActions, 'Code', () => code.open(exportButton), 62);
   exportButton.BackgroundColor3 = colors.accent;
   exportButton.TextColor3 = colors.canvas;
-  const workspace = createWorkspace(app, editor, preferences);
+  const workspace = createWorkspace(background, editor, preferences);
   const preview = createScenePreview(workspace.canvas);
   workspace.canvas.unsafeElement.dataset.workbenchCanvas = '';
   const palette = createCommandPalette(app, perform);
@@ -128,7 +138,14 @@ export const createWorkbench = (): ScreenGui => {
     palette.open(`Move ${selected.properties.Name} to…`, commands);
   };
 
-  createHierarchy(workspace.hierarchy, editor);
+  createHierarchy(
+    workspace.hierarchy,
+    editor,
+    () => palette.open('Insert an object', insertCommands()),
+    move,
+    perform,
+    report,
+  );
   createProperties(workspace.properties, editor, move, report, perform);
   const toolbar = panel('Toolbar', background);
   toolbar.Position = udim2FromOffset(0, 53);
@@ -161,7 +178,7 @@ export const createWorkbench = (): ScreenGui => {
   const redo = button(controls, '↷', () => perform(editor.redo), 34);
   redo.AccessibleLabel = 'Redo';
   redo.unsafeElement.title = 'Redo · Ctrl/Cmd Shift Z';
-  const navigation = panel('Workspace panels', app);
+  const navigation = panel('Workspace panels', background);
   navigation.Position = udim2(0, 0, 1, -76);
   navigation.Size = udim2(1, 0, 0, 48);
   const paneButtons = (['hierarchy', 'canvas', 'properties'] as const).map((pane, index) => {
@@ -218,6 +235,9 @@ export const createWorkbench = (): ScreenGui => {
     { id: 'undo', label: 'Undo', hint: 'Ctrl/Cmd Z', run: editor.undo },
     { id: 'redo', label: 'Redo', hint: 'Ctrl/Cmd Shift Z', run: editor.redo },
     { id: 'duplicate', label: 'Duplicate selection', hint: 'Ctrl/Cmd D', run: editor.duplicate },
+    { id: 'copy', label: 'Copy selection', hint: 'Ctrl/Cmd C', run: () => editor.copy() },
+    { id: 'cut', label: 'Cut selection', hint: 'Ctrl/Cmd X', run: () => editor.copy(true) },
+    { id: 'paste', label: 'Paste into selection', hint: 'Ctrl/Cmd V', run: editor.paste },
     { id: 'delete', label: 'Delete selection', hint: 'Delete', run: editor.remove },
     { id: 'move', label: 'Move selection to…', hint: 'Reparent', run: move },
     {
@@ -229,29 +249,15 @@ export const createWorkbench = (): ScreenGui => {
         preferences.update((value) => ({ ...value, pane: 'properties' }));
       },
     },
-    {
-      id: 'save',
-      label: 'Save JSON',
-      hint: 'Ctrl/Cmd S',
-      run: () => files.download(JSON.stringify(editor.state.get().document, null, 2), 'json'),
-    },
-    { id: 'open', label: 'Open JSON', hint: 'Import document', run: files.open },
+    { id: 'save', label: 'Save project', hint: 'Ctrl/Cmd S · browser storage', run: save },
+    { id: 'open', label: 'Open project', hint: 'Your project library', run: showHome },
     {
       id: 'new',
-      label: 'New blank document',
-      hint: 'Undo restores the previous document',
-      run: () =>
-        editor.load(
-          JSON.stringify({ version: 1, name: 'Untitled', width: 960, height: 640, nodes: [] }),
-        ),
+      label: 'New project from template',
+      hint: 'Choose a starting point',
+      run: showHome,
     },
     { id: 'code', label: 'Export TypeScript', hint: 'Source code', run: () => code.open() },
-    {
-      id: 'reset',
-      label: 'Restore example',
-      hint: 'Undo restores your current document',
-      run: editor.reset,
-    },
     {
       id: 'layout',
       label: 'Reset workspace layout',
@@ -324,6 +330,13 @@ export const createWorkbench = (): ScreenGui => {
 
   const keyboard = createUserInputService(app);
   keyboard.inputBegan.subscribe((event, processed) => {
+    if (
+      !activeProjectId ||
+      app.unsafeElement.querySelector('dialog[open], [popover]:popover-open')
+    ) {
+      return;
+    }
+
     const modifier = event.ctrlKey || event.metaKey;
     const key = event.key.toLowerCase();
 
@@ -332,8 +345,7 @@ export const createWorkbench = (): ScreenGui => {
       if (key === 'k') {
         palette.open('Commands', commands(), commandButton);
       } else {
-        (document.activeElement as HTMLElement | null)?.blur();
-        files.download(JSON.stringify(editor.state.get().document, null, 2), 'json');
+        perform(save);
       }
       return;
     }
@@ -342,7 +354,21 @@ export const createWorkbench = (): ScreenGui => {
       return;
     }
 
-    if (modifier && (key === 'z' || key === 'y' || key === 'd')) {
+    if (modifier && (key === 'c' || key === 'x' || key === 'v')) {
+      event.preventDefault();
+      perform(() => {
+        if (key === 'v') {
+          editor.paste();
+        } else {
+          editor.copy(key === 'x');
+          report(
+            key === 'x'
+              ? 'Cut branch. Select a destination and paste to move it.'
+              : 'Copied branch. Select a destination and paste.',
+          );
+        }
+      });
+    } else if (modifier && (key === 'z' || key === 'y' || key === 'd')) {
       event.preventDefault();
       perform(
         key === 'd' ? editor.duplicate : key === 'y' || event.shiftKey ? editor.redo : editor.undo,
@@ -361,9 +387,73 @@ export const createWorkbench = (): ScreenGui => {
   app.onDestroy(stop);
   resizeHeader();
   const previousTitle = document.title;
-  document.title = 'Workbench · FrameKit';
+  const openProject = (id: string): void => {
+    window.location.hash = `/project/${encodeURIComponent(id)}`;
+    renderRoute();
+  };
+  const createProject = (document: SceneDocument): void => {
+    const project = library.create(document);
+    openProject(project.id);
+  };
+  const home = createProjectHome(app, library, openProject, createProject, perform);
+
+  const renderRoute = (): void => {
+    const route = window.location.hash.match(/^#\/project\/([^/]+)$/);
+    const project = route
+      ? library.state.get().find((entry) => encodeURIComponent(entry.id) === route[1])
+      : undefined;
+
+    if (project) {
+      home.close();
+    }
+
+    if (project && project.id !== activeProjectId) {
+      activeProjectId = project.id;
+      interacting.set(false);
+      editor.replace(project.document);
+      report(
+        library.error.get() ??
+          'Saved in this browser. Drag objects in Explorer to organize your interface.',
+      );
+    } else if (!project) {
+      activeProjectId = null;
+    }
+
+    if (!project) {
+      code.close();
+      palette.close();
+    }
+
+    background.Visible = Boolean(project);
+    home.view.Visible = !project;
+    document.title = project ? `${project.document.name} · FrameKit` : 'Your projects · FrameKit';
+  };
+
+  let previous = editor.state.get().document;
+  watchOwnedValue(app, editor.state, (snapshot) => {
+    if (!activeProjectId || snapshot.document === previous) {
+      previous = snapshot.document;
+      return;
+    }
+
+    previous = snapshot.document;
+    if (
+      library.state.get().find((project) => project.id === activeProjectId)?.document ===
+      snapshot.document
+    ) {
+      return;
+    }
+
+    library.save(activeProjectId, snapshot.document);
+    document.title = `${snapshot.document.name} · FrameKit`;
+    report(library.error.get() ?? 'Saved automatically in this browser.');
+  });
+  const controller = new AbortController();
+  window.addEventListener('hashchange', renderRoute, { signal: controller.signal });
   app.onDestroy(() => {
+    controller.abort();
     document.title = previousTitle;
   });
+  renderRoute();
   return app;
 };

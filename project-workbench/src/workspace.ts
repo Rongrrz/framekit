@@ -12,7 +12,7 @@ import {
   watchOwnedValue,
   type Frame,
   type ObservableValue,
-  type ScreenGui,
+  type GuiElement,
 } from 'framekit';
 
 import type { Editor } from './editor';
@@ -108,7 +108,7 @@ const bindSplitter = (
 
 /** The shell owns responsive geometry; the editable artboard keeps its own coordinate system. */
 export const createWorkspace = (
-  app: ScreenGui,
+  app: GuiElement,
   editor: Editor,
   preferences: ObservableValue<WorkspacePreferences>,
 ): Readonly<{

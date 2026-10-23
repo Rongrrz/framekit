@@ -8,6 +8,7 @@ import {
   type SceneDocument,
   type SceneNode,
 } from './document';
+import { moveBranch, type MoveDestination } from './move';
 import {
   defaultProperties,
   definitionFor,
@@ -28,12 +29,15 @@ export type Editor = Readonly<{
   add(type: NodeType): void;
   edit(id: string, property: string, value: PropertyValue): void;
   reparent(id: string, parent: string | null): void;
+  move(id: string, destination: MoveDestination): void;
+  replace(document: SceneDocument): void;
   duplicate(): void;
+  copy(cut?: boolean): void;
+  paste(): void;
   remove(): void;
   undo(): void;
   redo(): void;
   load(text: string): void;
-  reset(): void;
   configure(patch: Partial<Pick<SceneDocument, 'name' | 'width' | 'height'>>): void;
 }>;
 
@@ -41,6 +45,9 @@ export type Editor = Readonly<{
 export const createEditor = (initial: SceneDocument = createSampleDocument()): Editor => {
   const past: Revision[] = [];
   const future: Revision[] = [];
+  let clipboard:
+    | Readonly<{ root: SceneNode; nodes: readonly SceneNode[]; cutId?: string }>
+    | undefined;
   const state = createObservableValue<EditorSnapshot>({
     document: initial,
     selectedId: initial.nodes[0]?.id ?? null,
@@ -78,6 +85,37 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
     });
   };
 
+  const insertionParent = (type: NodeType): string | null => {
+    const current = selected();
+    const category = definitionFor(type).category;
+    return current &&
+      (category === 'modifier'
+        ? definitionFor(current.type).category !== 'modifier'
+        : definitionFor(current.type).category === 'container')
+      ? current.id
+      : (current?.parent ?? null);
+  };
+
+  const insertCopy = (
+    root: SceneNode,
+    branch: readonly SceneNode[],
+    destination: MoveDestination,
+  ): void => {
+    const { document } = state.get();
+    const replacements = new Map(branch.map((node) => [node.id, crypto.randomUUID()]));
+    const id = replacements.get(root.id)!;
+    const copies = branch.map((node) => ({
+      ...node,
+      id: replacements.get(node.id)!,
+      parent: node.id === root.id ? destination.parent : replacements.get(node.parent!)!,
+      properties: {
+        ...node.properties,
+        Name: node.id === root.id ? `${node.properties.Name} copy` : node.properties.Name,
+      },
+    }));
+    commit(moveBranch({ ...document, nodes: [...document.nodes, ...copies] }, id, destination), id);
+  };
+
   return {
     state,
     select: (id): void => {
@@ -87,15 +125,7 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
     },
     add: (type): void => {
       const { document } = state.get();
-      const current = selected();
-      const category = definitionFor(type).category;
-      const parent =
-        current &&
-        (category === 'modifier'
-          ? definitionFor(current.type).category !== 'modifier'
-          : definitionFor(current.type).category === 'container')
-          ? current.id
-          : (current?.parent ?? null);
+      const parent = insertionParent(type);
       const id = crypto.randomUUID();
       const properties = defaultProperties(type);
       commit({ ...document, nodes: [...document.nodes, { id, type, parent, properties }] }, id);
@@ -111,7 +141,25 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         const validated = validateField(field, value, property);
         return { ...node, properties: { ...node.properties, [property]: validated } };
       }),
-    reparent: (id, parent): void => transform(id, (node) => ({ ...node, parent })),
+    reparent: (id, parent): void => {
+      const { document } = state.get();
+
+      if (document.nodes.find((node) => node.id === id)?.parent !== parent) {
+        commit(moveBranch(document, id, { parent }));
+      }
+    },
+    move: (id, destination): void => commit(moveBranch(state.get().document, id, destination), id),
+    replace: (document): void => {
+      validateHierarchy(document);
+      past.length = 0;
+      future.length = 0;
+
+      if (clipboard) {
+        clipboard = { root: clipboard.root, nodes: clipboard.nodes };
+      }
+
+      publish({ document, selectedId: document.nodes[0]?.id ?? null });
+    },
     duplicate: (): void => {
       const original = selected();
 
@@ -121,30 +169,44 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
 
       const { document } = state.get();
       const ids = descendantIds(document, original.id);
-      const replacements = new Map([...ids].map((id) => [id, crypto.randomUUID()]));
-      const copies = document.nodes
-        .filter((node) => ids.has(node.id))
-        .map((node) => ({
-          ...node,
-          id: replacements.get(node.id)!,
-          parent: node.id === original.id ? node.parent : replacements.get(node.parent!)!,
-          properties: {
-            ...node.properties,
-            Name: node.id === original.id ? `${node.properties.Name} copy` : node.properties.Name,
-          },
-        }));
-      const last = document.nodes.findLastIndex((node) => ids.has(node.id));
-      commit(
+      const siblings = document.nodes.filter((node) => node.parent === original.parent);
+      const before = siblings[siblings.indexOf(original) + 1]?.id;
+      insertCopy(
+        original,
+        document.nodes.filter((node) => ids.has(node.id)),
         {
-          ...document,
-          nodes: [
-            ...document.nodes.slice(0, last + 1),
-            ...copies,
-            ...document.nodes.slice(last + 1),
-          ],
+          parent: original.parent,
+          ...(before ? { before } : {}),
         },
-        replacements.get(original.id)!,
       );
+    },
+    copy: (cut = false): void => {
+      const root = selected();
+
+      if (root) {
+        const { document } = state.get();
+        const ids = descendantIds(document, root.id);
+        clipboard = {
+          root,
+          nodes: document.nodes.filter((node) => ids.has(node.id)),
+          ...(cut ? { cutId: root.id } : {}),
+        };
+      }
+    },
+    paste: (): void => {
+      if (!clipboard) {
+        return;
+      }
+
+      const { cutId, root, nodes } = clipboard;
+      const destination = { parent: insertionParent(root.type) };
+
+      if (cutId && state.get().document.nodes.some((node) => node.id === cutId)) {
+        commit(moveBranch(state.get().document, cutId, destination), cutId);
+        clipboard = undefined;
+      } else {
+        insertCopy(root, nodes, destination);
+      }
     },
     remove: (): void => {
       const original = selected();
@@ -178,10 +240,6 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
     },
     load: (text): void => {
       const document = parseDocument(text);
-      commit(document, document.nodes[0]?.id ?? null);
-    },
-    reset: (): void => {
-      const document = createSampleDocument();
       commit(document, document.nodes[0]?.id ?? null);
     },
     configure: (patch): void => {

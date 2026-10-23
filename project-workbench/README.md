@@ -5,7 +5,8 @@ The landing/documentation app lives separately in `project-landing` and starts w
 `npm run dev:landing` or `npm run dev`.
 
 Workbench is an editor built with public FrameKit APIs. The editor chrome and preview are
-separate ownership subtrees inside one application. It ships with an editable welcome composition.
+separate ownership subtrees inside one application. Its project home offers a blank canvas, a welcome
+card, a dashboard, and a settings panel as starting points.
 
 ## Editing
 
@@ -19,9 +20,13 @@ separate ownership subtrees inside one application. It ships with an editable we
 - Properties are grouped by purpose. Boolean buttons toggle; dropdown menus list supported choices.
 - Insert adds an object beneath the selected compatible parent, or beside the selected leaf.
   Modifiers require a scene parent; each parent accepts one modifier of each supported type.
-- Duplicate copies a subtree. Delete removes it. Move selects a compatible parent and rejects cycles.
-- Undo/redo includes property edits, ownership changes, insertion, deletion, imports, and restoring
-  the example. Selection, zoom, and panel sizes do not consume document history.
+- Drag a branch onto the middle of a row to reparent it, or onto its upper/lower edge to reorder
+  siblings. Drop on Canvas to move to the root. Hover expands collapsed branches and edges scroll
+  the tree; Escape cancels. Cycles, incompatible owners, and duplicate modifiers are rejected.
+- Right-click a row or open Explorer actions to rename, cut, copy, paste, duplicate, change visibility,
+  move, delete, expand, or collapse. F2 renames inline; Alt Up/Down reorders siblings. Cut moves the
+  original branch when pasted; copy and duplicate assign fresh IDs to the entire branch.
+- Undo/redo includes property edits, ownership changes, insertion, deletion, and clipboard operations. Opening a project starts its own history session. Selection, zoom, and panel sizes do not consume document history.
 - Preview lets native buttons and text inputs behave normally. Returning to Design restores
   document values after transient input. Workbench does not attach application behavior to scene buttons.
 
@@ -32,11 +37,17 @@ Choose Canvas in the inspector to edit its name and dimensions, or use “Edit c
 
 ## Files and shortcuts
 
-Document edits autosave locally in this browser. Panel widths, active compact panel, and zoom
-are also restored. If storage is unavailable, editing and explicit downloads still work.
-Use Save JSON to keep a portable copy; Open validates an entire JSON file before replacing the
-current document. A successful import can be undone. Documents support up to 500 objects, 50
-ownership levels, 5 MB of JSON, and artboards between 240 and 4096 pixels on each axis.
+Projects autosave independently in this browser. Projects returns to the library, where you can
+search, sort, reopen, rename, duplicate, and delete saved projects. Deletion asks for confirmation.
+New project offers four templates. Reloading a project's URL reopens it; browser Back/Forward
+navigates between projects and home. The previous single autosaved document is migrated into the
+library without removing its original saved data.
+
+Save and Ctrl/Cmd S save the current project; export is TypeScript code only. Workspace preferences
+and code themes persist separately. If browser storage fails, editing remains available in memory
+and the save status explains the failure; keep the tab open and export code to preserve the scene.
+Projects support up to 500 objects, 50 ownership levels, and artboards between 240 and 4096 pixels
+on each axis. Browser storage is local to this origin and browser profile.
 
 Code opens formatted, syntax-highlighted TypeScript with line numbers and GitHub Dark, GitHub Light,
 and Catppuccin themes. Theme selection persists. Export uses readable object names and compact
@@ -45,15 +56,18 @@ Formatting and highlighting load on demand in an owned background worker. Supply
 application and an `#app` mount point to run it. Export includes scene properties and ownership;
 editor selection and workspace preferences are excluded. It does not serialize callbacks or resources.
 
-| Shortcut                       | Action                                                            |
-| ------------------------------ | ----------------------------------------------------------------- |
-| Ctrl/Cmd K                     | Search commands, including New blank document and Restore example |
-| Ctrl/Cmd S                     | Save JSON, applying the active property field first               |
-| Ctrl/Cmd Z                     | Undo outside text editing                                         |
-| Ctrl/Cmd Shift Z or Ctrl/Cmd Y | Redo outside text editing                                         |
-| Ctrl/Cmd D                     | Duplicate selection outside text editing                          |
-| Delete / Backspace             | Delete selection outside text editing                             |
-| F8                             | Runtime inspector in development                                  |
+| Shortcut                       | Action                                                     |
+| ------------------------------ | ---------------------------------------------------------- |
+| Ctrl/Cmd K                     | Search commands, including project library and templates   |
+| Ctrl/Cmd S                     | Save the project, applying the active property field first |
+| Ctrl/Cmd Z                     | Undo outside text editing                                  |
+| Ctrl/Cmd Shift Z or Ctrl/Cmd Y | Redo outside text editing                                  |
+| Ctrl/Cmd D                     | Duplicate selection outside text editing                   |
+| Ctrl/Cmd C / X / V             | Copy / cut / paste branches outside text editing           |
+| F2                             | Rename the selected object                                 |
+| Alt Up / Down                  | Reorder the selected sibling                               |
+| Delete / Backspace             | Delete selection outside text editing                      |
+| F8                             | Runtime inspector in development                           |
 
 ## Source ownership and validation
 
@@ -61,7 +75,8 @@ editor selection and workspace preferences are excluded. It does not serialize c
 JSON boundary and ownership rules. `editor.ts` owns document revisions and selection; `export.ts`
 generates source. `preview.ts` reconciles persistent runtime handles by document ID, detaching
 surviving moves before destroying removed owners. The remaining modules own workspace geometry,
-hierarchy interaction, property editing, commands, file operations, and export UI.
+hierarchy interaction, validated branch moves, project storage and templates, property editing,
+commands, downloads, and export UI.
 
 The document is application data rather than a general runtime snapshot format. Add supported
 types through the schema and preview factory table, then cover their import and export contracts.
@@ -76,4 +91,4 @@ npm run preview:workbench
 
 CI includes Workbench unit tests, its production build, and the existing browser matrix.
 Production builds omit the optional runtime inspector. HMR and application destruction release
-the editor GUI, native modals, subscriptions, resize observation, file listeners, and download URLs.
+the editor GUI, native modals, subscriptions, resize observation, drag animation frames, and download URLs.

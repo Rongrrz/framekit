@@ -23,6 +23,7 @@ export const createCommandPalette = (
   perform: (action: () => void) => void,
 ): Readonly<{
   open(title: string, commands: readonly Command[], opener?: GuiElement): void;
+  close(): void;
 }> => {
   const dialog = createFrame({
     TagName: 'dialog',
@@ -143,6 +144,7 @@ export const createCommandPalette = (
   app.onDestroy(() => controller.abort());
 
   return {
+    close: (): void => modal.close(),
     open: (nextTitle, nextCommands, opener): void => {
       commands = nextCommands;
       title.Text = nextTitle;

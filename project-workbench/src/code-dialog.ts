@@ -36,7 +36,7 @@ export const createCodeDialog = (
   editor: Editor,
   download: (text: string, extension: 'ts') => void,
   report: (message: string) => void,
-): Readonly<{ open(opener?: GuiElement): void }> => {
+): Readonly<{ open(opener?: GuiElement): void; close(): void }> => {
   const dialog = createFrame({
     TagName: 'dialog',
     Name: 'TypeScript export',
@@ -258,6 +258,7 @@ export const createCodeDialog = (
   });
 
   return {
+    close: (): void => modal.close(),
     open: (opener): void => {
       source = exportTypeScript(editor.state.get().document);
       prepared = undefined;
