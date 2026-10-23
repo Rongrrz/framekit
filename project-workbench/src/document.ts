@@ -1,0 +1,298 @@
+import { color3FromHex, udim2FromOffset } from 'framekit';
+
+import {
+  defaultProperties,
+  definitionFor,
+  isNodeType,
+  validateField,
+  type NodeType,
+  type PropertyValue,
+} from './schema';
+
+/** Flat storage preserves sibling order while parent IDs describe ownership. */
+export type SceneNode = Readonly<{
+  id: string;
+  type: NodeType;
+  parent: string | null;
+  properties: Readonly<Record<string, PropertyValue> & { Name: string }>;
+}>;
+
+/** This is an application document, not a serialization of runtime handles or callbacks. */
+export type SceneDocument = Readonly<{
+  version: 1;
+  name: string;
+  width: number;
+  height: number;
+  nodes: readonly SceneNode[];
+}>;
+
+const object = (value: unknown): Record<string, unknown> => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new TypeError('Expected a document object.');
+  }
+
+  return value as Record<string, unknown>;
+};
+
+/** Parent choices omit the node itself and its descendants before the editor renders them. */
+export const descendantIds = (document: SceneDocument, id: string): ReadonlySet<string> => {
+  const ids = new Set([id]);
+
+  for (let previous = 0; previous !== ids.size;) {
+    previous = ids.size;
+
+    for (const node of document.nodes) {
+      if (node.parent !== null && ids.has(node.parent)) {
+        ids.add(node.id);
+      }
+    }
+  }
+
+  return ids;
+};
+
+/** Walk ownership rather than assuming that imported parents precede their children. */
+export const orderedNodes = (document: SceneDocument): readonly SceneNode[] => {
+  const children = new Map<string | null, SceneNode[]>();
+
+  for (const node of document.nodes) {
+    const siblings = children.get(node.parent) ?? [];
+    siblings.push(node);
+    children.set(node.parent, siblings);
+  }
+
+  const ordered: SceneNode[] = [];
+  const visit = (parent: string | null): void => {
+    for (const node of children.get(parent) ?? []) {
+      ordered.push(node);
+      visit(node.id);
+    }
+  };
+
+  visit(null);
+  return ordered;
+};
+
+/** Imports are validated completely before the current document or preview changes. */
+export const parseDocument = (input: string): SceneDocument => {
+  if (input.length > 5_000_000) {
+    throw new TypeError('Documents must be smaller than 5 MB.');
+  }
+
+  const value = object(JSON.parse(input));
+
+  if (
+    value.version !== 1 ||
+    typeof value.name !== 'string' ||
+    value.name.length > 200 ||
+    !Array.isArray(value.nodes) ||
+    value.nodes.length > 500
+  ) {
+    throw new TypeError('Expected a version 1 Workbench document with at most 500 nodes.');
+  }
+
+  for (const dimension of [value.width, value.height]) {
+    if (
+      typeof dimension !== 'number' ||
+      !Number.isFinite(dimension) ||
+      dimension < 240 ||
+      dimension > 4096
+    ) {
+      throw new TypeError('Artboard dimensions must be between 240 and 4096 pixels.');
+    }
+  }
+
+  const nodes = value.nodes.map((entry): SceneNode => {
+    const node = object(entry);
+
+    if (
+      typeof node.id !== 'string' ||
+      !node.id ||
+      node.id.length > 100 ||
+      !isNodeType(node.type) ||
+      (node.parent !== null && typeof node.parent !== 'string')
+    ) {
+      throw new TypeError('Each node needs an ID, supported type, and parent ID or null.');
+    }
+
+    const fields = definitionFor(node.type).fields;
+    const properties = defaultProperties(node.type);
+
+    for (const [key, property] of Object.entries(object(node.properties))) {
+      if (!Object.hasOwn(fields, key)) {
+        throw new TypeError(`Unsupported ${node.type} property: ${key}.`);
+      }
+
+      properties[key] = validateField(fields[key]!, property, key);
+    }
+
+    return { id: node.id, type: node.type, parent: node.parent, properties };
+  });
+
+  const document: SceneDocument = {
+    version: 1,
+    name: value.name,
+    width: value.width as number,
+    height: value.height as number,
+    nodes,
+  };
+  validateHierarchy(document);
+  return document;
+};
+
+/** Structural edits and imports use the same ownership rules as the preview. */
+export const validateHierarchy = (document: SceneDocument): void => {
+  const byId = new Map(document.nodes.map((node) => [node.id, node]));
+
+  if (byId.size !== document.nodes.length || document.nodes.length > 500) {
+    throw new TypeError('Use unique node IDs and at most 500 nodes.');
+  }
+
+  const modifiers = new Set<string>();
+
+  for (const node of document.nodes) {
+    const parent = node.parent === null ? undefined : byId.get(node.parent);
+    const category = definitionFor(node.type).category;
+
+    if (node.parent !== null && !parent) {
+      throw new TypeError('The parent no longer exists.');
+    }
+
+    if (parent) {
+      const parentCategory = definitionFor(parent.type).category;
+
+      if (
+        parentCategory === 'modifier' ||
+        (parentCategory === 'element' && category !== 'modifier')
+      ) {
+        throw new TypeError('This node cannot contain that child.');
+      }
+    }
+
+    if (category === 'modifier') {
+      const key = `${node.parent}:${node.type}`;
+
+      if (!parent || modifiers.has(key)) {
+        throw new TypeError('Modifiers need a scene parent with no modifier of the same type.');
+      }
+
+      modifiers.add(key);
+    }
+
+    const ancestors = new Set([node.id]);
+    let ancestor = parent;
+
+    while (ancestor) {
+      if (ancestors.has(ancestor.id) || ancestors.size >= 50) {
+        throw new TypeError('A scene cannot contain ownership cycles or exceed 50 levels.');
+      }
+
+      ancestors.add(ancestor.id);
+      ancestor = ancestor.parent === null ? undefined : byId.get(ancestor.parent);
+    }
+  }
+};
+
+/** The opening composition is also a useful sample document for import and export. */
+export const createSampleDocument = (): SceneDocument => {
+  const node = (
+    id: string,
+    type: NodeType,
+    parent: string | null,
+    properties: Record<string, PropertyValue>,
+  ): SceneNode => ({
+    id,
+    type,
+    parent,
+    properties: { ...defaultProperties(type), ...properties },
+  });
+  const position = udim2FromOffset;
+  const color = color3FromHex;
+
+  return {
+    version: 1,
+    name: 'First canvas',
+    width: 960,
+    height: 640,
+    nodes: [
+      node('card', 'Frame', null, {
+        Name: 'Welcome card',
+        Position: position(48, 48),
+        Size: position(864, 544),
+        BackgroundColor3: color('#ffffff'),
+      }),
+      node('card-corner', 'UICorner', 'card', { CornerRadius: 24 }),
+      node('card-stroke', 'UIStroke', 'card', { Color: color('#dce3e2') }),
+      node('eyebrow', 'TextLabel', 'card', {
+        Name: 'Eyebrow',
+        Text: 'YOUR NEXT GREAT INTERFACE',
+        Position: position(40, 32),
+        Size: position(720, 24),
+        TextSize: 12,
+        FontWeight: '600',
+        TextColor3: color('#678077'),
+      }),
+      node('headline', 'TextLabel', 'card', {
+        Name: 'Headline',
+        Text: 'Make something persistent.',
+        Position: position(40, 72),
+        Size: position(780, 60),
+        TextSize: 38,
+        FontWeight: '600',
+        TextColor3: color('#172e28'),
+      }),
+      node('description', 'TextLabel', 'card', {
+        Name: 'Description',
+        Text: 'Real objects. An explicit tree. A little room to experiment.',
+        Position: position(40, 146),
+        Size: position(780, 32),
+        TextSize: 18,
+        TextColor3: color('#6b7974'),
+      }),
+      node('feature', 'Frame', 'card', {
+        Name: 'Feature panel',
+        Position: position(40, 216),
+        Size: position(784, 164),
+        BackgroundColor3: color('#e4f4ec'),
+      }),
+      node('feature-corner', 'UICorner', 'feature', { CornerRadius: 16 }),
+      node('feature-title', 'TextLabel', 'feature', {
+        Name: 'Feature title',
+        Text: 'A canvas with a memory.',
+        Position: position(28, 24),
+        Size: position(700, 36),
+        TextSize: 24,
+        FontWeight: '600',
+        TextColor3: color('#205b43'),
+      }),
+      node('feature-copy', 'TextLabel', 'feature', {
+        Name: 'Feature copy',
+        Text: 'Change a property. Move a node. Your instances stay alive.\nStart by selecting anything on this canvas.',
+        Position: position(28, 76),
+        Size: position(700, 60),
+        TextSize: 17,
+        TextColor3: color('#4d7664'),
+      }),
+      node('button', 'TextButton', 'card', {
+        Name: 'Get started',
+        Text: 'Build something →',
+        Position: position(40, 424),
+        Size: position(218, 52),
+        TextSize: 16,
+        FontWeight: '600',
+        TextXAlignment: 'Center',
+        BackgroundColor3: color('#244f3c'),
+        TextColor3: color('#ffffff'),
+      }),
+      node('button-corner', 'UICorner', 'button', { CornerRadius: 12 }),
+      node('footnote', 'TextLabel', 'card', {
+        Name: 'Footnote',
+        Text: 'Built with FrameKit · Yours to change',
+        Position: position(288, 434),
+        Size: position(480, 32),
+        TextSize: 14,
+        TextColor3: color('#819089'),
+      }),
+    ],
+  };
+};
