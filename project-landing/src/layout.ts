@@ -5,9 +5,9 @@ import {
   type ObservableValue,
 } from 'framekit';
 
-export type PlaygroundLayout = 'desktop' | 'mobile';
+export type LandingLayout = 'desktop' | 'mobile';
 
-export type Responsive<Value> = Readonly<Record<PlaygroundLayout, Value>>;
+export type Responsive<Value> = Readonly<Record<LandingLayout, Value>>;
 
 export const mobileBreakpoint = 960;
 
@@ -16,7 +16,7 @@ export const navigationHeight = 64;
 /** Keeps one instance responsive without creating separate desktop and mobile trees. */
 export const bindLayoutProperties = <Properties extends InstanceProperties>(
   owner: Instance,
-  layout: ObservableValue<PlaygroundLayout>,
+  layout: ObservableValue<LandingLayout>,
   instance: Instance<Properties>,
   properties: Responsive<Partial<Properties>>,
 ): void => {

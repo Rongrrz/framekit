@@ -7,7 +7,7 @@ import {
 } from 'framekit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createPlaygroundApp } from '../src/app';
+import { createLandingApp } from '../src/app';
 
 afterEach(() => {
   document.body.replaceChildren();
@@ -17,9 +17,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('playground application', () => {
+describe('project-landing application', () => {
   it('creates one persistent routed site and a styled native scrollbar', () => {
-    const app = createPlaygroundApp('desktop', 'dark');
+    const app = createLandingApp('desktop', 'dark');
     app.mount(document.body);
 
     const siteRoots = Array.from(document.querySelectorAll('[data-framekit="ScreenGui"]')).filter(
@@ -62,7 +62,7 @@ describe('playground application', () => {
   });
 
   it('navigates between persistent pages without rebuilding them', () => {
-    const app = createPlaygroundApp('desktop', 'dark');
+    const app = createLandingApp('desktop', 'dark');
     const home = app.findFirstChild('HomePage', true) as Frame;
     const guide = app.findFirstChild('GuidePage', true) as Frame;
     (app.findFirstChild('GuideNavButton', true) as TextButton).unsafeElement.click();
@@ -74,7 +74,7 @@ describe('playground application', () => {
   });
 
   it('switches every themed surface immediately from one theme value', () => {
-    const app = createPlaygroundApp('desktop', 'dark');
+    const app = createLandingApp('desktop', 'dark');
     const page = app.findFirstChild('FrameKitPlaygroundPage', true) as ScrollingFrame;
     const toggle = app.findFirstChild('ThemeToggleButton', true) as TextButton;
     toggle.unsafeElement.click();
@@ -82,14 +82,14 @@ describe('playground application', () => {
     expect(toggle.Text).toContain('Dark');
     expect(page.BackgroundColor3).toEqual(color3FromRGB(245, 247, 250));
     expect(page.ScrollBarImageColor3).toEqual(color3FromRGB(121, 136, 151));
-    expect(window.localStorage.getItem('framekit-playground-theme')).toBe('light');
+    expect(window.localStorage.getItem('framekit-project-landing-theme')).toBe('light');
     app.destroy();
   });
 
   it('resizes the same hierarchy at the responsive breakpoint', () => {
     vi.stubGlobal('innerWidth', 1440);
 
-    const app = createPlaygroundApp(undefined, 'dark');
+    const app = createLandingApp(undefined, 'dark');
     const visual = app.findFirstChild('HomeCodeVisual', true) as Frame;
     vi.stubGlobal('innerWidth', 640);
     window.dispatchEvent(new Event('resize'));

@@ -57,7 +57,7 @@ describe('document theme', () => {
     'resolves stored %s with light preference %s to %s',
     (stored, prefersLight, expected) => {
       if (stored !== null) {
-        window.localStorage.setItem('framekit-playground-theme', stored);
+        window.localStorage.setItem('framekit-project-landing-theme', stored);
       }
 
       vi.stubGlobal('matchMedia', () => ({ matches: prefersLight }));
@@ -96,12 +96,12 @@ describe('document theme', () => {
       expect(document.documentElement.getAttribute('data-framekit-theme')).toBe('light');
       expect(meta.content).toBe('#f5f7fa');
       expect(owner.ColorScheme).toBe('Light');
-      expect(window.localStorage.getItem('framekit-playground-theme')).toBe('light');
+      expect(window.localStorage.getItem('framekit-project-landing-theme')).toBe('light');
       owner.destroy();
       mode.set('dark');
       expect(document.documentElement.getAttribute('data-framekit-theme')).toBe(previous);
       expect(meta.content).toBe('#123456');
-      expect(window.localStorage.getItem('framekit-playground-theme')).toBe('light');
+      expect(window.localStorage.getItem('framekit-project-landing-theme')).toBe('light');
     },
   );
 

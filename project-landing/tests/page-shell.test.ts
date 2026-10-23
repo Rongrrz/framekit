@@ -17,7 +17,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('playground page shell', () => {
+describe('project-landing page shell', () => {
   it('uses natural content height without a scaling canvas', () => {
     const shell = createPageShell(
       createObservableValue(themes.dark),

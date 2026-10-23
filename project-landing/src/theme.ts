@@ -86,7 +86,7 @@ export const typeScale = {
 
 export const scrollbarThickness = 12;
 
-const themeStorageKey = 'framekit-playground-theme';
+const themeStorageKey = 'framekit-project-landing-theme';
 
 const documentThemeColors = {
   dark: '#0a0d12',

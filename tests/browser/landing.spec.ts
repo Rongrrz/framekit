@@ -6,7 +6,7 @@ for (const width of [1440, 390]) {
   }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: width === 390 ? 'reduce' : 'no-preference' });
-    await page.goto('/playground/index.html#/guide');
+    await page.goto('/project-landing/index.html#/guide');
 
     const main = page.getByRole('main');
     const navigation = page.getByRole('navigation', { name: 'Primary', exact: true });
@@ -49,7 +49,7 @@ for (const width of [1440, 390]) {
 }
 
 test('does not retain the theme tooltip after a pointer click and exit', async ({ page }) => {
-  await page.goto('/playground/index.html#/api');
+  await page.goto('/project-landing/index.html#/api');
 
   const toggle = page.getByRole('button', { name: /Switch to (light|dark) mode/ });
   const tooltip = page.getByRole('tooltip');
@@ -67,8 +67,10 @@ test('does not retain the theme tooltip after a pointer click and exit', async (
 
 test('switches the page and code palette immediately in both directions', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.addInitScript(() => window.localStorage.setItem('framekit-playground-theme', 'dark'));
-  await page.goto('/playground/index.html#/api');
+  await page.addInitScript(() =>
+    window.localStorage.setItem('framekit-project-landing-theme', 'dark'),
+  );
+  await page.goto('/project-landing/index.html#/api');
   await expect(page.getByRole('article').locator('pre')).toBeVisible();
 
   for (const mode of ['light', 'dark', 'light'] as const) {
@@ -125,7 +127,7 @@ test('copies multiline examples and renders every code block with readable synta
     });
   });
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/playground/index.html#/elements');
+  await page.goto('/project-landing/index.html#/elements');
 
   const blocks = page.locator('.pg-code-block');
   const blockCount = await blocks.count();
@@ -195,7 +197,7 @@ test('offers a working landing page and readable, linkable documentation at diff
 }, info) => {
   for (const width of [1440, 1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/playground/index.html');
+    await page.goto('/project-landing/index.html');
     await expect(page.getByRole('heading', { name: 'UI you can hold onto.' })).toBeVisible();
     await page.screenshot({ path: info.outputPath(`home-${width}.png`) });
 
@@ -264,7 +266,7 @@ test('opens each chapter directly and keeps navigation reachable after scrolling
     'overlays',
     'api',
   ]) {
-    await page.goto(`/playground/index.html#/${route}`);
+    await page.goto(`/project-landing/index.html#/${route}`);
     await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible();
 
     const main = page.getByRole('main');
@@ -284,7 +286,7 @@ test('keeps documentation topics reachable in short windows and restores the com
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 500 });
-  await page.goto('/playground/index.html#/guide');
+  await page.goto('/project-landing/index.html#/guide');
   const topics = page.getByRole('navigation', { name: 'Documentation topics' });
   const main = page.getByRole('main');
   await main.evaluate((element) => {
@@ -326,7 +328,7 @@ test('keeps documentation topics reachable in short windows and restores the com
 test('the overlay chapter demonstrates usable keyboard and pointer interactions', async ({
   page,
 }) => {
-  await page.goto('/playground/index.html#/overlays');
+  await page.goto('/project-landing/index.html#/overlays');
 
   const trigger = page.getByRole('button', { name: 'Default spring', exact: true });
   await trigger.focus();
@@ -338,7 +340,7 @@ test('the overlay chapter demonstrates usable keyboard and pointer interactions'
 });
 
 test('keeps the reading surface usable in dark mode', async ({ page }, info) => {
-  await page.goto('/playground/index.html#/guide');
+  await page.goto('/project-landing/index.html#/guide');
 
   if ((await page.locator('html').getAttribute('data-framekit-theme')) !== 'dark') {
     await page.getByRole('button', { name: 'Switch to dark mode' }).click();

@@ -12,7 +12,7 @@ import {
 } from 'framekit';
 
 import popoverHooksExample from '../../examples/popover/popover-hooks.ts?example';
-import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
+import { bindLayoutProperties, type LandingLayout } from '../layout';
 import { typeScale, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
 import { createCodeBlock } from './code-block';
@@ -21,7 +21,7 @@ import { appendArticleSection, createExampleRow } from './docs-shell';
 /** Owns the interactive dropdown examples and their caller-owned content. */
 export const appendPopoverExamples = (
   article: Frame,
-  layout: ObservableValue<PlaygroundLayout>,
+  layout: ObservableValue<LandingLayout>,
   theme: ThemeValue,
 ): TextLabel => {
   const heading = appendArticleSection(

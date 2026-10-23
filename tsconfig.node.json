@@ -31,7 +31,7 @@
     "vite.config.ts",
     "vitest.package.config.ts",
     "tests",
-    "playground/vite.config.ts",
-    "playground/tooling"
+    "project-landing/vite.config.ts",
+    "project-landing/tooling"
   ]
 }

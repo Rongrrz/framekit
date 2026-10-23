@@ -97,12 +97,12 @@ describes the checked boundaries, dependency maintenance, and responsibilities o
 
 Use the patched Node 24 LTS version in `.nvmrc` (`nvm install && nvm use`), then `npm ci`.
 
-The playground includes a documentation site and a 100,000-item virtual collection (`/collections.html`), built with FrameKit. See [playground/README.md](playground/README.md) for its architecture.
+The project-landing includes a documentation site and a 100,000-item virtual collection (`/collections.html`), built with FrameKit. See [project-landing/README.md](project-landing/README.md) for its architecture.
 
 ```sh
-npm run dev              # start the playground
+npm run dev              # start the project-landing
 npm test                 # run library tests
-npm run test:playground  # run playground tests
+npm run test:landing  # run project-landing tests
 npm run test:browser     # Chromium, Firefox, WebKit (install browsers first)
 npm run benchmark        # record browser performance diagnostics
 npm run build            # build the package
@@ -148,6 +148,6 @@ text editing alone, except function keys. Modified shortcuts also work in inspec
 The binding owns the launcher, shortcut listener, and open inspector; destroying the supplied
 root releases them. Keep this integration behind your bundler's development flag.
 
-The Playground uses the button and **F8**. Its documentation has separate chapters for
+The landing project uses the button and **F8**. Its documentation has separate chapters for
 elements, layout, state and collections, ownership, animation, overlays, menus/dialogs/trees, and devtools, with
-an API overview at `#/api`. See [Playground architecture](playground/README.md).
+an API overview at `#/api`. See [Landing architecture](project-landing/README.md).

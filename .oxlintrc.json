@@ -3,7 +3,7 @@
   "env": {
     "browser": true
   },
-  "ignorePatterns": ["node_modules", "dist", "build", "playground/examples"],
+  "ignorePatterns": ["node_modules", "dist", "build", "project-landing/examples"],
   "rules": {
     "curly": ["error", "all"],
     "eqeqeq": "error",

@@ -4,7 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
-    "tsBuildInfoFile": "../node_modules/.tmp/tsconfig.playground.tsbuildinfo"
+    "tsBuildInfoFile": "../node_modules/.tmp/tsconfig.project-landing.tsbuildinfo"
   },
   "include": ["src", "tests"]
 }

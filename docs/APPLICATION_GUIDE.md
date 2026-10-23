@@ -3,7 +3,7 @@
 FrameKit objects are persistent. Application state describes the interface; owned callbacks
 update existing objects. `Parent` defines the ownership tree. No render function recreates it.
 
-Start with `playground/src/app.ts` in the repository for a complete routed interface, or run
+Start with `project-landing/src/app.ts` in the repository for a complete routed interface, or run
 `npm run dev` and open `/`. Use the shared Debug launcher to inspect its live
 FrameKit hierarchy. Open `/collections.html` for a 100,000-item virtual list.
 
@@ -282,7 +282,7 @@ Each binding returns an idempotent disposer and releases itself when any supplie
 destroyed. Disposal restores owned attributes, slider geometry/touch behavior, or original panel
 visibility without destroying caller instances or resetting application state. Detaching retains
 the binding. Do not reparent managed parts or bind competing behaviors to the same control.
-Try the live examples in the playground's Controls chapter.
+Try the live examples in the project-landing's Controls chapter.
 
 ## Large collections
 
@@ -396,8 +396,8 @@ Focus the title bar or resize handles to use Arrow keys; Shift uses smaller step
 title bar or a double-click resets the window. Closing restores focus to the opener.
 Navigation and styling do not mutate inspected objects.
 
-Each playground page binds the same devtools launcher and F8 shortcut during development. The inspector has
-no dedicated route or URL entry point. Production playground builds remove the integration.
+Each project-landing page binds the same devtools launcher and F8 shortcut during development. The inspector has
+no dedicated route or URL entry point. Production project-landing builds remove the integration.
 For custom mounting, use `createRuntimeInspector(root)` and mount its `gui` yourself.
 
 `unsafeElement` is useful for native integration, labels, input modes, and unsupported attributes.

@@ -1,4 +1,4 @@
-# Playground
+# Project landing
 
 Run `npm ci` and `npm run dev`, then open the URL printed by Vite. The documentation site,
 `collections.html`, and `inbox.html` consume the same FrameKit source as applications. Production builds omit

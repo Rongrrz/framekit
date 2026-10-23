@@ -17,7 +17,7 @@ import {
   type ObservableValue,
 } from 'framekit';
 
-import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
+import { bindLayoutProperties, type LandingLayout } from '../layout';
 import { documentationPages, pageHash, type DocsPage } from '../router';
 import { bindThemeColors, fonts, typeScale, type ThemeValue } from '../theme';
 import { addPadding, createButton, createSurface, createText } from '../ui';
@@ -39,10 +39,7 @@ export const appendFlowText = (
 };
 
 /** Keeps interactive examples in one row on desktop and a vertical stack on mobile. */
-export const createExampleRow = (
-  parent: Frame,
-  layout: ObservableValue<PlaygroundLayout>,
-): Frame => {
+export const createExampleRow = (parent: Frame, layout: ObservableValue<LandingLayout>): Frame => {
   const row = createFrame({
     Name: 'ExampleRow',
     Size: udim2FromScale(1, 0),

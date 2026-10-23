@@ -13,7 +13,7 @@ import { createNavigation } from './components/navigation';
 import { createOverlaysPage } from './components/overlays-page';
 import { referenceChapters } from './components/reference-content';
 import { createReferencePage } from './components/reference-page';
-import { mobileBreakpoint, type PlaygroundLayout } from './layout';
+import { mobileBreakpoint, type LandingLayout } from './layout';
 import { createPageShell } from './page-shell';
 import { bindHashRouter, documentationPages, navigateToPage, resolveInitialPage } from './router';
 import {
@@ -25,14 +25,14 @@ import {
 } from './theme';
 
 /** Creates one persistent FrameKit hierarchy shared by every route, layout, and theme. */
-export const createPlaygroundApp = (
-  forcedLayout?: PlaygroundLayout,
+export const createLandingApp = (
+  forcedLayout?: LandingLayout,
   initialTheme: ThemeMode = resolveInitialTheme(),
 ): ScreenGui => {
   const initialLayout =
     forcedLayout ?? (window.innerWidth < mobileBreakpoint ? 'mobile' : 'desktop');
 
-  const layout = createObservableValue<PlaygroundLayout>(initialLayout);
+  const layout = createObservableValue<LandingLayout>(initialLayout);
   const theme = createObservableValue<ThemeMode>(initialTheme);
   const palette = createObservableValue(themes[initialTheme]);
   const route = createObservableValue(resolveInitialPage());

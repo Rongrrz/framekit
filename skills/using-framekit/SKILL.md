@@ -134,6 +134,6 @@ Verify changed interactions in real browsers when layout, focus, scrolling, or n
 matter. Run only the affected cases locally; start with Chromium unless the change involves
 browser-specific behavior. The FrameKit repository offers static checks through `npm run check`,
 comprehensive local validation through `npm run check:all`, and diagnostic `npm run benchmark`.
-CI covers the full test matrix. Its playground demonstrates
+CI covers the full test matrix. Its project-landing demonstrates
 persistent routed pages; `/collections.html` demonstrates bounded views for 100,000 items. Browser automation does
 not establish how the finished application behaves with assistive technology.

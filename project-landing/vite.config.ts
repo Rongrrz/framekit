@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [codeExamples()],
   appType: 'spa',
   root: fileURLToPath(new URL('.', import.meta.url)),
-  cacheDir: '../node_modules/.vite/playground',
+  cacheDir: '../node_modules/.vite/project-landing',
   resolve: {
     alias: {
       'framekit/devtools': fileURLToPath(new URL('../src/devtools.ts', import.meta.url)),

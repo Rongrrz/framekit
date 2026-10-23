@@ -10,7 +10,7 @@ import {
 
 import popoverExample from '../../examples/overlays/popover.ts?example';
 import tooltipExample from '../../examples/overlays/tooltip.ts?example';
-import { bindLayoutProperties, type PlaygroundLayout } from '../layout';
+import { bindLayoutProperties, type LandingLayout } from '../layout';
 import type { SitePage } from '../router';
 import { typeScale, type ThemeValue } from '../theme';
 import { createButton, createSurface, createText } from '../ui';
@@ -27,7 +27,7 @@ import {
 import { appendPopoverExamples } from './popover-examples';
 
 export const createOverlaysPage = (
-  layout: ObservableValue<PlaygroundLayout>,
+  layout: ObservableValue<LandingLayout>,
   theme: ThemeValue,
   route: ObservableValue<SitePage>,
   scrollTo: (target: GuiElement) => void,
@@ -90,7 +90,7 @@ export const createOverlaysPage = (
 
 const appendTooltipExamples = (
   article: Frame,
-  layout: ObservableValue<PlaygroundLayout>,
+  layout: ObservableValue<LandingLayout>,
   theme: ThemeValue,
 ): void => {
   const row = createExampleRow(article, layout);

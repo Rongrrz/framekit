@@ -1,6 +1,6 @@
 # Measured-list application validation and runtime profiles
 
-The `/inbox.html` playground screen exercises 2,000 persistent messages with filtering,
+The `/inbox.html` project-landing screen exercises 2,000 persistent messages with filtering,
 empty results, listbox selection, expansion, nested automatic layout, late HTTP image
 attachments, delayed local font loading, mobile resizing, and destruction with pending work.
 Browser tests control image delivery separately from the asset's JavaScript module. Font loading
@@ -84,9 +84,9 @@ independent modules. Public entry points remain compatible. Cohesive test suites
 by the behavior they protect.
 
 Focused unit checks passed for inspector state, virtual lists and geometry, tooltip/popover
-behavior, playground rendering, and dependency boundaries. Inspector, inbox, and measured-list
+behavior, project-landing rendering, and dependency boundaries. Inspector, inbox, and measured-list
 browser cases passed Chromium, Firefox, and WebKit; fixed lists, overlays, and documentation
-cases passed Chromium. Type checking, library/playground production builds, and all eight
+cases passed Chromium. Type checking, library/project-landing production builds, and all eight
 packaged-consumer checks passed. A rebuilt production inbox also passed attachment/font loading,
 last-row visibility, destruction, and console checks.
 

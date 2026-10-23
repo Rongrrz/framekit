@@ -6,7 +6,7 @@ import {
   createDocsShell,
   createExampleRow,
 } from '../src/components/docs-shell';
-import type { PlaygroundLayout } from '../src/layout';
+import type { LandingLayout } from '../src/layout';
 import { themes } from '../src/theme';
 
 afterEach(() => {
@@ -44,7 +44,7 @@ describe('documentation spacing', () => {
     const parent = createFrame();
     createUIListLayout().Parent = parent;
 
-    const layout = createObservableValue<PlaygroundLayout>('desktop');
+    const layout = createObservableValue<LandingLayout>('desktop');
     const row = createExampleRow(parent, layout);
     createTextButton().Parent = row;
     expect(row.unsafeElement.style.position).toBe('relative');

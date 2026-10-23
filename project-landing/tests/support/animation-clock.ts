@@ -5,7 +5,7 @@ export type TestAnimationClock = Readonly<{
   settle: () => void;
 }>;
 
-/** Installs a deterministic animation frame clock for one playground test. */
+/** Installs a deterministic animation frame clock for one project-landing test. */
 export const installAnimationClock = (): TestAnimationClock => {
   const state = {
     time: 0,

@@ -2,20 +2,20 @@ import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vite';
 
-import { codeExamples } from '../../playground/tooling/code-examples.ts';
+import { codeExamples } from '../../project-landing/tooling/code-examples.ts';
 
 export default defineConfig({
   appType: 'mpa',
-  optimizeDeps: { entries: ['tests/browser/index.html', 'playground/index.html'] },
+  optimizeDeps: { entries: ['tests/browser/index.html', 'project-landing/index.html'] },
   plugins: [
     codeExamples(),
     {
-      name: 'playground-test-entry',
+      name: 'project-landing-test-entry',
       transformIndexHtml: {
         order: 'pre',
 
         handler(html) {
-          return html.replaceAll('src="/src/', 'src="/playground/src/');
+          return html.replaceAll('src="/src/', 'src="/project-landing/src/');
         },
       },
     },

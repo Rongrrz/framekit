@@ -4,7 +4,7 @@ test('documents working menu, modal, tree, and explicit binding cleanup on deskt
   page,
 }, info) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/playground/index.html#/controls');
+  await page.goto('/project-landing/index.html#/controls');
   await expect(
     page.getByRole('heading', { name: 'Menus, dialogs & trees', exact: true }),
   ).toBeVisible();

@@ -4,17 +4,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { createGuidePage } from '../src/components/guide-page';
 import { createHomePage } from '../src/components/home';
 import { createReferencePage } from '../src/components/reference-page';
-import type { PlaygroundLayout } from '../src/layout';
+import type { LandingLayout } from '../src/layout';
 import { documentationPages, type SitePage } from '../src/router';
 import { themes } from '../src/theme';
 
 const stateFor = (page: SitePage) => ({
-  layout: createObservableValue<PlaygroundLayout>('desktop'),
+  layout: createObservableValue<LandingLayout>('desktop'),
   theme: createObservableValue(themes.dark),
   route: createObservableValue<SitePage>(page),
 });
 
-describe('playground reading experience', () => {
+describe('project-landing reading experience', () => {
   it('offers a working landing example and routes into the guide', () => {
     const state = stateFor('home');
     const navigate = vi.fn();

@@ -14,7 +14,7 @@ import {
   bindTooltip,
 } from 'framekit';
 
-import { bindLayoutProperties, navigationHeight, type PlaygroundLayout } from '../layout';
+import { bindLayoutProperties, navigationHeight, type LandingLayout } from '../layout';
 import { repositoryUrl } from '../links';
 import type { SitePage } from '../router';
 import { bindThemeColors, fonts, typeScale, type ThemeMode, type ThemeValue } from '../theme';
@@ -24,7 +24,7 @@ export const createNavigation = (
   page: ScrollingFrame,
   route: ObservableValue<SitePage>,
   navigate: (page: SitePage) => void,
-  layout: ObservableValue<PlaygroundLayout>,
+  layout: ObservableValue<LandingLayout>,
   mode: ObservableValue<ThemeMode>,
   theme: ThemeValue,
 ): Frame => {

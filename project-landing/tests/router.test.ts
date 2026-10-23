@@ -7,7 +7,7 @@ afterEach(() => {
   window.history.replaceState(null, '', window.location.pathname);
 });
 
-describe('playground router', () => {
+describe('project-landing router', () => {
   it.each([
     ['', 'home'],
     ['#/', 'home'],

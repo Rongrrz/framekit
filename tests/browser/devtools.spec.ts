@@ -6,7 +6,7 @@ const inspectorFor = (page: Page) =>
 test('opens and closes the inspector without changing the host URL or history', async ({
   page,
 }) => {
-  await page.goto('/playground/index.html?preview=desktop#/guide');
+  await page.goto('/project-landing/index.html?preview=desktop#/guide');
   await expect(inspectorFor(page)).toHaveCount(0);
 
   const originalUrl = page.url();
@@ -44,7 +44,7 @@ test('opens and closes the inspector without changing the host URL or history', 
 test('searches collapsed paths, navigates ancestors and selection history, and filters readable properties', async ({
   page,
 }, info) => {
-  await page.goto('/playground/index.html');
+  await page.goto('/project-landing/index.html');
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
 
   const inspector = inspectorFor(page);
@@ -92,7 +92,7 @@ test('searches collapsed paths, navigates ancestors and selection history, and f
 test('picks elements without activating app commands and releases picking when closed', async ({
   page,
 }) => {
-  await page.goto('/playground/index.html');
+  await page.goto('/project-landing/index.html');
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
 
   const inspector = inspectorFor(page);
@@ -106,8 +106,8 @@ test('picks elements without activating app commands and releases picking when c
   await page.getByRole('button', { name: /Get started/i }).click();
   await expect(pick).toHaveAttribute('aria-pressed', 'false');
   await expect(inspector).toContainText('GetStartedButton');
-  // Picking must not activate the playground's navigation command.
-  await expect(page).toHaveURL(/\/playground\/index.html$/);
+  // Picking must not activate the project-landing's navigation command.
+  await expect(page).toHaveURL(/\/project-landing\/index.html$/);
   await pick.click();
   await page.keyboard.press('Escape');
   await expect(pick).toHaveAttribute('aria-pressed', 'false');
@@ -121,7 +121,7 @@ test('picks elements without activating app commands and releases picking when c
 test('resizes with keyboard and pointer, and uses navigable tabs on a compact screen', async ({
   page,
 }, info) => {
-  await page.goto('/playground/index.html');
+  await page.goto('/project-landing/index.html');
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
 
   const inspector = inspectorFor(page);
@@ -172,7 +172,7 @@ test('resizes with keyboard and pointer, and uses navigable tabs on a compact sc
 });
 
 test('keeps the inspector closed on page load and refresh', async ({ page }) => {
-  await page.goto('/playground/index.html#/guide');
+  await page.goto('/project-landing/index.html#/guide');
   await expect(inspectorFor(page)).toHaveCount(0);
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
   await expect(inspectorFor(page)).toBeVisible();
@@ -184,7 +184,7 @@ test('keeps the inspector closed on page load and refresh', async ({ page }) => 
 });
 
 test('does not serve separate debugging or workbench entries', async ({ request }) => {
-  for (const path of ['/fkdebug', '/playground/workbench.html']) {
+  for (const path of ['/fkdebug', '/project-landing/workbench.html']) {
     const response = await request.get(path);
     expect(response.status()).toBe(404);
   }
@@ -250,7 +250,7 @@ test('the same inspector binding inspects an independent FrameKit project and re
 
 test('moves the floating inspector and resizes from all eight directions', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 1000 });
-  await page.goto('/playground/index.html');
+  await page.goto('/project-landing/index.html');
   await page.getByRole('button', { name: 'Debug', exact: true }).click();
 
   const panel = inspectorFor(page);
