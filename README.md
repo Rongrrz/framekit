@@ -97,15 +97,24 @@ describes the checked boundaries, dependency maintenance, and responsibilities o
 
 Use the patched Node 24 LTS version in `.nvmrc` (`nvm install && nvm use`), then `npm ci`.
 
-The project-landing includes a documentation site and a 100,000-item virtual collection (`/collections.html`), built with FrameKit. See [project-landing/README.md](project-landing/README.md) for its architecture.
+Two independent applications consume the same FrameKit source:
+
+| Project                                          | Purpose                                                             | Start                   |
+| ------------------------------------------------ | ------------------------------------------------------------------- | ----------------------- |
+| [project-landing](project-landing/README.md)     | Landing page, documentation, and interactive examples               | `npm run dev:landing`   |
+| [project-workbench](project-workbench/README.md) | Scene hierarchy, live canvas, property editing, history, and export | `npm run dev:workbench` |
 
 ```sh
-npm run dev              # start the project-landing
+npm run dev              # start project-landing (also dev:landing)
+npm run dev:workbench    # start project-workbench on port 5174
 npm test                 # run library tests
-npm run test:landing  # run project-landing tests
+npm run test:landing     # run landing tests
+npm run test:workbench   # run workbench tests
 npm run test:browser     # Chromium, Firefox, WebKit (install browsers first)
 npm run benchmark        # record browser performance diagnostics
 npm run build            # build the package
+npm run build:landing    # build project-landing/dist
+npm run build:workbench  # build project-workbench/dist
 npm run check            # quick static checks: formatting, types, lint
 npm run check:all        # full local pipeline: tests, builds, packaged consumers
 ```

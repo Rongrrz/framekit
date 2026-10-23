@@ -1,0 +1,18 @@
+/* Native affordances and selection decoration complement FrameKit-owned geometry. */
+[data-workbench-splitter] {
+  cursor: col-resize;
+  touch-action: none;
+}
+
+[data-workbench-selected] {
+  outline: 2px solid #3d9dff;
+  outline-offset: -2px;
+}
+
+[data-workbench-editing] [data-scene-id] {
+  cursor: default;
+}
+
+input[aria-invalid='true'] {
+  outline: 1px solid #f3a49d;
+}

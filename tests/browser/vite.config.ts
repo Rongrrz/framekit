@@ -6,7 +6,13 @@ import { codeExamples } from '../../project-landing/tooling/code-examples.ts';
 
 export default defineConfig({
   appType: 'mpa',
-  optimizeDeps: { entries: ['tests/browser/index.html', 'project-landing/index.html'] },
+  optimizeDeps: {
+    entries: [
+      'tests/browser/index.html',
+      'project-landing/index.html',
+      'project-workbench/index.html',
+    ],
+  },
   plugins: [
     codeExamples(),
     {

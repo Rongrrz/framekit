@@ -32,6 +32,7 @@
     "vitest.package.config.ts",
     "tests",
     "project-landing/vite.config.ts",
-    "project-landing/tooling"
+    "project-landing/tooling",
+    "project-workbench/vite.config.ts"
   ]
 }

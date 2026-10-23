@@ -183,7 +183,7 @@ test('keeps the inspector closed on page load and refresh', async ({ page }) => 
   await expect(inspectorFor(page)).toBeVisible();
 });
 
-test('does not serve separate debugging or workbench entries', async ({ request }) => {
+test('does not serve obsolete debugging entries from the landing project', async ({ request }) => {
   for (const path of ['/fkdebug', '/project-landing/workbench.html']) {
     const response = await request.get(path);
     expect(response.status()).toBe(404);

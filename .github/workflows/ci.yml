@@ -44,11 +44,17 @@ jobs:
       - name: Test project-landing
         run: npm run test:landing
 
+      - name: Test workbench
+        run: npm run test:workbench
+
       - name: Build library
         run: npm run build:library
 
       - name: Build project-landing
         run: npm run build:landing
+
+      - name: Build workbench
+        run: npm run build:workbench
 
       - name: Verify packaged consumers
         run: npm run test:package
