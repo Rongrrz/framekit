@@ -3,9 +3,11 @@ import {
   bindTreeView,
   createObservableValue,
   createTextButton,
+  createUIPadding,
   setAccessibility,
   udim2,
   udim2FromOffset,
+  udim,
   watchOwnedValue,
   type Frame,
   type TreeViewItem,
@@ -14,7 +16,7 @@ import {
 import { orderedNodes } from './document';
 import type { Editor } from './editor';
 import { definitionFor, type NodeType } from './schema';
-import { colors, font, input, label, scroll } from './ui';
+import { colors, font, input, label, round, scroll } from './ui';
 
 /** Filtering preserves ancestor rows so depth-first keyboard navigation stays meaningful. */
 export const createHierarchy = (parent: Frame, editor: Editor): void => {
@@ -122,6 +124,26 @@ export const createHierarchy = (parent: Frame, editor: Editor): void => {
         TextColor3: colors.text,
       });
       rowIds.set(row, item.id);
+      round(row, 6);
+      const padding = createUIPadding({ PaddingLeft: udim(0, 8) });
+      padding.Parent = row;
+      row.on('click', (event) => {
+        const current = source.get().find((entry) => entry.id === item.id);
+        const x = event.clientX - row.unsafeElement.getBoundingClientRect().left;
+        const chevron = 8 + (current ? current.depth - 1 : 0) * 14;
+
+        if (current?.branch && x >= chevron && x <= chevron + 16) {
+          event.stopPropagation();
+
+          if (collapsed.has(item.id)) {
+            collapsed.delete(item.id);
+          } else {
+            collapsed.add(item.id);
+          }
+
+          publish();
+        }
+      });
       row.onDestroy(() => rowIds.delete(row));
       row.on('dblclick', () => {
         if (collapsed.has(item.id)) {
@@ -141,13 +163,24 @@ export const createHierarchy = (parent: Frame, editor: Editor): void => {
           : '▸'
         : definitionFor(item.type).category === 'modifier'
           ? '◇'
-          : '·';
-      row.Text = `${'   '.repeat(item.depth - 1)}${icon}  ${item.name}`;
+          : item.type.startsWith('Text')
+            ? 'T'
+            : '□';
+      row.Text = `${icon}  ${item.name}`;
+      const padding = row.getChildren().find((child) => child.isA('UIPadding'))!;
+      if (padding.isA('UIPadding')) {
+        padding.PaddingLeft = udim(0, 8 + (item.depth - 1) * 14);
+      }
       row.AccessibleLabel = item.name;
       row.Position = udim2FromOffset(2, index * 36);
       row.BackgroundTransparency = item.selected ? 0 : 1;
       row.BackgroundColor3 = colors.selected;
-      row.TextColor3 = item.selected ? colors.accent : colors.text;
+      row.TextColor3 = item.selected
+        ? colors.accent
+        : definitionFor(item.type).category === 'modifier'
+          ? colors.muted
+          : colors.text;
+      row.FontWeight = item.selected ? 600 : 450;
       row.unsafeElement.title = `${item.name} · ${item.type}`;
     },
   });

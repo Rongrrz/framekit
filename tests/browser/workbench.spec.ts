@@ -29,7 +29,7 @@ test('edits persistent scene objects, picks from the canvas, and supports undo a
   );
   const text = page.getByRole('textbox', { name: 'Text', exact: true });
   await text.fill('A working editor.');
-  await text.press('Enter');
+  await text.press('ControlOrMeta+Enter');
   await expect(headline).toContainText('A working editor.');
   const canvas = await page.locator('[data-workbench-canvas]').boundingBox();
   const card = await page.locator('[data-scene-id="card"]').boundingBox();
@@ -48,7 +48,8 @@ test('applies dimensions, colors, rotation, and visibility through property cont
 }) => {
   const card = page.locator('[data-scene-id="card"]');
   for (const [name, value] of [
-    ['Size', '0, 720, 0, 480'],
+    ['Size X offset', '720'],
+    ['Size Y offset', '480'],
     ['BackgroundColor3', '#112233'],
     ['Rotation', '12'],
   ] as const) {
@@ -66,7 +67,7 @@ test('applies dimensions, colors, rotation, and visibility through property cont
   await expect(card).toBeHidden();
   await visible.click();
   await expect(card).toBeVisible();
-  await page.getByRole('button', { name: 'Canvas', exact: true }).click();
+  await page.getByRole('button', { name: 'Canvas settings', exact: true }).click();
   await page.getByRole('textbox', { name: 'width', exact: true }).fill('1200');
   await page.getByRole('textbox', { name: 'width', exact: true }).press('Enter');
   await expect(page.locator('[data-workbench-canvas]')).toHaveCSS('width', '1200px');
@@ -116,12 +117,12 @@ test('resizes panels, restores the document and layout, and exports source and J
   await page.getByRole('treeitem', { name: 'Headline', exact: true }).click();
   const text = page.getByRole('textbox', { name: 'Text', exact: true });
   await text.fill('Saved between visits');
-  await text.press('Enter');
+  await text.press('ControlOrMeta+Enter');
   await page.reload();
   await expect(page.locator('[data-scene-id="headline"]')).toContainText('Saved between visits');
   await expect(splitter).toHaveAttribute('aria-valuenow', '250');
   await page.getByRole('button', { name: 'Code', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: 'Generated TypeScript' })).toHaveValue(
+  await expect(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
     /Saved between visits/,
   );
   const sourceDownload = page.waitForEvent('download');
@@ -151,6 +152,49 @@ test('keeps the three panels and file commands reachable on compact screens', as
   await page.getByRole('textbox', { name: 'Search commands' }).fill('TextLabel');
   await page.getByRole('textbox', { name: 'Search commands' }).press('Enter');
   await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('TextLabel');
+});
+
+test('shows formatted highlighted code in persistent themes and downloads the displayed source', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  const region = page.getByRole('region', { name: 'Generated TypeScript' });
+  const source = region.locator('pre').filter({ hasText: "from 'framekit'" });
+  await expect(source).toContainText('const welcomeCard = createFrame({');
+  const tokenColors = await source
+    .locator('span[style*="color"]')
+    .evaluateAll((nodes) => new Set(nodes.map((node) => (node as HTMLElement).style.color)).size);
+  expect(tokenColors).toBeGreaterThan(3);
+  await page.screenshot({ path: '/tmp/framekit-workbench-code-dark.png' });
+  const original = await source.textContent();
+  const dark = await region.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await page.getByRole('button', { name: 'GitHub Light', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'GitHub Light', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(await region.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(
+    dark,
+  );
+  expect(await source.textContent()).toBe(original);
+  await page.screenshot({ path: '/tmp/framekit-workbench-code-light.png' });
+  await page.getByRole('button', { name: 'Catppuccin', exact: true }).click();
+  expect(await source.textContent()).toBe(original);
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download .ts', exact: true }).click();
+  const path = await (await downloading).path();
+  expect(await readFile(path!, 'utf8')).toBe(`${original}\n`);
+  await page.reload();
+  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Catppuccin', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Close export', exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  await expect(region).toContainText('welcomeCard');
+  await page.screenshot({ path: '/tmp/framekit-workbench-code-mobile.png' });
 });
 
 test('imports JSON atomically, keeps invalid editing buffers, and can undo a successful import', async ({
@@ -194,12 +238,31 @@ test('imports JSON atomically, keeps invalid editing buffers, and can undo a suc
   await expect(before).toContainText('Make something persistent.');
 });
 
+test('edits multiline content and selects property values from dropdown menus', async ({
+  page,
+}) => {
+  await page.getByRole('treeitem', { name: 'Feature copy', exact: true }).click();
+  const text = page.getByRole('textbox', { name: 'Text', exact: true });
+  const original = await text.inputValue();
+  expect(original).toContain('\n');
+  await text.fill('Line one\nLine two');
+  await text.press('Escape');
+  await expect(text).toHaveValue(original);
+  await text.fill('Line one\nLine two');
+  await text.press('ControlOrMeta+Enter');
+  await expect(page.locator('[data-scene-id="feature-copy"]')).toContainText('Line one\nLine two');
+  await page.getByRole('button', { name: 'TextXAlignment', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Center', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'TextXAlignment', exact: true })).toContainText(
+    'Center',
+  );
+});
+
 test('keeps tree ancestors during search and reveals canvas selections in collapsed branches', async ({
   page,
 }) => {
   const card = page.getByRole('treeitem', { name: 'Welcome card', exact: true });
-  await card.focus();
-  await card.press('ArrowLeft');
+  await card.click({ position: { x: 12, y: 17 } });
   await expect(page.getByRole('treeitem', { name: 'Headline', exact: true })).toHaveCount(0);
   await page.locator('[data-scene-id="headline"]').click();
   await expect(page.getByRole('treeitem', { name: 'Headline', exact: true })).toHaveAttribute(
@@ -230,14 +293,14 @@ test('supports pointer splitting and resets transient input state when returning
   await page.mouse.down();
   await page.mouse.move(box!.x - 38, box!.y + 100);
   await page.mouse.up();
-  await expect(splitter).toHaveAttribute('aria-valuenow', '328');
+  await expect(splitter).toHaveAttribute('aria-valuenow', '360');
   await page.getByRole('button', { name: '+ Insert', exact: true }).click();
   await page.getByRole('button', { name: 'Add TextInput', exact: true }).click();
-  await page.getByRole('button', { name: '▷ Interact', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview', exact: true }).click();
   const previewInput = page.locator('[data-workbench-canvas] input');
   await previewInput.fill('Transient typing');
   await expect(previewInput).toHaveValue('Transient typing');
-  await page.getByRole('button', { name: '■ Design', exact: true }).click();
+  await page.getByRole('button', { name: 'Design', exact: true }).click();
   await expect(previewInput).toHaveValue('');
 });
 
@@ -278,3 +341,4 @@ test('releases its GUI, modal, and owned observers when destroyed', async ({ pag
   expect(result.recordsAfterDestruction).toBeGreaterThan(0);
   expect(result.laterMutations).toBe(0);
 });
+import { readFile } from 'node:fs/promises';

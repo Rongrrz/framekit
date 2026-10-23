@@ -20,25 +20,25 @@ import {
 
 /** Editor chrome is independent of the editable scene and its exported appearance. */
 export const colors = {
-  canvas: color3FromHex('#101419'),
-  panel: color3FromHex('#191f27'),
-  raised: color3FromHex('#222a35'),
-  field: color3FromHex('#141a22'),
-  border: color3FromHex('#303b48'),
-  text: color3FromHex('#e8edf4'),
-  muted: color3FromHex('#92a0b2'),
-  faint: color3FromHex('#647387'),
-  accent: color3FromHex('#a9efc5'),
-  selected: color3FromHex('#2b443b'),
+  canvas: color3FromHex('#111216'),
+  panel: color3FromHex('#1b1c21'),
+  raised: color3FromHex('#26282f'),
+  field: color3FromHex('#15161b'),
+  border: color3FromHex('#34363f'),
+  text: color3FromHex('#eeedf2'),
+  muted: color3FromHex('#a1a4b1'),
+  faint: color3FromHex('#777b89'),
+  accent: color3FromHex('#aff1d1'),
+  selected: color3FromHex('#284438'),
   danger: color3FromHex('#f3a49d'),
 };
 
 export const font =
   'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-export const mono = 'ui-monospace, "SFMono-Regular", Consolas, monospace';
+export const mono = '"SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
 
 /** Give related controls one inherited visual rhythm without changing browser semantics. */
-export const round = (node: GuiElement, radius = 6, border = false): void => {
+export const round = (node: GuiElement, radius = 8, border = false): void => {
   createUICorner({ CornerRadius: radius }).Parent = node;
 
   if (border) {
@@ -88,7 +88,7 @@ export const button = (
     Size: udim2(0, width, 0, 32),
     BackgroundColor3: colors.raised,
     TextColor3: colors.text,
-    TextSize: 12,
+    TextSize: 13,
     FontFamily: font,
     FontWeight: 500,
   });

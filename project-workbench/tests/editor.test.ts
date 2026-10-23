@@ -127,7 +127,7 @@ describe('Workbench documents', () => {
     const document = editor.state.get().document;
     const source = exportTypeScript({ ...document, nodes: [...document.nodes].reverse() });
     expect(source).toContain('createUICorner');
-    expect(source).toContain('node1.Parent = canvas;');
+    expect(source).toContain('welcomeCard.Parent = canvas;');
     expect(source).toContain(JSON.stringify('"; alert("no"); //'));
     expect(source).toContain("app.mount('#app')");
   });

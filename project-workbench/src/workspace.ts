@@ -3,10 +3,12 @@ import {
   createFrame,
   createScrollingFrame,
   createUIScale,
+  createUIShadow,
   observeSize,
   setAccessibility,
   udim2,
   udim2FromOffset,
+  vector2,
   watchOwnedValue,
   type Frame,
   type ObservableValue,
@@ -26,7 +28,7 @@ export type WorkspacePreferences = Readonly<{
 
 export const defaultWorkspace: WorkspacePreferences = {
   left: 240,
-  right: 288,
+  right: 320,
   zoom: 0,
   pane: 'canvas',
 };
@@ -130,11 +132,18 @@ export const createWorkspace = (
     CanvasSize: udim2FromOffset(1000, 680),
   });
   viewport.Parent = body;
+  viewport.unsafeElement.dataset.workbenchGrid = '';
   setAccessibility(viewport, { role: 'region', label: 'Design canvas', focusable: true });
   const caption = label(viewport, 'CANVAS', 20, 10, colors.faint);
   caption.LetterSpacing = 1.2;
   const world = panel('Artboard bounds', viewport);
   world.ClipsDescendants = true;
+  createUIShadow({
+    Color: color3FromHex('#000000'),
+    Transparency: 0.55,
+    BlurRadius: 48,
+    Offset: vector2(0, 16),
+  }).Parent = world;
   const canvas = createFrame({
     Name: 'Scene canvas',
     BackgroundColor3: color3FromHex('#f3f6f3'),
@@ -155,9 +164,10 @@ export const createWorkspace = (
 
   const layout = (): void => {
     const width = app.AbsoluteSize.X || window.innerWidth;
-    const height = Math.max(0, (app.AbsoluteSize.Y || window.innerHeight) - 132);
     const prefs = preferences.get();
     const compact = width < 1060;
+    const height = Math.max(0, (app.AbsoluteSize.Y || window.innerHeight) - (compact ? 180 : 132));
+    body.Size = udim2(1, 0, 1, compact ? -180 : -132);
     const left = compact ? 0 : prefs.left;
     const right = compact ? 0 : prefs.right;
     const available = Math.max(0, width - left - right - (compact ? 0 : 10));

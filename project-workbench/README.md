@@ -12,22 +12,23 @@ separate ownership subtrees inside one application. It ships with an editable we
 - Select an object on the canvas or in Explorer. Search retains matching ancestors.
 - Use tree arrows, Home/End, typeahead, and Enter/Space. Double-click branches to collapse them.
 - Edit properties in the right panel. Enter or blur applies a complete value; Escape restores
-  an uncommitted input. Invalid values stay in the field with an error indication and status message.
-- Colors use `#RRGGBB`. Position and Size use `x scale, x pixels, y scale, y pixels`.
-  AnchorPoint uses `x, y`; one-axis padding uses `scale, pixels`.
-- Boolean buttons toggle. Choice buttons cycle through supported values.
+  an uncommitted input. Text content supports multiple lines; Ctrl/Cmd Enter applies it. Invalid values stay in the field with an error indication and status message.
+- Colors use `#RRGGBB` with an adjacent color swatch. Position and Size have separate X/Y
+  scale and pixel fields. Scale is a fraction of the parent axis (0.5 means half).
+  AnchorPoint has X/Y fields; padding has scale and pixel fields.
+- Properties are grouped by purpose. Boolean buttons toggle; dropdown menus list supported choices.
 - Insert adds an object beneath the selected compatible parent, or beside the selected leaf.
   Modifiers require a scene parent; each parent accepts one modifier of each supported type.
 - Duplicate copies a subtree. Delete removes it. Move selects a compatible parent and rejects cycles.
 - Undo/redo includes property edits, ownership changes, insertion, deletion, imports, and restoring
   the example. Selection, zoom, and panel sizes do not consume document history.
-- Interact lets native buttons and text inputs behave normally. Returning to Design restores
+- Preview lets native buttons and text inputs behave normally. Returning to Design restores
   document values after transient input. Workbench does not attach application behavior to scene buttons.
 
 Drag either divider or focus it and use Left/Right to resize panels. Shift uses one-pixel steps;
-Home/End select width limits. Narrow screens use the Explorer, Canvas, and Properties toolbar buttons.
-The toolbar scrolls horizontally. Fit shows the whole artboard; 100% enables pixel-scale scrolling.
-Choose Canvas to edit its name and dimensions, or use “Edit canvas settings” in Commands.
+Home/End select width limits. Narrow screens have a fixed Explorer/Canvas/Properties switcher
+at the bottom. The toolbar scrolls horizontally. Fit shows the whole artboard; 100% enables pixel-scale scrolling.
+Choose Canvas in the inspector to edit its name and dimensions, or use “Edit canvas settings” in Commands.
 
 ## Files and shortcuts
 
@@ -37,7 +38,10 @@ Use Save JSON to keep a portable copy; Open validates an entire JSON file before
 current document. A successful import can be undone. Documents support up to 500 objects, 50
 ownership levels, 5 MB of JSON, and artboards between 240 and 4096 pixels on each axis.
 
-Code opens generated TypeScript, with copy and download actions. Supply a normal FrameKit
+Code opens formatted, syntax-highlighted TypeScript with line numbers and GitHub Dark, GitHub Light,
+and Catppuccin themes. Theme selection persists. Export uses readable object names and compact
+FrameKit value constructors. Copy and download use the same formatted source shown in the preview.
+Formatting and highlighting load on demand in an owned background worker. Supply a normal FrameKit
 application and an `#app` mount point to run it. Export includes scene properties and ownership;
 editor selection and workspace preferences are excluded. It does not serialize callbacks or resources.
 

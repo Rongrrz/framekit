@@ -13,6 +13,20 @@
   cursor: default;
 }
 
+[data-workbench-grid] {
+  background-image: radial-gradient(#ffffff12 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+[data-workbench-code] ::selection {
+  background: #7c83fd55;
+}
+
+[data-workbench-code] pre {
+  font-variant-ligatures: none;
+  tab-size: 2;
+}
+
 input[aria-invalid='true'] {
   outline: 1px solid #f3a49d;
 }

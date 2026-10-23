@@ -22,7 +22,7 @@ import { createScenePreview } from './preview';
 import { createProperties } from './properties';
 import { definitionFor, nodeDefinitions, type NodeType } from './schema';
 import { button, colors, label, panel, round, stack } from './ui';
-import { createWorkspace } from './workspace';
+import { createWorkspace, defaultWorkspace } from './workspace';
 
 /** Creates a standalone FrameKit application with an explicit, reversible scene document. */
 export const createWorkbench = (): ScreenGui => {
@@ -53,9 +53,9 @@ export const createWorkbench = (): ScreenGui => {
   mark.TextXAlignment = 'Center';
   mark.FontWeight = 750;
   round(mark, 8);
-  const brand = label(header, 'FrameKit', 32, 15);
+  const brand = label(header, 'Workbench', 32, 15);
   brand.Position = udim2FromOffset(56, 10);
-  brand.Size = udim2FromOffset(84, 32);
+  brand.Size = udim2FromOffset(100, 32);
   brand.FontWeight = 650;
   const documentTitle = label(header, '', 32, 12, colors.muted);
   documentTitle.Position = udim2FromOffset(176, 10);
@@ -145,7 +145,7 @@ export const createWorkbench = (): ScreenGui => {
   toolbarScroll.Parent = toolbar;
   const controls = panel('Toolbar commands', toolbarScroll);
   controls.Position = udim2FromOffset(12, 8);
-  controls.Size = udim2FromOffset(852, 34);
+  controls.Size = udim2FromOffset(708, 34);
   stack(controls, 6, true);
   const insert = button(
     controls,
@@ -161,10 +161,13 @@ export const createWorkbench = (): ScreenGui => {
   const redo = button(controls, '↷', () => perform(editor.redo), 34);
   redo.AccessibleLabel = 'Redo';
   redo.unsafeElement.title = 'Redo · Ctrl/Cmd Shift Z';
-  const paneButtons = (['hierarchy', 'canvas', 'properties'] as const).map((pane) => {
+  const navigation = panel('Workspace panels', app);
+  navigation.Position = udim2(0, 0, 1, -76);
+  navigation.Size = udim2(1, 0, 0, 48);
+  const paneButtons = (['hierarchy', 'canvas', 'properties'] as const).map((pane, index) => {
     const name = pane === 'hierarchy' ? 'Explorer' : pane === 'canvas' ? 'Canvas' : 'Properties';
     const control = button(
-      controls,
+      navigation,
       name,
       () => {
         preferences.update((value) => ({ ...value, pane }));
@@ -175,9 +178,28 @@ export const createWorkbench = (): ScreenGui => {
       },
       pane === 'properties' ? 82 : 72,
     );
+    control.Position = udim2(index / 3, 6, 0, 7);
+    control.Size = udim2(1 / 3, -12, 0, 34);
     return { control, pane };
   });
-  const interact = button(controls, '▷ Interact', () => interacting.update((value) => !value), 92);
+  const design = button(
+    controls,
+    'Design',
+    () => {
+      interacting.set(false);
+      report('Design · Select an object on the canvas or in Explorer.');
+    },
+    76,
+  );
+  const interact = button(
+    controls,
+    'Preview',
+    () => {
+      interacting.set(true);
+      report('Preview · Try your interface. Choose Design to keep editing.');
+    },
+    82,
+  );
   const fit = button(
     controls,
     'Fit',
@@ -234,14 +256,14 @@ export const createWorkbench = (): ScreenGui => {
       id: 'layout',
       label: 'Reset workspace layout',
       hint: 'Panels and zoom',
-      run: () => preferences.set({ left: 240, right: 288, zoom: 0, pane: 'canvas' }),
+      run: () => preferences.set(defaultWorkspace),
     },
   ];
   const commandButton = button(
     controls,
-    'Commands ⌘K',
+    '⌕ Commands  ⌘K',
     () => palette.open('Commands', commands(), commandButton),
-    120,
+    156,
   );
   const footer = panel('Status bar', background);
   footer.Position = udim2(0, 0, 1, -27);
@@ -282,20 +304,16 @@ export const createWorkbench = (): ScreenGui => {
     preview.update(snapshot.document, interacting.get() ? null : snapshot.selectedId);
     undo.Disabled = !snapshot.canUndo;
     redo.Disabled = !snapshot.canRedo;
-    documentTitle.Text = `WORKBENCH  /  ${snapshot.document.name}`;
+    documentTitle.Text = `FRAMEKIT  /  ${snapshot.document.name}`;
   });
   watchOwnedValue(app, interacting, (value) => {
-    interact.Text = value ? '■ Design' : '▷ Interact';
-    interact.AccessibleLabel = interact.Text;
+    design.BackgroundColor3 = value ? colors.raised : colors.selected;
+    design.TextColor3 = value ? colors.muted : colors.accent;
+    design.unsafeElement.setAttribute('aria-pressed', String(!value));
     interact.BackgroundColor3 = value ? colors.selected : colors.raised;
     interact.unsafeElement.setAttribute('aria-pressed', String(value));
     workspace.canvas.unsafeElement.toggleAttribute('data-workbench-editing', !value);
     preview.update(editor.state.get().document, value ? null : editor.state.get().selectedId, true);
-    report(
-      value
-        ? 'Interact mode · Try native controls. Switch to Design to edit.'
-        : 'Design mode · Select an object on the canvas or in Explorer.',
-    );
   });
   watchOwnedValue(app, preferences, (value) => {
     for (const { control, pane } of paneButtons) {
@@ -337,6 +355,7 @@ export const createWorkbench = (): ScreenGui => {
 
   const resizeHeader = (): void => {
     documentTitle.Visible = window.innerWidth >= 780;
+    navigation.Visible = window.innerWidth < 1060;
   };
   const stop = observeSize(app, resizeHeader);
   app.onDestroy(stop);
