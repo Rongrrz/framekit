@@ -13,9 +13,12 @@ import {
   udim2FromOffset,
   type Frame,
   type Instance,
+  type UDim2,
 } from 'framekit';
 
 import { orderedNodes, type SceneDocument, type SceneNode } from './document';
+import { expandScene, type ExpandedScene } from './expand-scene';
+import { runPreviewEvent } from './preview-events';
 import { definitionFor, type NodeType } from './schema';
 
 const factories = {
@@ -35,13 +38,35 @@ const factories = {
 /** Preview reconciliation owns handles; stable document IDs keep their runtime identity. */
 export const createScenePreview = (
   canvas: Frame,
+  report: (message: string) => void = () => {},
 ): Readonly<{
+  setInteractive(value: boolean): void;
+  setPosition(id: string, position: UDim2): void;
   update(document: SceneDocument, selectedId: string | null, reset?: boolean): void;
   idFromTarget(target: EventTarget | null): string | null;
 }> => {
   const handles = new Map<string, Instance>();
   let previous = new Map<string, SceneNode>();
   let highlighted: HTMLElement | undefined;
+  let scene: ExpandedScene | undefined;
+  let interactive = false;
+  let dispatching = false;
+
+  const trigger = (id: string, event: string): void => {
+    if (!interactive || !scene || dispatching) {
+      return;
+    }
+
+    dispatching = true;
+
+    try {
+      runPreviewEvent(scene, handles, id, event, report);
+    } catch (error) {
+      report(error instanceof Error ? error.message : String(error));
+    } finally {
+      dispatching = false;
+    }
+  };
 
   canvas.onDestroy(() => {
     handles.clear();
@@ -50,14 +75,25 @@ export const createScenePreview = (
   });
 
   return {
+    setPosition: (id, position): void => {
+      const node = handles.get(id);
+      if (node && !node.isDestroyed() && 'Position' in node) {
+        node.Position = position;
+      }
+    },
+    setInteractive: (value): void => {
+      interactive = value;
+    },
     idFromTarget: (target): string | null => {
       const element =
         target instanceof Element ? target.closest<HTMLElement>('[data-scene-id]') : null;
       return element && canvas.unsafeElement.contains(element)
-        ? (element.dataset.sceneId ?? null)
+        ? (element.dataset.sceneOwner ?? element.dataset.sceneId ?? null)
         : null;
     },
-    update: (document, selectedId, reset = false): void => {
+    update: (authored, selectedId, reset = false): void => {
+      scene = expandScene(authored);
+      const document = scene.document;
       const next = new Map(document.nodes.map((node) => [node.id, node]));
       const removed = new Set(
         [...previous].filter(([id, node]) => next.get(id)?.type !== node.type).map(([id]) => id),
@@ -89,10 +125,26 @@ export const createScenePreview = (
           handle = factories[node.type]();
           handles.set(node.id, handle);
 
+          if (handle.isA('TextButton')) {
+            handle.onClick(() => trigger(node.id, 'Activated'));
+          } else if (handle.isA('TextInput')) {
+            handle.on('input', () => trigger(node.id, 'TextChanged'));
+            handle.on('keydown', (event) => {
+              if (event.key === 'Enter' && !event.isComposing) {
+                trigger(node.id, 'Submitted');
+              }
+            });
+          }
+
           if (definitionFor(node.type).category !== 'modifier') {
             const element = (handle as Frame).unsafeElement;
             element.dataset.sceneId = node.id;
+            element.dataset.sceneOwner = scene.owners.get(node.id)!;
           }
+        }
+
+        if (definitionFor(node.type).category !== 'modifier') {
+          (handle as Frame).unsafeElement.dataset.sceneOwner = scene.owners.get(node.id)!;
         }
 
         const old = reset ? undefined : previous.get(node.id);
