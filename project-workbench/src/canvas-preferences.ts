@@ -22,6 +22,7 @@ export type CanvasPreferences = Readonly<{
   grid: boolean;
   snapping: boolean;
   guides: boolean;
+  precision: 0 | 1;
   device: (typeof devicePresets)[number]['id'];
   landscape: boolean;
   width: number;
@@ -32,6 +33,7 @@ const defaults: CanvasPreferences = {
   grid: true,
   snapping: true,
   guides: true,
+  precision: 0,
   device: 'design',
   landscape: false,
   width: 390,
@@ -51,6 +53,7 @@ export const createCanvasPreferences = (owner: ScreenGui): ObservableValue<Canva
         grid: typeof value.grid === 'boolean' ? value.grid : true,
         snapping: typeof value.snapping === 'boolean' ? value.snapping : true,
         guides: typeof value.guides === 'boolean' ? value.guides : true,
+        precision: value.precision === 1 ? 1 : 0,
         device: devicePresets.find((preset) => preset.id === value.device)?.id ?? 'design',
         landscape: typeof value.landscape === 'boolean' ? value.landscape : false,
         width:

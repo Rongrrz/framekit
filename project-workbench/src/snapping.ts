@@ -1,6 +1,10 @@
 /** Artboard-relative rectangles keep snapping independent of viewport zoom. */
 export type CanvasRect = Readonly<{ x: number; y: number; width: number; height: number }>;
 
+/** Quantize authored offsets after viewport and rotation transforms, without negative zero. */
+export const roundCanvasOffset = (value: number, precision: 0 | 1): number =>
+  Number(value.toFixed(precision)) || 0;
+
 const axis = (
   start: number,
   length: number,

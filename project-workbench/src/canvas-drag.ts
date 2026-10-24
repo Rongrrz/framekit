@@ -12,7 +12,7 @@ import type { CanvasPreferences } from './canvas-preferences';
 import type { SceneDocument } from './document';
 import type { Editor } from './editor';
 import { resolvedProperties } from './prefabs';
-import { snapTranslation, type CanvasRect } from './snapping';
+import { roundCanvasOffset, snapTranslation, type CanvasRect } from './snapping';
 import { colors, panel } from './ui';
 
 type Drag = Readonly<{
@@ -213,9 +213,15 @@ export const bindCanvasDrag = (
     const sin = Math.sin(current.angle);
     position = udim2(
       current.position.X.Scale,
-      current.position.X.Offset + delta.x * cos + delta.y * sin,
+      roundCanvasOffset(
+        current.position.X.Offset + delta.x * cos + delta.y * sin,
+        settings.precision,
+      ),
       current.position.Y.Scale,
-      current.position.Y.Offset - delta.x * sin + delta.y * cos,
+      roundCanvasOffset(
+        current.position.Y.Offset - delta.x * sin + delta.y * cos,
+        settings.precision,
+      ),
     );
     preview.setPosition(current.id, position);
     vertical.Visible = delta.vertical !== undefined;

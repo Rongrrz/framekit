@@ -45,7 +45,7 @@ export const createSettingsDialog = (
   viewport.Position = udim2FromOffset(24, 72);
   viewport.Size = udim2(1, -48, 1, -96);
   const content = panel('Settings content', viewport);
-  content.Size = udim2(1, -6, 0, 862);
+  content.Size = udim2(1, -6, 0, 958);
   const toggles = (
     [
       ['grid', 'Canvas grid'],
@@ -247,6 +247,25 @@ export const createSettingsDialog = (
   });
   const reset = button(content, 'Reset panel layout', () => preferences.set(defaultWorkspace), 180);
   reset.Position = udim2FromOffset(0, 804);
+  const precisionLabel = label(content, 'Position precision', 28, 14);
+  precisionLabel.Position = udim2FromOffset(0, 852);
+  for (const [precision, name] of [
+    [0, 'Whole pixels'],
+    [1, 'One decimal'],
+  ] as const) {
+    const control = button(
+      content,
+      name,
+      () => canvas.update((value) => ({ ...value, precision })),
+      140,
+    );
+    control.AccessibleLabel = `Position precision ${name}`;
+    control.Position = udim2FromOffset(precision * 148, 892);
+    watchOwnedValue(control, canvas, (value) => {
+      control.unsafeElement.setAttribute('aria-pressed', String(value.precision === precision));
+      control.BackgroundColor3 = value.precision === precision ? colors.selected : colors.raised;
+    });
+  }
   watchOwnedValue(dialog, preferences, (value) => {
     if (document.activeElement !== left.unsafeElement) {
       left.Text = String(value.left);
