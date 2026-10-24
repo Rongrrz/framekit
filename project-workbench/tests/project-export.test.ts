@@ -26,6 +26,22 @@ it('exports a self-contained project whose ZIP extracts and whose code type-chec
     })),
     nodes: [
       ...document.nodes,
+      {
+        id: 'script',
+        type: 'Script',
+        parent: null,
+        properties: {
+          ...defaultProperties('Script'),
+          Source: `import type { ScriptContext } from '@framekit/script';
+export default (ctx: ScriptContext): void => {
+  const input = ctx.node('input');
+  const status = ctx.node('counter-status');
+  if (input?.isA('TextInput') && status?.isA('TextLabel')) {
+    ctx.listen(input.unsafeElement, 'script-ping', () => { status.Text = 'TypeScript script ran'; });
+  }
+};`,
+        },
+      },
       { id: 'input', type: 'TextInput', parent: null, properties: defaultProperties('TextInput') },
     ],
     bindings: [
@@ -128,6 +144,8 @@ export const mount = () => { const app = createScreenGui(); createScene(app); ap
       expect(status).toBeDefined();
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       expect(status.style.display).toBe('none');
+      input.dispatchEvent(new Event('script-ping'));
+      expect(host.textContent).toContain('TypeScript script ran');
       app.destroy();
       expect(host.childElementCount).toBe(0);
       host.remove();

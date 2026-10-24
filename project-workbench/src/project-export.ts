@@ -7,6 +7,7 @@ import {
 } from './document';
 import { identifierFrom, sourceValue } from './export';
 import { definitionFor } from './schema';
+import scriptContextSource from './script-context.ts?raw';
 
 /** Every entry is a real project file; project documents themselves are not exported. */
 export type ProjectFile = Readonly<{
@@ -31,6 +32,7 @@ const serializeScope = (
     'root',
     'nodes',
     'events',
+    'mountScript',
     ...[...modules.values()].map((entry) => entry.factory),
   ]);
   const names = new Map(
@@ -43,6 +45,17 @@ const serializeScope = (
     (scope.events ?? []).map((event) => [event, identifierFrom(`output ${event}`, used)]),
   );
   const lines: string[] = [];
+  const scripts = scope.nodes.filter(
+    (node) => node.type === 'Script' && node.properties.Enabled !== false,
+  );
+  const scriptImports = scripts.map((node, index) => {
+    const name = identifierFrom(`attached script ${index}`, used);
+    return {
+      node,
+      name,
+      path: `${module ? '../' : './'}scripts/${(module ? module.path + '-' : 'scene-') + scriptFile(scope, node.id)}`,
+    };
+  });
   const rootType = module ? root.type : 'Frame';
   imports.add(`type ${rootType}Properties`);
   const factory = module?.factory ?? 'createScene';
@@ -72,6 +85,9 @@ const serializeScope = (
   }
 
   for (const node of orderedNodes({ ...document, nodes: scope.nodes })) {
+    if (node.type === 'Script') {
+      continue;
+    }
     const name = names.get(node.id)!;
     const owner =
       node.parent === null
@@ -163,6 +179,23 @@ const serializeScope = (
     }
   }
 
+  if (scripts.length) {
+    lines.push(
+      '  const scriptNodes = new Map<string, Instance>([',
+      ...scope.nodes
+        .filter((node) => node.type !== 'Script')
+        .map((node) => `    [${JSON.stringify(node.id)}, ${reference(node.id)}],`),
+      '  ]);',
+      '',
+    );
+    for (const script of scriptImports) {
+      lines.push(
+        `  mountScript(${script.name}, ${script.node.parent ? reference(script.node.parent) : rootName}, ${rootName}, scriptNodes, ${JSON.stringify(document.networkOrigins ?? [])});`,
+        '',
+      );
+    }
+  }
+
   lines.push(
     '  return {',
     `    root: ${rootName},`,
@@ -172,7 +205,9 @@ const serializeScope = (
     ),
     '    },',
     '    nodes: {',
-    ...scope.nodes.map((node) => `      ${JSON.stringify(node.id)}: ${reference(node.id)},`),
+    ...scope.nodes
+      .filter((node) => node.type !== 'Script')
+      .map((node) => `      [${JSON.stringify(node.id)}]: ${reference(node.id)},`),
     '    },',
     `    destroy: () => ${rootName}.destroy(),`,
     '  };',
@@ -181,6 +216,10 @@ const serializeScope = (
   );
   return [
     `import { ${[...imports].sort().join(', ')} } from 'framekit';`,
+    ...(scripts.length
+      ? [`import { mountScript } from '${module ? '../' : './'}script-context';`]
+      : []),
+    ...scriptImports.map((script) => `import ${script.name} from ${JSON.stringify(script.path)};`),
     ...[...prefabImports].map(
       ([factory, path]) => `import { ${factory} } from ${JSON.stringify(path)};`,
     ),
@@ -189,8 +228,11 @@ const serializeScope = (
   ].join('\n');
 };
 
-/** The generated app includes the local FrameKit source package, so it does not depend on publication. */
-export const exportProject = async (document: SceneDocument): Promise<readonly ProjectFile[]> => {
+const scriptFile = (scope: Pick<SceneDocument, 'nodes'>, id: string): string =>
+  `script-${scope.nodes.findIndex((node) => node.id === id)}-${identifierFrom(id, new Set())}`;
+
+/** Scene modules are also the executable input for the isolated presentation. */
+export const exportSceneModules = (document: SceneDocument): readonly ProjectFile[] => {
   validateHierarchy(document);
   const used = new Set<string>(['createScene']);
   const modules = new Map(
@@ -200,7 +242,8 @@ export const exportProject = async (document: SceneDocument): Promise<readonly P
       return [definition.id, { definition, factory, path }] as const;
     }),
   );
-  const files: ProjectFile[] = [
+  const scopes = [document, ...(document.prefabs ?? [])];
+  return [
     {
       path: 'src/scene.ts',
       language: 'typescript',
@@ -211,6 +254,24 @@ export const exportProject = async (document: SceneDocument): Promise<readonly P
       language: 'typescript',
       source: serializeScope(document, module.definition, modules, module),
     })),
+    { path: 'src/script-context.ts', language: 'typescript', source: scriptContextSource },
+    ...scopes.flatMap((scope, scopeIndex) =>
+      scope.nodes
+        .filter((node) => node.type === 'Script')
+        .map((node): ProjectFile => ({
+          path: `src/scripts/${scopeIndex === 0 ? 'scene-' : `${modules.get((scope as PrefabDefinition).id)!.path}-`}${scriptFile(scope, node.id)}.ts`,
+          language: 'typescript',
+          source: String(node.properties.Source),
+        })),
+    ),
+  ];
+};
+
+/** The generated app includes the local FrameKit source package, so it does not depend on publication. */
+export const exportProject = async (document: SceneDocument): Promise<readonly ProjectFile[]> => {
+  validateHierarchy(document);
+  const files: ProjectFile[] = [
+    ...exportSceneModules(document),
     {
       path: 'src/main.ts',
       language: 'typescript',
@@ -285,6 +346,7 @@ if (import.meta.hot) {
             skipLibCheck: true,
             noEmit: true,
             types: ['vite/client'],
+            paths: { '@framekit/script': ['./src/script-context.ts'] },
           },
           include: ['src'],
         },
