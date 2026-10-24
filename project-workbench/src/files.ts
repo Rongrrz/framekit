@@ -1,6 +1,5 @@
 import { type ScreenGui, type ObservableValue, watchOwnedValue } from 'framekit';
 
-import type { Editor } from './editor';
 import { defaultWorkspace, type WorkspacePreferences } from './workspace';
 
 const workspaceKey = 'framekit-workbench-layout-v1';
@@ -41,10 +40,9 @@ export const restoreWorkspace = (): WorkspacePreferences => {
 /** Downloads are source code; project documents stay in the browser library. */
 export const bindWorkbenchFiles = (
   app: ScreenGui,
-  editor: Editor,
   preferences: ObservableValue<WorkspacePreferences>,
   report: (message: string) => void,
-): Readonly<{ download(text: string, extension: 'ts'): void }> => {
+): Readonly<{ download(name: string, data: BlobPart, mime: string): void }> => {
   const urls = new Set<string>();
   const timers = new Set<number>();
 
@@ -62,17 +60,12 @@ export const bindWorkbenchFiles = (
   });
 
   return {
-    download: (text): void => {
-      const url = URL.createObjectURL(new Blob([text], { type: 'text/typescript' }));
+    download: (name, data, mime): void => {
+      const url = URL.createObjectURL(new Blob([data], { type: mime }));
       urls.add(url);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `${
-        editor.state
-          .get()
-          .document.name.replace(/[^\p{L}\p{N}_-]+/gu, '-')
-          .slice(0, 80) || 'framekit-scene'
-      }.ts`;
+      anchor.download = name;
       anchor.click();
       const timer = window.setTimeout(() => {
         URL.revokeObjectURL(url);
@@ -80,7 +73,7 @@ export const bindWorkbenchFiles = (
         timers.delete(timer);
       }, 1000);
       timers.add(timer);
-      report('Downloaded TypeScript.');
+      report(`Downloaded ${name}.`);
     },
   };
 };

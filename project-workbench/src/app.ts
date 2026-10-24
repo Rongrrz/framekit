@@ -67,7 +67,7 @@ export const createWorkbench = (): ScreenGui => {
   topActions.Position = udim2(1, -248, 0, 10);
   topActions.Size = udim2FromOffset(232, 32);
   stack(topActions, 6, true);
-  const files = bindWorkbenchFiles(app, editor, preferences, report);
+  const files = bindWorkbenchFiles(app, preferences, report);
   const code = createCodeDialog(app, editor, files.download, report);
   const save = (): void => {
     (document.activeElement as HTMLElement | null)?.blur();
