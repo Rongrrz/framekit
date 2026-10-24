@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { createProject } from './workbench-helpers';
+import { chooseDropdown, createProject } from './workbench-helpers';
 
 const runtimeErrors = new WeakMap<Page, string[]>();
 
@@ -177,7 +177,8 @@ test('shows formatted highlighted code in persistent themes and downloads the di
   const dark = await region.evaluate((element) => getComputedStyle(element).backgroundColor);
   await page.getByRole('button', { name: 'Close export', exact: true }).click();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Code theme GitHub Light', exact: true }).click();
+  await page.getByRole('tab', { name: 'Appearance', exact: true }).click();
+  await chooseDropdown(page, 'Code theme', 'GitHub Light');
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await page.getByRole('button', { name: 'Export', exact: true }).click();
   await expect(region).toHaveCSS('background-color', 'rgb(255, 255, 255)');

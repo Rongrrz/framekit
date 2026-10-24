@@ -8,3 +8,16 @@ export const createProject = async (page: Page, template: string): Promise<void>
     .getByRole('button', { name: `Create ${template}`, exact: true })
     .click();
 };
+
+/** Choices use native popovers rather than the searchable command dialog. */
+export const chooseDropdown = async (
+  page: Page,
+  name: string,
+  choice: string | RegExp,
+): Promise<void> => {
+  await page.getByRole('button', { name, exact: true }).click();
+  await page
+    .getByRole('menu')
+    .getByRole('menuitem', { name: choice, exact: typeof choice === 'string' })
+    .click();
+};

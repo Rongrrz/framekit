@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createProject } from './workbench-helpers';
+import { chooseDropdown, createProject } from './workbench-helpers';
 
 test('persists the chrome theme without recoloring the authored project or losing dynamic controls', async ({
   page,
@@ -10,7 +10,8 @@ test('persists the chrome theme without recoloring the authored project or losin
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto('/project-workbench/index.html');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Workbench theme light', exact: true }).click();
+  await page.getByRole('tab', { name: 'Appearance', exact: true }).click();
+  await chooseDropdown(page, 'Workbench theme', 'Light');
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Projects home' })).toHaveCSS(
     'background-color',
@@ -31,7 +32,8 @@ test('persists the chrome theme without recoloring the authored project or losin
     'light',
   );
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Workbench theme dark', exact: true }).click();
+  await page.getByRole('tab', { name: 'Appearance', exact: true }).click();
+  await chooseDropdown(page, 'Workbench theme', 'Dark');
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await expect(card).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   expect(errors).toEqual([]);
@@ -54,13 +56,13 @@ test('quantizes canvas movement at fractional zoom and persists decimal precisio
   const offset = page.getByRole('textbox', { name: 'Position X offset', exact: true });
   await expect(offset).toHaveValue(/^-?\d+$/);
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Position precision One decimal', exact: true }).click();
+  await chooseDropdown(page, 'Position precision', 'One decimal');
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await drag();
   await expect(offset).toHaveValue(/^-?\d+(\.\d)?$/);
   await page.reload();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await expect(
-    page.getByRole('button', { name: 'Position precision One decimal', exact: true }),
-  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Position precision', exact: true })).toContainText(
+    'One decimal',
+  );
 });

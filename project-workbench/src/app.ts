@@ -100,7 +100,13 @@ export const createWorkbench = (): ScreenGui => {
   exportButton.BackgroundColor3 = colors.accent;
   exportButton.TextColor3 = colors.canvas;
   const workspace = createWorkspace(background, editor, preferences, canvasPreferences);
-  const settings = createSettingsDialog(app, preferences, canvasPreferences, code);
+  const settings = createSettingsDialog(
+    app,
+    preferences,
+    canvasPreferences,
+    code,
+    () => editor.state.get().document,
+  );
   watchOwnedValue(app, canvasPreferences, (value) =>
     workspace.viewport.unsafeElement.toggleAttribute('data-workbench-grid', value.grid),
   );
