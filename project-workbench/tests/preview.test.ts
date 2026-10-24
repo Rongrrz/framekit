@@ -67,6 +67,37 @@ describe('Workbench preview', () => {
 });
 
 describe('Prefab event preview', () => {
+  it('runs internal native handlers before handlers on the placed instance, as exported factories do', () => {
+    const canvas = own(createFrame());
+    const editor = createEditor();
+    editor.select('button');
+    const prefab = editor.createPrefab('Action');
+    editor.openPrefab(prefab);
+    editor.connect({
+      id: 'change-button',
+      source: 'button',
+      event: 'Activated',
+      action: { type: 'set', target: 'button', property: 'Text', value: 'Internal handler ran' },
+    });
+    editor.openPrefab(null);
+    editor.connect({
+      id: 'read-button',
+      source: 'button',
+      event: 'Activated',
+      action: { type: 'copyText', source: 'button', target: 'headline' },
+    });
+    const preview = createScenePreview(canvas);
+    preview.update(editor.state.get().project, null);
+    preview.setInteractive(true);
+    const button = canvas.findFirstChild('Get started', true)!;
+    const headline = canvas.findFirstChild('Headline', true)!;
+
+    if (button.isA('TextButton') && headline.isA('TextLabel')) {
+      button.unsafeElement.click();
+      expect(headline.Text).toBe('Internal handler ran');
+    }
+  });
+
   it('runs prefab output connections in Preview and restores authored values when returning to Design', () => {
     const canvas = own(createFrame());
     const editor = createEditor();

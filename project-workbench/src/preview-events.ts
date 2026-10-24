@@ -19,7 +19,8 @@ export const runPreviewEvent = (
       throw new TypeError('Event connection loop stopped after 64 actions.');
     }
 
-    for (const scope of scene.scopes) {
+    // Factories register a prefab's handlers before its parent's handlers on that root.
+    for (const scope of scene.scopes.toReversed()) {
       for (const binding of scope.bindings) {
         if (scope.nodes.get(binding.source) === source && binding.event === event) {
           run(scope, binding.action);
