@@ -2,7 +2,6 @@ import {
   bindDialog,
   bindKeyedChildren,
   bindMenu,
-  color3FromHex,
   createFrame,
   createObservableValue,
   observeSize,
@@ -17,59 +16,9 @@ import {
 } from 'framekit';
 
 import type { SceneDocument } from './document';
+import { createProjectTemplateDialog } from './project-template-dialog';
 import type { ProjectLibrary, SavedProject } from './projects';
-import { projectTemplates } from './templates';
 import { button, colors, font, input, label, panel, round, scroll, stack } from './ui';
-
-/** Compact previews use a handful of shapes rather than mounting every project's live scene. */
-const thumbnail = (parent: Frame, kind: string, accent: string): void => {
-  const surface = panel('Project thumbnail', parent, color3FromHex('#141820'));
-  surface.Position = udim2FromOffset(12, 12);
-  surface.Size = udim2(1, -24, 0, 92);
-  surface.ClipsDescendants = true;
-  round(surface, 7);
-  const tint = color3FromHex(accent);
-
-  if (kind === 'blank') {
-    const plus = label(surface, '+', 64, 32, tint);
-    plus.Position = udim2FromOffset(0, 12);
-    plus.TextXAlignment = 'Center';
-    surface.unsafeElement.dataset.workbenchGrid = '';
-    return;
-  }
-
-  const sheet = panel(
-    'Preview sheet',
-    surface,
-    kind === 'dashboard' ? colors.raised : color3FromHex('#f4f5ee'),
-  );
-  sheet.Position = udim2(0.12, 0, 0, 12);
-  sheet.Size = udim2(0.76, 0, 0, 76);
-  round(sheet, 5);
-
-  if (kind === 'dashboard') {
-    const sidebar = panel('Preview navigation', sheet, tint);
-    sidebar.Size = udim2(0.18, 0, 1, 0);
-    sidebar.BackgroundTransparency = 0.55;
-  }
-
-  const x = kind === 'dashboard' ? 0.25 : 0.1;
-  const title = panel('Preview title', sheet, kind === 'dashboard' ? tint : colors.border);
-  title.Position = udim2(x, 0, 0, 12);
-  title.Size = udim2(0.42, 0, 0, 5);
-  round(title, 2);
-  const subtitle = panel('Preview subtitle', sheet, color3FromHex('#a1a4b1'));
-  subtitle.Position = udim2(x, 0, 0, 23);
-  subtitle.Size = udim2(0.56, 0, 0, 3);
-  round(subtitle, 2);
-
-  for (let index = 0; index < (kind === 'dashboard' ? 3 : 1); index++) {
-    const block = panel('Preview content', sheet, tint);
-    block.Position = udim2(x + index * 0.22, 0, 0, 38);
-    block.Size = udim2(kind === 'dashboard' ? 0.18 : 0.8, 0, 0, kind === 'settings' ? 10 : 22);
-    round(block, 3);
-  }
-};
 
 /** The home screen owns project discovery and management; opening a project belongs to the app. */
 export const createProjectHome = (
@@ -80,6 +29,7 @@ export const createProjectHome = (
   perform: (action: () => void) => void,
   openSettings: () => void,
 ): Readonly<{ view: Frame; close(): void }> => {
+  const templates = createProjectTemplateDialog(app, create, perform);
   const home = panel('Projects home', app, colors.canvas);
   setAccessibility(home, { role: 'region', label: 'Projects home' });
   const header = panel('Projects header', home);
@@ -89,15 +39,7 @@ export const createProjectHome = (
   brand.LetterSpacing = 2;
   brand.Position = udim2FromOffset(28, 16);
   brand.Size = udim2FromOffset(190, 40);
-  const newProject = button(
-    header,
-    '+ New project',
-    () => {
-      viewport.CanvasPosition = vector2(0, 0);
-      templates[0]!.focus();
-    },
-    144,
-  );
+  const newProject = button(header, '+ New project', () => templates.open(newProject), 144);
   newProject.Position = udim2(1, -172, 0, 20);
   newProject.BackgroundColor3 = colors.accent;
   newProject.TextColor3 = colors.canvas;
@@ -108,45 +50,9 @@ export const createProjectHome = (
   viewport.Position = udim2FromOffset(0, 73);
   viewport.Size = udim2(1, 0, 1, -73);
   const content = panel('Project library', viewport, colors.canvas);
-  const greeting = label(content, 'A place for your next idea.', 58, 32);
+  const greeting = label(content, 'Your projects', 44, 28);
   greeting.FontWeight = 650;
-  greeting.Position = udim2FromOffset(0, 28);
-  const intro = label(
-    content,
-    'Start with a template, or pick up where you left off.',
-    30,
-    14,
-    colors.muted,
-  );
-  intro.Position = udim2FromOffset(0, 86);
-  const templatesHeading = label(content, 'START SOMETHING NEW', 30, 10, colors.muted);
-  templatesHeading.LetterSpacing = 1.5;
-  templatesHeading.Position = udim2FromOffset(0, 138);
-  const templates = projectTemplates.map((template) => {
-    const card = panel(template.name, content, colors.panel);
-    round(card, 12, true);
-    thumbnail(card, template.kind, template.accent);
-    const title = label(card, template.name, 28, 14);
-    title.Position = udim2FromOffset(16, 112);
-    title.Size = udim2(1, -32, 0, 28);
-    title.FontWeight = 600;
-    const description = label(card, template.description, 34, 11, colors.muted);
-    description.Position = udim2FromOffset(16, 142);
-    description.Size = udim2(1, -32, 0, 34);
-    description.TextWrapped = true;
-    const choose = button(card, `Create ${template.name}`, () =>
-      perform(() => create(template.create())),
-    );
-    choose.Position = udim2FromOffset(0, 0);
-    choose.Size = udim2(1, 0, 1, 0);
-    choose.BackgroundTransparency = 1;
-    choose.Text = '';
-    choose.unsafeElement.title = template.description;
-    card.unsafeElement.dataset.projectCard = '';
-    return choose;
-  });
-  const recentHeading = label(content, 'Your projects', 40, 22);
-  recentHeading.FontWeight = 600;
+  greeting.Position = udim2FromOffset(0, 24);
   const storage = label(content, 'Saved automatically in this browser.', 28, 12, colors.muted);
   const search = input(content, 'Search projects');
   search.FontFamily = font;
@@ -161,13 +67,12 @@ export const createProjectHome = (
     158,
   );
   const cards = panel('Saved projects', content, colors.canvas);
+  setAccessibility(cards, { role: 'list', label: 'Saved projects' });
   const empty = label(cards, '', 64, 14, colors.muted);
   empty.TextWrapped = true;
   const source = createObservableValue<readonly SavedProject[]>([]);
   let alphabetical = false;
-  let columns = 4;
   let width = 1200;
-  let recentTop = 420;
 
   const dialog = createFrame({
     TagName: 'dialog',
@@ -270,32 +175,19 @@ export const createProjectHome = (
     create: (project) => {
       const card = panel('Saved project', cards, colors.panel);
       card.Parent = undefined;
-      round(card, 12, true);
-      const kind =
-        project.document.nodes.length === 0
-          ? 'blank'
-          : project.document.nodes.some((node) => node.id === 'sidebar')
-            ? 'dashboard'
-            : project.document.nodes.some((node) => node.type === 'TextInput')
-              ? 'settings'
-              : 'welcome';
-      thumbnail(card, kind, kind === 'dashboard' ? '#a5baff' : '#aff1d1');
+      round(card, 6, true);
       const title = label(card, '', 28, 14);
       title.Name = 'Project title';
-      title.Position = udim2FromOffset(16, 112);
-      title.Size = udim2(1, -54, 0, 28);
+      title.Position = udim2FromOffset(16, 12);
+      title.Size = udim2(1, -72, 0, 28);
       title.FontWeight = 600;
-      const details = label(card, '', 24, 11, colors.muted);
-      details.Name = 'Project details';
-      details.Position = udim2FromOffset(16, 143);
-      details.Size = udim2(1, -32, 0, 24);
       const enter = button(card, 'Open project', () => open(project.id));
       enter.Text = '';
       enter.BackgroundTransparency = 1;
       enter.Size = udim2(1, 0, 1, 0);
       const more = button(card, '•••', () => {}, 32);
       more.AccessibleLabel = `Project options ${project.id}`;
-      more.Position = udim2(1, -44, 0, 111);
+      more.Position = udim2(1, -44, 0, 10);
       more.BackgroundTransparency = 1;
       const menu = panel('Project options', app);
       menu.Size = udim2FromOffset(190, 128);
@@ -347,33 +239,25 @@ export const createProjectHome = (
       options[2]!.TextColor3 = colors.danger;
       const menuBinding = bindMenu(more, menu, options);
       card.onDestroy(() => menu.destroy());
-      card.unsafeElement.dataset.projectCard = '';
+      card.unsafeElement.dataset.projectRow = '';
+      setAccessibility(card, { role: 'listitem' });
       return card;
     },
     update: (card, project, index) => {
       const children = card.getChildren();
       const title = children.find((child) => child.Name === 'Project title');
-      const details = children.find((child) => child.Name === 'Project details');
       const enter = children.find((child) => child.Name === 'Open project');
       const more = children.find((child) => child.Name === '•••');
 
-      if (
-        title?.isA('TextLabel') &&
-        details?.isA('TextLabel') &&
-        enter?.isA('TextButton') &&
-        more?.isA('TextButton')
-      ) {
+      if (title?.isA('TextLabel') && enter?.isA('TextButton') && more?.isA('TextButton')) {
         title.Text = project.document.name;
-        details.Text = `${project.document.width} × ${project.document.height}  ·  ${new Date(project.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+        enter.unsafeElement.title = `Edited ${new Date(project.updatedAt).toLocaleDateString()}`;
         enter.AccessibleLabel = `Open ${project.document.name}`;
         more.AccessibleLabel = `Options for ${project.document.name}`;
       }
 
-      card.Position = udim2FromOffset(
-        (index % columns) * ((width + 16) / columns),
-        Math.floor(index / columns) * 198,
-      );
-      card.Size = udim2FromOffset((width - (columns - 1) * 16) / columns, 182);
+      card.Position = udim2FromOffset(0, index * 60);
+      card.Size = udim2FromOffset(width, 52);
     },
   });
 
@@ -389,41 +273,23 @@ export const createProjectHome = (
     empty.Visible = projects.length === 0;
     empty.Text = library.state.get().length
       ? 'No projects match your search.'
-      : 'Your projects will live here. Choose a template above to make your first one.';
-    cards.Size = udim2FromOffset(width, Math.max(80, Math.ceil(projects.length / columns) * 198));
-    content.Size = udim2FromOffset(
-      width,
-      recentTop + 152 + Math.max(120, Math.ceil(projects.length / columns) * 198),
-    );
+      : 'Your projects will live here. Choose New project to get started.';
+    cards.Size = udim2FromOffset(width, Math.max(80, projects.length * 60));
+    content.Size = udim2FromOffset(width, 210 + Math.max(120, projects.length * 60));
   };
 
   const resize = (): void => {
     width = Math.min(1200, Math.max(240, window.innerWidth - (window.innerWidth < 600 ? 32 : 96)));
-    columns = Math.max(1, Math.min(4, Math.floor((width + 16) / 250)));
-    const templateColumns = Math.max(1, Math.min(5, Math.floor((width + 16) / 220)));
     content.Position = udim2FromOffset((window.innerWidth - width) / 2, 0);
-    greeting.TextSize = window.innerWidth < 600 ? 25 : 32;
-    templates.forEach((choose, index) => {
-      const card = choose.Parent;
-
-      if (card?.isA('Frame')) {
-        card.Position = udim2FromOffset(
-          (index % templateColumns) * ((width + 16) / templateColumns),
-          180 + Math.floor(index / templateColumns) * 202,
-        );
-        card.Size = udim2FromOffset((width - (templateColumns - 1) * 16) / templateColumns, 186);
-      }
-    });
-    recentTop = 196 + Math.ceil(templates.length / templateColumns) * 202;
-    recentHeading.Position = udim2FromOffset(0, recentTop);
-    storage.Position = udim2FromOffset(0, recentTop + 40);
+    greeting.TextSize = window.innerWidth < 600 ? 24 : 28;
+    storage.Position = udim2FromOffset(0, 72);
     storage.Text = library.error.get() ?? 'Saved automatically in this browser.';
     storage.TextWrapped = true;
     storage.Size = udim2(1, 0, 0, 34);
-    search.Position = udim2FromOffset(0, recentTop + 84);
+    search.Position = udim2FromOffset(0, 116);
     search.Size = udim2FromOffset(Math.max(100, width - 174), 32);
-    sort.Position = udim2FromOffset(width - 158, recentTop + 84);
-    cards.Position = udim2FromOffset(0, recentTop + 136);
+    sort.Position = udim2FromOffset(width - 158, 116);
+    cards.Position = udim2FromOffset(0, 172);
     publish();
   };
 
@@ -435,5 +301,11 @@ export const createProjectHome = (
   });
   home.onDestroy(observeSize(app, resize));
   resize();
-  return { view: home, close: (): void => modal.close() };
+  return {
+    view: home,
+    close: (): void => {
+      modal.close();
+      templates.close();
+    },
+  };
 };

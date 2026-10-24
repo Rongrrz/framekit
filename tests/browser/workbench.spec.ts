@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { createProject } from './workbench-helpers';
+
 const runtimeErrors = new WeakMap<Page, string[]>();
 
 test.beforeEach(async ({ page }) => {
@@ -10,7 +12,7 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto('/project-workbench/index.html');
-  await page.getByRole('button', { name: 'Create Welcome card', exact: true }).click();
+  await createProject(page, 'Welcome card');
 });
 
 test.afterEach(async ({ page }) => {
@@ -319,12 +321,17 @@ test('creates projects from templates, manages the library, and keeps project hi
 }) => {
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Projects home' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create Welcome card', exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.locator('[data-project-card]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Open First canvas', exact: true })).toBeVisible();
   await page.screenshot({ path: '/tmp/framekit-projects-home.png' });
-  await page.getByRole('button', { name: 'Create Dashboard', exact: true }).click();
+  await createProject(page, 'Dashboard');
   await expect(page.getByRole('treeitem', { name: 'Navigation', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
+  await expect(page.locator('[data-project-row]')).toHaveCount(2);
   await page.getByRole('button', { name: 'Options for Dashboard', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Rename project', exact: true }).click();
   const name = page.getByRole('textbox', { name: 'Project name', exact: true });
@@ -379,10 +386,10 @@ test('starts on an empty project home and offers templates on a compact screen',
   await page.goto('/project-workbench/index.html');
   await expect(page.getByRole('region', { name: 'Projects home' })).toBeVisible();
   await expect(page.getByText('Your projects will live here.', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: 'Create Settings panel', exact: true }).click();
+  await createProject(page, 'Settings panel');
   await expect(page.locator('[data-scene-id="settings"]')).toBeVisible();
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
-  await page.getByRole('button', { name: 'Create Blank canvas', exact: true }).click();
+  await createProject(page, 'Blank canvas');
   await expect(page.locator('[data-scene-id]')).toHaveCount(0);
   await page.getByRole('button', { name: '+ Insert', exact: true }).click();
   await page.getByRole('button', { name: 'Add Frame', exact: true }).click();

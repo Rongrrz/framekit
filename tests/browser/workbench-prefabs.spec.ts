@@ -2,6 +2,8 @@ import { execFileSync } from 'node:child_process';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { createProject } from './workbench-helpers';
+
 const errors = new WeakMap<Page, string[]>();
 
 test.beforeEach(async ({ page }) => {
@@ -10,7 +12,7 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', (error) => current.push(error.message));
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto('/project-workbench/index.html');
-  await page.getByRole('button', { name: 'Create Welcome card', exact: true }).click();
+  await createProject(page, 'Welcome card');
 });
 
 test.afterEach(async ({ page }) => {
@@ -74,7 +76,7 @@ test('runs nested prefab events independently and downloads a working multi-file
   page,
 }) => {
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
-  await page.getByRole('button', { name: 'Create Interactive counters', exact: true }).click();
+  await createProject(page, 'Interactive counters');
   await page.getByRole('button', { name: 'Preview', exact: true }).click();
   const canvas = page.getByRole('region', { name: 'Design canvas' });
   const buttons = canvas.getByRole('button', { name: '+ Add one', exact: true });
