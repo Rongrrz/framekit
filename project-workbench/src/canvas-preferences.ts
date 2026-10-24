@@ -14,7 +14,8 @@ export const devicePresets = [
   { id: 'laptop', label: 'Laptop', width: 1280, height: 800 },
   { id: 'tablet', label: 'Tablet', width: 768, height: 1024 },
   { id: 'phone', label: 'Phone', width: 390, height: 844 },
-  { id: 'wide', label: 'Wide screen', width: 1920, height: 1080 },
+  { id: 'wide', label: 'Full HD', width: 1920, height: 1080 },
+  { id: '4k', label: '4K UHD', width: 3840, height: 2160 },
   { id: 'custom', label: 'Custom device', width: 0, height: 0 },
 ] as const;
 
@@ -90,21 +91,43 @@ export const createCanvasPreferences = (owner: ScreenGui): ObservableValue<Canva
   return state;
 };
 
+export type Resolution = Readonly<{ width: number; height: number }>;
+export type Orientation = 'Portrait' | 'Landscape' | 'Square';
+
+/** Both editing and presentation resolve exactly the same viewport dimensions. */
+export const previewResolution = (
+  document: Resolution,
+  preferences: CanvasPreferences,
+): Resolution => {
+  const preset = devicePresets.find((preset) => preset.id === preferences.device)!;
+  const base = preset.id === 'design' ? document : preset.id === 'custom' ? preferences : preset;
+  return preferences.landscape
+    ? { width: base.height, height: base.width }
+    : { width: base.width, height: base.height };
+};
+
+export const resolutionOrientation = ({ width, height }: Resolution): Orientation =>
+  width === height ? 'Square' : width > height ? 'Landscape' : 'Portrait';
+
+export const resolutionLabel = (resolution: Resolution): string =>
+  `${resolution.width} × ${resolution.height} px · ${resolutionOrientation(resolution)}`;
+
+/** The legacy landscape preference stores a quarter-turn, including landscape-native presets. */
+export const withOrientation = (
+  document: Resolution,
+  preferences: CanvasPreferences,
+  orientation: 'Portrait' | 'Landscape',
+): CanvasPreferences => {
+  const base = previewResolution(document, { ...preferences, landscape: false });
+  return {
+    ...preferences,
+    landscape: resolutionOrientation(base) !== orientation && base.width !== base.height,
+  };
+};
+
 export const deviceDocument = (
   document: SceneDocument,
   preferences: CanvasPreferences,
   prefabId: string | null,
-): SceneDocument => {
-  if (prefabId || preferences.device === 'design') {
-    return document;
-  }
-
-  const preset = devicePresets.find((preset) => preset.id === preferences.device)!;
-  const width = preferences.device === 'custom' ? preferences.width : preset.width;
-  const height = preferences.device === 'custom' ? preferences.height : preset.height;
-  return {
-    ...document,
-    width: preferences.landscape ? height : width,
-    height: preferences.landscape ? width : height,
-  };
-};
+): SceneDocument =>
+  prefabId ? document : { ...document, ...previewResolution(document, preferences) };

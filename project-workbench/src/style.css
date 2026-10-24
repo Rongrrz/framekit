@@ -116,3 +116,16 @@ input[aria-invalid='true'] {
   border: 0;
   display: block;
 }
+
+[data-workbench-dropdown]::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: calc(50% - 5px);
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid #98a2b3;
+  border-bottom: 2px solid #98a2b3;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
