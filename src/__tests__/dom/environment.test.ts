@@ -14,7 +14,10 @@ import { describe, expect, it } from 'vitest';
 
 describe('DOM ownership', () => {
   it('creates factory DOM and injected styles in the selected document', () => {
-    const iframe = document.body.appendChild(document.createElement('iframe'));
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = '<!doctype html><html><head></head><body></body></html>';
+    document.body.appendChild(iframe);
+
     const ownerDocument = iframe.contentDocument!;
     const options = { ownerDocument };
 

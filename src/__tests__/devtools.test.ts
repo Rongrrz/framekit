@@ -125,7 +125,10 @@ it('uses the inspected document and removes its styles, picking listeners, and r
 });
 
 it('keeps a subtree inspector in its own document and does not navigate above its supplied root', () => {
-  const iframe = document.body.appendChild(document.createElement('iframe'));
+  const iframe = document.createElement('iframe');
+  iframe.srcdoc = '<!doctype html><html><head></head><body></body></html>';
+  document.body.appendChild(iframe);
+
   const ownerDocument = iframe.contentDocument!;
   const outside = createFrame({ Name: 'Outside' }, { ownerDocument });
   const scoped = createFrame({ Name: 'ScopedRoot' }, { ownerDocument });

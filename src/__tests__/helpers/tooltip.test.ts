@@ -466,7 +466,10 @@ describe('tooltips', () => {
   });
 
   it('creates generated content and its overlay in the trigger iframe document', () => {
-    const iframe = document.body.appendChild(document.createElement('iframe'));
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = '<!doctype html><html><head></head><body></body></html>';
+    document.body.appendChild(iframe);
+
     const ownerDocument = iframe.contentDocument!;
     const root = createScreenGui({}, { ownerDocument });
     const target = createTextButton({}, { ownerDocument });

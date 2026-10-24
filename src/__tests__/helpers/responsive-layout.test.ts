@@ -44,7 +44,10 @@ describe('responsive layouts', () => {
   });
 
   it('uses the owner document viewport rather than the global window', () => {
-    const iframe = document.body.appendChild(document.createElement('iframe'));
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = '<!doctype html><html><head></head><body></body></html>';
+    document.body.appendChild(iframe);
+
     const ownerDocument = iframe.contentDocument!;
     const ownerWindow = ownerDocument.defaultView!;
     const owner = createFrame({}, { ownerDocument });

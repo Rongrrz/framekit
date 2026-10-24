@@ -115,7 +115,10 @@ describe('owned keyboard input service', () => {
   );
 
   it('uses the owner’s document and supports independent subscription disposal', () => {
-    const iframe = document.body.appendChild(document.createElement('iframe'));
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = '<!doctype html><html><head></head><body></body></html>';
+    document.body.appendChild(iframe);
+
     const otherDocument = iframe.contentDocument!;
     const owner = createFrame({}, { ownerDocument: otherDocument });
     const input = createUserInputService(owner);
