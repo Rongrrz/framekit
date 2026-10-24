@@ -99,10 +99,10 @@ Use the patched Node 24 LTS version in `.nvmrc` (`nvm install && nvm use`), then
 
 Two independent applications consume the same FrameKit source:
 
-| Project                                          | Purpose                                                             | Start                   |
-| ------------------------------------------------ | ------------------------------------------------------------------- | ----------------------- |
-| [project-landing](project-landing/README.md)     | Landing page, documentation, and interactive examples               | `npm run dev:landing`   |
-| [project-workbench](project-workbench/README.md) | Scene hierarchy, live canvas, property editing, history, and export | `npm run dev:workbench` |
+| Project                                          | Purpose                                                            | Start                   |
+| ------------------------------------------------ | ------------------------------------------------------------------ | ----------------------- |
+| [project-landing](project-landing/README.md)     | Landing page, documentation, and interactive examples              | `npm run dev:landing`   |
+| [project-workbench](project-workbench/README.md) | Projects, nested prefabs, events, device previews, and code export | `npm run dev:workbench` |
 
 ```sh
 npm run dev              # start project-landing (also dev:landing)

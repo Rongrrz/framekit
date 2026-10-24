@@ -6,7 +6,7 @@ The landing/documentation app lives separately in `project-landing` and starts w
 
 Workbench is an editor built with public FrameKit APIs. The editor chrome and preview are
 separate ownership subtrees inside one application. Its project home offers a blank canvas, a welcome
-card, a dashboard, and a settings panel as starting points.
+card, a dashboard, a settings panel, and interactive counters as starting points.
 
 ## Editing
 
@@ -28,7 +28,7 @@ card, a dashboard, and a settings panel as starting points.
   original branch when pasted; copy and duplicate assign fresh IDs to the entire branch.
 - Undo/redo includes property edits, ownership changes, insertion, deletion, and clipboard operations. Opening a project starts its own history session. Selection, zoom, and panel sizes do not consume document history.
 - Preview lets native buttons and text inputs behave normally. Returning to Design restores
-  document values after transient input. Workbench does not attach application behavior to scene buttons.
+  document values after transient input. Event connections run only in Preview.
 
 Drag either divider or focus it and use Left/Right to resize panels. Shift uses one-pixel steps;
 Home/End select width limits. Narrow screens have a fixed Explorer/Canvas/Properties switcher
@@ -39,22 +39,70 @@ Choose Canvas in the inspector to edit its name and dimensions, or use “Edit c
 
 Projects autosave independently in this browser. Projects returns to the library, where you can
 search, sort, reopen, rename, duplicate, and delete saved projects. Deletion asks for confirmation.
-New project offers four templates. Reloading a project's URL reopens it; browser Back/Forward
+New project offers five templates. Reloading a project's URL reopens it; browser Back/Forward
 navigates between projects and home. The previous single autosaved document is migrated into the
 library without removing its original saved data.
 
-Save and Ctrl/Cmd S save the current project; export is TypeScript code only. Workspace preferences
-and code themes persist separately. If browser storage fails, editing remains available in memory
-and the save status explains the failure; keep the tab open and export code to preserve the scene.
-Projects support up to 500 objects, 50 ownership levels, and artboards between 240 and 4096 pixels
-on each axis. Browser storage is local to this origin and browser profile.
+Save and Ctrl/Cmd S save the complete project, including its prefabs and connections. Workspace
+preferences and code themes persist separately. If browser storage fails, editing remains available
+in memory and the save status explains the failure. Browser storage is local to this origin and profile.
 
-Code opens formatted, syntax-highlighted TypeScript with line numbers and GitHub Dark, GitHub Light,
-and Catppuccin themes. Theme selection persists. Export uses readable object names and compact
-FrameKit value constructors. Copy and download use the same formatted source shown in the preview.
-Formatting and highlighting load on demand in an owned background worker. Supply a normal FrameKit
-application and an `#app` mount point to run it. Export includes scene properties and ownership;
-editor selection and workspace preferences are excluded. It does not serialize callbacks or resources.
+## Prefabs and events
+
+Hierarchy contains the objects and prefab instances placed in the active scene. The Prefabs tab
+contains reusable component definitions. Select a standard GUI branch and choose **Create prefab**
+to convert its frames, text, controls, and modifiers into a component. With nothing selected, this
+creates an empty component instead.
+
+Choose **Edit** in the prefab library or **Edit prefab** on a selected instance to open its own
+hierarchy and canvas. Use the Canvas inspector to rename the component or change its preview
+size. **Return to scene** leaves the prefab editor. **Insert** places a linked instance in the
+current scene or component; prefabs may contain other prefabs. Changes to a definition update
+its instances. Root properties edited on an instance override that definition for that instance.
+Undo includes definition edits, event connections, and insertion.
+
+**Events** opens the connection editor for the current scene or prefab. Declare custom outputs,
+then connect a button's Activated, a text input's TextChanged/Submitted, or a nested prefab's
+custom output to an action. Actions set or toggle a property, increment text, copy text, or emit
+a custom output. Connections can be edited or deleted. Internal objects and events belong to
+each placed instance. The Welcome card uses a reusable button with a Pressed output; Interactive
+counters demonstrates independent state and outputs passing through nested prefabs.
+
+A scene or definition supports 500 authored objects and 50 ownership levels. Projects support
+100 definitions, 20 nested prefab levels, and 5,000 expanded scene objects (2,000 per definition).
+Scene dimensions range from 240 to 4096 pixels; prefab editing canvases can be as small as 4 pixels.
+
+## Settings and device previews
+
+The gear button opens settings from either the editor or project home. Canvas grid, snapping,
+and alignment guides have independent switches. Drag objects directly on the design canvas;
+nearby edges and centers snap before the eight-pixel grid. Hold Alt to move freely, or Escape
+to cancel a drag. A completed drag creates one undo step. Layout-controlled children are arranged
+through Hierarchy.
+
+The device selector previews desktop, laptop, tablet, phone, wide-screen, or custom dimensions;
+rotate switches orientation. Settings accepts custom widths and heights between 240 and 4096 pixels.
+These previews change the viewport without rewriting saved design dimensions. Scale-based
+properties respond to the preview size; fixed pixel values retain their authored sizes.
+Prefab editing uses the component's own dimensions.
+
+Settings also controls zoom, code appearance, panel widths, and resetting the panel layout.
+These choices persist in this browser.
+
+## Code and export
+
+**Code** opens a file hierarchy with scene and prefab TypeScript modules, index.html, CSS,
+package.json, TypeScript configuration, and a README. Files are formatted and syntax highlighted
+with line numbers in GitHub Dark, GitHub Light, or Catppuccin. Copy and individual downloads use
+the same formatted source shown in the viewer; ZIP export includes those same file contents.
+Formatting and highlighting load on demand in an owned background worker.
+
+**Download ZIP** exports a complete code project, including a local FrameKit source dependency.
+Unzip it, run `npm install`, then `npm run dev`. Use `npm run build` for production. No published
+FrameKit package is required. Generated factories expose a root, named nodes, custom output
+subscriptions, and destroy(); each prefab is a separate module. The app fills the browser viewport,
+matching device previews. Export is code rather than a saved project JSON document; selection,
+workspace preferences, and undo history are excluded.
 
 | Shortcut                       | Action                                                     |
 | ------------------------------ | ---------------------------------------------------------- |
@@ -72,8 +120,9 @@ editor selection and workspace preferences are excluded. It does not serialize c
 ## Source ownership and validation
 
 `schema.ts` defines the supported editing vocabulary and defaults. `document.ts` validates the
-JSON boundary and ownership rules. `editor.ts` owns document revisions and selection; `export.ts`
-generates source. `preview.ts` reconciles persistent runtime handles by document ID, detaching
+saved document boundary, ownership, prefab dependencies, and event references. `editor.ts` owns
+project revisions and selection; `prefabs.ts` derives the active editing scope. `project-export.ts`
+generates component factories and project files; `zip.ts` packages them. `preview.ts` reconciles persistent runtime handles by document ID, detaching
 surviving moves before destroying removed owners. The remaining modules own workspace geometry,
 hierarchy interaction, validated branch moves, project storage and templates, property editing,
 commands, downloads, and export UI.
@@ -84,7 +133,7 @@ types through the schema and preview factory table, then cover their import and 
 ```sh
 npm run test:workbench
 npm run typecheck
-npx playwright test tests/browser/workbench.spec.ts --project=chromium
+npx playwright test tests/browser/workbench.spec.ts tests/browser/workbench-prefabs.spec.ts --project=chromium
 npm run build:workbench
 npm run preview:workbench
 ```
