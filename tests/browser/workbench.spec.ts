@@ -288,8 +288,10 @@ test('releases its GUI, modal, and owned observers when destroyed', async ({ pag
     const root = app.unsafeElement;
     const observer = new MutationObserver(() => undefined);
     observer.observe(document.body, { childList: true, subtree: true });
-    const code = [...root.querySelectorAll('button')].find((node) => node.textContent === 'Code')!;
-    code.click();
+    const exportButton = [...root.querySelectorAll('button')].find(
+      (node) => node.textContent === 'Export',
+    )!;
+    exportButton.click();
     const opened = document.querySelectorAll('dialog[open]').length;
     app.destroy();
     const recordsAfterDestruction = observer.takeRecords().length;

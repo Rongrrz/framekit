@@ -102,7 +102,9 @@ export const createScriptDialog = (
   const stop = (): void => {
     worker?.terminate();
     worker = undefined;
-    format.Disabled = false;
+    if (!format.isDestroyed()) {
+      format.Disabled = false;
+    }
   };
   const modal = bindDialog(dialog, { initialFocus: source });
   dialog.on('close', stop);

@@ -21,7 +21,13 @@ describe('Workbench preview', () => {
       editor.add('Frame');
       editor.add(type);
       preview.update(editor.state.get().document, editor.state.get().selectedId);
-      expect(canvas.getDescendants().findLast((node) => node.Name === type)?.ClassName).toBe(type);
+      const runtime = canvas.getDescendants().findLast((node) => node.Name === type);
+
+      if (type === 'Script') {
+        expect(runtime).toBeUndefined();
+      } else {
+        expect(runtime?.ClassName).toBe(type);
+      }
     }
   });
 
