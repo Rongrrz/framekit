@@ -1,5 +1,6 @@
 import { color3FromHex, udim2FromOffset } from 'framekit';
 
+import { parseBindings, validateBindings } from './interactions';
 import {
   defaultProperties,
   definitionFor,
@@ -13,8 +14,36 @@ import {
 export type SceneNode = Readonly<{
   id: string;
   type: NodeType;
+  prefabId?: string;
   parent: string | null;
   properties: Readonly<Record<string, PropertyValue> & { Name: string }>;
+}>;
+
+/** Events are explicit, portable behaviors shared by Preview and generated source. */
+export type SceneAction = Readonly<
+  | { type: 'emit'; event: string }
+  | { type: 'set'; target: string; property: string; value: PropertyValue }
+  | { type: 'toggle'; target: string; property: 'Visible' | 'Disabled' }
+  | { type: 'increment'; target: string; amount: number }
+  | { type: 'copyText'; source: string; target: string }
+>;
+
+export type Interaction = Readonly<{
+  id: string;
+  source: string;
+  event: string;
+  action: SceneAction;
+}>;
+
+/** A prefab has one owned root and may reference other prefab definitions by ID. */
+export type PrefabDefinition = Readonly<{
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  nodes: readonly SceneNode[];
+  events?: readonly string[];
+  bindings?: readonly Interaction[];
 }>;
 
 /** This is an application document, not a serialization of runtime handles or callbacks. */
@@ -24,6 +53,9 @@ export type SceneDocument = Readonly<{
   width: number;
   height: number;
   nodes: readonly SceneNode[];
+  prefabs?: readonly PrefabDefinition[];
+  events?: readonly string[];
+  bindings?: readonly Interaction[];
 }>;
 
 const object = (value: unknown): Record<string, unknown> => {
@@ -80,9 +112,16 @@ export const parseDocument = (input: string): SceneDocument => {
   }
 
   const value = object(JSON.parse(input));
+  const document = parseScope(value, false);
+  const prefabs = value.prefabs === undefined ? undefined : parsePrefabDefinitions(value.prefabs);
+  const result = { ...document, ...(prefabs ? { prefabs } : {}) };
+  validateHierarchy(result);
+  return result;
+};
 
+const parseScope = (value: Record<string, unknown>, prefab: boolean): SceneDocument => {
   if (
-    value.version !== 1 ||
+    (!prefab && value.version !== 1) ||
     typeof value.name !== 'string' ||
     value.name.length > 200 ||
     !Array.isArray(value.nodes) ||
@@ -95,10 +134,12 @@ export const parseDocument = (input: string): SceneDocument => {
     if (
       typeof dimension !== 'number' ||
       !Number.isFinite(dimension) ||
-      dimension < 240 ||
+      dimension < (prefab ? 4 : 240) ||
       dimension > 4096
     ) {
-      throw new TypeError('Artboard dimensions must be between 240 and 4096 pixels.');
+      throw new TypeError(
+        `Artboard dimensions must be between ${prefab ? 4 : 240} and 4096 pixels.`,
+      );
     }
   }
 
@@ -110,13 +151,16 @@ export const parseDocument = (input: string): SceneDocument => {
       !node.id ||
       node.id.length > 100 ||
       !isNodeType(node.type) ||
+      (node.prefabId !== undefined && (typeof node.prefabId !== 'string' || !node.prefabId)) ||
       (node.parent !== null && typeof node.parent !== 'string')
     ) {
       throw new TypeError('Each node needs an ID, supported type, and parent ID or null.');
     }
 
     const fields = definitionFor(node.type).fields;
-    const properties = defaultProperties(node.type);
+    const properties: Record<string, PropertyValue> & { Name: string } = node.prefabId
+      ? { Name: node.type }
+      : defaultProperties(node.type);
 
     for (const [key, property] of Object.entries(object(node.properties))) {
       if (!Object.hasOwn(fields, key)) {
@@ -126,7 +170,13 @@ export const parseDocument = (input: string): SceneDocument => {
       properties[key] = validateField(fields[key]!, property, key);
     }
 
-    return { id: node.id, type: node.type, parent: node.parent, properties };
+    return {
+      id: node.id,
+      type: node.type,
+      parent: node.parent,
+      properties,
+      ...(typeof node.prefabId === 'string' ? { prefabId: node.prefabId } : {}),
+    };
   });
 
   const document: SceneDocument = {
@@ -135,22 +185,68 @@ export const parseDocument = (input: string): SceneDocument => {
     width: value.width as number,
     height: value.height as number,
     nodes,
+    ...(value.events === undefined ? {} : { events: parseEventNames(value.events) }),
+    ...(value.bindings === undefined ? {} : { bindings: parseBindings(value.bindings) }),
   };
-  validateHierarchy(document);
   return document;
 };
 
-/** Structural edits and imports use the same ownership rules as the preview. */
-export const validateHierarchy = (document: SceneDocument): void => {
-  const byId = new Map(document.nodes.map((node) => [node.id, node]));
+const parseEventNames = (value: unknown): readonly string[] => {
+  if (
+    !Array.isArray(value) ||
+    value.length > 50 ||
+    value.some(
+      (name) =>
+        typeof name !== 'string' ||
+        ['Activated', 'TextChanged', 'Submitted'].includes(name) ||
+        !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(name),
+    ) ||
+    new Set(value).size !== value.length
+  ) {
+    throw new TypeError(
+      'Use unique custom event names starting with a letter; Activated, TextChanged, and Submitted are built-in triggers.',
+    );
+  }
 
-  if (byId.size !== document.nodes.length || document.nodes.length > 500) {
+  return value as string[];
+};
+
+const parsePrefabDefinitions = (value: unknown): readonly PrefabDefinition[] => {
+  if (!Array.isArray(value) || value.length > 100) {
+    throw new TypeError('A project supports up to 100 prefab definitions.');
+  }
+
+  return value.map((entry: unknown) => {
+    const item = object(entry);
+
+    if (typeof item.id !== 'string' || !item.id || item.id.length > 100) {
+      throw new TypeError('Every prefab needs a unique ID.');
+    }
+
+    const scope = parseScope(item, true);
+    return {
+      id: item.id,
+      name: scope.name,
+      width: scope.width,
+      height: scope.height,
+      nodes: scope.nodes,
+      ...(scope.events ? { events: scope.events } : {}),
+      ...(scope.bindings ? { bindings: scope.bindings } : {}),
+    };
+  });
+};
+
+/** Structural edits and imports use the same ownership rules as the preview. */
+const validateNodes = (nodes: readonly SceneNode[]): void => {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+
+  if (byId.size !== nodes.length || nodes.length > 500) {
     throw new TypeError('Use unique node IDs and at most 500 nodes.');
   }
 
   const modifiers = new Set<string>();
 
-  for (const node of document.nodes) {
+  for (const node of nodes) {
     const parent = node.parent === null ? undefined : byId.get(node.parent);
     const category = definitionFor(node.type).category;
 
@@ -190,6 +286,84 @@ export const validateHierarchy = (document: SceneDocument): void => {
       ancestors.add(ancestor.id);
       ancestor = ancestor.parent === null ? undefined : byId.get(ancestor.parent);
     }
+  }
+};
+
+/** Ownership, prefab dependencies, and event references are validated as one transaction. */
+export const validateHierarchy = (document: SceneDocument): void => {
+  const definitions = new Map((document.prefabs ?? []).map((prefab) => [prefab.id, prefab]));
+
+  if (definitions.size !== (document.prefabs?.length ?? 0) || definitions.size > 100) {
+    throw new TypeError('Use unique prefab IDs and at most 100 prefabs.');
+  }
+
+  const scopes = [document, ...definitions.values()];
+
+  for (const scope of scopes) {
+    validateNodes(scope.nodes);
+    parseEventNames(scope.events ?? []);
+    validateBindings(scope, definitions);
+
+    for (const node of scope.nodes) {
+      if (node.prefabId) {
+        const prefab = definitions.get(node.prefabId);
+        const root = prefab?.nodes.find((entry) => entry.parent === null);
+
+        if (!root || root.type !== node.type) {
+          throw new TypeError(
+            'Prefab instances need an existing definition with a matching root type.',
+          );
+        }
+      }
+    }
+  }
+
+  for (const prefab of definitions.values()) {
+    const roots = prefab.nodes.filter((node) => node.parent === null);
+
+    if (
+      roots.length !== 1 ||
+      roots[0]!.prefabId ||
+      definitionFor(roots[0]!.type).category === 'modifier'
+    ) {
+      throw new TypeError('A prefab needs exactly one standard GUI root.');
+    }
+  }
+
+  const sizes = new Map<string, number>();
+  const visiting = new Set<string>();
+  const size = (id: string): number => {
+    if (visiting.has(id) || visiting.size >= 20) {
+      throw new TypeError('Prefabs cannot contain dependency cycles or nest more than 20 levels.');
+    }
+
+    const known = sizes.get(id);
+
+    if (known !== undefined) {
+      return known;
+    }
+
+    visiting.add(id);
+    const count = definitions
+      .get(id)!
+      .nodes.reduce((total, node) => total + (node.prefabId ? size(node.prefabId) : 1), 0);
+    visiting.delete(id);
+
+    if (count > 2000) {
+      throw new TypeError('A prefab may expand to at most 2000 objects.');
+    }
+
+    sizes.set(id, count);
+    return count;
+  };
+
+  definitions.forEach((_, id) => size(id));
+
+  if (
+    document.nodes.reduce((total, node) => total + (node.prefabId ? size(node.prefabId) : 1), 0) >
+    5000
+  ) {
+    throw new TypeError('A scene may expand to at most 5000 objects.');
   }
 };
 
