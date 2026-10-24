@@ -166,3 +166,53 @@ it('formats and highlights administrative files without changing their meaning',
     expect(prepared.palettes['github-dark'].text).toContain('<font');
   }
 });
+
+it('type-checks every template as exported TypeScript, including its attached behavior modules', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'framekit-templates-'));
+  const root = resolve(process.cwd());
+
+  try {
+    const baseline = await exportProject(projectTemplates[0].create());
+    for (const file of baseline.filter((file) => file.path.startsWith('framekit/'))) {
+      const target = join(directory, file.path);
+      await mkdir(join(target, '..'), { recursive: true });
+      await writeFile(target, file.source);
+    }
+    for (const [index, template] of projectTemplates.entries()) {
+      const files = await exportProject(template.create());
+      for (const file of files.filter((file) => file.path.startsWith('src/'))) {
+        const target = join(directory, `template-${index}`, file.path);
+        await mkdir(join(target, '..'), { recursive: true });
+        await writeFile(target, file.source);
+      }
+    }
+    await mkdir(join(directory, 'node_modules'));
+    await symlink(join(directory, 'framekit'), join(directory, 'node_modules/framekit'));
+    await symlink(join(root, 'node_modules/vite'), join(directory, 'node_modules/vite'));
+    await writeFile(
+      join(directory, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2023',
+          lib: ['ES2023', 'DOM'],
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          strict: true,
+          noEmit: true,
+          skipLibCheck: true,
+          types: ['vite/client'],
+          paths: { '@framekit/script': ['./template-0/src/script-context.ts'] },
+        },
+        include: ['template-*/src'],
+      }),
+    );
+    const checked = spawnSync(
+      process.execPath,
+      [join(root, 'node_modules/typescript/bin/tsc'), '-p', directory],
+      { cwd: directory, encoding: 'utf8' },
+    );
+    expect(checked.status, checked.stdout + checked.stderr).toBe(0);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}, 30000);
