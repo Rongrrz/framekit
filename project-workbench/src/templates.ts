@@ -144,33 +144,55 @@ const dashboard = (): SceneDocument => ({
   const title = ctx.node('page-title');
   const subtitle = ctx.node('page-subtitle');
   const pages = ['Overview', 'Analytics', 'Projects'];
-  const descriptions = ['A little clarity for your next big idea.', 'Your audience is growing. Here is the latest.', 'Twelve projects are ready to explore below.'];
-  const metrics = [['24', '1,284', '+18.6%'], ['8,410', '1,284', '+24.2%'], ['24', '18', '6']];
-  const labels = [['Projects', 'Active users', 'This month'], ['Page views', 'Active users', 'Engagement'], ['Total projects', 'In progress', 'Completed']];
+  const descriptions = [
+    'A little clarity for your next big idea.',
+    'Your audience is growing. Here is the latest.',
+    'Twelve projects are ready to explore below.',
+  ];
+  const metrics = [
+    ['24', '1,284', '+18.6%'],
+    ['8,410', '1,284', '+24.2%'],
+    ['24', '18', '6'],
+  ];
+  const labels = [
+    ['Projects', 'Active users', 'This month'],
+    ['Page views', 'Active users', 'Engagement'],
+    ['Total projects', 'In progress', 'Completed'],
+  ];
   pages.forEach((page, index) => {
     const nav = ctx.node('nav-' + index);
     if (nav?.isA('TextButton')) {
-      ctx.own(nav.onClick(() => {
-        if (title?.isA('TextLabel')) title.Text = page;
-        if (subtitle?.isA('TextLabel')) subtitle.Text = descriptions[index]!;
-        pages.forEach((_, other) => {
-          const button = ctx.node('nav-' + other);
-          if (button?.isA('TextButton')) button.Text = (index === other ? '• ' : '') + pages[other];
-        });
-        [0, 1, 2].forEach((metric) => {
-          const value = ctx.node('metric-value-' + metric);
-          const label = ctx.node('metric-label-' + metric);
-          if (value?.isA('TextLabel')) value.Text = metrics[index]![metric]!;
-          if (label?.isA('TextLabel')) label.Text = labels[index]![metric]!;
-        });
-        const activity = ctx.node('activity-title');
-        if (activity?.isA('TextLabel')) activity.Text = index === 1 ? 'Top performing projects' : index === 2 ? 'Your projects' : 'Recent activity';
-        const content = ctx.node('content');
-        if (content?.isA('ScrollingFrame')) content.CanvasPosition = { X: 0, Y: 0 };
-      }));
+      ctx.own(
+        nav.onClick(() => {
+          if (title?.isA('TextLabel')) title.Text = page;
+          if (subtitle?.isA('TextLabel')) subtitle.Text = descriptions[index]!;
+          pages.forEach((_, other) => {
+            const button = ctx.node('nav-' + other);
+            if (button?.isA('TextButton'))
+              button.Text = (index === other ? '• ' : '') + pages[other];
+          });
+          [0, 1, 2].forEach((metric) => {
+            const value = ctx.node('metric-value-' + metric);
+            const label = ctx.node('metric-label-' + metric);
+            if (value?.isA('TextLabel')) value.Text = metrics[index]![metric]!;
+            if (label?.isA('TextLabel')) label.Text = labels[index]![metric]!;
+          });
+          const activity = ctx.node('activity-title');
+          if (activity?.isA('TextLabel'))
+            activity.Text =
+              index === 1
+                ? 'Top performing projects'
+                : index === 2
+                  ? 'Your projects'
+                  : 'Recent activity';
+          const content = ctx.node('content');
+          if (content?.isA('ScrollingFrame')) content.CanvasPosition = { X: 0, Y: 0 };
+        }),
+      );
     }
   });
-};`,
+};
+`,
     ),
   ],
 });
@@ -255,23 +277,34 @@ const settings = (): SceneDocument => ({
   const status = ctx.node('save-status');
   const notifications = ctx.node('notifications');
   let enabled = true;
-  if (notifications?.isA('TextButton')) ctx.own(notifications.onClick(() => {
-    enabled = !enabled;
-    notifications.Text = 'Notifications: ' + (enabled ? 'On' : 'Off');
-  }));
+  if (notifications?.isA('TextButton'))
+    ctx.own(
+      notifications.onClick(() => {
+        enabled = !enabled;
+        notifications.Text = 'Notifications: ' + (enabled ? 'On' : 'Off');
+      }),
+    );
   const submit = (): void => {
-    if (!name?.isA('TextInput') || !email?.isA('TextInput') || !status?.isA('TextLabel')) return;
+    if (
+      !name?.isA('TextInput') ||
+      !email?.isA('TextInput') ||
+      !status?.isA('TextLabel')
+    )
+      return;
     if (!name.Text.trim() || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email.Text)) {
       status.Text = 'Enter your name and a valid email address.';
       return;
     }
-    status.Text = 'Saved for ' + name.Text.trim() + ' · Notifications ' + (enabled ? 'on' : 'off');
+    status.Text =
+      'Saved for ' + name.Text.trim() + ' · Notifications ' + (enabled ? 'on' : 'off');
   };
   if (save?.isA('TextButton')) ctx.own(save.onClick(submit));
-  if (email?.isA('TextInput')) ctx.listen(email.unsafeElement, 'keydown', (event) => {
-    if ((event as KeyboardEvent).key === 'Enter') submit();
-  });
-};`,
+  if (email?.isA('TextInput'))
+    ctx.listen(email.unsafeElement, 'keydown', (event) => {
+      if ((event as KeyboardEvent).key === 'Enter') submit();
+    });
+};
+`,
     ),
   ],
 });
@@ -584,7 +617,12 @@ export default (ctx: ScriptContext): void => {
   const tasks = new Map<TextButton, boolean>();
   let order = 12;
   const update = (): void => {
-    if (status?.isA('TextLabel')) status.Text = tasks.size + ' tasks · ' + [...tasks.values()].filter(Boolean).length + ' completed';
+    if (status?.isA('TextLabel'))
+      status.Text =
+        tasks.size +
+        ' tasks · ' +
+        [...tasks.values()].filter(Boolean).length +
+        ' completed';
   };
   const attach = (button: TextButton, title: string): void => {
     tasks.set(button, false);
@@ -602,10 +640,25 @@ export default (ctx: ScriptContext): void => {
     if (task?.isA('TextButton')) attach(task, task.Name);
   }
   const addTask = (): void => {
-    if (!input?.isA('TextInput') || !list?.isA('ScrollingFrame') || !input.Text.trim()) return;
-    if (tasks.size >= 100) { if (status?.isA('TextLabel')) status.Text = 'Finish a few tasks before adding more.'; return; }
+    if (!input?.isA('TextInput') || !list?.isA('ScrollingFrame') || !input.Text.trim())
+      return;
+    if (tasks.size >= 100) {
+      if (status?.isA('TextLabel'))
+        status.Text = 'Finish a few tasks before adding more.';
+      return;
+    }
     const title = input.Text.trim().slice(0, 200);
-    const task = createTextButton({ Name: title, Text: '○  ' + title, AccessibleLabel: title, Size: udim2(1, -8, 0, 48), LayoutOrder: order++, TextXAlignment: 'Left', TextSize: 15, BackgroundColor3: color3FromHex('#243d35'), TextColor3: color3FromHex('#e6f5ed') });
+    const task = createTextButton({
+      Name: title,
+      Text: '○  ' + title,
+      AccessibleLabel: title,
+      Size: udim2(1, -8, 0, 48),
+      LayoutOrder: order++,
+      TextXAlignment: 'Left',
+      TextSize: 15,
+      BackgroundColor3: color3FromHex('#243d35'),
+      TextColor3: color3FromHex('#e6f5ed'),
+    });
     task.Parent = list;
     attach(task, title);
     input.Text = '';
@@ -613,14 +666,19 @@ export default (ctx: ScriptContext): void => {
     update();
   };
   if (add?.isA('TextButton')) ctx.own(add.onClick(addTask));
-  if (input?.isA('TextInput')) ctx.listen(input.unsafeElement, 'keydown', (event) => {
-    if ((event as KeyboardEvent).key === 'Enter') addTask();
-  });
-  if (clear?.isA('TextButton')) ctx.own(clear.onClick(() => {
-    for (const [task, done] of tasks) if (done) task.destroy();
-    update();
-  }));
-};`,
+  if (input?.isA('TextInput'))
+    ctx.listen(input.unsafeElement, 'keydown', (event) => {
+      if ((event as KeyboardEvent).key === 'Enter') addTask();
+    });
+  if (clear?.isA('TextButton'))
+    ctx.own(
+      clear.onClick(() => {
+        for (const [task, done] of tasks) if (done) task.destroy();
+        update();
+      }),
+    );
+};
+`,
     ),
   ].map((entry) =>
     entry.id === 'task-status'
