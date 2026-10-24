@@ -1,8 +1,9 @@
 import { fileURLToPath } from 'node:url';
 
+import { build } from 'vite';
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({
+const config = defineConfig({
   base: './',
   root: fileURLToPath(new URL('.', import.meta.url)),
   server: { port: 5174 },
@@ -27,3 +28,42 @@ export default defineConfig({
     sequence: { hooks: 'stack' },
   },
 });
+
+config.plugins = [
+  {
+    name: 'presentation-runtime',
+    resolveId: (id) =>
+      id === 'virtual:presentation-runtime' ? '\0presentation-runtime' : undefined,
+    load: async (id) => {
+      if (id !== '\0presentation-runtime') {
+        return;
+      }
+      const result = await build({
+        configFile: false,
+        resolve: config.resolve!,
+        logLevel: 'silent',
+        build: {
+          write: false,
+          minify: true,
+          lib: {
+            entry: fileURLToPath(new URL('./src/presentation-runtime.ts', import.meta.url)),
+            formats: ['iife'],
+            name: 'FrameKitPresentation',
+          },
+        },
+      });
+      const output = Array.isArray(result)
+        ? result[0]!.output
+        : 'output' in result
+          ? result.output
+          : [];
+      const chunk = output.find((entry) => entry.type === 'chunk');
+      if (!chunk || chunk.type !== 'chunk') {
+        throw new Error('Could not bundle presentation runtime.');
+      }
+      return `export default ${JSON.stringify(chunk.code)}`;
+    },
+  },
+];
+
+export default config;

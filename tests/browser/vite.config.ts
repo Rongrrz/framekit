@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 import { codeExamples } from '../../project-landing/tooling/code-examples.ts';
+import workbenchConfig from '../../project-workbench/vite.config.ts';
 
 export default defineConfig({
   appType: 'mpa',
@@ -14,6 +15,7 @@ export default defineConfig({
     ],
   },
   plugins: [
+    ...(workbenchConfig.plugins ?? []),
     codeExamples(),
     {
       name: 'project-landing-test-entry',
