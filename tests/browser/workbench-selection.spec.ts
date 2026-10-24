@@ -204,3 +204,39 @@ test('selection follows nested rotation, zoom and scrolling, and clears for hidd
   await page.getByRole('button', { name: 'Canvas root', exact: true }).click();
   await expect(outline).not.toBeVisible();
 });
+
+test('exposes fractional stroke thickness, edge and inner or outer placement in the inspector', async ({
+  page,
+}) => {
+  await openScene(page, [
+    {
+      id: 'target',
+      type: 'Frame',
+      parent: null,
+      properties: { Name: 'Stroke target', Position: dimension(40, 40), Size: dimension(320, 200) },
+    },
+    {
+      id: 'border',
+      type: 'UIStroke',
+      parent: 'target',
+      properties: { Name: 'Border', Color: { R: 0, G: 0, B: 0 } },
+    },
+  ]);
+  await page.getByRole('treeitem', { name: 'Border', exact: true }).click();
+  const thickness = page.getByRole('textbox', { name: 'Thickness', exact: true });
+  await thickness.fill('3.5');
+  await thickness.press('Enter');
+  await page.getByRole('button', { name: 'BorderStrokeSide', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Right', exact: true }).click();
+  await page.getByRole('button', { name: 'BorderStrokePosition', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Outer', exact: true }).click();
+  await expect(page.locator('[data-scene-id="target"]')).toHaveCSS(
+    'box-shadow',
+    'rgb(0, 0, 0) 3.5px 0px 0px 0px',
+  );
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.locator('[data-scene-id="target"]')).toHaveCSS(
+    'box-shadow',
+    'rgb(0, 0, 0) -3.5px 0px 0px 0px inset',
+  );
+});

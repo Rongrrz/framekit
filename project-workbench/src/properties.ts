@@ -80,6 +80,7 @@ const sections = {
     'AutomaticCanvasSize',
     'SortOrder',
     'BorderStrokePosition',
+    'BorderStrokeSide',
     'ScaleType',
   ],
 };
@@ -102,6 +103,8 @@ const titles: Readonly<Record<string, string>> = {
   AccessibleLabel: 'Accessible label',
   PlaceholderText: 'Placeholder',
   CornerRadius: 'Radius',
+  BorderStrokePosition: 'Stroke position',
+  BorderStrokeSide: 'Stroke edge',
   name: 'Name',
   width: 'Width',
   height: 'Height',

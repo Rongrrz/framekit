@@ -137,6 +137,7 @@ export const nodeDefinitions = {
       Thickness: number(1, 0),
       Transparency: number(0, 0, 1),
       BorderStrokePosition: choice('Inner', ['Inner', 'Center', 'Outer']),
+      BorderStrokeSide: choice('All', ['All', 'Top', 'Right', 'Bottom', 'Left']),
     },
   },
   UIListLayout: {
