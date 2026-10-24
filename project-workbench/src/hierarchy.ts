@@ -67,6 +67,7 @@ export const createHierarchy = (
       depth: number;
       name: string;
       type: NodeType;
+      prefab: boolean;
       branch: boolean;
       expanded: boolean;
       selected: boolean;
@@ -142,6 +143,7 @@ export const createHierarchy = (
         depth: depth.get(node.id)!,
         name: node.properties.Name,
         type: node.type,
+        prefab: Boolean(node.prefabId),
         branch: branches.has(node.id),
         expanded: Boolean(term) || !collapsed.has(node.id),
         selected: selectedId === node.id,
@@ -203,15 +205,17 @@ export const createHierarchy = (
       return row;
     },
     update: (row, item, index) => {
-      const icon = item.branch
-        ? item.expanded
-          ? '▾'
-          : '▸'
-        : definitionFor(item.type).category === 'modifier'
-          ? '◇'
-          : item.type.startsWith('Text')
-            ? 'T'
-            : '□';
+      const icon = item.prefab
+        ? '◇'
+        : item.branch
+          ? item.expanded
+            ? '▾'
+            : '▸'
+          : definitionFor(item.type).category === 'modifier'
+            ? '◇'
+            : item.type.startsWith('Text')
+              ? 'T'
+              : '□';
       row.Text = `${icon}  ${item.name}${item.hidden ? '  ◌' : ''}`;
       const padding = row.getChildren().find((child) => child.isA('UIPadding'))!;
       if (padding.isA('UIPadding')) {

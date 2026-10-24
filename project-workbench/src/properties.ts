@@ -16,6 +16,7 @@ import {
 } from 'framekit';
 
 import type { Editor } from './editor';
+import { resolvedProperties } from './prefabs';
 import { definitionFor, formatField, parseField, type Field, type PropertyValue } from './schema';
 import { button, colors, font, input, label, panel, round, scroll, stack } from './ui';
 
@@ -376,7 +377,7 @@ export const createProperties = (
     const selected = snapshot.document.nodes.find((node) => node.id === snapshot.selectedId);
     name.Text = selected?.properties.Name ?? snapshot.document.name;
     type.Text = selected
-      ? `${selected.type}  /  ${selected.parent ? 'Nested object' : 'Canvas child'}`
+      ? `${selected.prefabId ? 'Prefab instance' : selected.type}  /  ${selected.parent ? 'Nested object' : 'Canvas child'}`
       : 'Canvas settings';
     duplicate.Disabled = !selected || definitionFor(selected.type).category === 'modifier';
     remove.Disabled = !selected;
@@ -385,7 +386,7 @@ export const createProperties = (
       ? definitionFor(selected.type).fields
       : documentFields;
     const values: Readonly<Record<string, PropertyValue>> = selected
-      ? selected.properties
+      ? resolvedProperties(snapshot.document, selected)
       : {
           name: snapshot.document.name,
           width: snapshot.document.width,
@@ -400,7 +401,10 @@ export const createProperties = (
         rows.push({
           key: `${selected?.id ?? 'canvas'}:${name}`,
           name,
-          field: definitions[name]!,
+          field:
+            !selected && snapshot.prefabId && (name === 'width' || name === 'height')
+              ? { ...definitions[name]!, min: 4 }
+              : definitions[name]!,
           value: values[name]!,
           nodeId: selected?.id ?? null,
           ...(index === 0 ? { section } : {}),
