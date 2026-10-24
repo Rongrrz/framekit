@@ -57,3 +57,7 @@ input[aria-invalid='true'] {
 [data-explorer-overlay] {
   pointer-events: none;
 }
+
+[data-canvas-guide] {
+  pointer-events: none;
+}
