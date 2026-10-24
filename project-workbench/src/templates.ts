@@ -179,6 +179,222 @@ const settings = (): SceneDocument => ({
   ],
 });
 
+const welcome = (): SceneDocument => {
+  const document = createSampleDocument();
+  const root = document.nodes.find((node) => node.id === 'button')!;
+  const children = document.nodes.filter((node) => node.parent === root.id);
+  const prefabId = 'primary-button';
+  return {
+    ...document,
+    nodes: document.nodes
+      .filter((node) => node.parent !== root.id)
+      .map((node) =>
+        node.id === root.id
+          ? {
+              ...node,
+              prefabId,
+              properties: {
+                Name: root.properties.Name,
+                Position: root.properties.Position!,
+                Size: root.properties.Size!,
+              },
+            }
+          : node,
+      ),
+    prefabs: [
+      {
+        id: prefabId,
+        name: 'Primary button',
+        width: 240,
+        height: 52,
+        nodes: [
+          {
+            ...root,
+            parent: null,
+            properties: { ...root.properties, Position: udim2FromOffset(0, 0) },
+          },
+          ...children,
+        ],
+        events: ['Pressed'],
+        bindings: [
+          {
+            id: 'button-output',
+            source: root.id,
+            event: 'Activated',
+            action: { type: 'emit', event: 'Pressed' },
+          },
+        ],
+      },
+    ],
+    bindings: [
+      {
+        id: 'welcome-response',
+        source: root.id,
+        event: 'Pressed',
+        action: {
+          type: 'set',
+          target: 'footnote',
+          property: 'Text',
+          value: 'Your prefab event is connected. Keep building!',
+        },
+      },
+    ],
+  };
+};
+
+const counter = (): SceneDocument => ({
+  version: 1,
+  name: 'Interactive counters',
+  width: 960,
+  height: 640,
+  nodes: [
+    node('counter-page', 'Frame', null, {
+      Name: 'Counter page',
+      Position: udim2FromOffset(0, 0),
+      Size: udim2(1, 0, 1, 0),
+      BackgroundColor3: color3FromHex('#141820'),
+    }),
+    text('counter-title', 'counter-page', 'Small pieces. Real behavior.', 48, 36, 30),
+    text(
+      'counter-subtitle',
+      'counter-page',
+      'Two instances. One definition. Independent state.',
+      48,
+      98,
+      16,
+      '#9fa8bc',
+    ),
+    {
+      id: 'left-counter',
+      type: 'Frame',
+      parent: 'counter-page',
+      prefabId: 'counter-panel',
+      properties: { Name: 'Left counter', Position: udim2FromOffset(48, 180) },
+    },
+    {
+      id: 'right-counter',
+      type: 'Frame',
+      parent: 'counter-page',
+      prefabId: 'counter-panel',
+      properties: { Name: 'Right counter', Position: udim2FromOffset(496, 180) },
+    },
+    text(
+      'counter-status',
+      'counter-page',
+      'Choose Preview, then press a button.',
+      48,
+      510,
+      16,
+      '#aff1d1',
+    ),
+  ],
+  prefabs: [
+    {
+      id: 'counter',
+      name: 'Counter',
+      width: 320,
+      height: 200,
+      events: ['Changed'],
+      nodes: [
+        node('counter-root', 'Frame', null, {
+          Name: 'Counter root',
+          Position: udim2FromOffset(0, 0),
+          Size: udim2FromOffset(320, 200),
+          BackgroundTransparency: 1,
+        }),
+        node('count', 'TextLabel', 'counter-root', {
+          Name: 'Count',
+          Text: '0',
+          Position: udim2FromOffset(0, 0),
+          Size: udim2FromOffset(320, 90),
+          TextSize: 56,
+          TextXAlignment: 'Center',
+          TextColor3: color3FromHex('#e8eaf1'),
+        }),
+        node('increment', 'TextButton', 'counter-root', {
+          Name: 'Increment',
+          Text: '+  Add one',
+          Position: udim2FromOffset(40, 118),
+          Size: udim2FromOffset(240, 52),
+          BackgroundColor3: color3FromHex('#aff1d1'),
+          TextColor3: color3FromHex('#172a23'),
+          TextSize: 17,
+        }),
+        node('increment-round', 'UICorner', 'increment', { CornerRadius: 10 }),
+      ],
+      bindings: [
+        {
+          id: 'increment-count',
+          source: 'increment',
+          event: 'Activated',
+          action: { type: 'increment', target: 'count', amount: 1 },
+        },
+        {
+          id: 'announce-count',
+          source: 'increment',
+          event: 'Activated',
+          action: { type: 'emit', event: 'Changed' },
+        },
+      ],
+    },
+    {
+      id: 'counter-panel',
+      name: 'Counter panel',
+      width: 416,
+      height: 280,
+      events: ['CountChanged'],
+      nodes: [
+        node('panel-root', 'Frame', null, {
+          Name: 'Panel',
+          Position: udim2FromOffset(0, 0),
+          Size: udim2FromOffset(416, 280),
+          BackgroundColor3: color3FromHex('#232b39'),
+        }),
+        node('panel-round', 'UICorner', 'panel-root', { CornerRadius: 20 }),
+        {
+          id: 'nested-counter',
+          type: 'Frame',
+          parent: 'panel-root',
+          prefabId: 'counter',
+          properties: { Name: 'Nested counter', Position: udim2FromOffset(48, 40) },
+        },
+      ],
+      bindings: [
+        {
+          id: 'forward-change',
+          source: 'nested-counter',
+          event: 'Changed',
+          action: { type: 'emit', event: 'CountChanged' },
+        },
+      ],
+    },
+  ],
+  bindings: [
+    {
+      id: 'left-change',
+      source: 'left-counter',
+      event: 'CountChanged',
+      action: {
+        type: 'set',
+        target: 'counter-status',
+        property: 'Text',
+        value: 'The left prefab emitted CountChanged.',
+      },
+    },
+    {
+      id: 'right-change',
+      source: 'right-counter',
+      event: 'CountChanged',
+      action: {
+        type: 'set',
+        target: 'counter-status',
+        property: 'Text',
+        value: 'The right prefab emitted CountChanged.',
+      },
+    },
+  ],
+});
+
 /** Templates are independent documents; edits never mutate the next project's starting point. */
 export const projectTemplates = [
   {
@@ -201,7 +417,7 @@ export const projectTemplates = [
     description: 'Typography, cards, and a clear call to action.',
     accent: '#aff1d1',
     kind: 'welcome',
-    create: createSampleDocument,
+    create: welcome,
   },
   {
     id: 'dashboard',
@@ -218,5 +434,13 @@ export const projectTemplates = [
     accent: '#e9c5a0',
     kind: 'settings',
     create: settings,
+  },
+  {
+    id: 'counter',
+    name: 'Interactive counters',
+    description: 'Nested prefabs, custom events, and real behavior.',
+    accent: '#aff1d1',
+    kind: 'dashboard',
+    create: counter,
   },
 ] as const;
