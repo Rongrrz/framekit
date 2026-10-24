@@ -88,21 +88,25 @@ test('inserts, renames, reparents, duplicates, and deletes through the editor', 
     'aria-selected',
     'true',
   );
-  await page.getByRole('button', { name: 'Move…', exact: true }).click();
+  await page.getByRole('button', { name: 'Explorer actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Move to…', exact: true }).click();
   await page.getByRole('button', { name: 'Canvas (top level)', exact: true }).click();
   await expect(page.getByRole('treeitem', { name: 'New panel', exact: true })).toHaveAttribute(
     'aria-level',
     '1',
   );
-  await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
+  await page.getByRole('button', { name: 'Explorer actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Duplicate', exact: true }).click();
   await expect(page.getByRole('treeitem', { name: 'New panel copy', exact: true })).toHaveAttribute(
     'aria-selected',
     'true',
   );
-  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByRole('button', { name: 'Explorer actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
   await expect(page.getByRole('treeitem', { name: 'New panel copy', exact: true })).toHaveCount(0);
   await page.getByRole('treeitem', { name: 'Headline', exact: true }).click();
-  await page.getByRole('button', { name: 'Move…', exact: true }).click();
+  await page.getByRole('button', { name: 'Explorer actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Move to…', exact: true }).click();
   await page.getByRole('button', { name: 'Canvas (top level)', exact: true }).click();
   await expect(page.getByRole('treeitem', { name: 'Headline', exact: true })).toHaveAttribute(
     'aria-level',

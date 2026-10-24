@@ -199,7 +199,7 @@ export const createWorkbench = (): ScreenGui => {
     (title, commands, opener) => palette.open(title, commands, opener),
     perform,
   );
-  createProperties(workspace.properties, editor, move, report, perform);
+  createProperties(workspace.properties, editor, report);
   const toolbar = panel('Toolbar', background);
   toolbar.Position = udim2FromOffset(0, 53);
   toolbar.Size = udim2(1, 0, 0, 50);

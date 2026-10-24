@@ -117,9 +117,7 @@ const documentFields = {
 export const createProperties = (
   parent: Frame,
   editor: Editor,
-  move: () => void,
   report: (message: string) => void,
-  perform: (action: () => void) => void,
 ): void => {
   const heading = label(parent, 'INSPECTOR', 32, 10, colors.muted);
   heading.Position = udim2FromOffset(20, 12);
@@ -129,28 +127,20 @@ export const createProperties = (
   canvasSettings.AccessibleLabel = 'Canvas settings';
   canvasSettings.Position = udim2(1, -80, 0, 12);
   canvasSettings.Size = udim2FromOffset(60, 28);
-  const name = label(parent, '', 28, 18);
-  name.Position = udim2FromOffset(20, 54);
+  const name = label(parent, '', 24, 16);
+  name.Position = udim2FromOffset(16, 48);
   name.Size = udim2(1, -40, 0, 28);
   name.FontWeight = 600;
   const type = label(parent, '', 22, 11, colors.muted);
-  type.Position = udim2FromOffset(20, 84);
+  type.Position = udim2FromOffset(16, 74);
   type.Size = udim2(1, -40, 0, 22);
-  const actions = panel('Selection actions', parent);
-  actions.Position = udim2FromOffset(16, 118);
-  actions.Size = udim2(1, -32, 0, 32);
-  stack(actions, 6, true);
-  const duplicate = button(actions, 'Duplicate', () => perform(editor.duplicate), 88);
-  const relocate = button(actions, 'Move…', move, 68);
-  const remove = button(actions, 'Delete', () => perform(editor.remove), 64);
-  remove.TextColor3 = colors.danger;
   const viewport = scroll(parent, 'Property fields');
-  viewport.Position = udim2FromOffset(20, 166);
-  viewport.Size = udim2(1, -34, 1, -178);
+  viewport.Position = udim2FromOffset(16, 104);
+  viewport.Size = udim2(1, -28, 1, -116);
   const content = panel('Fields', viewport);
   content.Size = udim2(1, -8, 0, 0);
   content.AutomaticSize = 'Y';
-  stack(content, 8);
+  stack(content, 4);
   const fields = createObservableValue<readonly PropertyRow[]>([]);
   const updates = new Map<Frame, (item: PropertyRow) => void>();
 
@@ -175,17 +165,12 @@ export const createProperties = (
   bindKeyedChildren(content, fields, {
     key: (item) => item.key,
     create: (item) => {
-      const top = item.section ? 32 : 0;
+      const top = item.section ? 26 : 0;
       const compact = item.field.kind === 'boolean' || item.field.kind === 'choice';
       const compound = ['udim2', 'udim', 'vector2'].includes(item.field.kind);
       const row = createFrame({
         Name: `${item.name} field`,
-        Size: udim2(
-          1,
-          0,
-          0,
-          top + (compact ? 36 : compound ? 86 : item.name === 'Text' ? 112 : 66),
-        ),
+        Size: udim2(1, 0, 0, top + (compound ? 68 : item.name === 'Text' ? 94 : 30)),
         BackgroundTransparency: 1,
       });
 
@@ -195,12 +180,15 @@ export const createProperties = (
         title.LetterSpacing = 1;
       }
 
-      const title = label(row, titles[item.name] ?? item.name, compact ? 34 : 22, 12, colors.muted);
+      const title = label(row, titles[item.name] ?? item.name, 28, 11, colors.muted);
       title.Position = udim2FromOffset(0, top);
+      if (!compound && item.name !== 'Text') {
+        title.Size = udim2(0.36, -6, 0, 28);
+      }
       title.unsafeElement.title = item.name;
 
       if (compact) {
-        title.Size = udim2(0.45, 0, 0, 34);
+        title.Size = udim2(0.45, 0, 0, 28);
         const control = button(row, '', () => {
           if (item.field.kind === 'boolean') {
             const current = fields.get().find((entry) => entry.key === item.key)!;
@@ -209,7 +197,7 @@ export const createProperties = (
         });
         control.AccessibleLabel = item.name;
         control.Position = udim2(0.48, 0, 0, top);
-        control.Size = udim2(0.52, 0, 0, 34);
+        control.Size = udim2(0.52, 0, 0, 28);
 
         if (item.field.kind === 'choice') {
           const choices = item.field.choices!;
@@ -293,13 +281,19 @@ export const createProperties = (
             hint.TextXAlignment = 'Right';
           }
           const count = names.length;
-          control.Position = udim2(index / count, index ? 4 : 0, 0, top + (compound ? 46 : 28));
-          control.Size = udim2(1 / count, count > 1 ? -5 : 0, 0, multiline ? 76 : 34);
+          control.Position =
+            compound || multiline
+              ? udim2(index / count, index ? 4 : 0, 0, top + (compound ? 36 : 24))
+              : udim2(0.36, 0, 0, top);
+          control.Size =
+            compound || multiline
+              ? udim2(1 / count, count > 1 ? -5 : 0, 0, multiline ? 64 : 28)
+              : udim2(0.64, 0, 0, 28);
           control.TextSize = multiline ? 13 : 12;
 
           if (compound) {
             const hint = label(row, part.replace('offset', 'px'), 18, 10, colors.faint);
-            hint.Position = udim2(index / count, index ? 4 : 0, 0, top + 24);
+            hint.Position = udim2(index / count, index ? 4 : 0, 0, top + 18);
             hint.Size = udim2(1 / count, -5, 0, 18);
             control.unsafeElement.inputMode = 'decimal';
           }
@@ -341,11 +335,11 @@ export const createProperties = (
         const swatch = item.field.kind === 'color' ? panel('Color swatch', row) : undefined;
 
         if (swatch) {
-          swatch.Position = udim2FromOffset(0, top + 29);
-          swatch.Size = udim2FromOffset(32, 32);
+          swatch.Position = udim2(0.36, 0, 0, top + 2);
+          swatch.Size = udim2FromOffset(24, 24);
           round(swatch, 6, true);
-          inputs[0]!.Position = udim2FromOffset(42, top + 28);
-          inputs[0]!.Size = udim2(1, -42, 0, 34);
+          inputs[0]!.Position = udim2(0.36, 32, 0, top);
+          inputs[0]!.Size = udim2(0.64, -32, 0, 28);
         }
 
         updates.set(row, (current) => {
@@ -379,9 +373,6 @@ export const createProperties = (
     type.Text = selected
       ? `${selected.prefabId ? 'Prefab instance' : selected.type}  /  ${selected.parent ? 'Nested object' : 'Canvas child'}`
       : 'Canvas settings';
-    duplicate.Disabled = !selected || definitionFor(selected.type).category === 'modifier';
-    remove.Disabled = !selected;
-    relocate.Disabled = !selected;
     const definitions: Readonly<Record<string, Field>> = selected
       ? definitionFor(selected.type).fields
       : documentFields;
