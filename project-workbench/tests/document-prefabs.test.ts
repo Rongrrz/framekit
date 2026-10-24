@@ -100,4 +100,49 @@ describe('prefab document boundary', () => {
       parseDocument(JSON.stringify(document({ ...base, events: ['Activated'] }))),
     ).toThrow();
   });
+
+  it('enforces nesting limits regardless of definition order', () => {
+    const prefabs = Array.from({ length: 21 }, (_, index) =>
+      component(`level-${index}`, index ? `level-${index - 1}` : undefined),
+    );
+    const project = document(...prefabs.slice(0, 20));
+    expect(() => parseDocument(JSON.stringify(project))).not.toThrow();
+    expect(() => parseDocument(JSON.stringify(document(...prefabs)))).toThrow('20 levels');
+    expect(() => parseDocument(JSON.stringify(document(...prefabs.toReversed())))).toThrow(
+      '20 levels',
+    );
+  });
+
+  it('rejects modifiers duplicating ones inherited from a prefab root', () => {
+    const base = component('base');
+    const prefab: PrefabDefinition = {
+      ...base,
+      nodes: [
+        ...base.nodes,
+        {
+          id: 'round',
+          type: 'UICorner',
+          parent: 'root',
+          properties: defaultProperties('UICorner'),
+        },
+      ],
+    };
+    const project = document(prefab);
+    expect(() =>
+      parseDocument(
+        JSON.stringify({
+          ...project,
+          nodes: [
+            ...project.nodes,
+            {
+              id: 'duplicate-round',
+              type: 'UICorner',
+              parent: 'placed',
+              properties: defaultProperties('UICorner'),
+            },
+          ],
+        }),
+      ),
+    ).toThrow('already supplies');
+  });
 });

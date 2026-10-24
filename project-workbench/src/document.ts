@@ -305,6 +305,19 @@ export const validateHierarchy = (document: SceneDocument): void => {
     validateBindings(scope, definitions);
 
     for (const node of scope.nodes) {
+      if (definitionFor(node.type).category === 'modifier') {
+        const parent = scope.nodes.find((entry) => entry.id === node.parent);
+        const prefab = parent?.prefabId ? definitions.get(parent.prefabId) : undefined;
+        const root = prefab?.nodes.find((entry) => entry.parent === null);
+
+        if (
+          root &&
+          prefab?.nodes.some((entry) => entry.parent === root.id && entry.type === node.type)
+        ) {
+          throw new TypeError('This prefab already supplies a modifier of the same type.');
+        }
+      }
+
       if (node.prefabId) {
         const prefab = definitions.get(node.prefabId);
         const root = prefab?.nodes.find((entry) => entry.parent === null);
@@ -330,10 +343,10 @@ export const validateHierarchy = (document: SceneDocument): void => {
     }
   }
 
-  const sizes = new Map<string, number>();
+  const sizes = new Map<string, Readonly<{ count: number; depth: number }>>();
   const visiting = new Set<string>();
-  const size = (id: string): number => {
-    if (visiting.has(id) || visiting.size >= 20) {
+  const size = (id: string): Readonly<{ count: number; depth: number }> => {
+    if (visiting.has(id)) {
       throw new TypeError('Prefabs cannot contain dependency cycles or nest more than 20 levels.');
     }
 
@@ -344,24 +357,37 @@ export const validateHierarchy = (document: SceneDocument): void => {
     }
 
     visiting.add(id);
-    const count = definitions
-      .get(id)!
-      .nodes.reduce((total, node) => total + (node.prefabId ? size(node.prefabId) : 1), 0);
+    let count = 0;
+    let depth = 1;
+
+    for (const node of definitions.get(id)!.nodes) {
+      const nested = node.prefabId ? size(node.prefabId) : undefined;
+      count += nested?.count ?? 1;
+      depth = Math.max(depth, 1 + (nested?.depth ?? 0));
+    }
+
     visiting.delete(id);
+
+    if (depth > 20) {
+      throw new TypeError('Prefabs cannot contain dependency cycles or nest more than 20 levels.');
+    }
 
     if (count > 2000) {
       throw new TypeError('A prefab may expand to at most 2000 objects.');
     }
 
-    sizes.set(id, count);
-    return count;
+    const result = { count, depth };
+    sizes.set(id, result);
+    return result;
   };
 
   definitions.forEach((_, id) => size(id));
 
   if (
-    document.nodes.reduce((total, node) => total + (node.prefabId ? size(node.prefabId) : 1), 0) >
-    5000
+    document.nodes.reduce(
+      (total, node) => total + (node.prefabId ? size(node.prefabId).count : 1),
+      0,
+    ) > 5000
   ) {
     throw new TypeError('A scene may expand to at most 5000 objects.');
   }
