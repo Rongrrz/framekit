@@ -24,6 +24,7 @@ import {
 import { codeThemes, type CodeResponse, type CodeTheme, type PreparedCode } from './code-themes';
 import type { Editor } from './editor';
 import { exportProject, type ProjectFile } from './project-export';
+import { decorateTreeRow } from './tree-appearance';
 import { button, colors, label, mono, panel, round, scroll } from './ui';
 import { zipProject } from './zip';
 
@@ -443,7 +444,13 @@ export const createCodeDialog = (
       return control;
     },
     update: (control, row, index) => {
-      control.Text = `${'  '.repeat(row.depth - 1)}${row.folder ? (collapsed.has(row.path) ? '▸' : '▾') : '·'} ${row.name}`;
+      control.Text = row.name;
+      decorateTreeRow(
+        control,
+        row.depth,
+        row.folder ? 'folder' : 'file',
+        row.folder ? !collapsed.has(row.path) : undefined,
+      );
       control.AccessibleLabel = row.path;
       control.Position = udim2FromOffset(6, 6 + index * 32);
       control.Size = udim2(1, -16, 0, 30);

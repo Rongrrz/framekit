@@ -4,11 +4,9 @@ import {
   bindTreeView,
   createObservableValue,
   createTextButton,
-  createUIPadding,
   setAccessibility,
   udim2,
   udim2FromOffset,
-  udim,
   watchOwnedValue,
   vector2,
   type Frame,
@@ -19,6 +17,7 @@ import { orderedNodes } from './document';
 import type { Editor } from './editor';
 import { bindHierarchyDrag } from './hierarchy-drag';
 import { definitionFor, type NodeType } from './schema';
+import { decorateTreeRow } from './tree-appearance';
 import { button, colors, font, input, label, panel, round, scroll } from './ui';
 
 /** Filtering preserves ancestor rows so depth-first keyboard navigation stays meaningful. */
@@ -168,14 +167,12 @@ export const createHierarchy = (
       rowIds.set(row, item.id);
       row.unsafeElement.dataset.explorerId = item.id;
       round(row, 6);
-      const padding = createUIPadding({ PaddingLeft: udim(0, 8) });
-      padding.Parent = row;
       row.on('click', (event) => {
         const current = source.get().find((entry) => entry.id === item.id);
         const x = event.clientX - row.unsafeElement.getBoundingClientRect().left;
         const chevron = 8 + (current ? current.depth - 1 : 0) * 14;
 
-        if (current?.branch && x >= chevron && x <= chevron + 16) {
+        if (current?.branch && x >= chevron && x <= chevron + 24) {
           event.stopPropagation();
 
           if (collapsed.has(item.id)) {
@@ -208,21 +205,20 @@ export const createHierarchy = (
     },
     update: (row, item, index) => {
       const icon = item.prefab
-        ? '◇'
-        : item.branch
-          ? item.expanded
-            ? '▾'
-            : '▸'
-          : definitionFor(item.type).category === 'modifier'
-            ? '◇'
-            : item.type.startsWith('Text')
-              ? 'T'
-              : '□';
-      row.Text = `${icon}  ${item.name}${item.hidden ? '  ◌' : ''}`;
-      const padding = row.getChildren().find((child) => child.isA('UIPadding'))!;
-      if (padding.isA('UIPadding')) {
-        padding.PaddingLeft = udim(0, 8 + (item.depth - 1) * 14);
-      }
+        ? 'prefab'
+        : definitionFor(item.type).category === 'modifier'
+          ? 'modifier'
+          : item.type === 'TextButton'
+            ? 'button'
+            : item.type === 'TextInput'
+              ? 'input'
+              : item.type === 'ImageLabel'
+                ? 'image'
+                : item.type === 'TextLabel'
+                  ? 'text'
+                  : 'frame';
+      row.Text = `${item.name}${item.hidden ? '  ◌' : ''}`;
+      decorateTreeRow(row, item.depth, icon, item.branch ? item.expanded : undefined);
       row.AccessibleLabel = item.name;
       row.Position = udim2FromOffset(2, index * 36);
       row.BackgroundTransparency = item.selected ? 0 : 1;

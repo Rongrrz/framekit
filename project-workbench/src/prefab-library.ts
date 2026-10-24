@@ -10,6 +10,7 @@ import {
 
 import type { PrefabDefinition } from './document';
 import type { Editor } from './editor';
+import { decorateTreeRow } from './tree-appearance';
 import { button, colors, input, label, panel, round, scroll } from './ui';
 
 /** Definitions live in the library; inserting creates a link rather than copying their internals. */
@@ -73,7 +74,8 @@ export const createPrefabLibrary = (
       round(card, 8, true);
       const name = label(card, '', 28, 13);
       name.Name = 'Prefab name';
-      name.Position = udim2FromOffset(12, 5);
+      name.Position = udim2FromOffset(0, 5);
+      decorateTreeRow(name, 1, 'prefab');
       name.Size = udim2(1, -24, 0, 28);
       name.FontWeight = 600;
       const metadata = label(card, '', 24, 10, colors.muted);
@@ -102,7 +104,7 @@ export const createPrefabLibrary = (
         if (child.isA('TextLabel')) {
           child.Text =
             child.Name === 'Prefab name'
-              ? `◇  ${prefab.name}`
+              ? prefab.name
               : `${prefab.nodes.length} objects · ${prefab.events?.length ?? 0} custom events`;
         } else if (child.isA('TextButton')) {
           child.AccessibleLabel = `${child.Name === '×' ? 'Delete' : child.Name} prefab ${prefab.name}`;

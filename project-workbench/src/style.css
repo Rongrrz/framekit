@@ -61,3 +61,33 @@ input[aria-invalid='true'] {
 [data-canvas-guide] {
   pointer-events: none;
 }
+
+[data-tree-row]::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  left: calc(var(--tree-indent) + 26px);
+  top: calc(50% - 8px);
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: var(--tree-icon) center / contain no-repeat;
+  opacity: 0.8;
+}
+
+[data-tree-expanded]::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  left: calc(var(--tree-indent) + 8px);
+  top: calc(50% - 5px);
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+[data-tree-expanded='true']::before {
+  transform: translateY(-2px) rotate(45deg);
+}
