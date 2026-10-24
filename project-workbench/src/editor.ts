@@ -1,4 +1,4 @@
-import { createObservableValue, type ReadonlyObservableValue } from 'framekit';
+import { createObservableValue, udim2FromOffset, type ReadonlyObservableValue } from 'framekit';
 
 import {
   createSampleDocument,
@@ -6,9 +6,12 @@ import {
   parseDocument,
   validateHierarchy,
   type SceneDocument,
+  type Interaction,
   type SceneNode,
 } from './document';
+import { cloneInternalConnections } from './interactions';
 import { moveBranch, type MoveDestination } from './move';
+import { editableDocument, makePrefab, replaceScope } from './prefabs';
 import {
   defaultProperties,
   definitionFor,
@@ -17,15 +20,27 @@ import {
   type PropertyValue,
 } from './schema';
 
-type Revision = Readonly<{ document: SceneDocument; selectedId: string | null }>;
+type Revision = Readonly<{
+  project: SceneDocument;
+  selectedId: string | null;
+  prefabId: string | null;
+}>;
 
 /** History availability is published with each revision so controls update together. */
-export type EditorSnapshot = Revision & Readonly<{ canUndo: boolean; canRedo: boolean }>;
+export type EditorSnapshot = Revision &
+  Readonly<{ document: SceneDocument; canUndo: boolean; canRedo: boolean }>;
 
 /** One owner for document edits, selection, and reversible document history. */
 export type Editor = Readonly<{
   state: ReadonlyObservableValue<EditorSnapshot>;
   select(id: string | null): void;
+  openPrefab(id: string | null): void;
+  createPrefab(name: string): string;
+  insertPrefab(id: string): void;
+  removePrefab(id: string): void;
+  setEvents(events: readonly string[]): void;
+  connect(binding: Interaction): void;
+  disconnect(id: string): void;
   add(type: NodeType): void;
   edit(id: string, property: string, value: PropertyValue): void;
   reparent(id: string, parent: string | null): void;
@@ -46,24 +61,40 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
   const past: Revision[] = [];
   const future: Revision[] = [];
   let clipboard:
-    | Readonly<{ root: SceneNode; nodes: readonly SceneNode[]; cutId?: string }>
+    | Readonly<{
+        root: SceneNode;
+        nodes: readonly SceneNode[];
+        bindings: readonly Interaction[];
+        cutId?: string;
+      }>
     | undefined;
   const state = createObservableValue<EditorSnapshot>({
     document: initial,
+    project: initial,
+    prefabId: null,
     selectedId: initial.nodes[0]?.id ?? null,
     canUndo: false,
     canRedo: false,
   });
 
   const publish = (revision: Revision): void =>
-    state.set({ ...revision, canUndo: past.length > 0, canRedo: future.length > 0 });
+    state.set({
+      ...revision,
+      document: editableDocument(revision.project, revision.prefabId),
+      canUndo: past.length > 0,
+      canRedo: future.length > 0,
+    });
 
-  const commit = (document: SceneDocument, selectedId = state.get().selectedId): void => {
-    if (JSON.stringify(document) === JSON.stringify(state.get().document)) {
+  const commitProject = (
+    project: SceneDocument,
+    selectedId = state.get().selectedId,
+    prefabId = state.get().prefabId,
+  ): void => {
+    if (JSON.stringify(project) === JSON.stringify(state.get().project)) {
       return;
     }
 
-    validateHierarchy(document);
+    validateHierarchy(project);
     past.push(state.get());
 
     if (past.length > 100) {
@@ -71,8 +102,11 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
     }
 
     future.length = 0;
-    publish({ document, selectedId });
+    publish({ project, selectedId, prefabId });
   };
+
+  const commit = (document: SceneDocument, selectedId = state.get().selectedId): void =>
+    commitProject(replaceScope(state.get().project, state.get().prefabId, document), selectedId);
 
   const selected = (): SceneNode | undefined =>
     state.get().document.nodes.find((node) => node.id === state.get().selectedId);
@@ -86,7 +120,11 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
   };
 
   const insertionParent = (type: NodeType): string | null => {
-    const current = selected();
+    const current =
+      selected() ??
+      (state.get().prefabId
+        ? state.get().document.nodes.find((node) => node.parent === null)
+        : undefined);
     const category = definitionFor(type).category;
     return current &&
       (category === 'modifier'
@@ -100,6 +138,7 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
     root: SceneNode,
     branch: readonly SceneNode[],
     destination: MoveDestination,
+    bindings = state.get().document.bindings ?? [],
   ): void => {
     const { document } = state.get();
     const replacements = new Map(branch.map((node) => [node.id, crypto.randomUUID()]));
@@ -113,16 +152,101 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         Name: node.id === root.id ? `${node.properties.Name} copy` : node.properties.Name,
       },
     }));
-    commit(moveBranch({ ...document, nodes: [...document.nodes, ...copies] }, id, destination), id);
+    const connections = cloneInternalConnections(bindings, replacements);
+    commit(
+      moveBranch(
+        {
+          ...document,
+          nodes: [...document.nodes, ...copies],
+          ...(connections.length
+            ? { bindings: [...(document.bindings ?? []), ...connections] }
+            : {}),
+        },
+        id,
+        destination,
+      ),
+      id,
+    );
   };
 
   return {
     state,
     select: (id): void => {
       if (id === null || state.get().document.nodes.some((node) => node.id === id)) {
-        publish({ document: state.get().document, selectedId: id });
+        publish({ project: state.get().project, prefabId: state.get().prefabId, selectedId: id });
       }
     },
+    openPrefab: (id): void => {
+      const { project } = state.get();
+      const document = editableDocument(project, id);
+      publish({ project, prefabId: id, selectedId: document.nodes[0]?.id ?? null });
+    },
+    createPrefab: (name): string => {
+      const current = state.get();
+      const result = makePrefab(current.document, current.selectedId, name);
+      commitProject(replaceScope(current.project, current.prefabId, result.document));
+      return result.prefab.id;
+    },
+    insertPrefab: (prefabId): void => {
+      const { document } = state.get();
+      const prefab = document.prefabs?.find((entry) => entry.id === prefabId);
+      const root = prefab?.nodes.find((node) => node.parent === null);
+
+      if (!prefab || !root) {
+        throw new TypeError('The prefab no longer exists.');
+      }
+
+      const id = crypto.randomUUID();
+      commit(
+        {
+          ...document,
+          nodes: [
+            ...document.nodes,
+            {
+              id,
+              type: root.type,
+              prefabId,
+              parent: insertionParent(root.type),
+              properties: { Name: prefab.name, Position: udim2FromOffset(32, 32) },
+            },
+          ],
+        },
+        id,
+      );
+    },
+    removePrefab: (id): void => {
+      const { project, prefabId } = state.get();
+      const inUse = [project, ...(project.prefabs ?? [])].some((scope) =>
+        scope.nodes.some((node) => node.prefabId === id),
+      );
+
+      if (inUse || prefabId === id) {
+        throw new TypeError(
+          'Remove placed instances and leave this prefab editor before deleting its definition.',
+        );
+      }
+
+      commitProject({
+        ...project,
+        prefabs: (project.prefabs ?? []).filter((prefab) => prefab.id !== id),
+      });
+    },
+    setEvents: (events): void => commit({ ...state.get().document, events }),
+    connect: (binding): void => {
+      const { document } = state.get();
+      commit({
+        ...document,
+        bindings: [
+          ...(document.bindings ?? []).filter((entry) => entry.id !== binding.id),
+          binding,
+        ],
+      });
+    },
+    disconnect: (id): void =>
+      commit({
+        ...state.get().document,
+        bindings: (state.get().document.bindings ?? []).filter((entry) => entry.id !== id),
+      }),
     add: (type): void => {
       const { document } = state.get();
       const parent = insertionParent(type);
@@ -155,10 +279,10 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
       future.length = 0;
 
       if (clipboard) {
-        clipboard = { root: clipboard.root, nodes: clipboard.nodes };
+        clipboard = { root: clipboard.root, nodes: clipboard.nodes, bindings: clipboard.bindings };
       }
 
-      publish({ document, selectedId: document.nodes[0]?.id ?? null });
+      publish({ project: document, prefabId: null, selectedId: document.nodes[0]?.id ?? null });
     },
     duplicate: (): void => {
       const original = selected();
@@ -189,6 +313,7 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         clipboard = {
           root,
           nodes: document.nodes.filter((node) => ids.has(node.id)),
+          bindings: document.bindings ?? [],
           ...(cut ? { cutId: root.id } : {}),
         };
       }
@@ -198,14 +323,14 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         return;
       }
 
-      const { cutId, root, nodes } = clipboard;
+      const { cutId, root, nodes, bindings } = clipboard;
       const destination = { parent: insertionParent(root.type) };
 
       if (cutId && state.get().document.nodes.some((node) => node.id === cutId)) {
         commit(moveBranch(state.get().document, cutId, destination), cutId);
         clipboard = undefined;
       } else {
-        insertCopy(root, nodes, destination);
+        insertCopy(root, nodes, destination, bindings);
       }
     },
     remove: (): void => {
@@ -218,7 +343,22 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
       const { document } = state.get();
       const removed = descendantIds(document, original.id);
       commit(
-        { ...document, nodes: document.nodes.filter((node) => !removed.has(node.id)) },
+        {
+          ...document,
+          nodes: document.nodes.filter((node) => !removed.has(node.id)),
+          ...(document.bindings
+            ? {
+                bindings: document.bindings.filter(
+                  (binding) =>
+                    !removed.has(binding.source) &&
+                    (binding.action.type === 'emit' ||
+                      (!removed.has(binding.action.target) &&
+                        (binding.action.type !== 'copyText' ||
+                          !removed.has(binding.action.source)))),
+                ),
+              }
+            : {}),
+        },
         original.parent,
       );
     },
@@ -240,11 +380,25 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
     },
     load: (text): void => {
       const document = parseDocument(text);
-      commit(document, document.nodes[0]?.id ?? null);
+      commitProject(document, document.nodes[0]?.id ?? null, null);
     },
     configure: (patch): void => {
-      const document = parseDocument(JSON.stringify({ ...state.get().document, ...patch }));
-      commit(document);
+      const current = state.get();
+      const min = current.prefabId ? 4 : 240;
+
+      if (
+        (patch.name !== undefined && (!patch.name.trim() || patch.name.length > 200)) ||
+        [patch.width, patch.height].some(
+          (value) =>
+            value !== undefined && (!Number.isFinite(value) || value < min || value > 4096),
+        )
+      ) {
+        throw new TypeError(
+          `Use a name of 1–200 characters and dimensions between ${min} and 4096 pixels.`,
+        );
+      }
+
+      commit({ ...current.document, ...patch });
     },
   };
 };
