@@ -1,3 +1,5 @@
+import type { ProjectFile } from './project-export';
+
 /** Theme labels and worker messages stay lightweight in the main editor bundle. */
 export const codeThemes = [
   { id: 'github-dark', label: 'GitHub Dark' },
@@ -18,7 +20,11 @@ export type PreparedCode = Readonly<{
   >;
 }>;
 
-export type CodeRequest = Readonly<{ id: number; source: string }>;
+export type CodeRequest = Readonly<{
+  id: number;
+  source: string;
+  language?: ProjectFile['language'];
+}>;
 export type CodeResponse = Readonly<
   { id: number; result: PreparedCode } | { id: number; error: string }
 >;

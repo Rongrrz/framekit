@@ -59,6 +59,7 @@ const reservedNames = new Set([
   'eval',
   'arguments',
   'createScreenGui',
+  'createSignalEmitter',
   'color3FromHex',
   'udim',
   'udim2',
@@ -80,7 +81,7 @@ const runtimeDefaults: Readonly<Record<string, PropertyValue>> = {
   Enabled: true,
 };
 
-const identifierFrom = (name: string, used: Set<string>): string => {
+export const identifierFrom = (name: string, used: Set<string>): string => {
   const words = name
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -110,7 +111,7 @@ const identifierFrom = (name: string, used: Set<string>): string => {
 };
 
 /** Property constructors keep source short while retaining exact scale, offset, and color values. */
-const sourceValue = (field: Field, value: PropertyValue, imports: Set<string>): string => {
+export const sourceValue = (field: Field, value: PropertyValue, imports: Set<string>): string => {
   const helper = (name: string, arguments_: string): string => {
     imports.add(name);
     return `${name}(${arguments_})`;
