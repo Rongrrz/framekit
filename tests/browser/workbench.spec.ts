@@ -124,7 +124,7 @@ test('resizes panels, restores the project and layout, and exports only source c
   await page.reload();
   await expect(page.locator('[data-scene-id="headline"]')).toContainText('Saved between visits');
   await expect(splitter).toHaveAttribute('aria-valuenow', '250');
-  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
     /Saved between visits/,
   );
@@ -160,7 +160,7 @@ test('keeps the three panels and file commands reachable on compact screens', as
 test('shows formatted highlighted code in persistent themes and downloads the displayed source', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   const region = page.getByRole('region', { name: 'Generated TypeScript' });
   const source = region.locator('pre').filter({ hasText: "from 'framekit'" });
   await expect(source).toContainText('const welcomeCard = createFrame({');
@@ -171,31 +171,27 @@ test('shows formatted highlighted code in persistent themes and downloads the di
   await page.screenshot({ path: '/tmp/framekit-workbench-code-dark.png' });
   const original = await source.textContent();
   const dark = await region.evaluate((element) => getComputedStyle(element).backgroundColor);
-  await page.getByRole('button', { name: 'GitHub Light', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'GitHub Light', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await page.getByRole('button', { name: 'Close export', exact: true }).click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Code theme GitHub Light', exact: true }).click();
+  await page.getByRole('button', { name: 'Close settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  await expect(region).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  expect(await source.textContent()).toBe(original);
   expect(await region.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(
     dark,
   );
-  expect(await source.textContent()).toBe(original);
-  await page.screenshot({ path: '/tmp/framekit-workbench-code-light.png' });
-  await page.getByRole('button', { name: 'Catppuccin', exact: true }).click();
-  expect(await source.textContent()).toBe(original);
+  await expect(page.getByRole('button', { name: 'GitHub Light', exact: true })).toHaveCount(0);
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download .ts', exact: true }).click();
   const path = await (await downloading).path();
   expect(await readFile(path!, 'utf8')).toBe(`${original}\n`);
   await page.reload();
-  await page.getByRole('button', { name: 'Code', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Catppuccin', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  await expect(region).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await page.getByRole('button', { name: 'Close export', exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   await expect(region).toContainText('welcomeCard');
   await page.screenshot({ path: '/tmp/framekit-workbench-code-mobile.png' });
 });

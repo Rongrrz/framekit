@@ -14,6 +14,7 @@ import {
 
 import { bindCanvasDrag } from './canvas-drag';
 import { createCanvasPreferences, deviceDocument, devicePresets } from './canvas-preferences';
+import { bindChromeTheme, themeChromeNode } from './chrome-theme';
 import { createCodeDialog } from './code-dialog';
 import { createCommandPalette, type Command } from './commands';
 import { descendantIds, type SceneDocument } from './document';
@@ -40,7 +41,10 @@ export const createWorkbench = (): ScreenGui => {
   const interacting = createObservableValue(false);
   const status = createObservableValue('Select an object to start editing.');
   const app = createScreenGui({ Name: 'FrameKitWorkbench', ColorScheme: 'Dark' });
-  createUIFocusRing({ Color: colors.accent, Thickness: 2, Offset: 2 }).Parent = app;
+  const canvasPreferences = createCanvasPreferences(app);
+  bindChromeTheme(app, canvasPreferences);
+  themeChromeNode(createUIFocusRing({ Color: colors.accent, Thickness: 2, Offset: 2 })).Parent =
+    app;
   const report = (message: string): void => status.set(message);
   const perform = (action: () => void): void => {
     try {
@@ -90,10 +94,9 @@ export const createWorkbench = (): ScreenGui => {
   const projectsButton = button(topActions, 'Projects', showHome, 88);
   projectsButton.AccessibleLabel = 'Back to projects';
   button(topActions, 'Save', () => perform(save), 64);
-  const exportButton = button(topActions, 'Code', () => code.open(exportButton), 62);
+  const exportButton = button(topActions, 'Export', () => code.open(exportButton), 62);
   exportButton.BackgroundColor3 = colors.accent;
   exportButton.TextColor3 = colors.canvas;
-  const canvasPreferences = createCanvasPreferences(app);
   const workspace = createWorkspace(background, editor, preferences, canvasPreferences);
   const settings = createSettingsDialog(app, preferences, canvasPreferences, code);
   watchOwnedValue(app, canvasPreferences, (value) =>

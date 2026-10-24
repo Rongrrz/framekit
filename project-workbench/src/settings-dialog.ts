@@ -45,7 +45,7 @@ export const createSettingsDialog = (
   viewport.Position = udim2FromOffset(24, 72);
   viewport.Size = udim2(1, -48, 1, -96);
   const content = panel('Settings content', viewport);
-  content.Size = udim2(1, -6, 0, 958);
+  content.Size = udim2(1, -6, 0, 1054);
   const toggles = (
     [
       ['grid', 'Canvas grid'],
@@ -264,6 +264,22 @@ export const createSettingsDialog = (
     watchOwnedValue(control, canvas, (value) => {
       control.unsafeElement.setAttribute('aria-pressed', String(value.precision === precision));
       control.BackgroundColor3 = value.precision === precision ? colors.selected : colors.raised;
+    });
+  }
+  const appearanceLabel = label(content, 'Workbench appearance', 28, 14);
+  appearanceLabel.Position = udim2FromOffset(0, 948);
+  for (const [index, uiTheme] of (['dark', 'light'] as const).entries()) {
+    const control = button(
+      content,
+      uiTheme === 'light' ? 'Light' : 'Dark',
+      () => canvas.update((value) => ({ ...value, uiTheme })),
+      140,
+    );
+    control.AccessibleLabel = `Workbench theme ${uiTheme}`;
+    control.Position = udim2FromOffset(index * 148, 988);
+    watchOwnedValue(control, canvas, (value) => {
+      control.unsafeElement.setAttribute('aria-pressed', String(value.uiTheme === uiTheme));
+      control.BackgroundColor3 = value.uiTheme === uiTheme ? colors.selected : colors.raised;
     });
   }
   watchOwnedValue(dialog, preferences, (value) => {

@@ -94,7 +94,7 @@ test('runs nested prefab events independently and downloads a working multi-file
   await expect(
     page.locator('[data-scene-id="left-counter/@/nested-counter/@/count"]'),
   ).toContainText('0');
-  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   await page
     .getByRole('treeitem', { name: 'src/prefabs/create-counter-prefab.ts', exact: true })
     .click();
@@ -254,14 +254,20 @@ test('keeps custom device settings, event forms, and export files usable on comp
   expect(left.x + left.width).toBeLessThan(right.x);
   expect(right.x + right.width).toBeLessThanOrEqual(375);
   await page.getByRole('button', { name: 'Close events', exact: true }).click();
-  await page.getByRole('button', { name: 'Code', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
     'createScene',
   );
   await page.getByRole('button', { name: 'Browse project files', exact: true }).click();
   await page.getByRole('treeitem', { name: 'index.html', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Generated html' })).toContainText('/src/main.ts');
-  await page.getByRole('button', { name: 'GitHub Light', exact: true }).click();
+  await page.getByRole('button', { name: 'Close export', exact: true }).click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Code theme GitHub Light', exact: true }).click();
+  await page.getByRole('button', { name: 'Close settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  await page.getByRole('button', { name: 'Browse project files', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'index.html', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Generated html' })).toHaveCSS(
     'background-color',
     'rgb(255, 255, 255)',

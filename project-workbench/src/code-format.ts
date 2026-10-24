@@ -11,7 +11,6 @@ import cssGrammar from 'shiki/langs/css.mjs';
 import htmlGrammar from 'shiki/langs/html.mjs';
 import jsonGrammar from 'shiki/langs/json.mjs';
 import grammar from 'shiki/langs/typescript.mjs';
-import mocha from 'shiki/themes/catppuccin-mocha.mjs';
 import githubDark from 'shiki/themes/github-dark.mjs';
 import githubLight from 'shiki/themes/github-light.mjs';
 
@@ -21,7 +20,7 @@ import type { ProjectFile } from './project-export';
 // Grammars and themes load in the worker when the code dialog is first opened.
 const highlighter = createHighlighterCoreSync({
   langs: [grammar, htmlGrammar, cssGrammar, jsonGrammar],
-  themes: [githubDark, githubLight, mocha],
+  themes: [githubDark, githubLight],
   engine: createJavaScriptRegexEngine(),
 });
 
@@ -80,7 +79,6 @@ export const prepareCode = async (
     palettes: {
       'github-dark': palette('github-dark'),
       'github-light': palette('github-light'),
-      'catppuccin-mocha': palette('catppuccin-mocha'),
     },
   };
 };

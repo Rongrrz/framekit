@@ -1,5 +1,4 @@
 import {
-  color3FromHex,
   createFrame,
   createScrollingFrame,
   createTextButton,
@@ -18,20 +17,10 @@ import {
   type TextLabel,
 } from 'framekit';
 
-/** Editor chrome is independent of the editable scene and its exported appearance. */
-export const colors = {
-  canvas: color3FromHex('#111216'),
-  panel: color3FromHex('#1b1c21'),
-  raised: color3FromHex('#26282f'),
-  field: color3FromHex('#15161b'),
-  border: color3FromHex('#34363f'),
-  text: color3FromHex('#eeedf2'),
-  muted: color3FromHex('#a1a4b1'),
-  faint: color3FromHex('#777b89'),
-  accent: color3FromHex('#aff1d1'),
-  selected: color3FromHex('#284438'),
-  danger: color3FromHex('#f3a49d'),
-};
+import { themeChromeNode } from './chrome-theme';
+import { colors } from './palette';
+
+export { colors } from './palette';
 
 export const font =
   'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -39,18 +28,20 @@ export const mono = '"SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation M
 
 /** Give related controls one inherited visual rhythm without changing browser semantics. */
 export const round = (node: GuiElement, radius = 8, border = false): void => {
+  themeChromeNode(node);
   createUICorner({ CornerRadius: radius }).Parent = node;
 
   if (border) {
-    createUIStroke({ Color: colors.border, Thickness: 1, BorderStrokePosition: 'Inner' }).Parent =
-      node;
+    themeChromeNode(
+      createUIStroke({ Color: colors.border, Thickness: 1, BorderStrokePosition: 'Inner' }),
+    ).Parent = node;
   }
 };
 
 export const panel = (name: string, parent: GuiElement, background = colors.panel): Frame => {
   const node = createFrame({ Name: name, Size: udim2(1, 0, 1, 0), BackgroundColor3: background });
   node.Parent = parent;
-  return node;
+  return themeChromeNode(node);
 };
 
 export const label = (
@@ -72,7 +63,7 @@ export const label = (
     TextYAlignment: 'Center',
   });
   node.Parent = parent;
-  return node;
+  return themeChromeNode(node);
 };
 
 export const button = (
@@ -95,7 +86,7 @@ export const button = (
   round(node);
   node.Parent = parent;
   node.onClick(action);
-  return node;
+  return themeChromeNode(node);
 };
 
 export const input = (parent: GuiElement, name: string, text = ''): TextInput => {
@@ -113,7 +104,7 @@ export const input = (parent: GuiElement, name: string, text = ''): TextInput =>
   round(node, 5, true);
   createUIPadding({ PaddingLeft: udim(0, 10), PaddingRight: udim(0, 10) }).Parent = node;
   node.Parent = parent;
-  return node;
+  return themeChromeNode(node);
 };
 
 export const stack = (node: GuiElement, gap = 8, horizontal = false): void => {
@@ -138,12 +129,12 @@ export const scroll = (
     ScrollBarImageColor3: colors.border,
   });
   node.Parent = parent;
-  return node;
+  return themeChromeNode(node);
 };
 
 export const sectionTitle = (parent: GuiElement, text: string): TextLabel => {
   const node = label(parent, text, 34, 10, colors.muted);
   node.FontWeight = 650;
   node.LetterSpacing = 1.2;
-  return node;
+  return themeChromeNode(node);
 };

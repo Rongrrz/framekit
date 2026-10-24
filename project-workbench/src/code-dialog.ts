@@ -24,7 +24,7 @@ import {
 import { codeThemes, type CodeResponse, type CodeTheme, type PreparedCode } from './code-themes';
 import type { Editor } from './editor';
 import { exportProject, type ProjectFile } from './project-export';
-import { button, colors, label, mono, panel, round, scroll, stack } from './ui';
+import { button, colors, label, mono, panel, round, scroll } from './ui';
 import { zipProject } from './zip';
 
 const themeStorageKey = 'framekit-workbench-code-theme';
@@ -75,7 +75,7 @@ export const createCodeDialog = (
   heading.Size = udim2(1, -96, 0, 36);
   const description = label(
     dialog,
-    'Browse the files. Download a complete app with reusable components and event code.',
+    'Download a runnable project. Source files remain available here for debugging.',
     24,
     12,
     colors.muted,
@@ -100,11 +100,6 @@ export const createCodeDialog = (
   filename.Size = udim2(1, -24, 0, 48);
   filename.FontFamily = mono;
   filename.ClipsDescendants = true;
-  const themeBar = panel('Code themes', filebar, colors.raised);
-  themeBar.Position = udim2(1, -360, 0, 8);
-  themeBar.Size = udim2FromOffset(348, 32);
-  stack(themeBar, 4, true);
-  setAccessibility(themeBar, { role: 'group', label: 'Code theme' });
   const viewport = createScrollingFrame({
     Name: 'Generated TypeScript',
     ScrollingDirection: 'XY',
@@ -215,8 +210,7 @@ export const createCodeDialog = (
     },
     118,
   );
-  copy.BackgroundColor3 = colors.accent;
-  copy.TextColor3 = colors.canvas;
+
   const zip = button(
     dialog,
     'Download ZIP',
@@ -264,6 +258,8 @@ export const createCodeDialog = (
     },
     140,
   );
+  zip.BackgroundColor3 = colors.accent;
+  zip.TextColor3 = colors.canvas;
   const filesToggle = button(
     dialog,
     'Files',
@@ -287,13 +283,6 @@ export const createCodeDialog = (
       viewport.BackgroundColor3 = color3FromHex(palette.background);
       gutter.TextColor3 = color3FromHex(palette.muted);
     }
-
-    for (const entry of themeButtons) {
-      const selected = entry.id === theme;
-      entry.button.BackgroundColor3 = selected ? colors.selected : colors.raised;
-      entry.button.TextColor3 = selected ? colors.accent : colors.muted;
-      entry.button.unsafeElement.setAttribute('aria-pressed', String(selected));
-    }
   };
   const setTheme = (value: CodeTheme): void => {
     theme = value;
@@ -305,10 +294,6 @@ export const createCodeDialog = (
       /* Theme remains available in memory. */
     }
   };
-  const themeButtons = codeThemes.map((entry) => ({
-    id: entry.id,
-    button: button(themeBar, entry.label, () => setTheme(entry.id), 110),
-  }));
   const fallback = (file: ProjectFile): PreparedCode => ({
     source: file.source,
     palettes: {
@@ -323,12 +308,6 @@ export const createCodeDialog = (
         foreground: '#1f2328',
         background: '#ffffff',
         muted: '#8c959f',
-      },
-      'catppuccin-mocha': {
-        text: escapeRichText(file.source.trimEnd()),
-        foreground: '#cdd6f4',
-        background: '#1e1e2e',
-        muted: '#6e7681',
       },
     },
   });
@@ -521,16 +500,9 @@ export const createCodeDialog = (
     frame.Visible = !compact || !showFiles;
     frame.Position = udim2FromOffset(compact ? 20 : 240, 104);
     frame.Size = udim2(1, compact ? -40 : -260, 1, -208);
-    filebar.Size = udim2(1, 0, 0, 88);
-    themeBar.Position = udim2FromOffset(8, 44);
-    themeBar.Size = udim2(1, -16, 0, 32);
-    const codeWidth = width - (compact ? 40 : 260);
-    themeButtons.forEach((entry) => {
-      entry.button.Size = udim2FromOffset(Math.min(116, (codeWidth - 24) / 3), 32);
-      entry.button.TextSize = compact ? 10 : 11;
-    });
-    viewport.Position = udim2FromOffset(0, 88);
-    viewport.Size = udim2(1, 0, 1, -88);
+    filebar.Size = udim2(1, 0, 0, 48);
+    viewport.Position = udim2FromOffset(0, 48);
+    viewport.Size = udim2(1, 0, 1, -48);
     description.Visible = !compact;
     filesToggle.Visible = compact;
     filesToggle.Text = showFiles ? 'Code' : 'Files';

@@ -14,7 +14,7 @@ describe('formatted source', () => {
     expect(result.source).toContain('const uiCorner = createUICorner({');
     expect(result.source).toContain("BackgroundColor3: color3FromHex('#ffffff'),");
     expect(result.source).not.toContain('"Position":');
-    expect(new Set(Object.values(result.palettes).map((theme) => theme.background)).size).toBe(3);
+    expect(new Set(Object.values(result.palettes).map((theme) => theme.background)).size).toBe(2);
 
     for (const theme of Object.values(result.palettes)) {
       expect(() => color3FromHex(theme.background)).not.toThrow();

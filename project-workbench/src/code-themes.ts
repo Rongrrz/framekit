@@ -4,7 +4,6 @@ import type { ProjectFile } from './project-export';
 export const codeThemes = [
   { id: 'github-dark', label: 'GitHub Dark' },
   { id: 'github-light', label: 'GitHub Light' },
-  { id: 'catppuccin-mocha', label: 'Catppuccin' },
 ] as const;
 
 export type CodeTheme = (typeof codeThemes)[number]['id'];
