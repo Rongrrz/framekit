@@ -13,11 +13,12 @@ import {
 } from 'framekit';
 
 import { bindCanvasDrag } from './canvas-drag';
-import { createCanvasPreferences, deviceDocument, devicePresets } from './canvas-preferences';
+import { createCanvasPreferences, deviceDocument } from './canvas-preferences';
 import { bindChromeTheme, themeChromeNode } from './chrome-theme';
 import { createCodeDialog } from './code-dialog';
 import { createCommandPalette, type Command } from './commands';
 import { descendantIds, type SceneDocument } from './document';
+import { createDropdown } from './dropdown';
 import { createEditor } from './editor';
 import { createEventDialog } from './event-dialog';
 import { bindWorkbenchFiles, restoreWorkspace } from './files';
@@ -28,6 +29,7 @@ import { createScenePreview } from './preview';
 import { createProjectHome } from './project-home';
 import { createProjectLibrary } from './projects';
 import { createProperties } from './properties';
+import { createResolutionControls } from './resolution-controls';
 import { definitionFor, nodeDefinitions, type NodeType } from './schema';
 import { createScriptDialog } from './script-dialog';
 import { createSettingsDialog } from './settings-dialog';
@@ -233,7 +235,8 @@ export const createWorkbench = (): ScreenGui => {
   toolbarScroll.Parent = toolbar;
   const controls = panel('Toolbar commands', toolbarScroll);
   controls.Position = udim2FromOffset(12, 8);
-  controls.Size = udim2FromOffset(1330, 34);
+  controls.Size = udim2FromOffset(0, 34);
+  controls.AutomaticSize = 'X';
   stack(controls, 6, true);
   const insert = button(
     controls,
@@ -282,19 +285,19 @@ export const createWorkbench = (): ScreenGui => {
   );
   present.BackgroundColor3 = colors.selected;
   present.TextColor3 = colors.accent;
-  const fit = button(
-    controls,
-    'Fit',
-    () => preferences.update((value) => ({ ...value, zoom: 0, pane: 'canvas' })),
-    40,
-  );
-  fit.AccessibleLabel = 'Fit canvas';
-  button(
-    controls,
-    '100%',
-    () => preferences.update((value) => ({ ...value, zoom: 1, pane: 'canvas' })),
-    50,
-  );
+  const zoom = createDropdown(controls, {
+    label: 'Canvas zoom',
+    width: 108,
+    menuParent: app,
+    choices: [
+      { value: 0, label: 'Fit canvas' },
+      ...[0.25, 0.5, 0.75, 1, 1.5, 2].map((value) => ({ value, label: `${value * 100}%` })),
+    ],
+    value: () => preferences.get().zoom,
+    change: (value) =>
+      preferences.update((current) => ({ ...current, zoom: value, pane: 'canvas' })),
+  });
+  watchOwnedValue(app, preferences, zoom.refresh);
   const commands = (): readonly Command[] => [
     ...insertCommands(),
     { id: 'undo', label: 'Undo', hint: 'Ctrl/Cmd Z', run: editor.undo },
@@ -359,10 +362,11 @@ export const createWorkbench = (): ScreenGui => {
   ];
   const commandButton = button(
     controls,
-    '⌕ Commands  ⌘K',
+    '⌘K',
     () => palette.open('Commands', commands(), commandButton),
-    156,
+    44,
   );
+  commandButton.AccessibleLabel = 'Commands';
   const eventsButton = button(controls, 'Events', () => events.open(eventsButton), 72);
   const sceneButton = button(controls, '← Scene', () => openPrefab(null), 82);
   sceneButton.AccessibleLabel = 'Return to scene';
@@ -381,47 +385,22 @@ export const createWorkbench = (): ScreenGui => {
     },
     100,
   );
-  const deviceButton = button(
-    controls,
-    'Design size',
-    () =>
-      palette.open(
-        'Preview device',
-        devicePresets.map((preset) => ({
-          id: preset.id,
-          label: preset.label,
-          hint: preset.width
-            ? `${preset.width} × ${preset.height}`
-            : preset.id === 'custom'
-              ? 'Edit dimensions in Settings'
-              : 'Authored dimensions',
-          run: () => {
-            canvasPreferences.update((value) => ({ ...value, device: preset.id }));
-            if (preset.id === 'custom') {
-              settings.open();
-            }
-          },
-        })),
-        deviceButton,
-      ),
-    130,
-  );
-  deviceButton.AccessibleLabel = 'Preview device';
-  const rotateDevice = button(
-    controls,
-    '↻',
-    () => canvasPreferences.update((value) => ({ ...value, landscape: !value.landscape })),
-    34,
-  );
-  rotateDevice.AccessibleLabel = 'Rotate preview';
+  const devices = createResolutionControls(controls, {
+    preferences: canvasPreferences,
+    document: () => editor.state.get().document,
+    label: 'Canvas resolution',
+    orientationLabel: 'Canvas orientation',
+    menuParent: app,
+    custom: () => settings.open(),
+  });
   watchOwnedValue(app, canvasPreferences, (value) => {
-    deviceButton.Text = devicePresets.find((preset) => preset.id === value.device)!.label;
-    rotateDevice.Disabled = value.device === 'design' || Boolean(editor.state.get().prefabId);
     const snapshot = editor.state.get();
     preview.update(
       deviceDocument(snapshot.document, value, snapshot.prefabId),
       snapshot.selectedId,
     );
+    devices.resolution.Disabled = Boolean(snapshot.prefabId);
+    devices.orientation.Disabled ||= Boolean(snapshot.prefabId);
   });
   const footer = panel('Status bar', background);
   footer.Position = udim2(0, 0, 1, -27);
@@ -454,12 +433,14 @@ export const createWorkbench = (): ScreenGui => {
     redo.Disabled = !snapshot.canRedo;
     documentTitle.Text = `${snapshot.project.name}${snapshot.prefabId ? `  /  ◇ ${snapshot.document.name}` : ''}`;
     sceneButton.Disabled = !snapshot.prefabId;
-    deviceButton.Disabled = Boolean(snapshot.prefabId);
-    rotateDevice.Disabled =
-      Boolean(snapshot.prefabId) || canvasPreferences.get().device === 'design';
+    devices.refresh();
+    devices.resolution.Disabled = Boolean(snapshot.prefabId);
+    devices.orientation.Disabled ||= Boolean(snapshot.prefabId);
+    sceneButton.Visible = Boolean(snapshot.prefabId);
     editPrefabButton.Disabled = !snapshot.document.nodes.find(
       (node) => node.id === snapshot.selectedId,
     )?.prefabId;
+    editPrefabButton.Visible = !editPrefabButton.Disabled;
   });
   workspace.canvas.unsafeElement.setAttribute('data-workbench-editing', '');
   watchOwnedValue(app, preferences, (value) => {

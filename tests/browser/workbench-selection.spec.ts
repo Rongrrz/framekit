@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { chooseDropdown } from './workbench-helpers';
+
 const dimension = (x: number, y: number): object => ({
   X: { Scale: 0, Offset: x },
   Y: { Scale: 0, Offset: y },
@@ -87,7 +89,7 @@ test('draws selection above opaque children and overlapping high-z siblings with
       },
     },
   ]);
-  await page.getByRole('button', { name: '100%', exact: true }).click();
+  await chooseDropdown(page, 'Canvas zoom', '100%');
   const saved = await page.evaluate(() => localStorage.getItem('framekit-workbench-projects-v1'));
   await page.getByRole('treeitem', { name: 'Selected frame', exact: true }).click();
   const target = page.locator('[data-scene-id="selected"]');
@@ -172,7 +174,7 @@ test('selection follows nested rotation, zoom and scrolling, and clears for hidd
   await matchesTarget();
   await expect(outline).toHaveCSS('rotate', '29deg');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: '50%', exact: true }).click();
+  await chooseDropdown(page, 'Canvas zoom', '50%');
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await matchesTarget();
   await expect(outline).toHaveCSS('box-shadow', 'rgb(61, 157, 255) 0px 0px 0px 2px inset');
