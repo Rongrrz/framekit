@@ -77,20 +77,18 @@ test('runs nested prefab events independently and downloads a working multi-file
 }) => {
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
   await createProject(page, 'Interactive counters');
-  await page.getByRole('button', { name: 'Preview', exact: true }).click();
-  const canvas = page.getByRole('region', { name: 'Design canvas' });
+  await page.getByRole('button', { name: 'Present', exact: true }).click();
+  const canvas = page.frameLocator('iframe[title="Presented project"]');
   const buttons = canvas.getByRole('button', { name: '+ Add one', exact: true });
   await buttons.nth(0).click();
   await buttons.nth(0).click();
-  await expect(
-    page.locator('[data-scene-id="left-counter/@/nested-counter/@/count"]'),
-  ).toContainText('2');
-  await expect(
-    page.locator('[data-scene-id="right-counter/@/nested-counter/@/count"]'),
-  ).toContainText('0');
+  await expect(canvas.getByText('2', { exact: true })).toBeVisible();
+  await expect(canvas.getByText('0', { exact: true })).toBeVisible();
   await buttons.nth(1).click();
-  await expect(page.locator('[data-scene-id="counter-status"]')).toContainText('right prefab');
-  await page.getByRole('button', { name: 'Design', exact: true }).click();
+  await expect(
+    canvas.getByText('The right prefab emitted CountChanged.', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Exit presentation', exact: true }).click();
   await expect(
     page.locator('[data-scene-id="left-counter/@/nested-counter/@/count"]'),
   ).toContainText('0');
@@ -149,12 +147,16 @@ test('declares a custom output and connects it to scene behavior through the eve
   await page.getByRole('button', { name: 'Save connection', exact: true }).click();
   await page.screenshot({ path: '/tmp/framekit-events-editor.png' });
   await page.getByRole('button', { name: 'Close events', exact: true }).click();
-  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await page.getByRole('button', { name: 'Present', exact: true }).click();
   await page
-    .getByRole('region', { name: 'Design canvas' })
+    .frameLocator('iframe[title="Presented project"]')
     .getByRole('button', { name: 'Build something →', exact: true })
     .click();
-  await expect(page.locator('[data-scene-id="headline"]')).toContainText('Accepted by prefab.');
+  await expect(
+    page
+      .frameLocator('iframe[title="Presented project"]')
+      .getByText('Accepted by prefab.', { exact: true }),
+  ).toBeVisible();
 });
 
 test('supports free canvas dragging, optional snapping and guides, and non-destructive device previews', async ({

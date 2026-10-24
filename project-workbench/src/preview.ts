@@ -40,7 +40,6 @@ export const createScenePreview = (
   canvas: Frame,
   report: (message: string) => void = () => {},
 ): Readonly<{
-  handles: ReadonlyMap<string, Instance>;
   setInteractive(value: boolean): void;
   setPosition(id: string, position: UDim2): void;
   update(document: SceneDocument, selectedId: string | null, reset?: boolean): void;
@@ -76,7 +75,6 @@ export const createScenePreview = (
   });
 
   return {
-    handles,
     setPosition: (id, position): void => {
       const node = handles.get(id);
       if (node && !node.isDestroyed() && 'Position' in node) {

@@ -23,11 +23,13 @@ import { createEventDialog } from './event-dialog';
 import { bindWorkbenchFiles, restoreWorkspace } from './files';
 import { createHierarchy } from './hierarchy';
 import { createPrefabLibrary } from './prefab-library';
+import { createPresentation } from './presentation';
 import { createScenePreview } from './preview';
 import { createProjectHome } from './project-home';
 import { createProjectLibrary } from './projects';
 import { createProperties } from './properties';
 import { definitionFor, nodeDefinitions, type NodeType } from './schema';
+import { createScriptDialog } from './script-dialog';
 import { createSettingsDialog } from './settings-dialog';
 import { button, colors, label, panel, round, stack } from './ui';
 import { createWorkspace, defaultWorkspace } from './workspace';
@@ -38,7 +40,6 @@ export const createWorkbench = (): ScreenGui => {
   const editor = createEditor();
   const preferences = createObservableValue(restoreWorkspace());
   let activeProjectId: string | null = null;
-  const interacting = createObservableValue(false);
   const status = createObservableValue('Select an object to start editing.');
   const app = createScreenGui({ Name: 'FrameKitWorkbench', ColorScheme: 'Dark' });
   const canvasPreferences = createCanvasPreferences(app);
@@ -78,6 +79,7 @@ export const createWorkbench = (): ScreenGui => {
   stack(topActions, 6, true);
   const files = bindWorkbenchFiles(app, preferences, report);
   const code = createCodeDialog(app, editor, files.download, report);
+  const scripts = createScriptDialog(app, editor, code.getTheme);
   const save = (): void => {
     (document.activeElement as HTMLElement | null)?.blur();
 
@@ -105,6 +107,7 @@ export const createWorkbench = (): ScreenGui => {
   const settingsButton = button(topActions, '⚙', () => settings.open(settingsButton), 34);
   settingsButton.AccessibleLabel = 'Settings';
   const preview = createScenePreview(workspace.canvas, report);
+  const presentation = createPresentation(app, report);
   workspace.canvas.unsafeElement.dataset.workbenchCanvas = '';
   const palette = createCommandPalette(app, perform);
 
@@ -115,6 +118,9 @@ export const createWorkbench = (): ScreenGui => {
       hint: definitionFor(type).category,
       run: () => {
         editor.add(type);
+        if (type === 'Script') {
+          scripts.open(editor.state.get().selectedId!);
+        }
         preferences.update((value) => ({ ...value, pane: 'properties' }));
       },
     }));
@@ -171,7 +177,6 @@ export const createWorkbench = (): ScreenGui => {
   hierarchyView.Size = udim2(1, 0, 1, -38);
   const openPrefab = (id: string | null): void => {
     editor.openPrefab(id);
-    interacting.set(false);
     leftSection.set('hierarchy');
     preferences.update((value) => ({ ...value, pane: 'canvas' }));
   };
@@ -193,6 +198,7 @@ export const createWorkbench = (): ScreenGui => {
     move,
     perform,
     report,
+    (id, opener) => scripts.open(id, opener),
   );
   const events = createEventDialog(
     app,
@@ -200,7 +206,12 @@ export const createWorkbench = (): ScreenGui => {
     (title, commands, opener) => palette.open(title, commands, opener),
     perform,
   );
-  createProperties(workspace.properties, editor, report);
+  createProperties(workspace.properties, editor, report, () => {
+    const id = editor.state.get().selectedId;
+    if (id) {
+      scripts.open(id);
+    }
+  });
   const toolbar = panel('Toolbar', background);
   toolbar.Position = udim2FromOffset(0, 53);
   toolbar.Size = udim2(1, 0, 0, 50);
@@ -253,24 +264,18 @@ export const createWorkbench = (): ScreenGui => {
     control.Size = udim2(1 / 3, -12, 0, 34);
     return { control, pane };
   });
-  const design = button(
+  const present = button(
     controls,
-    'Design',
+    'Present',
     () => {
-      interacting.set(false);
-      report('Design · Select an object on the canvas or in Explorer.');
+      cancelCanvasDrag();
+      (document.activeElement as HTMLElement | null)?.blur();
+      presentation.open(editor.state.get().document, present);
     },
-    76,
+    90,
   );
-  const interact = button(
-    controls,
-    'Preview',
-    () => {
-      interacting.set(true);
-      report('Preview · Try your interface. Choose Design to keep editing.');
-    },
-    82,
-  );
+  present.BackgroundColor3 = colors.selected;
+  present.TextColor3 = colors.accent;
   const fit = button(
     controls,
     'Fit',
@@ -409,7 +414,7 @@ export const createWorkbench = (): ScreenGui => {
     const snapshot = editor.state.get();
     preview.update(
       deviceDocument(snapshot.document, value, snapshot.prefabId),
-      interacting.get() ? null : snapshot.selectedId,
+      snapshot.selectedId,
     );
   });
   const footer = panel('Status bar', background);
@@ -429,7 +434,6 @@ export const createWorkbench = (): ScreenGui => {
     workspace.viewport,
     workspace.canvas,
     editor,
-    interacting,
     canvasPreferences,
     preview,
     report,
@@ -438,7 +442,7 @@ export const createWorkbench = (): ScreenGui => {
   watchOwnedValue(app, editor.state, (snapshot) => {
     preview.update(
       deviceDocument(snapshot.document, canvasPreferences.get(), snapshot.prefabId),
-      interacting.get() ? null : snapshot.selectedId,
+      snapshot.selectedId,
     );
     undo.Disabled = !snapshot.canUndo;
     redo.Disabled = !snapshot.canRedo;
@@ -451,21 +455,7 @@ export const createWorkbench = (): ScreenGui => {
       (node) => node.id === snapshot.selectedId,
     )?.prefabId;
   });
-  watchOwnedValue(app, interacting, (value) => {
-    preview.setInteractive(value);
-    design.BackgroundColor3 = value ? colors.raised : colors.selected;
-    design.TextColor3 = value ? colors.muted : colors.accent;
-    design.unsafeElement.setAttribute('aria-pressed', String(!value));
-    interact.BackgroundColor3 = value ? colors.selected : colors.raised;
-    interact.unsafeElement.setAttribute('aria-pressed', String(value));
-    workspace.canvas.unsafeElement.toggleAttribute('data-workbench-editing', !value);
-    const snapshot = editor.state.get();
-    preview.update(
-      deviceDocument(snapshot.document, canvasPreferences.get(), snapshot.prefabId),
-      value ? null : snapshot.selectedId,
-      true,
-    );
-  });
+  workspace.canvas.unsafeElement.setAttribute('data-workbench-editing', '');
   watchOwnedValue(app, preferences, (value) => {
     for (const { control, pane } of paneButtons) {
       control.BackgroundColor3 = value.pane === pane ? colors.selected : colors.raised;
@@ -495,7 +485,7 @@ export const createWorkbench = (): ScreenGui => {
       return;
     }
 
-    if (processed || interacting.get()) {
+    if (processed) {
       return;
     }
 
@@ -557,7 +547,6 @@ export const createWorkbench = (): ScreenGui => {
 
     if (project && project.id !== activeProjectId) {
       activeProjectId = project.id;
-      interacting.set(false);
       leftSection.set('hierarchy');
       editor.replace(project.document);
       report(
@@ -574,6 +563,8 @@ export const createWorkbench = (): ScreenGui => {
       palette.close();
       events.close();
       settings.close();
+      presentation.close();
+      scripts.close();
     }
 
     background.Visible = Boolean(project);

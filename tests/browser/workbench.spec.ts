@@ -258,7 +258,7 @@ test('keeps tree ancestors during search and reveals canvas selections in collap
   );
 });
 
-test('supports pointer splitting and resets transient input state when returning to design', async ({
+test('supports pointer splitting and resets transient input state after presentation', async ({
   page,
 }) => {
   const splitter = page.getByRole('separator', { name: 'Properties width' });
@@ -270,12 +270,12 @@ test('supports pointer splitting and resets transient input state when returning
   await expect(splitter).toHaveAttribute('aria-valuenow', '360');
   await page.getByRole('button', { name: '+ Insert', exact: true }).click();
   await page.getByRole('button', { name: 'Add TextInput', exact: true }).click();
-  await page.getByRole('button', { name: 'Preview', exact: true }).click();
-  const previewInput = page.locator('[data-workbench-canvas] input');
+  await page.getByRole('button', { name: 'Present', exact: true }).click();
+  const previewInput = page.frameLocator('iframe[title="Presented project"]').getByRole('textbox');
   await previewInput.fill('Transient typing');
   await expect(previewInput).toHaveValue('Transient typing');
-  await page.getByRole('button', { name: 'Design', exact: true }).click();
-  await expect(previewInput).toHaveValue('');
+  await page.getByRole('button', { name: 'Exit presentation', exact: true }).click();
+  await expect(page.locator('[data-workbench-canvas] input')).toHaveValue('');
 });
 
 test('releases its GUI, modal, and owned observers when destroyed', async ({ page }) => {

@@ -10,6 +10,7 @@ import {
   watchOwnedValue,
   vector2,
   type Frame,
+  type GuiElement,
   type TreeViewItem,
 } from 'framekit';
 
@@ -28,6 +29,7 @@ export const createHierarchy = (
   move: () => void,
   perform: (action: () => void) => void,
   report: (message: string) => void,
+  editScript: (id: string, opener: GuiElement) => void,
 ): void => {
   const heading = label(parent, 'EXPLORER', 38, 10, colors.muted);
   heading.Position = udim2FromOffset(16, 4);
@@ -193,6 +195,12 @@ export const createHierarchy = (
       });
       row.onDestroy(() => rowIds.delete(row));
       row.on('dblclick', () => {
+        if (
+          editor.state.get().document.nodes.find((node) => node.id === item.id)?.type === 'Script'
+        ) {
+          editScript(item.id, row);
+          return;
+        }
         if (collapsed.has(item.id)) {
           collapsed.delete(item.id);
         } else {

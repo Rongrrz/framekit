@@ -3,7 +3,6 @@ import {
   udim2FromOffset,
   type Frame,
   type ObservableValue,
-  type ReadonlyObservableValue,
   type ScrollingFrame,
   type UDim2,
 } from 'framekit';
@@ -33,7 +32,6 @@ export const bindCanvasDrag = (
   viewport: ScrollingFrame,
   canvas: Frame,
   editor: Editor,
-  interacting: ReadonlyObservableValue<boolean>,
   preferences: ObservableValue<CanvasPreferences>,
   preview: Readonly<{
     idFromTarget(target: EventTarget | null): string | null;
@@ -95,7 +93,7 @@ export const bindCanvasDrag = (
   viewport.on(
     'pointerdown',
     (event) => {
-      if (interacting.get() || event.button !== 0) {
+      if (event.button !== 0) {
         return;
       }
 
@@ -252,9 +250,6 @@ export const bindCanvasDrag = (
   viewport.on(
     'click',
     (event) => {
-      if (interacting.get()) {
-        return;
-      }
       event.preventDefault();
       event.stopPropagation();
       const id = clickSelection === undefined ? preview.idFromTarget(event.target) : clickSelection;
@@ -273,11 +268,9 @@ export const bindCanvasDrag = (
     }
   });
   const stopPreferences = preferences.onChange(() => finish(false));
-  const stopMode = interacting.onChange(() => finish(false));
   viewport.onDestroy(() => {
     stop();
     stopPreferences();
-    stopMode();
     drag = undefined;
     hideGuides();
   });

@@ -118,6 +118,7 @@ export const createProperties = (
   parent: Frame,
   editor: Editor,
   report: (message: string) => void,
+  editScript: () => void,
 ): void => {
   const heading = label(parent, 'INSPECTOR', 32, 10, colors.muted);
   heading.Position = udim2FromOffset(20, 12);
@@ -134,6 +135,10 @@ export const createProperties = (
   const type = label(parent, '', 22, 11, colors.muted);
   type.Position = udim2FromOffset(16, 74);
   type.Size = udim2(1, -40, 0, 22);
+  const scriptButton = button(parent, 'Edit script', editScript, 100);
+  scriptButton.Position = udim2(1, -116, 0, 70);
+  scriptButton.Size = udim2FromOffset(100, 28);
+  scriptButton.Visible = false;
   const viewport = scroll(parent, 'Property fields');
   viewport.Position = udim2FromOffset(16, 104);
   viewport.Size = udim2(1, -28, 1, -116);
@@ -403,6 +408,7 @@ export const createProperties = (
       });
     }
 
+    scriptButton.Visible = selected?.type === 'Script';
     fields.set(rows);
   });
 };
