@@ -78,6 +78,7 @@ export const createProjectHome = (
   open: (id: string) => void,
   create: (document: SceneDocument) => void,
   perform: (action: () => void) => void,
+  openSettings: () => void,
 ): Readonly<{ view: Frame; close(): void }> => {
   const home = panel('Projects home', app, colors.canvas);
   setAccessibility(home, { role: 'region', label: 'Projects home' });
@@ -100,6 +101,9 @@ export const createProjectHome = (
   newProject.Position = udim2(1, -172, 0, 20);
   newProject.BackgroundColor3 = colors.accent;
   newProject.TextColor3 = colors.canvas;
+  const settings = button(header, '⚙', openSettings, 34);
+  settings.AccessibleLabel = 'Settings';
+  settings.Position = udim2(1, -218, 0, 20);
   const viewport = scroll(home, 'Projects');
   viewport.Position = udim2FromOffset(0, 73);
   viewport.Size = udim2(1, 0, 1, -73);
@@ -396,6 +400,7 @@ export const createProjectHome = (
   const resize = (): void => {
     width = Math.min(1200, Math.max(240, window.innerWidth - (window.innerWidth < 600 ? 32 : 96)));
     columns = Math.max(1, Math.min(4, Math.floor((width + 16) / 250)));
+    const templateColumns = Math.max(1, Math.min(5, Math.floor((width + 16) / 220)));
     content.Position = udim2FromOffset((window.innerWidth - width) / 2, 0);
     greeting.TextSize = window.innerWidth < 600 ? 25 : 32;
     templates.forEach((choose, index) => {
@@ -403,13 +408,13 @@ export const createProjectHome = (
 
       if (card?.isA('Frame')) {
         card.Position = udim2FromOffset(
-          (index % columns) * ((width + 16) / columns),
-          180 + Math.floor(index / columns) * 202,
+          (index % templateColumns) * ((width + 16) / templateColumns),
+          180 + Math.floor(index / templateColumns) * 202,
         );
-        card.Size = udim2FromOffset((width - (columns - 1) * 16) / columns, 186);
+        card.Size = udim2FromOffset((width - (templateColumns - 1) * 16) / templateColumns, 186);
       }
     });
-    recentTop = 196 + Math.ceil(templates.length / columns) * 202;
+    recentTop = 196 + Math.ceil(templates.length / templateColumns) * 202;
     recentHeading.Position = udim2FromOffset(0, recentTop);
     storage.Position = udim2FromOffset(0, recentTop + 40);
     storage.Text = library.error.get() ?? 'Saved automatically in this browser.';

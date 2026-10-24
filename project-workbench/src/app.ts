@@ -12,17 +12,22 @@ import {
   type ScreenGui,
 } from 'framekit';
 
+import { bindCanvasDrag } from './canvas-drag';
+import { createCanvasPreferences, deviceDocument, devicePresets } from './canvas-preferences';
 import { createCodeDialog } from './code-dialog';
 import { createCommandPalette, type Command } from './commands';
 import { descendantIds, type SceneDocument } from './document';
 import { createEditor } from './editor';
+import { createEventDialog } from './event-dialog';
 import { bindWorkbenchFiles, restoreWorkspace } from './files';
 import { createHierarchy } from './hierarchy';
+import { createPrefabLibrary } from './prefab-library';
 import { createScenePreview } from './preview';
 import { createProjectHome } from './project-home';
 import { createProjectLibrary } from './projects';
 import { createProperties } from './properties';
 import { definitionFor, nodeDefinitions, type NodeType } from './schema';
+import { createSettingsDialog } from './settings-dialog';
 import { button, colors, label, panel, round, stack } from './ui';
 import { createWorkspace, defaultWorkspace } from './workspace';
 
@@ -64,8 +69,8 @@ export const createWorkbench = (): ScreenGui => {
   documentTitle.Position = udim2FromOffset(176, 10);
   documentTitle.Size = udim2(1, -440, 0, 32);
   const topActions = panel('File actions', header);
-  topActions.Position = udim2(1, -248, 0, 10);
-  topActions.Size = udim2FromOffset(232, 32);
+  topActions.Position = udim2(1, -290, 0, 10);
+  topActions.Size = udim2FromOffset(274, 32);
   stack(topActions, 6, true);
   const files = bindWorkbenchFiles(app, preferences, report);
   const code = createCodeDialog(app, editor, files.download, report);
@@ -73,11 +78,12 @@ export const createWorkbench = (): ScreenGui => {
     (document.activeElement as HTMLElement | null)?.blur();
 
     if (activeProjectId) {
-      library.save(activeProjectId, editor.state.get().document);
+      library.save(activeProjectId, editor.state.get().project);
       report(library.error.get() ?? 'Saved in this browser.');
     }
   };
   const showHome = (): void => {
+    cancelCanvasDrag();
     window.location.hash = '/';
     renderRoute();
   };
@@ -87,8 +93,15 @@ export const createWorkbench = (): ScreenGui => {
   const exportButton = button(topActions, 'Code', () => code.open(exportButton), 62);
   exportButton.BackgroundColor3 = colors.accent;
   exportButton.TextColor3 = colors.canvas;
-  const workspace = createWorkspace(background, editor, preferences);
-  const preview = createScenePreview(workspace.canvas);
+  const canvasPreferences = createCanvasPreferences(app);
+  const workspace = createWorkspace(background, editor, preferences, canvasPreferences);
+  const settings = createSettingsDialog(app, preferences, canvasPreferences, code);
+  watchOwnedValue(app, canvasPreferences, (value) =>
+    workspace.viewport.unsafeElement.toggleAttribute('data-workbench-grid', value.grid),
+  );
+  const settingsButton = button(topActions, '⚙', () => settings.open(settingsButton), 34);
+  settingsButton.AccessibleLabel = 'Settings';
+  const preview = createScenePreview(workspace.canvas, report);
   workspace.canvas.unsafeElement.dataset.workbenchCanvas = '';
   const palette = createCommandPalette(app, perform);
 
@@ -138,13 +151,50 @@ export const createWorkbench = (): ScreenGui => {
     palette.open(`Move ${selected.properties.Name} to…`, commands);
   };
 
+  const leftSection = createObservableValue<'hierarchy' | 'prefabs'>('hierarchy');
+  const leftTabs = panel('Object libraries', workspace.hierarchy);
+  leftTabs.Size = udim2(1, 0, 0, 38);
+  const hierarchyTab = button(leftTabs, 'Hierarchy', () => leftSection.set('hierarchy'), 100);
+  hierarchyTab.AccessibleLabel = 'Hierarchy tab';
+  hierarchyTab.Position = udim2FromOffset(8, 4);
+  hierarchyTab.Size = udim2(0.5, -12, 0, 30);
+  const prefabTab = button(leftTabs, 'Prefabs', () => leftSection.set('prefabs'), 100);
+  prefabTab.AccessibleLabel = 'Prefabs tab';
+  prefabTab.Position = udim2(0.5, 4, 0, 4);
+  prefabTab.Size = udim2(0.5, -12, 0, 30);
+  const hierarchyView = panel('Hierarchy editor', workspace.hierarchy);
+  hierarchyView.Position = udim2FromOffset(0, 38);
+  hierarchyView.Size = udim2(1, 0, 1, -38);
+  const openPrefab = (id: string | null): void => {
+    editor.openPrefab(id);
+    interacting.set(false);
+    leftSection.set('hierarchy');
+    preferences.update((value) => ({ ...value, pane: 'canvas' }));
+  };
+  const prefabView = createPrefabLibrary(workspace.hierarchy, editor, openPrefab, perform);
+  prefabView.Position = udim2FromOffset(0, 38);
+  prefabView.Size = udim2(1, 0, 1, -38);
+  watchOwnedValue(app, leftSection, (section) => {
+    hierarchyView.Visible = section === 'hierarchy';
+    prefabView.Visible = section === 'prefabs';
+    hierarchyTab.BackgroundColor3 = section === 'hierarchy' ? colors.selected : colors.panel;
+    prefabTab.BackgroundColor3 = section === 'prefabs' ? colors.selected : colors.panel;
+    hierarchyTab.unsafeElement.setAttribute('aria-pressed', String(section === 'hierarchy'));
+    prefabTab.unsafeElement.setAttribute('aria-pressed', String(section === 'prefabs'));
+  });
   createHierarchy(
-    workspace.hierarchy,
+    hierarchyView,
     editor,
     () => palette.open('Insert an object', insertCommands()),
     move,
     perform,
     report,
+  );
+  const events = createEventDialog(
+    app,
+    editor,
+    (title, commands, opener) => palette.open(title, commands, opener),
+    perform,
   );
   createProperties(workspace.properties, editor, move, report, perform);
   const toolbar = panel('Toolbar', background);
@@ -162,7 +212,7 @@ export const createWorkbench = (): ScreenGui => {
   toolbarScroll.Parent = toolbar;
   const controls = panel('Toolbar commands', toolbarScroll);
   controls.Position = udim2FromOffset(12, 8);
-  controls.Size = udim2FromOffset(708, 34);
+  controls.Size = udim2FromOffset(1330, 34);
   stack(controls, 6, true);
   const insert = button(
     controls,
@@ -249,6 +299,33 @@ export const createWorkbench = (): ScreenGui => {
         preferences.update((value) => ({ ...value, pane: 'properties' }));
       },
     },
+    {
+      id: 'settings',
+      label: 'Workbench settings',
+      hint: 'Canvas, panels, and code appearance',
+      run: () => settings.open(),
+    },
+    {
+      id: 'events',
+      label: 'Edit event connections',
+      hint: 'Triggers, actions, and custom outputs',
+      run: () => events.open(),
+    },
+    {
+      id: 'prefabs',
+      label: 'Open prefab library',
+      hint: 'Reusable components',
+      run: () => {
+        leftSection.set('prefabs');
+        preferences.update((value) => ({ ...value, pane: 'hierarchy' }));
+      },
+    },
+    {
+      id: 'scene',
+      label: 'Return to scene hierarchy',
+      hint: 'Leave prefab editing',
+      run: () => openPrefab(null),
+    },
     { id: 'save', label: 'Save project', hint: 'Ctrl/Cmd S · browser storage', run: save },
     { id: 'open', label: 'Open project', hint: 'Your project library', run: showHome },
     {
@@ -271,6 +348,66 @@ export const createWorkbench = (): ScreenGui => {
     () => palette.open('Commands', commands(), commandButton),
     156,
   );
+  const eventsButton = button(controls, 'Events', () => events.open(eventsButton), 72);
+  const sceneButton = button(controls, '← Scene', () => openPrefab(null), 82);
+  sceneButton.AccessibleLabel = 'Return to scene';
+  const editPrefabButton = button(
+    controls,
+    'Edit prefab',
+    () => {
+      const snapshot = editor.state.get();
+      const prefabId = snapshot.document.nodes.find(
+        (node) => node.id === snapshot.selectedId,
+      )?.prefabId;
+
+      if (prefabId) {
+        perform(() => openPrefab(prefabId));
+      }
+    },
+    100,
+  );
+  const deviceButton = button(
+    controls,
+    'Design size',
+    () =>
+      palette.open(
+        'Preview device',
+        devicePresets.map((preset) => ({
+          id: preset.id,
+          label: preset.label,
+          hint: preset.width
+            ? `${preset.width} × ${preset.height}`
+            : preset.id === 'custom'
+              ? 'Edit dimensions in Settings'
+              : 'Authored dimensions',
+          run: () => {
+            canvasPreferences.update((value) => ({ ...value, device: preset.id }));
+            if (preset.id === 'custom') {
+              settings.open();
+            }
+          },
+        })),
+        deviceButton,
+      ),
+    130,
+  );
+  deviceButton.AccessibleLabel = 'Preview device';
+  const rotateDevice = button(
+    controls,
+    '↻',
+    () => canvasPreferences.update((value) => ({ ...value, landscape: !value.landscape })),
+    34,
+  );
+  rotateDevice.AccessibleLabel = 'Rotate preview';
+  watchOwnedValue(app, canvasPreferences, (value) => {
+    deviceButton.Text = devicePresets.find((preset) => preset.id === value.device)!.label;
+    rotateDevice.Disabled = value.device === 'design' || Boolean(editor.state.get().prefabId);
+    const snapshot = editor.state.get();
+    preview.update(
+      deviceDocument(snapshot.document, value, snapshot.prefabId),
+      interacting.get() ? null : snapshot.selectedId,
+    );
+  });
   const footer = panel('Status bar', background);
   footer.Position = udim2(0, 0, 1, -27);
   footer.Size = udim2(1, 0, 0, 27);
@@ -284,42 +421,46 @@ export const createWorkbench = (): ScreenGui => {
     message.unsafeElement.title = value;
   });
 
-  workspace.viewport.on(
-    'pointerdown',
-    (event) => {
-      if (!interacting.get() && event.button === 0 && preview.idFromTarget(event.target)) {
-        event.preventDefault();
-        workspace.viewport.focus();
-      }
-    },
-    { capture: true },
-  );
-  workspace.viewport.on(
-    'click',
-    (event) => {
-      if (!interacting.get()) {
-        event.preventDefault();
-        event.stopPropagation();
-        editor.select(preview.idFromTarget(event.target));
-      }
-    },
-    { capture: true },
+  const cancelCanvasDrag = bindCanvasDrag(
+    workspace.viewport,
+    workspace.canvas,
+    editor,
+    interacting,
+    canvasPreferences,
+    preview,
+    report,
   );
 
   watchOwnedValue(app, editor.state, (snapshot) => {
-    preview.update(snapshot.document, interacting.get() ? null : snapshot.selectedId);
+    preview.update(
+      deviceDocument(snapshot.document, canvasPreferences.get(), snapshot.prefabId),
+      interacting.get() ? null : snapshot.selectedId,
+    );
     undo.Disabled = !snapshot.canUndo;
     redo.Disabled = !snapshot.canRedo;
-    documentTitle.Text = `FRAMEKIT  /  ${snapshot.document.name}`;
+    documentTitle.Text = `${snapshot.project.name}${snapshot.prefabId ? `  /  ◇ ${snapshot.document.name}` : ''}`;
+    sceneButton.Disabled = !snapshot.prefabId;
+    deviceButton.Disabled = Boolean(snapshot.prefabId);
+    rotateDevice.Disabled =
+      Boolean(snapshot.prefabId) || canvasPreferences.get().device === 'design';
+    editPrefabButton.Disabled = !snapshot.document.nodes.find(
+      (node) => node.id === snapshot.selectedId,
+    )?.prefabId;
   });
   watchOwnedValue(app, interacting, (value) => {
+    preview.setInteractive(value);
     design.BackgroundColor3 = value ? colors.raised : colors.selected;
     design.TextColor3 = value ? colors.muted : colors.accent;
     design.unsafeElement.setAttribute('aria-pressed', String(!value));
     interact.BackgroundColor3 = value ? colors.selected : colors.raised;
     interact.unsafeElement.setAttribute('aria-pressed', String(value));
     workspace.canvas.unsafeElement.toggleAttribute('data-workbench-editing', !value);
-    preview.update(editor.state.get().document, value ? null : editor.state.get().selectedId, true);
+    const snapshot = editor.state.get();
+    preview.update(
+      deviceDocument(snapshot.document, canvasPreferences.get(), snapshot.prefabId),
+      value ? null : snapshot.selectedId,
+      true,
+    );
   });
   watchOwnedValue(app, preferences, (value) => {
     for (const { control, pane } of paneButtons) {
@@ -381,6 +522,7 @@ export const createWorkbench = (): ScreenGui => {
 
   const resizeHeader = (): void => {
     documentTitle.Visible = window.innerWidth >= 780;
+    brand.Visible = window.innerWidth >= 600;
     navigation.Visible = window.innerWidth < 1060;
   };
   const stop = observeSize(app, resizeHeader);
@@ -395,7 +537,9 @@ export const createWorkbench = (): ScreenGui => {
     const project = library.create(document);
     openProject(project.id);
   };
-  const home = createProjectHome(app, library, openProject, createProject, perform);
+  const home = createProjectHome(app, library, openProject, createProject, perform, () =>
+    settings.open(),
+  );
 
   const renderRoute = (): void => {
     const route = window.location.hash.match(/^#\/project\/([^/]+)$/);
@@ -410,6 +554,7 @@ export const createWorkbench = (): ScreenGui => {
     if (project && project.id !== activeProjectId) {
       activeProjectId = project.id;
       interacting.set(false);
+      leftSection.set('hierarchy');
       editor.replace(project.document);
       report(
         library.error.get() ??
@@ -420,8 +565,11 @@ export const createWorkbench = (): ScreenGui => {
     }
 
     if (!project) {
+      cancelCanvasDrag();
       code.close();
       palette.close();
+      events.close();
+      settings.close();
     }
 
     background.Visible = Boolean(project);
@@ -429,23 +577,23 @@ export const createWorkbench = (): ScreenGui => {
     document.title = project ? `${project.document.name} · FrameKit` : 'Your projects · FrameKit';
   };
 
-  let previous = editor.state.get().document;
+  let previous = editor.state.get().project;
   watchOwnedValue(app, editor.state, (snapshot) => {
-    if (!activeProjectId || snapshot.document === previous) {
-      previous = snapshot.document;
+    if (!activeProjectId || snapshot.project === previous) {
+      previous = snapshot.project;
       return;
     }
 
-    previous = snapshot.document;
+    previous = snapshot.project;
     if (
       library.state.get().find((project) => project.id === activeProjectId)?.document ===
-      snapshot.document
+      snapshot.project
     ) {
       return;
     }
 
-    library.save(activeProjectId, snapshot.document);
-    document.title = `${snapshot.document.name} · FrameKit`;
+    library.save(activeProjectId, snapshot.project);
+    document.title = `${snapshot.project.name} · FrameKit`;
     report(library.error.get() ?? 'Saved automatically in this browser.');
   });
   const controller = new AbortController();

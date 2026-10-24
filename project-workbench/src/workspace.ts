@@ -15,6 +15,7 @@ import {
   type GuiElement,
 } from 'framekit';
 
+import { deviceDocument, type CanvasPreferences } from './canvas-preferences';
 import type { Editor } from './editor';
 import { colors, label, panel } from './ui';
 
@@ -111,6 +112,7 @@ export const createWorkspace = (
   app: GuiElement,
   editor: Editor,
   preferences: ObservableValue<WorkspacePreferences>,
+  canvasPreferences: ObservableValue<CanvasPreferences>,
 ): Readonly<{
   hierarchy: Frame;
   properties: Frame;
@@ -196,7 +198,8 @@ export const createWorkspace = (
       Position: udim2(1, -right - 5, 0, 0),
       Size: udim2(0, 5, 1, 0),
     });
-    const document = editor.state.get().document;
+    const snapshot = editor.state.get();
+    const document = deviceDocument(snapshot.document, canvasPreferences.get(), snapshot.prefabId);
     const zoom =
       prefs.zoom ||
       Math.max(
@@ -225,6 +228,7 @@ export const createWorkspace = (
 
   watchOwnedValue(app, preferences, layout);
   watchOwnedValue(app, editor.state, layout);
+  watchOwnedValue(app, canvasPreferences, layout);
   const stop = observeSize(app, layout);
   app.onDestroy(stop);
   return { hierarchy, properties, canvas, viewport, zoomLabel };
