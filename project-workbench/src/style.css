@@ -62,34 +62,48 @@ input[aria-invalid='true'] {
   pointer-events: none;
 }
 
+[data-tree-row] {
+  --tree-decoration: #98a2b3;
+}
+
+[data-workbench-theme='light'] [data-tree-row] {
+  --tree-decoration: #66756c;
+}
+
+[data-tree-row][aria-selected='true'] {
+  --tree-decoration: #aff1d1;
+}
+
+[data-workbench-theme='light'] [data-tree-row][aria-selected='true'] {
+  --tree-decoration: #165b3d;
+}
+
+/* ::before belongs to FrameKit's text stroke; keep both decorations in ::after. */
 [data-tree-row]::after {
   content: '';
   position: absolute;
   pointer-events: none;
-  left: calc(var(--tree-indent) + 26px);
-  top: calc(50% - 8px);
-  width: 16px;
-  height: 16px;
-  background: currentColor;
-  mask: var(--tree-icon) center / contain no-repeat;
-  opacity: 0.8;
+  left: var(--tree-indent);
+  top: calc(50% - 12px);
+  width: 42px;
+  height: 24px;
+  background: var(--tree-decoration);
+  mask-image: var(--tree-chevron, linear-gradient(transparent, transparent)), var(--tree-icon);
+  mask-position:
+    left center,
+    right center;
+  mask-size:
+    24px 24px,
+    16px 16px;
+  mask-repeat: no-repeat;
 }
 
-[data-tree-expanded]::before {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-  left: calc(var(--tree-indent) + 8px);
-  top: calc(50% - 5px);
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(-45deg);
+[data-tree-expanded='false'] {
+  --tree-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 6 6 6-6 6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
-[data-tree-expanded='true']::before {
-  transform: translateY(-2px) rotate(45deg);
+[data-tree-expanded='true'] {
+  --tree-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 [data-presentation] {

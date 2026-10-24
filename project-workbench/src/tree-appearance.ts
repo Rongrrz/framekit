@@ -35,8 +35,8 @@ export const decorateTreeRow = (
   const padding = row.getChildren().find((child) => child.isA('UIPadding'));
 
   if (padding?.isA('UIPadding')) {
-    padding.PaddingLeft = udim(0, 50 + (depth - 1) * 14);
+    padding.PaddingLeft = udim(0, 54 + (depth - 1) * 14);
   } else {
-    createUIPadding({ PaddingLeft: udim(0, 50 + (depth - 1) * 14) }).Parent = row;
+    createUIPadding({ PaddingLeft: udim(0, 54 + (depth - 1) * 14) }).Parent = row;
   }
 };
