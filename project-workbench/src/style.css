@@ -4,9 +4,8 @@
   touch-action: none;
 }
 
-[data-workbench-selected] {
-  outline: 2px solid #3d9dff;
-  outline-offset: -2px;
+[data-selection-overlay] {
+  pointer-events: none;
 }
 
 [data-workbench-editing] [data-scene-id] {

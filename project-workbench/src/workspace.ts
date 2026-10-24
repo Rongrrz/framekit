@@ -17,6 +17,7 @@ import {
 
 import { deviceDocument, type CanvasPreferences } from './canvas-preferences';
 import type { Editor } from './editor';
+import { bindSelectionOverlay } from './selection-overlay';
 import { colors, label, panel } from './ui';
 
 /** Zero zoom means fit; panel widths remain preferences when the compact layout takes over. */
@@ -153,6 +154,7 @@ export const createWorkspace = (
   canvas.Parent = world;
   const scale = createUIScale();
   scale.Parent = canvas;
+  bindSelectionOverlay(world, canvas);
   const leftHandle = panel('Explorer splitter', body, colors.border);
   const rightHandle = panel('Properties splitter', body, colors.border);
   leftHandle.unsafeElement.dataset.workbenchSplitter = '';
