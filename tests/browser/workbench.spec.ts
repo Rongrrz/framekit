@@ -486,6 +486,35 @@ test('renames with F2, reorders with the keyboard, and exposes context actions',
   await expect(page.locator('[data-scene-id="headline"]')).toBeVisible();
 });
 
+test('opens hierarchy context menus after release and supports outside dismissal and keyboard access', async ({
+  page,
+}) => {
+  const row = page.getByRole('treeitem', { name: 'Feature panel', exact: true });
+  const menu = page.getByRole('menu');
+  const bounds = (await row.boundingBox())!;
+
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.down({ button: 'right' });
+  await expect(menu).toBeHidden();
+  await page.mouse.up({ button: 'right' });
+  await expect(menu).toBeVisible();
+  await expect(row).toHaveAttribute('aria-selected', 'true');
+  await expect(menu.getByRole('menuitem', { name: 'Rename', exact: true })).toBeFocused();
+
+  const name = page.getByRole('textbox', { name: 'Name', exact: true });
+  await name.click();
+  await expect(menu).toBeHidden();
+  await expect(name).toBeFocused();
+
+  await row.press('Shift+F10');
+  await expect(menu).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+
+  await row.click();
+  await expect(menu).toBeHidden();
+});
+
 test('copies and cuts branches with shortcuts while keeping property text editing native', async ({
   page,
 }) => {

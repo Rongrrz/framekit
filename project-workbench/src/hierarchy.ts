@@ -187,8 +187,10 @@ export const createHierarchy = (
           publish();
         }
       });
-      row.on('contextmenu', (event) => {
-        event.preventDefault();
+      row.on('contextmenu', (event) => event.preventDefault());
+
+      // Opening before release lets native light dismissal immediately hide the menu.
+      row.onSecondaryClick((event) => {
         editor.select(item.id);
         menu.open(vector2(event.clientX, event.clientY));
       });
