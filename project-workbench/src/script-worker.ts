@@ -1,6 +1,7 @@
 import ts from 'typescript';
 
 import type { ProjectFile } from './project-export';
+import { scriptBudget } from './script-budget';
 
 self.onmessage = (event: MessageEvent<readonly ProjectFile[]>): void => {
   try {
@@ -14,6 +15,9 @@ self.onmessage = (event: MessageEvent<readonly ProjectFile[]>): void => {
           isolatedModules: true,
         },
         reportDiagnostics: true,
+        ...(file.path.startsWith('src/scripts/')
+          ? { transformers: { before: [scriptBudget(file.source)] } }
+          : {}),
       });
       const errors =
         result.diagnostics?.filter(

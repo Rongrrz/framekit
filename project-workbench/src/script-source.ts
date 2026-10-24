@@ -3,7 +3,7 @@ export const defaultScriptSource = `import type { ScriptContext } from '@frameki
 
 export default (ctx: ScriptContext): void => {
   // ctx.parent is the attached FrameKit object; ctx.root is the scene/prefab root.
-  // ctx.node('id') looks up an object in this scene or prefab instance.
+  // ctx.node('id or unique name') looks up an object in this scene or prefab instance.
   // ctx.query() queries only the owner's project DOM.
   // Use ctx.listen, ctx.interval, ctx.timeout, ctx.fetch, and ctx.own for cleanup.
 };

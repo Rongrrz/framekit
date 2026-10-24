@@ -47,7 +47,7 @@ export const createScriptDialog = (
   cancel.Position = udim2(1, -52, 0, 14);
   const hint = label(
     dialog,
-    'TypeScript · default export receives ctx · framekit imports supported',
+    'TypeScript · default export receives ctx · use ctx helpers or return your cleanup function',
     24,
     11,
     colors.muted,

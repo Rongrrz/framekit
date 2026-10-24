@@ -7,7 +7,8 @@ export type ScriptContext = Readonly<{
   parent: Instance;
   root: Instance;
   signal: AbortSignal;
-  node(id: string): Instance | undefined;
+  /** Resolve an authored ID or a unique object name in this scene/prefab instance. */
+  node(idOrName: string): Instance | undefined;
   query<T extends Element = HTMLElement>(selector: string): T | null;
   own<T extends Disposable>(resource: T): T;
   listen(target: EventTarget, type: string, listener: EventListener): () => void;
@@ -74,7 +75,18 @@ export const mountScript = (
     parent,
     root,
     signal: controller.signal,
-    node: (id) => nodes.get(id),
+    node: (id) => {
+      const direct = nodes.get(id);
+      if (direct) {
+        return direct;
+      }
+
+      const matches = [...nodes.values()].filter((node) => node.Name === id);
+      if (matches.length > 1) {
+        throw new Error(`More than one object is named ${id}. Use its ID instead.`);
+      }
+      return matches[0];
+    },
     query: <T extends Element>(selector: string): T | null =>
       'unsafeElement' in parent
         ? (parent.unsafeElement as HTMLElement).querySelector<T>(selector)

@@ -76,6 +76,7 @@ export const createPresentation = (
           if (current.signal.aborted) {
             return;
           }
+
           const iframe = window.document.createElement('iframe');
           iframe.title = 'Presented project';
           iframe.setAttribute('sandbox', 'allow-scripts');
@@ -84,9 +85,11 @@ export const createPresentation = (
             'allow',
             "camera 'none'; microphone 'none'; geolocation 'none'; clipboard-read 'none'; clipboard-write 'none'",
           );
+
           const nonce = crypto.randomUUID().replaceAll('-', '');
           const origins = document.networkOrigins?.join(' ') || "'none'";
           const policy = `default-src 'none'; script-src 'nonce-${nonce}' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob: ${origins}; connect-src ${origins}; font-src data:; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`;
+
           // Only the trusted bootstrap enters HTML. Authored code travels as structured message data.
           iframe.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><style>html,body,#project{width:100%;height:100%;margin:0;overflow:hidden}</style></head><body><div id="project"></div><script nonce="${nonce}">${runtime.default.replaceAll('</script', '<\\/script')}</script></body></html>`;
           frame = iframe;
@@ -101,6 +104,7 @@ export const createPresentation = (
               ) {
                 return;
               }
+
               connected = true;
               const channel = new MessageChannel();
               port = channel.port1;
@@ -118,14 +122,16 @@ export const createPresentation = (
                 ) {
                   title.Text = message.data.error.slice(0, 180);
                   report(message.data.error.slice(0, 2000));
-                } else if ('ready' in message.data) {
+                } else if ('ready' in message.data && errors === 0) {
                   title.Text = `${document.name} · Presentation`;
                 }
               };
+
               iframe.contentWindow?.postMessage({ modules }, '*', [channel.port2]);
             },
             { signal: current.signal },
           );
+
           // The dedicated host has one native integration child, owned by this session.
           host.unsafeElement.append(iframe);
         })
