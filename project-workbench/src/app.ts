@@ -129,11 +129,12 @@ export const createWorkbench = (): ScreenGui => {
 
     const excluded = descendantIds(snapshot.document, selected.id);
     const modifier = definitionFor(selected.type).category === 'modifier';
+    const script = selected.type === 'Script';
     const candidates = snapshot.document.nodes.filter(
       (node) =>
         !excluded.has(node.id) &&
         (definitionFor(node.type).category === 'container' ||
-          (modifier && definitionFor(node.type).category === 'element')),
+          ((modifier || script) && definitionFor(node.type).category === 'element')),
     );
     const commands: Command[] = candidates.map((node) => ({
       id: node.id,

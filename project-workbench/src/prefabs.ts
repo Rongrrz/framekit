@@ -82,7 +82,10 @@ export const makePrefab = (
 ): Readonly<{ document: SceneDocument; prefab: PrefabDefinition }> => {
   const selected = document.nodes.find((node) => node.id === selectedId);
 
-  if (selected && (selected.prefabId || definitionFor(selected.type).category === 'modifier')) {
+  if (
+    selected &&
+    (selected.prefabId || ['modifier', 'script'].includes(definitionFor(selected.type).category))
+  ) {
     throw new TypeError(
       'Choose a standard GUI root, or clear selection to create an empty prefab.',
     );

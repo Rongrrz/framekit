@@ -147,7 +147,7 @@ export const sourceValue = (field: Field, value: PropertyValue, imports: Set<str
 
 /** Names become safe, unique identifiers; caller text is always emitted as a quoted literal. */
 export const exportTypeScript = (document: SceneDocument): string => {
-  const nodes = orderedNodes(document);
+  const nodes = orderedNodes(document).filter((node) => node.type !== 'Script');
   const imports = new Set(['createScreenGui', 'createFrame', 'udim2FromOffset', 'color3FromHex']);
   const used = new Set(reservedNames);
   const identifiers = new Map(

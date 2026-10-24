@@ -9,6 +9,8 @@ import {
   type Vector2,
 } from 'framekit';
 
+import { defaultScriptSource } from './script-source';
+
 /** Values stay compatible with public FrameKit properties and plain JSON. */
 export type PropertyValue = string | number | boolean | Color3 | UDim | UDim2 | Vector2;
 
@@ -23,7 +25,7 @@ export type Field = Readonly<{
 }>;
 
 type NodeDefinition = Readonly<{
-  category: 'container' | 'element' | 'modifier';
+  category: 'container' | 'element' | 'modifier' | 'script';
   fields: Readonly<Record<string, Field>>;
 }>;
 
@@ -71,6 +73,14 @@ const text = {
 
 /** Supported scene types are deliberately separate from the editor's own interface. */
 export const nodeDefinitions = {
+  Script: {
+    category: 'script',
+    fields: {
+      Name: { kind: 'text', value: 'Script' },
+      Enabled: { kind: 'boolean', value: true },
+      Source: { kind: 'text', value: defaultScriptSource },
+    },
+  },
   Frame: { category: 'container', fields: gui },
   ScrollingFrame: {
     category: 'container',

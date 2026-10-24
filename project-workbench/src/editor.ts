@@ -54,6 +54,7 @@ export type Editor = Readonly<{
   redo(): void;
   load(text: string): void;
   configure(patch: Partial<Pick<SceneDocument, 'name' | 'width' | 'height'>>): void;
+  setNetworkOrigins(origins: readonly string[]): void;
 }>;
 
 /** History stores immutable document revisions; selection alone never consumes an undo step. */
@@ -127,8 +128,8 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         : undefined);
     const category = definitionFor(type).category;
     return current &&
-      (category === 'modifier'
-        ? definitionFor(current.type).category !== 'modifier'
+      (category === 'modifier' || category === 'script'
+        ? ['container', 'element'].includes(definitionFor(current.type).category)
         : definitionFor(current.type).category === 'container')
       ? current.id
       : (current?.parent ?? null);
@@ -171,6 +172,8 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
 
   return {
     state,
+    setNetworkOrigins: (networkOrigins): void =>
+      commitProject({ ...state.get().project, networkOrigins }),
     select: (id): void => {
       if (id === null || state.get().document.nodes.some((node) => node.id === id)) {
         publish({ project: state.get().project, prefabId: state.get().prefabId, selectedId: id });

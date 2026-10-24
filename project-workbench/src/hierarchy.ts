@@ -214,9 +214,11 @@ export const createHierarchy = (
               ? 'input'
               : item.type === 'ImageLabel'
                 ? 'image'
-                : item.type === 'TextLabel'
-                  ? 'text'
-                  : 'frame';
+                : item.type === 'Script'
+                  ? 'script'
+                  : item.type === 'TextLabel'
+                    ? 'text'
+                    : 'frame';
       row.Text = `${item.name}${item.hidden ? '  ◌' : ''}`;
       decorateTreeRow(row, item.depth, icon, item.branch ? item.expanded : undefined);
       row.AccessibleLabel = item.name;

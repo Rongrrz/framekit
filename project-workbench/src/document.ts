@@ -56,6 +56,7 @@ export type SceneDocument = Readonly<{
   prefabs?: readonly PrefabDefinition[];
   events?: readonly string[];
   bindings?: readonly Interaction[];
+  networkOrigins?: readonly string[];
 }>;
 
 const object = (value: unknown): Record<string, unknown> => {
@@ -114,7 +115,13 @@ export const parseDocument = (input: string): SceneDocument => {
   const value = object(JSON.parse(input));
   const document = parseScope(value, false);
   const prefabs = value.prefabs === undefined ? undefined : parsePrefabDefinitions(value.prefabs);
-  const result = { ...document, ...(prefabs ? { prefabs } : {}) };
+  const result = {
+    ...document,
+    ...(prefabs ? { prefabs } : {}),
+    ...(value.networkOrigins === undefined
+      ? {}
+      : { networkOrigins: parseNetworkOrigins(value.networkOrigins) }),
+  };
   validateHierarchy(result);
   return result;
 };
@@ -259,7 +266,8 @@ const validateNodes = (nodes: readonly SceneNode[]): void => {
 
       if (
         parentCategory === 'modifier' ||
-        (parentCategory === 'element' && category !== 'modifier')
+        parentCategory === 'script' ||
+        (parentCategory === 'element' && category !== 'modifier' && category !== 'script')
       ) {
         throw new TypeError('This node cannot contain that child.');
       }
@@ -297,6 +305,7 @@ export const validateHierarchy = (document: SceneDocument): void => {
     throw new TypeError('Use unique prefab IDs and at most 100 prefabs.');
   }
 
+  parseNetworkOrigins(document.networkOrigins ?? []);
   const scopes = [document, ...definitions.values()];
 
   for (const scope of scopes) {
@@ -337,7 +346,7 @@ export const validateHierarchy = (document: SceneDocument): void => {
     if (
       roots.length !== 1 ||
       roots[0]!.prefabId ||
-      definitionFor(roots[0]!.type).category === 'modifier'
+      ['modifier', 'script'].includes(definitionFor(roots[0]!.type).category)
     ) {
       throw new TypeError('A prefab needs exactly one standard GUI root.');
     }
@@ -495,4 +504,33 @@ export const createSampleDocument = (): SceneDocument => {
       }),
     ],
   };
+};
+
+/** Network permissions are exact origins, never CSP fragments, paths, wildcards, or credentials. */
+export const parseNetworkOrigins = (value: unknown): readonly string[] => {
+  if (!Array.isArray(value) || value.length > 16) {
+    throw new TypeError('Allow at most 16 HTTP(S) backend origins.');
+  }
+
+  return [
+    ...new Set(
+      value.map((entry: unknown) => {
+        if (typeof entry !== 'string') {
+          throw new TypeError('Enter an HTTP(S) origin.');
+        }
+        const url = new URL(entry);
+        if (
+          !['http:', 'https:'].includes(url.protocol) ||
+          url.username ||
+          url.password ||
+          url.origin !== entry
+        ) {
+          throw new TypeError(
+            'Use exact origins such as https://api.example.com, without paths or a trailing slash.',
+          );
+        }
+        return url.origin;
+      }),
+    ),
+  ];
 };

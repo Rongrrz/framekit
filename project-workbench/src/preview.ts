@@ -33,13 +33,14 @@ const factories = {
   UIPadding: createUIPadding,
   UIShadow: createUIShadow,
   UIStroke: createUIStroke,
-} satisfies Record<NodeType, () => Instance>;
+} satisfies Record<Exclude<NodeType, 'Script'>, () => Instance>;
 
 /** Preview reconciliation owns handles; stable document IDs keep their runtime identity. */
 export const createScenePreview = (
   canvas: Frame,
   report: (message: string) => void = () => {},
 ): Readonly<{
+  handles: ReadonlyMap<string, Instance>;
   setInteractive(value: boolean): void;
   setPosition(id: string, position: UDim2): void;
   update(document: SceneDocument, selectedId: string | null, reset?: boolean): void;
@@ -75,6 +76,7 @@ export const createScenePreview = (
   });
 
   return {
+    handles,
     setPosition: (id, position): void => {
       const node = handles.get(id);
       if (node && !node.isDestroyed() && 'Position' in node) {
@@ -93,7 +95,10 @@ export const createScenePreview = (
     },
     update: (authored, selectedId, reset = false): void => {
       scene = expandScene(authored);
-      const document = scene.document;
+      const document = {
+        ...scene.document,
+        nodes: scene.document.nodes.filter((node) => node.type !== 'Script'),
+      };
       const next = new Map(document.nodes.map((node) => [node.id, node]));
       const removed = new Set(
         [...previous].filter(([id, node]) => next.get(id)?.type !== node.type).map(([id]) => id),
@@ -122,7 +127,7 @@ export const createScenePreview = (
         let handle = handles.get(node.id);
 
         if (!handle) {
-          handle = factories[node.type]();
+          handle = factories[node.type as Exclude<NodeType, 'Script'>]();
           handles.set(node.id, handle);
 
           if (handle.isA('TextButton')) {
