@@ -93,8 +93,15 @@ test('draws selection above opaque children and overlapping high-z siblings with
   const saved = await page.evaluate(() => localStorage.getItem('framekit-workbench-projects-v1'));
   await page.getByRole('treeitem', { name: 'Selected frame', exact: true }).click();
   const target = page.locator('[data-scene-id="selected"]');
-  const bounds = (await target.boundingBox())!;
-  await expect.poll(() => colorAt(page, bounds.x + 1, bounds.y + 60)).toEqual([61, 157, 255, 255]);
+  // At 100% the centered artboard is wider than the viewport. Sample the scene, not the Explorer.
+  await target.scrollIntoViewIfNeeded();
+  await expect(target).toBeInViewport({ ratio: 1 });
+  await expect
+    .poll(async () => {
+      const bounds = (await target.boundingBox())!;
+      return colorAt(page, bounds.x + 1, bounds.y + 60);
+    })
+    .toEqual([61, 157, 255, 255]);
   await expect(target).toHaveCSS('z-index', '1');
   await expect(page.locator('[data-scene-id="sibling"]')).toHaveCSS('z-index', '2147483647');
   expect(await page.evaluate(() => localStorage.getItem('framekit-workbench-projects-v1'))).toBe(
@@ -102,6 +109,7 @@ test('draws selection above opaque children and overlapping high-z siblings with
   );
 
   // The decoration must not intercept canvas selection or raise the selected scene object.
+  const bounds = (await target.boundingBox())!;
   await page.mouse.click(bounds.x + 1, bounds.y + 60);
   await expect(page.getByRole('treeitem', { name: 'Opaque sibling', exact: true })).toHaveAttribute(
     'aria-selected',
