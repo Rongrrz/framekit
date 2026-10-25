@@ -17,6 +17,7 @@ export const createDropdown = <T extends string | number>(
     label: string;
     choices: readonly Readonly<{ value: T; label: string | (() => string) }>[];
     value(): T;
+    formatValue?: (value: T) => string;
     change(value: T): void;
     width?: number;
     menuParent?: GuiElement;
@@ -48,7 +49,9 @@ export const createDropdown = <T extends string | number>(
   });
   const refresh = (): void => {
     const selected = options.choices.find((choice) => choice.value === options.value());
-    control.Text = selected ? text(selected) : String(options.value());
+    control.Text =
+      options.formatValue?.(options.value()) ??
+      (selected ? text(selected) : String(options.value()));
     control.unsafeElement.setAttribute('aria-description', control.Text);
     control.unsafeElement.title = `${options.label}: ${control.Text}`;
     const width = Math.min(Math.max(options.width ?? 160, 260), window.innerWidth - 24);

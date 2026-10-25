@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 /** Projects start in the library; templates are available only through explicit creation. */
 export const createProject = async (page: Page, template: string): Promise<void> => {
@@ -11,7 +11,7 @@ export const createProject = async (page: Page, template: string): Promise<void>
 
 /** Choices use native popovers rather than the searchable command dialog. */
 export const chooseDropdown = async (
-  page: Page,
+  page: Page | Locator,
   name: string,
   choice: string | RegExp,
 ): Promise<void> => {

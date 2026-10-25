@@ -20,7 +20,12 @@ import type { SceneDocument } from './document';
 import { createDropdown } from './dropdown';
 import { createResolutionControls } from './resolution-controls';
 import { button, colors, iconButton, input, label, panel, round, scroll, setToggle } from './ui';
-import { defaultWorkspace, type WorkspacePreferences } from './workspace';
+import {
+  canvasZoomChoices,
+  defaultWorkspace,
+  formatCanvasZoom,
+  type WorkspacePreferences,
+} from './workspace';
 
 /** Settings group related choices into small panels, while each preference keeps its existing owner. */
 export const createSettingsDialog = (
@@ -231,10 +236,8 @@ export const createSettingsDialog = (
   }
   const zoom = createDropdown(canvasSection, {
     label: 'Canvas zoom',
-    choices: [
-      { value: 0, label: 'Fit canvas' },
-      ...[0.25, 0.5, 0.75, 1, 1.5, 2].map((value) => ({ value, label: `${value * 100}%` })),
-    ],
+    choices: canvasZoomChoices,
+    formatValue: formatCanvasZoom,
     value: () => preferences.get().zoom,
     change: (zoom) => preferences.update((value) => ({ ...value, zoom })),
   });

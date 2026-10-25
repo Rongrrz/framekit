@@ -36,6 +36,17 @@ export const defaultWorkspace: WorkspacePreferences = {
   pane: 'canvas',
 };
 
+/** Zoom is shared by gestures, menus, keyboard commands, and saved workspace preferences. */
+export const canvasZoomLimits = { min: 0.1, max: 4 } as const;
+
+export const formatCanvasZoom = (zoom: number): string =>
+  zoom === 0 ? 'Fit canvas' : `${Math.round(zoom * 100)}%`;
+
+export const canvasZoomChoices = [0, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map((value) => ({
+  value,
+  label: formatCanvasZoom(value),
+}));
+
 /** Splitters own pointer capture and publish widths through the same path as keyboard resizing. */
 const bindSplitter = (
   handle: Frame,
@@ -121,6 +132,7 @@ export const createWorkspace = (
   canvas: Frame;
   viewport: ReturnType<typeof createScrollingFrame>;
   zoomLabel: ReturnType<typeof label>;
+  recenter(): void;
 }> => {
   const body = panel('Workspace', app, colors.canvas);
   body.Position = udim2FromOffset(0, 104);
@@ -130,7 +142,7 @@ export const createWorkspace = (
   const viewport = createScrollingFrame({
     Name: 'Canvas viewport',
     ScrollingDirection: 'XY',
-    ScrollBarThickness: 8,
+    ScrollBarThickness: 0,
     ScrollBarImageColor3: colors.border,
     BackgroundColor3: colors.canvas,
     CanvasSize: udim2FromOffset(1000, 680),
@@ -139,6 +151,10 @@ export const createWorkspace = (
   themeChromeNode(viewport);
   viewport.unsafeElement.dataset.workbenchGrid = '';
   setAccessibility(viewport, { role: 'region', label: 'Design canvas', focusable: true });
+  viewport.unsafeElement.setAttribute(
+    'aria-description',
+    'Space-drag or middle-drag to pan. Scroll to move. Ctrl or Command plus scroll to zoom. H selects the Hand tool; V selects objects.',
+  );
   const caption = label(viewport, 'CANVAS', 20, 10, colors.faint);
   caption.LetterSpacing = 1.2;
   const world = panel('Artboard bounds', viewport);
@@ -167,6 +183,18 @@ export const createWorkspace = (
   zoomLabel.Position = udim2(1, -230, 1, -27);
   zoomLabel.Size = udim2FromOffset(214, 26);
   zoomLabel.TextXAlignment = 'Right';
+  let recenter = true;
+  let previous:
+    | Readonly<{
+        width: number;
+        height: number;
+        zoom: number;
+        requestedZoom: number;
+        documentWidth: number;
+        documentHeight: number;
+        prefabId: string | null;
+      }>
+    | undefined;
 
   const layout = (): void => {
     const width = app.AbsoluteSize.X || window.innerWidth;
@@ -204,12 +232,54 @@ export const createWorkspace = (
     });
     const snapshot = editor.state.get();
     const document = deviceDocument(snapshot.document, canvasPreferences.get(), snapshot.prefabId);
+    const viewportWidth = viewport.unsafeElement.clientWidth || available;
+    const viewportHeight = viewport.unsafeElement.clientHeight || height;
     const zoom =
       prefs.zoom ||
       Math.max(
         0.1,
-        Math.min(1, (available - 64) / document.width, (height - 100) / document.height),
+        Math.min(
+          1,
+          (viewportWidth - 64) / document.width,
+          (viewportHeight - 100) / document.height,
+        ),
       );
+    caption.Text = `${document.name.toUpperCase()}  /  ${document.width} × ${document.height}`;
+    zoomLabel.Text = `${Math.round(zoom * 100)}%${prefs.zoom ? '' : ' · Fit'}     ${document.width} × ${document.height}`;
+    const current = {
+      width: viewportWidth,
+      height: viewportHeight,
+      zoom,
+      requestedZoom: prefs.zoom,
+      documentWidth: document.width,
+      documentHeight: document.height,
+      prefabId: snapshot.prefabId,
+    };
+    const dimensionsChanged =
+      previous?.documentWidth !== document.width ||
+      previous?.documentHeight !== document.height ||
+      previous?.prefabId !== snapshot.prefabId;
+    const geometryChanged =
+      dimensionsChanged ||
+      previous?.width !== viewportWidth ||
+      previous?.height !== viewportHeight ||
+      previous?.zoom !== zoom;
+    const fitRequested = prefs.zoom === 0 && previous?.requestedZoom !== 0;
+
+    if (!geometryChanged && !recenter && !fitRequested) {
+      previous = current;
+      return;
+    }
+
+    const center =
+      previous && !recenter && !dimensionsChanged && prefs.zoom !== 0
+        ? vector2(
+            (previous.width / 2 + viewport.CanvasPosition.X - world.Position.X.Offset) /
+              previous.zoom,
+            (previous.height / 2 + viewport.CanvasPosition.Y - world.Position.Y.Offset) /
+              previous.zoom,
+          )
+        : vector2(document.width / 2, document.height / 2);
     scale.Scale = zoom;
     // UIScale scales about the center, so offset the unscaled box without an anchor transform.
     canvas.Position = udim2FromOffset(
@@ -217,17 +287,26 @@ export const createWorkspace = (
       (document.height * zoom - document.height) / 2,
     );
     world.Size = udim2FromOffset(document.width * zoom, document.height * zoom);
-    const x = Math.max(24, (available - document.width * zoom) / 2);
-    const y = Math.max(54, (height - document.height * zoom) / 2);
+    // Native scroll space on every side lets the artboard move freely even while it fits on screen.
+    const padding = Math.max(10000, document.width * zoom * 2, document.height * zoom * 2);
+    const x = padding + Math.max(24, (viewportWidth - document.width * zoom) / 2);
+    const y = padding + Math.max(54, (viewportHeight - document.height * zoom) / 2);
     world.Position = udim2FromOffset(x, y);
     caption.Position = udim2FromOffset(x, y - 28);
     caption.Size = udim2FromOffset(document.width * zoom, 20);
-    caption.Text = `${document.name.toUpperCase()}  /  ${document.width} × ${document.height}`;
     viewport.CanvasSize = udim2FromOffset(
-      Math.max(available, x + document.width * zoom + 24),
-      Math.max(height, y + document.height * zoom + 24),
+      x + document.width * zoom + padding,
+      y + document.height * zoom + padding,
     );
-    zoomLabel.Text = `${Math.round(zoom * 100)}%${prefs.zoom ? '' : ' · Fit'}     ${document.width} × ${document.height}`;
+
+    if (viewport.unsafeElement.isConnected && viewport.unsafeElement.clientWidth > 0) {
+      viewport.CanvasPosition = vector2(
+        x + center.X * zoom - viewportWidth / 2,
+        y + center.Y * zoom - viewportHeight / 2,
+      );
+      previous = current;
+      recenter = false;
+    }
   };
 
   watchOwnedValue(app, preferences, layout);
@@ -235,5 +314,16 @@ export const createWorkspace = (
   watchOwnedValue(app, canvasPreferences, layout);
   const stop = observeSize(app, layout);
   app.onDestroy(stop);
-  return { hierarchy, properties, canvas, viewport, zoomLabel };
+  app.onDestroy(observeSize(viewport, layout));
+  return {
+    hierarchy,
+    properties,
+    canvas,
+    viewport,
+    zoomLabel,
+    recenter: (): void => {
+      recenter = true;
+      layout();
+    },
+  };
 };

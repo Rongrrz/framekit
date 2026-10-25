@@ -36,7 +36,7 @@ import { definitionFor, nodeDefinitions, type NodeType } from './schema';
 import { createScriptDialog } from './script-dialog';
 import { createSettingsDialog } from './settings-dialog';
 import { button, colors, iconButton, label, panel, round, stack } from './ui';
-import { createWorkspace, defaultWorkspace } from './workspace';
+import { canvasZoomChoices, createWorkspace, defaultWorkspace, formatCanvasZoom } from './workspace';
 
 /** Creates a standalone FrameKit application with an explicit, reversible scene document. */
 export const createWorkbench = (): ScreenGui => {
@@ -302,10 +302,8 @@ export const createWorkbench = (): ScreenGui => {
     label: 'Canvas zoom',
     width: 108,
     menuParent: app,
-    choices: [
-      { value: 0, label: 'Fit canvas' },
-      ...[0.25, 0.5, 0.75, 1, 1.5, 2].map((value) => ({ value, label: `${value * 100}%` })),
-    ],
+    choices: canvasZoomChoices,
+    formatValue: formatCanvasZoom,
     value: () => preferences.get().zoom,
     change: (value) =>
       preferences.update((current) => ({ ...current, zoom: value, pane: 'canvas' })),

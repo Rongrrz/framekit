@@ -174,7 +174,11 @@ test('selection follows nested rotation, zoom and scrolling, and clears for hidd
   await matchesTarget();
   await expect(outline).toHaveCSS('rotate', '29deg');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await chooseDropdown(page, 'Canvas zoom', '50%');
+  await chooseDropdown(
+    page.getByRole('dialog', { name: 'Settings', exact: true }),
+    'Canvas zoom',
+    '50%',
+  );
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await matchesTarget();
   await expect(outline).toHaveCSS('box-shadow', 'rgb(61, 157, 255) 0px 0px 0px 2px inset');
