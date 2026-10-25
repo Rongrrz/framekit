@@ -215,13 +215,12 @@ input[aria-invalid='true'] {
 [data-workbench-dropdown]::after {
   content: '';
   position: absolute;
-  right: 12px;
-  top: calc(50% - 5px);
-  width: 7px;
-  height: 7px;
-  border-right: 1.5px solid var(--chrome-icon);
-  border-bottom: 1.5px solid var(--chrome-icon);
-  transform: rotate(45deg);
+  right: 9px;
+  top: calc(50% - 9px);
+  width: 18px;
+  height: 18px;
+  background: var(--chrome-icon);
+  mask: url('./icons/ai-chevron-down.svg') center / contain no-repeat;
   pointer-events: none;
 }
 

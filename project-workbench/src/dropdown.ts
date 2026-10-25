@@ -8,7 +8,7 @@ import {
 } from 'framekit';
 
 import { setIcon } from './icons/ai-decorations';
-import { button, colors, panel, round } from './ui';
+import { button, colors, round, scroll } from './ui';
 
 /** One selected value, native popover dismissal, and the same keyboard navigation as other menus. */
 export const createDropdown = <T extends string | number>(
@@ -27,7 +27,10 @@ export const createDropdown = <T extends string | number>(
   control.TextXAlignment = 'Left';
   control.unsafeElement.dataset.workbenchDropdown = '';
   createUIPadding({ PaddingLeft: udim(0, 12), PaddingRight: udim(0, 30) }).Parent = control;
-  const menu = panel(`${options.label} options`, options.menuParent ?? parent);
+  const menu = scroll(options.menuParent ?? parent, `${options.label} options`);
+  menu.BackgroundTransparency = 0;
+  menu.BackgroundColor3 = colors.panel;
+  menu.ScrollBarThickness = 4;
   round(menu, 8, true);
   const text = (choice: (typeof options.choices)[number]): string =>
     typeof choice.label === 'function' ? choice.label() : choice.label;
@@ -49,7 +52,10 @@ export const createDropdown = <T extends string | number>(
     control.unsafeElement.setAttribute('aria-description', control.Text);
     control.unsafeElement.title = `${options.label}: ${control.Text}`;
     const width = Math.min(Math.max(options.width ?? 160, 260), window.innerWidth - 24);
-    menu.Size = udim2FromOffset(width, options.choices.length * 36 + 12);
+    menu.Size = udim2FromOffset(
+      width,
+      Math.min(options.choices.length * 36 + 12, window.innerHeight - 24),
+    );
 
     items.forEach((item, index) => {
       const choice = options.choices[index]!;

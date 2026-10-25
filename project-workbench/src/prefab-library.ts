@@ -10,8 +10,8 @@ import {
 
 import type { PrefabDefinition } from './document';
 import type { Editor } from './editor';
-import { decorateTreeRow } from './tree-appearance';
-import { button, colors, input, label, panel, round, scroll } from './ui';
+import { setIcon } from './icons/ai-decorations';
+import { button, colors, font, iconButton, input, label, panel, round, scroll } from './ui';
 
 /** Definitions live in the library; inserting creates a link rather than copying their internals. */
 export const createPrefabLibrary = (
@@ -22,11 +22,11 @@ export const createPrefabLibrary = (
 ): Frame => {
   const library = panel('Prefab library', parent);
   setAccessibility(library, { role: 'region', label: 'Prefab library' });
-  const heading = label(library, 'PREFABS', 38, 10, colors.muted);
+  const heading = label(library, 'Components', 38, 13, colors.muted);
   heading.Position = udim2FromOffset(16, 4);
-  heading.LetterSpacing = 1.4;
   const search = input(library, 'Search prefabs');
   search.PlaceholderText = 'Find a component…';
+  search.FontFamily = font;
   search.Position = udim2FromOffset(12, 48);
   search.Size = udim2(1, -24, 0, 32);
   const create = button(library, '+ Create prefab', () =>
@@ -41,6 +41,8 @@ export const createPrefabLibrary = (
   create.Size = udim2(1, -24, 0, 34);
   create.BackgroundColor3 = colors.selected;
   create.TextColor3 = colors.accent;
+  create.Text = 'Create prefab';
+  setIcon(create, 'plus');
   const hint = label(
     library,
     'Converts the selected branch, or creates an empty component when nothing is selected.',
@@ -75,7 +77,7 @@ export const createPrefabLibrary = (
       const name = label(card, '', 28, 13);
       name.Name = 'Prefab name';
       name.Position = udim2FromOffset(0, 5);
-      decorateTreeRow(name, 1, 'prefab');
+      setIcon(name, 'prefab');
       name.Size = udim2(1, -24, 0, 28);
       name.FontWeight = 600;
       const metadata = label(card, '', 24, 10, colors.muted);
@@ -92,7 +94,13 @@ export const createPrefabLibrary = (
       insert.AccessibleLabel = `Insert prefab ${prefab.id}`;
       const editButton = button(card, 'Edit', () => perform(() => edit(prefab.id)), 54);
       editButton.Position = udim2FromOffset(80, 64);
-      const remove = button(card, '×', () => perform(() => editor.removePrefab(prefab.id)), 30);
+      const remove = iconButton(
+        card,
+        'trash',
+        'Delete',
+        () => perform(() => editor.removePrefab(prefab.id)),
+        30,
+      );
       remove.Position = udim2(1, -40, 0, 64);
       remove.TextColor3 = colors.danger;
       return card;
@@ -107,7 +115,8 @@ export const createPrefabLibrary = (
               ? prefab.name
               : `${prefab.nodes.length} objects · ${prefab.events?.length ?? 0} custom events`;
         } else if (child.isA('TextButton')) {
-          child.AccessibleLabel = `${child.Name === '×' ? 'Delete' : child.Name} prefab ${prefab.name}`;
+          child.AccessibleLabel = `${child.Name} prefab ${prefab.name}`;
+          child.unsafeElement.title = child.AccessibleLabel;
         }
       }
     },

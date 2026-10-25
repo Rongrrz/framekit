@@ -17,9 +17,12 @@ import {
 import { orderedNodes } from './document';
 import type { Editor } from './editor';
 import { bindHierarchyDrag } from './hierarchy-drag';
+import { setIcon } from './icons/ai-decorations';
+import type { IconName } from './icons/ai-icons';
+import { nodeIcons } from './icons/ai-node-icons';
 import { definitionFor, type NodeType } from './schema';
 import { decorateTreeRow } from './tree-appearance';
-import { button, colors, font, input, label, panel, round, scroll } from './ui';
+import { button, colors, font, iconButton, input, label, round, scroll } from './ui';
 
 /** Filtering preserves ancestor rows so depth-first keyboard navigation stays meaningful. */
 export const createHierarchy = (
@@ -31,30 +34,29 @@ export const createHierarchy = (
   report: (message: string) => void,
   editScript: (id: string, opener: GuiElement) => void,
 ): void => {
-  const heading = label(parent, 'EXPLORER', 38, 10, colors.muted);
+  const heading = label(parent, 'Explorer', 38, 13, colors.muted);
   heading.Position = udim2FromOffset(16, 4);
   heading.Size = udim2(1, -108, 0, 38);
-  heading.LetterSpacing = 1.4;
   heading.FontWeight = 650;
-  const add = button(parent, '+', insert, 28);
-  add.AccessibleLabel = 'Insert in Explorer';
+  const add = iconButton(parent, 'plus', 'Insert in Explorer', insert, 28);
   add.Position = udim2(1, -76, 0, 8);
   add.BackgroundTransparency = 1;
-  const more = button(parent, '•••', () => {}, 32);
-  more.AccessibleLabel = 'Explorer actions';
+  const more = iconButton(parent, 'more', 'Explorer actions', () => {});
   more.Position = udim2(1, -42, 0, 8);
   more.BackgroundTransparency = 1;
   const search = input(parent, 'Search hierarchy');
   search.PlaceholderText = 'Find a layer…';
+  search.FontFamily = font;
   search.Position = udim2FromOffset(12, 48);
   search.Size = udim2(1, -24, 0, 32);
   const tree = scroll(parent, 'Scene hierarchy');
-  const root = button(parent, '▱  Canvas', () => editor.select(null));
+  const root = button(parent, 'Canvas', () => editor.select(null));
+  setIcon(root, 'canvas');
   root.AccessibleLabel = 'Canvas root';
   root.Position = udim2FromOffset(10, 88);
   root.Size = udim2(1, -20, 0, 30);
   root.TextXAlignment = 'Left';
-  root.TextSize = 11;
+  root.TextSize = 12;
   root.TextColor3 = colors.muted;
   root.BackgroundTransparency = 1;
   root.unsafeElement.title = 'Drop here to move an object to the top level';
@@ -191,7 +193,7 @@ export const createHierarchy = (
       // Opening before release lets native light dismissal immediately hide the menu.
       row.onSecondaryClick((event) => {
         editor.select(item.id);
-        menu.open(vector2(event.clientX, event.clientY));
+        openContextMenu(vector2(event.clientX, event.clientY));
       });
       row.onDestroy(() => rowIds.delete(row));
       row.on('dblclick', () => {
@@ -212,22 +214,8 @@ export const createHierarchy = (
       return row;
     },
     update: (row, item, index) => {
-      const icon = item.prefab
-        ? 'prefab'
-        : definitionFor(item.type).category === 'modifier'
-          ? 'modifier'
-          : item.type === 'TextButton'
-            ? 'button'
-            : item.type === 'TextInput'
-              ? 'input'
-              : item.type === 'ImageLabel'
-                ? 'image'
-                : item.type === 'Script'
-                  ? 'code'
-                  : item.type === 'TextLabel'
-                    ? 'text'
-                    : 'frame';
-      row.Text = `${item.name}${item.hidden ? '  ◌' : ''}`;
+      const icon = item.prefab ? 'prefab' : nodeIcons[item.type];
+      row.Text = item.name;
       decorateTreeRow(row, item.depth, icon, item.branch ? item.expanded : undefined);
       row.AccessibleLabel = item.name;
       row.Position = udim2FromOffset(2, index * 36);
@@ -333,33 +321,49 @@ export const createHierarchy = (
     }
   };
 
-  const menuPanel = panel('Explorer context menu', parent);
-  menuPanel.Size = udim2FromOffset(230, 466);
+  const menuPanel = scroll(parent, 'Explorer context menu');
+  menuPanel.BackgroundTransparency = 0;
+  menuPanel.BackgroundColor3 = colors.panel;
+  menuPanel.ScrollBarThickness = 4;
+  const resizeMenu = (): void => {
+    menuPanel.Size = udim2FromOffset(246, Math.min(420, window.innerHeight - 16));
+  };
+  resizeMenu();
   round(menuPanel, 8, true);
-  const actions = [
-    ['Rename                 F2', startRename],
-    ['Duplicate            ⌘/Ctrl D', editor.duplicate],
-    [
-      'Cut                      ⌘/Ctrl X',
-      () => {
+  const actions: readonly Readonly<{
+    label: string;
+    icon: IconName;
+    hint?: string;
+    run(): void;
+  }>[] = [
+    { label: 'Rename', icon: 'edit', hint: 'F2', run: startRename },
+    { label: 'Duplicate', icon: 'copy', hint: 'Ctrl/⌘ D', run: editor.duplicate },
+    {
+      label: 'Cut',
+      icon: 'cut',
+      hint: 'Ctrl/⌘ X',
+      run: () => {
         editor.copy(true);
         report('Cut branch. Select a destination and paste to move it.');
       },
-    ],
-    [
-      'Copy                    ⌘/Ctrl C',
-      () => {
+    },
+    {
+      label: 'Copy',
+      icon: 'copy',
+      hint: 'Ctrl/⌘ C',
+      run: () => {
         editor.copy();
         report('Copied branch. Select a destination and paste.');
       },
-    ],
-    ['Paste into             ⌘/Ctrl V', editor.paste],
-    ['Move to…', move],
-    ['Move up                Alt ↑', () => reorder(-1)],
-    ['Move down           Alt ↓', () => reorder(1)],
-    [
-      'Show / hide',
-      () => {
+    },
+    { label: 'Paste into', icon: 'paste', hint: 'Ctrl/⌘ V', run: editor.paste },
+    { label: 'Move to…', icon: 'folder', run: move },
+    { label: 'Move up', icon: 'arrow_up', hint: 'Alt ↑', run: () => reorder(-1) },
+    { label: 'Move down', icon: 'arrow_down', hint: 'Alt ↓', run: () => reorder(1) },
+    {
+      label: 'Show / hide',
+      icon: 'eye',
+      run: () => {
         const { document, selectedId } = editor.state.get();
         const node = document.nodes.find((entry) => entry.id === selectedId);
 
@@ -367,44 +371,67 @@ export const createHierarchy = (
           editor.edit(node.id, 'Visible', !node.properties.Visible);
         }
       },
-    ],
-    ['Delete                    Del', editor.remove],
-    [
-      'Expand all',
-      () => {
+    },
+    { label: 'Delete', icon: 'trash', hint: 'Del', run: editor.remove },
+    {
+      label: 'Expand all',
+      icon: 'expand',
+      run: () => {
         collapsed.clear();
         publish();
       },
-    ],
-    [
-      'Collapse all',
-      () => {
+    },
+    {
+      label: 'Collapse all',
+      icon: 'collapse',
+      run: () => {
         editor.state.get().document.nodes.forEach((node) => collapsed.add(node.id));
         publish();
       },
-    ],
-  ] as const;
-  const items = actions.map(([text, run], index) => {
+    },
+  ];
+  const items = actions.map((action, index) => {
     const control = button(
       menuPanel,
-      text,
+      action.label,
       () => {
         menu.close();
-        perform(run);
+        perform(action.run);
       },
-      214,
+      234,
     );
     control.on('click', (event) => event.stopPropagation());
-    control.Position = udim2FromOffset(8, 6 + index * 38);
+    control.Position = udim2FromOffset(6, 6 + index * 34);
     control.BackgroundTransparency = 1;
-    control.TextXAlignment = 'Left';
     control.TextSize = 12;
-    control.FontFamily = font;
-    control.AccessibleLabel = text.split(/  +/)[0]!;
+    setIcon(control, action.icon);
+
+    if (action.hint) {
+      const hint = label(menuPanel, action.hint, 32, 10, colors.faint);
+      hint.Position = udim2(1, -88, 0, 6 + index * 34);
+      hint.Size = udim2FromOffset(74, 32);
+      hint.TextXAlignment = 'Right';
+      hint.unsafeElement.style.pointerEvents = 'none';
+    }
+
     return control;
   });
   items[9]!.TextColor3 = colors.danger;
   const menu = bindMenu(more, menuPanel, items);
+  const openContextMenu = (position: ReturnType<typeof vector2>): void => {
+    resizeMenu();
+    menu.open(position);
+  };
+  more.on('click', resizeMenu, { capture: true });
+  more.on('keydown', resizeMenu, { capture: true });
+  watchOwnedValue(parent, editor.state, ({ document, selectedId }) => {
+    const selected = document.nodes.find((node) => node.id === selectedId);
+    items.forEach((item, index) => {
+      item.Disabled = index < 10 && index !== 4 && !selected;
+    });
+    items[8]!.Disabled = !selected || !('Visible' in selected.properties);
+    root.unsafeElement.setAttribute('aria-pressed', String(!selectedId));
+  });
   tree.on(
     'keydown',
     (event) => {
@@ -419,7 +446,7 @@ export const createHierarchy = (
         event.preventDefault();
         const row = [...rowIds].find(([, id]) => id === editor.state.get().selectedId)?.[0];
         const bounds = (row ?? tree).unsafeElement.getBoundingClientRect();
-        menu.open(vector2(bounds.left + 24, bounds.bottom));
+        openContextMenu(vector2(bounds.left + 24, bounds.bottom));
       }
     },
     { capture: true },
