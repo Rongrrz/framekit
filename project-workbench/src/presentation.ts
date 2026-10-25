@@ -1,22 +1,32 @@
 import {
   bindDialog,
   createFrame,
+  createScrollingFrame,
+  createUIScale,
+  observeSize,
+  watchOwnedValue,
   setAccessibility,
   udim2,
   udim2FromOffset,
+  type ObservableValue,
   type GuiElement,
   type ScreenGui,
 } from 'framekit';
 
+import { previewResolution, resolutionLabel, type CanvasPreferences } from './canvas-preferences';
 import type { SceneDocument } from './document';
+import { createDropdown } from './dropdown';
 import { exportSceneModules } from './project-export';
+import { createResolutionControls } from './resolution-controls';
 import { compileScripts } from './script-compiler';
 import { button, colors, label, panel } from './ui';
 
 /** Owns the complete presentation realm. User modules never run in the editor document. */
 export const createPresentation = (
   app: ScreenGui,
+  preferences: ObservableValue<CanvasPreferences>,
   report: (message: string) => void,
+  custom: () => void,
 ): Readonly<{
   open(document: SceneDocument, opener?: GuiElement): void;
   close(): void;
@@ -38,16 +48,110 @@ export const createPresentation = (
   const exit = button(bar, 'Exit · Esc', () => modal.close(), 110);
   exit.AccessibleLabel = 'Exit presentation';
   exit.Position = udim2(1, -126, 0, 6);
-  const host = panel('Isolated project', dialog);
-  host.Position = udim2FromOffset(0, 44);
-  host.Size = udim2(1, 0, 1, -44);
+  title.TextSize = 13;
+  const dimensions = label(bar, '', 20, 11, colors.muted);
+  dimensions.Position = udim2FromOffset(16, 32);
+  dimensions.Size = udim2(1, -32, 0, 20);
+  dimensions.unsafeElement.dataset.presentationResolution = '';
+  const viewport = createScrollingFrame({
+    Name: 'Presentation stage',
+    ScrollingDirection: 'XY',
+    ScrollBarThickness: 8,
+    BackgroundTransparency: 1,
+  });
+  viewport.Parent = dialog;
+  setAccessibility(viewport, { role: 'region', label: 'Presentation viewport', focusable: true });
+  const world = panel('Presentation bounds', viewport, colors.canvas);
+  const host = panel('Isolated project', world);
+  const scale = createUIScale();
+  scale.Parent = host;
   host.unsafeElement.dataset.presentationHost = '';
+  let activeDocument: SceneDocument | undefined;
+  let sizing: 'fit' | 'actual' = 'fit';
+  const devices = createResolutionControls(bar, {
+    preferences,
+    document: () => activeDocument ?? { width: 960, height: 640 },
+    label: 'Presentation resolution',
+    orientationLabel: 'Presentation orientation',
+    menuParent: dialog,
+    custom,
+  });
+  const zoom = createDropdown(bar, {
+    label: 'Presentation scale',
+    width: 152,
+    menuParent: dialog,
+    choices: [
+      { value: 'fit', label: 'Fit to window' },
+      { value: 'actual', label: 'Actual size · 100%' },
+    ] as const,
+    value: () => sizing,
+    change: (value) => {
+      sizing = value;
+      layout();
+    },
+  });
+  const layout = (): void => {
+    if (!activeDocument) {
+      return;
+    }
+
+    const compact = app.AbsoluteSize.X < 700;
+    const height = compact ? 144 : 102;
+    bar.Size = udim2(1, 0, 0, height);
+    viewport.Position = udim2FromOffset(0, height);
+    viewport.Size = udim2(1, 0, 1, -height);
+    devices.resolution.Position = udim2FromOffset(16, 58);
+    devices.resolution.Size = compact ? udim2(1, -32, 0, 32) : udim2FromOffset(330, 32);
+    devices.orientation.Position = compact ? udim2FromOffset(16, 100) : udim2FromOffset(354, 58);
+    devices.orientation.Size = compact ? udim2(0.5, -20, 0, 32) : udim2FromOffset(130, 32);
+    zoom.control.Position = compact ? udim2(0.5, 4, 0, 100) : udim2FromOffset(492, 58);
+    zoom.control.Size = compact ? udim2(0.5, -20, 0, 32) : udim2FromOffset(152, 32);
+
+    const resolution = previewResolution(activeDocument, preferences.get());
+    const width = viewport.unsafeElement.clientWidth;
+    const availableHeight = viewport.unsafeElement.clientHeight;
+    const factor =
+      sizing === 'actual'
+        ? 1
+        : Math.max(
+            0.01,
+            Math.min(
+              1,
+              (width - 32) / resolution.width,
+              (availableHeight - 32) / resolution.height,
+            ),
+          );
+
+    const renderedWidth = resolution.width * factor;
+    const renderedHeight = resolution.height * factor;
+    world.Position = udim2FromOffset(
+      Math.max(16, (width - renderedWidth) / 2),
+      Math.max(16, (availableHeight - renderedHeight) / 2),
+    );
+    world.Size = udim2FromOffset(renderedWidth, renderedHeight);
+    host.Size = udim2FromOffset(resolution.width, resolution.height);
+    host.Position = udim2FromOffset(
+      (renderedWidth - resolution.width) / 2,
+      (renderedHeight - resolution.height) / 2,
+    );
+    scale.Scale = factor;
+    viewport.CanvasSize = udim2FromOffset(
+      Math.max(width, renderedWidth + 32),
+      Math.max(availableHeight, renderedHeight + 32),
+    );
+    dimensions.Text = `${resolutionLabel(resolution)} · ${Math.round(factor * 100)}% view`;
+    devices.refresh();
+  };
+  watchOwnedValue(dialog, preferences, layout);
+  dialog.onDestroy(observeSize(dialog, layout, app));
+
   let session: AbortController | undefined;
   let frame: HTMLIFrameElement | undefined;
   let port: MessagePort | undefined;
   const stop = (): void => {
     session?.abort();
     session = undefined;
+    activeDocument = undefined;
     port?.close();
     port = undefined;
     frame?.remove();
@@ -66,8 +170,12 @@ export const createPresentation = (
       stop();
       const current = new AbortController();
       session = current;
+      activeDocument = document;
+      sizing = 'fit';
+      zoom.refresh();
       title.Text = 'Preparing presentation…';
       modal.open(opener);
+      layout();
       void Promise.all([
         compileScripts(exportSceneModules(document), current.signal),
         import('virtual:presentation-runtime'),

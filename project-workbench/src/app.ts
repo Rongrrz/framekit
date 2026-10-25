@@ -115,7 +115,7 @@ export const createWorkbench = (): ScreenGui => {
   const settingsButton = button(topActions, '⚙', () => settings.open(settingsButton), 34);
   settingsButton.AccessibleLabel = 'Settings';
   const preview = createScenePreview(workspace.canvas, report);
-  const presentation = createPresentation(app, report);
+  const presentation = createPresentation(app, canvasPreferences, report, () => settings.open());
   workspace.canvas.unsafeElement.dataset.workbenchCanvas = '';
   const palette = createCommandPalette(app, perform);
 
