@@ -8,7 +8,7 @@ export const codeThemes = [
 
 export type CodeTheme = (typeof codeThemes)[number]['id'];
 
-/** All themes share one formatted source for rendering, clipboard, and downloads. */
+/** All themes share the same source for rendering, editing, clipboard, and downloads. */
 export type PreparedCode = Readonly<{
   source: string;
   palettes: Readonly<
@@ -23,6 +23,8 @@ export type CodeRequest = Readonly<{
   id: number;
   source: string;
   language?: ProjectFile['language'];
+  /** Highlight preserves the editing buffer. Requests otherwise format before highlighting. */
+  operation?: 'highlight' | 'format';
 }>;
 export type CodeResponse = Readonly<
   { id: number; result: PreparedCode } | { id: number; error: string }

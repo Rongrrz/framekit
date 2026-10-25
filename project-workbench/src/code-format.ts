@@ -17,7 +17,7 @@ import githubLight from 'shiki/themes/github-light.mjs';
 import type { PreparedCode } from './code-themes';
 import type { ProjectFile } from './project-export';
 
-// Grammars and themes load in the worker when the code dialog is first opened.
+// Grammars and themes stay in the worker, away from the editor's input handling.
 const highlighter = createHighlighterCoreSync({
   langs: [grammar, htmlGrammar, cssGrammar, jsonGrammar],
   themes: [githubDark, githubLight],
@@ -27,7 +27,46 @@ const highlighter = createHighlighterCoreSync({
 const fullHex = (color: string): string =>
   color.replace(/^#([\da-f])([\da-f])([\da-f])$/i, '#$1$1$2$2$3$3');
 
-/** Tokens become escaped FrameKit rich text; no caller text is interpreted as HTML. */
+/** Preserves the editing buffer, including incomplete syntax and trailing whitespace. */
+export const highlightCode = (
+  source: string,
+  language: ProjectFile['language'] = 'typescript',
+): PreparedCode => {
+  const palette = (theme: string): PreparedCode['palettes']['github-dark'] => {
+    const { fg, bg } = highlighter.getTheme(theme);
+    const { tokens } = highlighter.codeToTokens(source, {
+      lang: language === 'text' ? 'text' : language,
+      theme,
+    });
+
+    return {
+      foreground: fullHex(fg),
+      background: fullHex(bg),
+      muted: theme === 'github-light' ? '#8c959f' : '#6e7681',
+      // Only escaped text and trusted colors enter FrameKit's rich-text renderer.
+      text: tokens
+        .map((line) =>
+          line
+            .map(
+              (token) =>
+                `<font color="${fullHex(token.color ?? fg)}">${escapeRichText(token.content)}</font>`,
+            )
+            .join(''),
+        )
+        .join('\n'),
+    };
+  };
+
+  return {
+    source,
+    palettes: {
+      'github-dark': palette('github-dark'),
+      'github-light': palette('github-light'),
+    },
+  };
+};
+
+/** Formats exported code and explicit Format commands without changing live editing buffers. */
 export const prepareCode = async (
   source: string,
   language: ProjectFile['language'] = 'typescript',
@@ -50,35 +89,6 @@ export const prepareCode = async (
           tabWidth: 2,
           trailingComma: 'all',
         });
-  const palette = (theme: string): PreparedCode['palettes']['github-dark'] => {
-    const { fg, bg } = highlighter.getTheme(theme);
-    const { tokens } = highlighter.codeToTokens(formatted.trimEnd(), {
-      lang: language === 'text' ? 'text' : language,
-      theme,
-    });
 
-    return {
-      foreground: fullHex(fg),
-      background: fullHex(bg),
-      muted: theme === 'github-light' ? '#8c959f' : '#6e7681',
-      text: tokens
-        .map((line) =>
-          line
-            .map(
-              (token) =>
-                `<font color="${fullHex(token.color ?? fg)}">${escapeRichText(token.content)}</font>`,
-            )
-            .join(''),
-        )
-        .join('\n'),
-    };
-  };
-
-  return {
-    source: formatted,
-    palettes: {
-      'github-dark': palette('github-dark'),
-      'github-light': palette('github-light'),
-    },
-  };
+  return { ...highlightCode(formatted.trimEnd(), language), source: formatted };
 };

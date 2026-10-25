@@ -1,12 +1,27 @@
 import { color3FromHex } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
-import { prepareCode } from '../src/code-format';
+import { highlightCode, prepareCode } from '../src/code-format';
 import { createSampleDocument } from '../src/document';
 import { createEditor } from '../src/editor';
 import { exportTypeScript } from '../src/export';
 
 describe('formatted source', () => {
+  it('highlights unfinished scripts without changing indentation or trailing whitespace', () => {
+    const source =
+      "\tconst literal = '</font><img src=x onerror=alert(1)>';\nexport default ( => {\n  \n";
+    const result = highlightCode(source);
+    expect(result.source).toBe(source);
+
+    for (const theme of Object.values(result.palettes)) {
+      const host = document.createElement('div');
+      host.innerHTML = theme.text;
+      expect(host.textContent).toBe(source);
+      expect(host.querySelector('img')).toBeNull();
+      expect(host.querySelectorAll('font').length).toBeGreaterThan(5);
+    }
+  });
+
   it('produces readable names, compact value constructors, and complete highlighted themes', async () => {
     const result = await prepareCode(exportTypeScript(createSampleDocument()));
     expect(result.source).toContain("const welcomeCard = createFrame({\n  Name: 'Welcome card',");
