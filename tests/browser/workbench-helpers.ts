@@ -1,4 +1,7 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
+
+/** Cold Vite workers load the formatter/highlighter on shared CI CPUs; ordinary UI keeps its deadline. */
+export const expectWorker = expect.configure({ timeout: 20_000 });
 
 /** Projects start in the library; templates are available only through explicit creation. */
 export const createProject = async (page: Page, template: string): Promise<void> => {

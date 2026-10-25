@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { chooseDropdown, createProject } from './workbench-helpers';
+import { chooseDropdown, createProject, expectWorker } from './workbench-helpers';
 
 const runtimeErrors = new WeakMap<Page, string[]>();
 
@@ -129,7 +129,7 @@ test('resizes panels, restores the project and layout, and exports only source c
   await expect(page.locator('[data-scene-id="headline"]')).toContainText('Saved between visits');
   await expect(splitter).toHaveAttribute('aria-valuenow', '250');
   await page.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
+  await expectWorker(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
     /Saved between visits/,
   );
   const sourceDownload = page.waitForEvent('download');
@@ -167,7 +167,7 @@ test('shows formatted highlighted code in persistent themes and downloads the di
   await page.getByRole('button', { name: 'Export', exact: true }).click();
   const region = page.getByRole('region', { name: 'Generated TypeScript' });
   const source = region.locator('pre').filter({ hasText: "from 'framekit'" });
-  await expect(source).toContainText('const welcomeCard = createFrame({');
+  await expectWorker(source).toContainText('const welcomeCard = createFrame({');
   const tokenColors = await source
     .locator('span[style*="color"]')
     .evaluateAll((nodes) => new Set(nodes.map((node) => (node as HTMLElement).style.color)).size);
@@ -181,7 +181,7 @@ test('shows formatted highlighted code in persistent themes and downloads the di
   await chooseDropdown(page, 'Code theme', 'GitHub Light');
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await page.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(region).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expectWorker(region).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   expect(await source.textContent()).toBe(original);
   expect(await region.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(
     dark,
@@ -193,11 +193,11 @@ test('shows formatted highlighted code in persistent themes and downloads the di
   expect(await readFile(path!, 'utf8')).toBe(`${original}\n`);
   await page.reload();
   await page.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(region).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expectWorker(region).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await page.getByRole('button', { name: 'Close export', exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(region).toContainText('welcomeCard');
+  await expectWorker(region).toContainText('welcomeCard');
   await page.screenshot({ path: '/tmp/framekit-workbench-code-mobile.png' });
 });
 

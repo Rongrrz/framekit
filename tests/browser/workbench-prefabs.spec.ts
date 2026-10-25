@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { chooseDropdown, createProject } from './workbench-helpers';
+import { chooseDropdown, createProject, expectWorker } from './workbench-helpers';
 
 const errors = new WeakMap<Page, string[]>();
 
@@ -96,7 +96,7 @@ test('runs nested prefab events independently and downloads a working multi-file
   await page
     .getByRole('treeitem', { name: 'src/prefabs/create-counter-prefab.ts', exact: true })
     .click();
-  await expect(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
+  await expectWorker(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
     'outputChanged.emit()',
   );
   await expect(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
@@ -104,7 +104,7 @@ test('runs nested prefab events independently and downloads a working multi-file
   );
   await page.getByRole('treeitem', { name: 'index.html', exact: true }).click();
   const html = page.getByRole('region', { name: 'Generated html' });
-  await expect(html).toContainText('<!doctype html>');
+  await expectWorker(html).toContainText('<!doctype html>');
   await expect(html).toContainText('/src/main.ts');
   const shown = await html.locator('pre').filter({ hasText: '<!doctype' }).textContent();
   await page.screenshot({ path: '/tmp/framekit-project-export.png' });
@@ -257,12 +257,14 @@ test('keeps custom device settings, event forms, and export files usable on comp
   expect(right.x + right.width).toBeLessThanOrEqual(375);
   await page.getByRole('button', { name: 'Close events', exact: true }).click();
   await page.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
+  await expectWorker(page.getByRole('region', { name: 'Generated TypeScript' })).toContainText(
     'createScene',
   );
   await page.getByRole('button', { name: 'Browse project files', exact: true }).click();
   await page.getByRole('treeitem', { name: 'index.html', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Generated html' })).toContainText('/src/main.ts');
+  await expectWorker(page.getByRole('region', { name: 'Generated html' })).toContainText(
+    '/src/main.ts',
+  );
   await page.getByRole('button', { name: 'Close export', exact: true }).click();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page.getByRole('tab', { name: 'Appearance', exact: true }).click();
@@ -271,7 +273,7 @@ test('keeps custom device settings, event forms, and export files usable on comp
   await page.getByRole('button', { name: 'Export', exact: true }).click();
   await page.getByRole('button', { name: 'Browse project files', exact: true }).click();
   await page.getByRole('treeitem', { name: 'index.html', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Generated html' })).toHaveCSS(
+  await expectWorker(page.getByRole('region', { name: 'Generated html' })).toHaveCSS(
     'background-color',
     'rgb(255, 255, 255)',
   );

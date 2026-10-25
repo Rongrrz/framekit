@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { chooseDropdown, createProject } from './workbench-helpers';
+import { chooseDropdown, createProject, expectWorker } from './workbench-helpers';
 
 const openScript = async (page: Page): Promise<void> => {
   await page.getByRole('treeitem', { name: 'Feature panel', exact: true }).click();
@@ -20,12 +20,12 @@ test('script colors preserve unfinished source, literal markup, selection, and n
   const source = page.getByRole('textbox', { name: 'TypeScript source', exact: true });
   const mirror = page.locator('[data-script-mirror] pre');
   await expect(mirror).toBeInViewport();
-  await expect.poll(() => mirror.locator('span[style*="color"]').count()).toBeGreaterThan(5);
+  await expectWorker.poll(() => mirror.locator('span[style*="color"]').count()).toBeGreaterThan(5);
   const buffer =
     "\tconst html = '</font><img src=x onerror=document.body.dataset.injected=1>';\nexport default ( => {\n  \n";
   await source.fill(buffer);
   await expect.poll(() => mirror.textContent()).toBe(buffer);
-  await expect.poll(() => mirror.locator('span[style*="color"]').count()).toBeGreaterThan(5);
+  await expectWorker.poll(() => mirror.locator('span[style*="color"]').count()).toBeGreaterThan(5);
   await expect(source).toHaveValue(buffer);
   await expect(page.locator('body')).not.toHaveAttribute('data-injected');
   await expect(mirror.locator('img, script')).toHaveCount(0);
@@ -56,8 +56,8 @@ test('Format and its keyboard shortcut produce readable TypeScript that persists
     "export default (ctx) => {\n  const message = 'Hello';\n  ctx.parent.Name = message;\n};\n";
   await source.fill(unformatted);
   await page.getByRole('button', { name: 'Format', exact: true }).click();
-  await expect(source).toHaveValue(formatted);
-  await expect(
+  await expectWorker(source).toHaveValue(formatted);
+  await expectWorker(
     page.getByRole('dialog', { name: 'TypeScript script', exact: true }).getByRole('status'),
   ).toContainText('Formatted with 2-space indentation');
   await page.getByRole('button', { name: 'Apply script', exact: true }).click();
@@ -65,13 +65,13 @@ test('Format and its keyboard shortcut produce readable TypeScript that persists
   await expect(source).toHaveValue(formatted);
   await source.fill('export default()=>{console.log("unsaved")}');
   await source.press('Shift+Alt+KeyF');
-  await expect(source).toHaveValue("export default () => {\n  console.log('unsaved');\n};\n");
+  await expectWorker(source).toHaveValue("export default () => {\n  console.log('unsaved');\n};\n");
   await page.getByRole('button', { name: 'Close script editor', exact: true }).click();
   await page.getByRole('treeitem', { name: 'Script', exact: true }).dblclick();
   await expect(source).toHaveValue(formatted);
   const mirror = page.locator('[data-script-mirror] pre');
   await expect(mirror).toBeInViewport();
-  await expect.poll(() => mirror.locator('span[style*="color"]').count()).toBeGreaterThan(5);
+  await expectWorker.poll(() => mirror.locator('span[style*="color"]').count()).toBeGreaterThan(5);
   await page.screenshot({ path: '/tmp/framekit-script-editor-dark.png' });
 });
 
@@ -93,7 +93,9 @@ test('script colors follow the GitHub theme from Settings and stay aligned while
   ).join('\n')}\n`;
   await source.fill(buffer);
   await expect(root).toHaveCSS('background-color', 'rgb(255, 255, 255)');
-  await expect.poll(() => mirror.locator('span[style*="color"]').count()).toBeGreaterThan(100);
+  await expectWorker
+    .poll(() => mirror.locator('span[style*="color"]').count())
+    .toBeGreaterThan(100);
   await source.evaluate((element: HTMLTextAreaElement) => {
     element.scrollTop = 480;
     element.scrollLeft = 300;
@@ -128,7 +130,7 @@ test('format failures and late formatting leave the current editing buffer intac
   const format = page.getByRole('button', { name: 'Format', exact: true });
   await source.fill('export default ( => {');
   await format.click();
-  await expect(
+  await expectWorker(
     page.getByRole('dialog', { name: 'TypeScript script', exact: true }).getByRole('status'),
   ).toContainText('Could not format this TypeScript');
   await expect(source).toHaveValue('export default ( => {');
@@ -145,7 +147,7 @@ test('format failures and late formatting leave the current editing buffer intac
     input.value = '// newer edits';
     input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
   });
-  await expect(
+  await expectWorker(
     page.getByRole('dialog', { name: 'TypeScript script', exact: true }).getByRole('status'),
   ).toContainText('Source changed while formatting');
   await expect(source).toHaveValue('// newer edits');
@@ -155,7 +157,7 @@ test('format failures and late formatting leave the current editing buffer intac
   await expect
     .poll(() => page.locator('[data-script-mirror] pre').textContent())
     .toBe('export default ( => {');
-  await expect
+  await expectWorker
     .poll(() => page.locator('[data-script-mirror] pre span[style*="color"]').count())
     .toBeGreaterThan(2);
 });
