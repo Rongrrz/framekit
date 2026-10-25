@@ -163,9 +163,15 @@ test('supports free canvas dragging, optional snapping and guides, and non-destr
   page,
 }) => {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Canvas snapping', exact: true }).click();
-  await page.getByRole('button', { name: 'Alignment guides', exact: true }).click();
-  await page.getByRole('button', { name: 'Canvas grid', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+
+  // This drag test's setup uses native keyboard activation, avoiding CI's scroll-into-view stall.
+  for (const name of ['Canvas snapping', 'Alignment guides', 'Canvas grid']) {
+    const toggle = settings.getByRole('button', { name, exact: true });
+    await toggle.press('Space');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  }
+
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await chooseDropdown(page, 'Canvas zoom', '100%');
   const headline = page.locator('[data-scene-id="headline"]');
@@ -187,8 +193,13 @@ test('supports free canvas dragging, optional snapping and guides, and non-destr
     '40',
   );
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Canvas snapping', exact: true }).click();
-  await page.getByRole('button', { name: 'Alignment guides', exact: true }).click();
+
+  for (const name of ['Canvas snapping', 'Alignment guides']) {
+    const toggle = settings.getByRole('button', { name, exact: true });
+    await toggle.press('Space');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  }
+
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   const start = (await headline.boundingBox())!;
   await page.mouse.move(start.x + 100, start.y + 24);
