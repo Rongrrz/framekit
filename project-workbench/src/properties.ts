@@ -1,6 +1,5 @@
 import {
   bindKeyedChildren,
-  bindMenu,
   color3FromHex,
   createFrame,
   createTextArea,
@@ -15,10 +14,24 @@ import {
   type TextArea,
 } from 'framekit';
 
+import { createDropdown } from './dropdown';
 import type { Editor } from './editor';
+import { setIcon } from './icons/ai-decorations';
 import { resolvedProperties } from './prefabs';
 import { definitionFor, formatField, parseField, type Field, type PropertyValue } from './schema';
-import { button, colors, font, input, label, panel, round, scroll, stack } from './ui';
+import {
+  button,
+  colors,
+  font,
+  iconButton,
+  input,
+  label,
+  panel,
+  round,
+  scroll,
+  setToggle,
+  stack,
+} from './ui';
 
 type PropertyRow = Readonly<{
   key: string;
@@ -26,7 +39,8 @@ type PropertyRow = Readonly<{
   field: Field;
   value: PropertyValue;
   nodeId: string | null;
-  section?: string;
+  section: string;
+  first: boolean;
 }>;
 
 const sections = {
@@ -123,18 +137,16 @@ export const createProperties = (
   report: (message: string) => void,
   editScript: () => void,
 ): void => {
-  const heading = label(parent, 'INSPECTOR', 32, 10, colors.muted);
-  heading.Position = udim2FromOffset(20, 12);
-  heading.LetterSpacing = 1.3;
+  const heading = label(parent, 'Inspector', 32, 13, colors.muted);
+  heading.Position = udim2FromOffset(16, 8);
   heading.FontWeight = 650;
-  const canvasSettings = button(parent, 'Canvas', () => editor.select(null), 60);
-  canvasSettings.AccessibleLabel = 'Canvas settings';
-  canvasSettings.Position = udim2(1, -80, 0, 12);
-  canvasSettings.Size = udim2FromOffset(60, 28);
+  const canvasSettings = iconButton(parent, 'canvas', 'Canvas settings', () => editor.select(null));
+  canvasSettings.Position = udim2(1, -44, 0, 8);
   const name = label(parent, '', 24, 16);
   name.Position = udim2FromOffset(16, 48);
   name.Size = udim2(1, -40, 0, 28);
   name.FontWeight = 600;
+  name.ClipsDescendants = true;
   const type = label(parent, '', 22, 11, colors.muted);
   type.Position = udim2FromOffset(16, 74);
   type.Size = udim2(1, -40, 0, 22);
@@ -151,6 +163,7 @@ export const createProperties = (
   stack(content, 4);
   const fields = createObservableValue<readonly PropertyRow[]>([]);
   const updates = new Map<Frame, (item: PropertyRow) => void>();
+  const collapsed = new Set<string>();
 
   const commit = (item: PropertyRow, text: string): boolean => {
     try {
@@ -173,22 +186,42 @@ export const createProperties = (
   bindKeyedChildren(content, fields, {
     key: (item) => item.key,
     create: (item) => {
-      const top = item.section ? 26 : 0;
+      const headerHeight = item.first ? 36 : 0;
+      const top = 0;
       const compact = item.field.kind === 'boolean' || item.field.kind === 'choice';
       const compound = ['udim2', 'udim', 'vector2'].includes(item.field.kind);
       const row = createFrame({
         Name: `${item.name} field`,
-        Size: udim2(1, 0, 0, top + (compound ? 68 : item.name === 'Text' ? 94 : 30)),
+        Size: udim2(1, 0, 0, headerHeight + (compound ? 68 : item.name === 'Text' ? 94 : 30)),
         BackgroundTransparency: 1,
       });
 
-      if (item.section) {
-        const title = label(row, item.section.toUpperCase(), 24, 10, colors.muted);
-        title.FontWeight = 600;
-        title.LetterSpacing = 1;
+      const header = item.first
+        ? button(row, item.section, () => {
+            if (collapsed.has(item.section)) {
+              collapsed.delete(item.section);
+            } else {
+              collapsed.add(item.section);
+            }
+
+            fields.set([...fields.get()]);
+          })
+        : undefined;
+
+      if (header) {
+        header.Size = udim2(1, 0, 0, 28);
+        header.BackgroundTransparency = 1;
+        header.TextSize = 12;
+        header.FontWeight = 600;
+        header.AccessibleLabel = `${item.section} section`;
       }
 
-      const title = label(row, titles[item.name] ?? item.name, 28, 11, colors.muted);
+      const fieldContent = panel('Property control', row);
+      fieldContent.BackgroundTransparency = 1;
+      fieldContent.Position = udim2FromOffset(0, headerHeight);
+      fieldContent.Size = udim2(1, 0, 0, compound ? 68 : item.name === 'Text' ? 94 : 30);
+
+      const title = label(fieldContent, titles[item.name] ?? item.name, 28, 11, colors.muted);
       title.Position = udim2FromOffset(0, top);
       if (!compound && item.name !== 'Text') {
         title.Size = udim2(0.36, -6, 0, 28);
@@ -197,54 +230,41 @@ export const createProperties = (
 
       if (compact) {
         title.Size = udim2(0.45, 0, 0, 28);
-        const control = button(row, '', () => {
-          if (item.field.kind === 'boolean') {
-            const current = fields.get().find((entry) => entry.key === item.key)!;
-            commit(item, String(!current.value));
-          }
-        });
+        const dropdown =
+          item.field.kind === 'choice'
+            ? createDropdown(fieldContent, {
+                label: item.name,
+                width: 210,
+                choices: item.field.choices!.map((value) => ({ value, label: value })),
+                value: () =>
+                  String(fields.get().find((entry) => entry.key === item.key)?.value ?? item.value),
+                change: (value) => {
+                  commit(item, value);
+                },
+              })
+            : undefined;
+        const control =
+          dropdown?.control ??
+          button(fieldContent, '', () => {
+            if (item.field.kind === 'boolean') {
+              const current = fields.get().find((entry) => entry.key === item.key)!;
+              commit(item, String(!current.value));
+            }
+          });
         control.AccessibleLabel = item.name;
         control.Position = udim2(0.48, 0, 0, top);
         control.Size = udim2(0.52, 0, 0, 28);
 
-        if (item.field.kind === 'choice') {
-          const choices = item.field.choices!;
-          const menu = createFrame({
-            Name: `${item.name} choices`,
-            Size: udim2FromOffset(210, choices.length * 36 + 12),
-            BackgroundColor3: colors.raised,
-          });
-          round(menu, 8, true);
-          menu.Parent = row;
-          const items = choices.map((choice, index) => {
-            const option = button(
-              menu,
-              choice,
-              () => {
-                commit(item, choice);
-              },
-              198,
-            );
-            option.Position = udim2FromOffset(6, index * 36 + 6);
-            return option;
-          });
-          bindMenu(control, menu, items);
+        if (item.field.kind === 'boolean') {
+          control.Position = udim2(1, -76, 0, top);
+          control.Size = udim2FromOffset(76, 28);
         }
 
         updates.set(row, (current) => {
-          control.Text =
-            item.field.kind === 'boolean'
-              ? current.value
-                ? '●  On'
-                : '○  Off'
-              : `${current.value}  ⌄`;
-          control.BackgroundColor3 =
-            item.field.kind === 'boolean' && current.value ? colors.selected : colors.field;
-          control.TextColor3 =
-            item.field.kind === 'boolean' && current.value ? colors.accent : colors.text;
-
           if (item.field.kind === 'boolean') {
-            control.unsafeElement.setAttribute('aria-pressed', String(current.value));
+            setToggle(control, Boolean(current.value));
+          } else {
+            dropdown!.refresh();
           }
         });
       } else {
@@ -272,10 +292,10 @@ export const createProperties = (
                 TextWrapped: true,
                 LineHeight: 1.5,
               })
-            : input(row, part ? `${item.name} ${part}` : item.name);
+            : input(fieldContent, part ? `${item.name} ${part}` : item.name);
 
           if (multiline) {
-            control.Parent = row;
+            control.Parent = fieldContent;
             round(control, 6, true);
             createUIPadding({
               PaddingLeft: udim(0, 10),
@@ -283,7 +303,7 @@ export const createProperties = (
               PaddingTop: udim(0, 8),
               PaddingBottom: udim(0, 8),
             }).Parent = control;
-            const hint = label(row, 'Ctrl/⌘ Enter to apply', 20, 9, colors.faint);
+            const hint = label(fieldContent, 'Ctrl/⌘ Enter to apply', 20, 9, colors.faint);
             hint.Position = udim2(1, -128, 0, top);
             hint.Size = udim2FromOffset(128, 20);
             hint.TextXAlignment = 'Right';
@@ -300,7 +320,7 @@ export const createProperties = (
           control.TextSize = multiline ? 13 : 12;
 
           if (compound) {
-            const hint = label(row, part.replace('offset', 'px'), 18, 10, colors.faint);
+            const hint = label(fieldContent, part.replace('offset', 'px'), 18, 10, colors.faint);
             hint.Position = udim2(index / count, index ? 4 : 0, 0, top + 18);
             hint.Size = udim2(1 / count, -5, 0, 18);
             control.unsafeElement.inputMode = 'decimal';
@@ -340,7 +360,8 @@ export const createProperties = (
           });
           return control;
         });
-        const swatch = item.field.kind === 'color' ? panel('Color swatch', row) : undefined;
+        const swatch =
+          item.field.kind === 'color' ? panel('Color swatch', fieldContent) : undefined;
 
         if (swatch) {
           swatch.Position = udim2(0.36, 0, 0, top + 2);
@@ -369,6 +390,20 @@ export const createProperties = (
         });
       }
 
+      const updateControl = updates.get(row)!;
+      updates.set(row, (current) => {
+        const expanded = !collapsed.has(current.section);
+        row.Visible = current.first || expanded;
+        row.Size = udim2(1, 0, 0, headerHeight + (expanded ? fieldContent.Size.Y.Offset : 0));
+        fieldContent.Visible = expanded;
+
+        if (header) {
+          header.unsafeElement.setAttribute('aria-expanded', String(expanded));
+          setIcon(header, expanded ? 'chevron_down' : 'chevron_right');
+        }
+
+        updateControl(current);
+      });
       row.onDestroy(() => updates.delete(row));
       return row;
     },
@@ -406,7 +441,8 @@ export const createProperties = (
               : definitions[name]!,
           value: values[name]!,
           nodeId: selected?.id ?? null,
-          ...(index === 0 ? { section } : {}),
+          section,
+          first: index === 0,
         });
       });
     }

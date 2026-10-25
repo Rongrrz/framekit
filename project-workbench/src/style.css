@@ -5,6 +5,8 @@
   --chrome-outline: #aff1d166;
   --chrome-line: #34363f;
   --chrome-icon: #a1a4b1;
+  --chrome-switch: #aff1d1;
+  --chrome-switch-thumb: #1b1c21;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -14,6 +16,8 @@
   --chrome-outline: #17684d66;
   --chrome-line: #d2d8e1;
   --chrome-icon: #526071;
+  --chrome-switch: #17684d;
+  --chrome-switch-thumb: #ffffff;
 }
 
 [data-workbench-button] {
@@ -52,6 +56,24 @@
 
 [data-workbench-icon][aria-current='false']::after {
   opacity: 0;
+}
+
+[data-workbench-toggle]::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  left: 8px;
+  top: calc(50% - 7px);
+  width: 26px;
+  height: 14px;
+  border-radius: 20px;
+  background: radial-gradient(circle at 7px 50%, #ffffff 4.5px, transparent 5px), #777b8966;
+}
+
+[data-workbench-toggle='on']::after {
+  background:
+    radial-gradient(circle at 19px 50%, var(--chrome-switch-thumb) 4.5px, transparent 5px),
+    var(--chrome-switch);
 }
 
 [data-workbench-theme] dialog,

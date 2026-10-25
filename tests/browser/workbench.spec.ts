@@ -213,6 +213,32 @@ test('keeps invalid editing buffers without saving incomplete values', async ({ 
   await expect(rotation).toHaveValue('0');
 });
 
+test('collapses inspector sections while retaining their values and keyboard focus', async ({
+  page,
+}) => {
+  await page.getByRole('treeitem', { name: 'Headline', exact: true }).click();
+  const section = page.getByRole('button', { name: 'Layout section', exact: true });
+  const rotation = page.getByRole('textbox', { name: 'Rotation', exact: true });
+  await expect(section).toHaveAttribute('aria-expanded', 'true');
+  await section.click();
+  await expect(section).toBeFocused();
+  await expect(rotation).toBeHidden();
+  const text = page.getByRole('textbox', { name: 'Text', exact: true });
+  await text.fill('Focused on the details.');
+  await text.press('ControlOrMeta+Enter');
+  await expect(section).toHaveAttribute('aria-expanded', 'false');
+  await section.focus();
+  await section.press('Enter');
+  await expect(rotation).toHaveValue('0');
+  await expect(section).toBeFocused();
+  await chooseDropdown(page, 'TextXAlignment', 'Center');
+  await expect(page.locator('[data-scene-id="headline"] [data-framekit-text]')).toHaveCSS(
+    'justify-content',
+    'center',
+  );
+  await page.screenshot({ path: '/tmp/framekit-inspector-redesign.png' });
+});
+
 test('edits multiline content and selects property values from dropdown menus', async ({
   page,
 }) => {

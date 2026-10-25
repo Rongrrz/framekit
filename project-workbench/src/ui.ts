@@ -107,6 +107,20 @@ export const iconButton = (
   return node;
 };
 
+/** Render an existing boolean control without introducing another owner for its value. */
+export const setToggle = (control: TextButton, value: boolean): void => {
+  control.Text = value ? 'On' : 'Off';
+  control.BackgroundColor3 = colors.field;
+  control.TextColor3 = value ? colors.accent : colors.muted;
+  control.unsafeElement.dataset.workbenchToggle = value ? 'on' : 'off';
+  control.unsafeElement.setAttribute('aria-pressed', String(value));
+  const padding = control.getChildren().find((child) => child.isA('UIPadding'));
+
+  if (!padding) {
+    createUIPadding({ PaddingLeft: udim(0, 38), PaddingRight: udim(0, 8) }).Parent = control;
+  }
+};
+
 export const input = (parent: GuiElement, name: string, text = ''): TextInput => {
   const node = createTextInput({
     Name: name,

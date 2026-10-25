@@ -19,7 +19,7 @@ import { codeThemes, type CodeTheme } from './code-themes';
 import type { SceneDocument } from './document';
 import { createDropdown } from './dropdown';
 import { createResolutionControls } from './resolution-controls';
-import { button, colors, input, label, panel, round, scroll } from './ui';
+import { button, colors, iconButton, input, label, panel, round, scroll, setToggle } from './ui';
 import { defaultWorkspace, type WorkspacePreferences } from './workspace';
 
 /** Settings group related choices into small panels, while each preference keeps its existing owner. */
@@ -44,8 +44,7 @@ export const createSettingsDialog = (
   const title = label(dialog, 'Workbench settings', 36, 22);
   title.Position = udim2FromOffset(20, 14);
   title.Size = udim2(1, -80, 0, 36);
-  const close = button(dialog, '×', () => modal.close(), 32);
-  close.AccessibleLabel = 'Close settings';
+  const close = iconButton(dialog, 'close', 'Close settings', () => modal.close());
   close.Position = udim2(1, -48, 0, 16);
   const tabs = panel('Settings categories', dialog);
   tabs.Position = udim2FromOffset(16, 64);
@@ -143,6 +142,8 @@ export const createSettingsDialog = (
     );
     control.AccessibleLabel = name;
     row(canvasSection, name, index * 40, control);
+    control.Position = udim2(1, -76, 0, index * 40);
+    control.Size = udim2FromOffset(76, 32);
     return { key, control };
   });
   const precision = createDropdown(canvasSection, {
@@ -242,9 +243,7 @@ export const createSettingsDialog = (
   watchOwnedValue(dialog, canvas, (value) => {
     precision.refresh();
     toggles.forEach(({ key, control }) => {
-      control.Text = value[key] ? 'On' : 'Off';
-      control.BackgroundColor3 = value[key] ? colors.selected : colors.raised;
-      control.unsafeElement.setAttribute('aria-pressed', String(value[key]));
+      setToggle(control, value[key]);
     });
     if (document.activeElement !== deviceWidth.unsafeElement) {
       deviceWidth.Text = String(value.width);
