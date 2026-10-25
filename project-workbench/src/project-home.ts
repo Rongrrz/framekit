@@ -6,6 +6,7 @@ import {
   createObservableValue,
   observeSize,
   setAccessibility,
+  udim,
   udim2,
   udim2FromOffset,
   vector2,
@@ -16,9 +17,11 @@ import {
 } from 'framekit';
 
 import type { SceneDocument } from './document';
+import { createDropdown } from './dropdown';
+import { setIcon } from './icons/ai-decorations';
 import { createProjectTemplateDialog } from './project-template-dialog';
 import type { ProjectLibrary, SavedProject } from './projects';
-import { button, colors, font, input, label, panel, round, scroll, stack } from './ui';
+import { button, colors, font, iconButton, input, label, panel, round, scroll, stack } from './ui';
 
 /** The home screen owns project discovery and management; opening a project belongs to the app. */
 export const createProjectHome = (
@@ -34,44 +37,116 @@ export const createProjectHome = (
   setAccessibility(home, { role: 'region', label: 'Projects home' });
   const header = panel('Projects header', home);
   header.Size = udim2(1, 0, 0, 72);
-  const brand = label(header, '◈  FRAMEKIT', 40, 15, colors.accent);
-  brand.FontWeight = 700;
-  brand.LetterSpacing = 2;
-  brand.Position = udim2FromOffset(28, 16);
-  brand.Size = udim2FromOffset(190, 40);
+  header.unsafeElement.dataset.workbenchDivider = 'bottom';
+  const mark = label(header, 'F', 34, 22, colors.canvas);
+  mark.Position = udim2FromOffset(24, 19);
+  mark.Size = udim2FromOffset(34, 34);
+  mark.BackgroundTransparency = 0;
+  mark.BackgroundColor3 = colors.accent;
+  mark.FontWeight = 750;
+  mark.TextXAlignment = 'Center';
+  round(mark, 9);
+  const brand = label(header, 'FrameKit', 24, 16);
+  brand.FontWeight = 650;
+  brand.Position = udim2FromOffset(70, 13);
+  brand.Size = udim2FromOffset(100, 24);
+  const brandHint = label(header, 'Workbench', 20, 11, colors.muted);
+  brandHint.Position = udim2FromOffset(70, 37);
+  brandHint.Size = udim2FromOffset(100, 20);
   const newProject = button(header, '+ New project', () => templates.open(newProject), 144);
+  newProject.Text = 'New project';
+  setIcon(newProject, 'plus');
   newProject.Position = udim2(1, -172, 0, 20);
   newProject.BackgroundColor3 = colors.accent;
   newProject.TextColor3 = colors.canvas;
-  const settings = button(header, '⚙', openSettings, 34);
-  settings.AccessibleLabel = 'Settings';
+  const settings = iconButton(header, 'settings', 'Settings', openSettings, 34);
   settings.Position = udim2(1, -218, 0, 20);
   const viewport = scroll(home, 'Projects');
   viewport.Position = udim2FromOffset(0, 73);
   viewport.Size = udim2(1, 0, 1, -73);
   const content = panel('Project library', viewport, colors.canvas);
-  const greeting = label(content, 'Your projects', 44, 28);
+  const greeting = label(content, 'Your projects', 44, 30);
   greeting.FontWeight = 650;
-  greeting.Position = udim2FromOffset(0, 24);
+  greeting.Position = udim2FromOffset(0, 36);
   const storage = label(content, 'Saved automatically in this browser.', 28, 12, colors.muted);
   const search = input(content, 'Search projects');
   search.FontFamily = font;
   search.PlaceholderText = 'Search your projects…';
-  const sort = button(
-    content,
-    'Recently edited ↓',
-    () => {
-      alphabetical = !alphabetical;
+  const searchPadding = search.getChildren().find((child) => child.isA('UIPadding'));
+
+  if (searchPadding?.isA('UIPadding')) {
+    searchPadding.PaddingLeft = udim(0, 36);
+  }
+  const searchIcon = label(content, '', 32, 12, colors.faint);
+  searchIcon.Size = udim2FromOffset(34, 32);
+  setIcon(searchIcon, 'search', 'only');
+  searchIcon.unsafeElement.style.pointerEvents = 'none';
+  let sortOrder: 'recent' | 'name' | 'name-desc' = 'recent';
+  const sort = createDropdown(content, {
+    label: 'Sort projects',
+    width: 184,
+    choices: [
+      { value: 'recent', label: 'Last edited' },
+      { value: 'name', label: 'Name · A–Z' },
+      { value: 'name-desc', label: 'Name · Z–A' },
+    ] as const,
+    value: () => sortOrder,
+    change: (value) => {
+      sortOrder = value;
       publish();
     },
-    158,
-  );
+  });
+  const columns = panel('Project columns', content, colors.canvas);
+  columns.Size = udim2(1, 0, 0, 32);
+  columns.unsafeElement.dataset.workbenchDivider = 'bottom';
+  const nameColumn = label(columns, 'Name', 32, 11, colors.muted);
+  nameColumn.Position = udim2FromOffset(16, 0);
+  const sizeColumn = label(columns, 'Canvas size', 32, 11, colors.muted);
+  sizeColumn.Position = udim2(1, -340, 0, 0);
+  sizeColumn.Size = udim2FromOffset(140, 32);
+  const dateColumn = label(columns, 'Last edited', 32, 11, colors.muted);
+  dateColumn.Position = udim2(1, -190, 0, 0);
+  dateColumn.Size = udim2FromOffset(140, 32);
   const cards = panel('Saved projects', content, colors.canvas);
   setAccessibility(cards, { role: 'list', label: 'Saved projects' });
-  const empty = label(cards, '', 64, 14, colors.muted);
-  empty.TextWrapped = true;
+  const empty = panel('Empty project library', cards, colors.panel);
+  empty.Size = udim2(1, 0, 0, 270);
+  round(empty, 10, true);
+  const emptyIcon = label(empty, '', 48, 20, colors.accent);
+  emptyIcon.Position = udim2(0.5, -24, 0, 30);
+  emptyIcon.Size = udim2FromOffset(48, 48);
+  emptyIcon.BackgroundTransparency = 0;
+  emptyIcon.BackgroundColor3 = colors.selected;
+  round(emptyIcon, 12);
+  setIcon(emptyIcon, 'folder', 'only');
+  const emptyTitle = label(empty, '', 32, 18);
+  emptyTitle.Position = udim2FromOffset(20, 96);
+  emptyTitle.Size = udim2(1, -40, 0, 32);
+  emptyTitle.TextXAlignment = 'Center';
+  emptyTitle.FontWeight = 600;
+  const emptyHint = label(empty, '', 48, 12, colors.muted);
+  emptyHint.TextWrapped = true;
+  emptyHint.Position = udim2FromOffset(24, 132);
+  emptyHint.Size = udim2(1, -48, 0, 48);
+  emptyHint.TextXAlignment = 'Center';
+  const emptyAction = button(
+    empty,
+    'Create a project',
+    () => {
+      if (library.state.get().length) {
+        search.Text = '';
+        publish();
+        search.focus();
+      } else {
+        templates.open(emptyAction);
+      }
+    },
+    160,
+  );
+  emptyAction.Position = udim2(0.5, -80, 0, 202);
+  emptyAction.BackgroundColor3 = colors.selected;
+  emptyAction.TextColor3 = colors.accent;
   const source = createObservableValue<readonly SavedProject[]>([]);
-  let alphabetical = false;
   let width = 1200;
 
   const dialog = createFrame({
@@ -175,19 +250,30 @@ export const createProjectHome = (
     create: (project) => {
       const card = panel('Saved project', cards, colors.panel);
       card.Parent = undefined;
-      round(card, 6, true);
+      card.unsafeElement.dataset.workbenchDivider = 'bottom';
+      const icon = label(card, '', 36, 12, colors.muted);
+      icon.Position = udim2FromOffset(12, 12);
+      icon.Size = udim2FromOffset(30, 36);
+      setIcon(icon, 'file', 'only');
       const title = label(card, '', 28, 14);
       title.Name = 'Project title';
-      title.Position = udim2FromOffset(16, 12);
-      title.Size = udim2(1, -72, 0, 28);
-      title.FontWeight = 600;
+      title.Position = udim2FromOffset(52, 16);
+      title.FontWeight = 500;
+      title.ClipsDescendants = true;
+      const size = label(card, '', 28, 12, colors.muted);
+      size.Name = 'Project size';
+      size.Position = udim2(1, -340, 0, 16);
+      size.Size = udim2FromOffset(140, 28);
+      const date = label(card, '', 28, 12, colors.muted);
+      date.Name = 'Project date';
+      date.Position = udim2(1, -190, 0, 16);
+      date.Size = udim2FromOffset(140, 28);
       const enter = button(card, 'Open project', () => open(project.id));
       enter.Text = '';
       enter.BackgroundTransparency = 1;
       enter.Size = udim2(1, 0, 1, 0);
-      const more = button(card, '•••', () => {}, 32);
-      more.AccessibleLabel = `Project options ${project.id}`;
-      more.Position = udim2(1, -44, 0, 10);
+      const more = iconButton(card, 'more', 'Project options', () => {});
+      more.Position = udim2(1, -44, 0, 14);
       more.BackgroundTransparency = 1;
       const menu = panel('Project options', app);
       menu.Size = udim2FromOffset(190, 128);
@@ -235,6 +321,7 @@ export const createProjectHome = (
         option.Position = udim2FromOffset(8, 8 + index * 38);
         option.BackgroundTransparency = 1;
         option.TextXAlignment = 'Left';
+        setIcon(option, (['edit', 'copy', 'trash'] as const)[index]!);
       });
       options[2]!.TextColor3 = colors.danger;
       const menuBinding = bindMenu(more, menu, options);
@@ -247,17 +334,33 @@ export const createProjectHome = (
       const children = card.getChildren();
       const title = children.find((child) => child.Name === 'Project title');
       const enter = children.find((child) => child.Name === 'Open project');
-      const more = children.find((child) => child.Name === '•••');
+      const more = children.find((child) => child.Name === 'Project options');
+      const size = children.find((child) => child.Name === 'Project size');
+      const date = children.find((child) => child.Name === 'Project date');
+      const showMetadata = width >= 650;
+
+      if (size?.isA('TextLabel') && date?.isA('TextLabel')) {
+        size.Text = `${project.document.width} × ${project.document.height} px`;
+        size.Visible = showMetadata;
+        date.Text = new Date(project.updatedAt).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        date.Visible = showMetadata;
+      }
 
       if (title?.isA('TextLabel') && enter?.isA('TextButton') && more?.isA('TextButton')) {
         title.Text = project.document.name;
+        title.Size = udim2(1, showMetadata ? -408 : -110, 0, 28);
+        title.unsafeElement.title = project.document.name;
         enter.unsafeElement.title = `Edited ${new Date(project.updatedAt).toLocaleDateString()}`;
         enter.AccessibleLabel = `Open ${project.document.name}`;
         more.AccessibleLabel = `Options for ${project.document.name}`;
       }
 
       card.Position = udim2FromOffset(0, index * 60);
-      card.Size = udim2FromOffset(width, 52);
+      card.Size = udim2FromOffset(width, 60);
     },
   });
 
@@ -266,30 +369,46 @@ export const createProjectHome = (
     const projects = [...library.state.get()]
       .filter((project) => project.document.name.toLowerCase().includes(term))
       .sort((a, b) =>
-        alphabetical ? a.document.name.localeCompare(b.document.name) : b.updatedAt - a.updatedAt,
+        sortOrder === 'recent'
+          ? b.updatedAt - a.updatedAt
+          : a.document.name.localeCompare(b.document.name) * (sortOrder === 'name' ? 1 : -1),
       );
-    sort.Text = alphabetical ? 'Name A–Z ↓' : 'Recently edited ↓';
     source.set(projects);
     empty.Visible = projects.length === 0;
-    empty.Text = library.state.get().length
-      ? 'No projects match your search.'
-      : 'Your projects will live here. Choose New project to get started.';
-    cards.Size = udim2FromOffset(width, Math.max(80, projects.length * 60));
-    content.Size = udim2FromOffset(width, 210 + Math.max(120, projects.length * 60));
+    emptyTitle.Text = library.state.get().length
+      ? 'No projects found'
+      : 'Create your first project';
+    emptyHint.Text = library.state.get().length
+      ? 'Try a different name, or clear the search to see all your projects.'
+      : 'Start from a blank canvas or choose a working template.\nYour changes are saved automatically.';
+    emptyAction.Text = library.state.get().length ? 'Clear search' : 'Create a project';
+    emptyAction.AccessibleLabel = emptyAction.Text;
+    columns.Visible = projects.length > 0;
+    cards.Size = udim2FromOffset(width, projects.length ? projects.length * 60 : 270);
+    content.Size = udim2FromOffset(width, cards.Position.Y.Offset + cards.Size.Y.Offset + 48);
   };
 
   const resize = (): void => {
-    width = Math.min(1200, Math.max(240, window.innerWidth - (window.innerWidth < 600 ? 32 : 96)));
+    const compact = window.innerWidth < 600;
+    width = Math.min(1120, Math.max(240, window.innerWidth - (compact ? 32 : 96)));
     content.Position = udim2FromOffset((window.innerWidth - width) / 2, 0);
-    greeting.TextSize = window.innerWidth < 600 ? 24 : 28;
-    storage.Position = udim2FromOffset(0, 72);
+    greeting.TextSize = compact ? 26 : 30;
+    brand.Visible = !compact;
+    brandHint.Visible = !compact;
+    newProject.Position = udim2(1, compact ? -160 : -172, 0, 20);
+    settings.Position = udim2(1, compact ? -202 : -218, 0, 20);
+    storage.Position = udim2FromOffset(0, 84);
     storage.Text = library.error.get() ?? 'Saved automatically in this browser.';
     storage.TextWrapped = true;
     storage.Size = udim2(1, 0, 0, 34);
-    search.Position = udim2FromOffset(0, 116);
-    search.Size = udim2FromOffset(Math.max(100, width - 174), 32);
-    sort.Position = udim2FromOffset(width - 158, 116);
-    cards.Position = udim2FromOffset(0, 172);
+    search.Position = udim2FromOffset(0, 140);
+    search.Size = udim2FromOffset(compact ? width : Math.min(420, width - 208), 36);
+    searchIcon.Position = udim2FromOffset(0, 142);
+    sort.control.Position = udim2FromOffset(compact ? 0 : width - 184, compact ? 188 : 142);
+    sizeColumn.Visible = width >= 650;
+    dateColumn.Visible = width >= 650;
+    columns.Position = udim2FromOffset(0, compact ? 242 : 196);
+    cards.Position = udim2FromOffset(0, compact ? 282 : 236);
     publish();
   };
 

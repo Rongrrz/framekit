@@ -322,6 +322,10 @@ test('releases its GUI, modal, and owned observers when destroyed', async ({ pag
 test('creates projects from templates, manages the library, and keeps project histories separate', async ({
   page,
 }) => {
+  await page.getByRole('button', { name: 'Canvas settings', exact: true }).click();
+  const projectName = page.getByRole('textbox', { name: 'name', exact: true });
+  await projectName.fill('First canvas');
+  await projectName.press('Enter');
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Projects home' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Create Welcome card', exact: true })).toHaveCount(
@@ -335,6 +339,18 @@ test('creates projects from templates, manages the library, and keeps project hi
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
   await expect(page.locator('[data-project-row]')).toHaveCount(2);
+  await expect(page.getByRole('list', { name: 'Saved projects' })).toContainText('960 × 640 px');
+  await chooseDropdown(page, 'Sort projects', 'Name · A–Z');
+  await expect(page.locator('[data-project-row]').first()).toContainText('Dashboard');
+  await chooseDropdown(page, 'Sort projects', 'Name · Z–A');
+  await expect(page.locator('[data-project-row]').first()).toContainText('First canvas');
+  const searchProjects = page.getByRole('textbox', { name: 'Search projects', exact: true });
+  await searchProjects.fill('no matching project');
+  await expect(page.getByText('No projects found', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+  await expect(searchProjects).toBeFocused();
+  await expect(page.locator('[data-project-row]')).toHaveCount(2);
+  await page.screenshot({ path: '/tmp/framekit-library-redesign.png' });
   await page.getByRole('button', { name: 'Options for Dashboard', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Rename project', exact: true }).click();
   const name = page.getByRole('textbox', { name: 'Project name', exact: true });
@@ -388,7 +404,12 @@ test('starts on an empty project home and offers templates on a compact screen',
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/project-workbench/index.html');
   await expect(page.getByRole('region', { name: 'Projects home' })).toBeVisible();
-  await expect(page.getByText('Your projects will live here.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Create your first project', { exact: true })).toBeVisible();
+  await page.screenshot({ path: '/tmp/framekit-library-empty-mobile.png' });
+  await page.getByRole('button', { name: 'Create a project', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'New project', exact: true })).toBeVisible();
+  await page.screenshot({ path: '/tmp/framekit-templates-mobile.png' });
+  await page.getByRole('button', { name: 'Close new project', exact: true }).click();
   await createProject(page, 'Settings panel');
   await expect(page.locator('[data-scene-id="settings"]')).toBeVisible();
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
