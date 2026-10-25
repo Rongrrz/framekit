@@ -8,12 +8,14 @@ import {
   setAccessibility,
   udim2,
   udim2FromOffset,
+  vector2,
   type ObservableValue,
   type GuiElement,
   type ScreenGui,
 } from 'framekit';
 
 import { previewResolution, resolutionLabel, type CanvasPreferences } from './canvas-preferences';
+import { themeChromeNode } from './chrome-theme';
 import type { SceneDocument } from './document';
 import { createDropdown } from './dropdown';
 import { setIcon } from './icons/ai-decorations';
@@ -59,9 +61,11 @@ export const createPresentation = (
     Name: 'Presentation stage',
     ScrollingDirection: 'XY',
     ScrollBarThickness: 8,
+    ScrollBarImageColor3: colors.faint,
     BackgroundTransparency: 1,
   });
   viewport.Parent = dialog;
+  themeChromeNode(viewport);
   setAccessibility(viewport, { role: 'region', label: 'Presentation viewport', focusable: true });
   const world = panel('Presentation bounds', viewport, colors.canvas);
   const host = panel('Isolated project', world);
@@ -126,6 +130,10 @@ export const createPresentation = (
 
     const renderedWidth = resolution.width * factor;
     const renderedHeight = resolution.height * factor;
+    const resetView =
+      scale.Scale !== factor ||
+      host.Size.X.Offset !== resolution.width ||
+      host.Size.Y.Offset !== resolution.height;
     world.Position = udim2FromOffset(
       Math.max(16, (width - renderedWidth) / 2),
       Math.max(16, (availableHeight - renderedHeight) / 2),
@@ -141,6 +149,12 @@ export const createPresentation = (
       Math.max(width, renderedWidth + 32),
       Math.max(availableHeight, renderedHeight + 32),
     );
+
+    // A new resolution or zoom starts at the project origin, rather than an old cropped view.
+    if (resetView) {
+      viewport.CanvasPosition = vector2(0, 0);
+    }
+
     dimensions.Text = `${resolutionLabel(resolution)} · ${Math.round(factor * 100)}% view`;
     devices.refresh();
   };
@@ -178,6 +192,7 @@ export const createPresentation = (
       title.Text = 'Preparing presentation…';
       modal.open(opener);
       layout();
+      viewport.CanvasPosition = vector2(0, 0);
       void Promise.all([
         compileScripts(exportSceneModules(document), current.signal),
         import('virtual:presentation-runtime'),

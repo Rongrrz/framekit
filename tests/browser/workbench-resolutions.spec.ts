@@ -2,6 +2,76 @@ import { expect, test } from '@playwright/test';
 
 import { chooseDropdown, createProject } from './workbench-helpers';
 
+test('Actual size keeps both dimensions at one CSS pixel per project pixel with reachable edges', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/project-workbench/');
+  await createProject(page, 'Welcome card');
+  await page.getByRole('button', { name: 'Present', exact: true }).click();
+  const iframe = page.locator('iframe[title="Presented project"]');
+  const frame = page.frameLocator('iframe[title="Presented project"]');
+  const viewport = page.getByRole('region', { name: 'Presentation viewport', exact: true });
+  await expect(frame.locator('[data-framekit="ScreenGui"]')).toBeVisible();
+  await chooseDropdown(page, 'Presentation scale', 'Actual size · 100%');
+  for (const resolution of [
+    { label: 'Design size · 960 × 640 px · Landscape', width: 960, height: 640 },
+    { label: 'Full HD · 1920 × 1080 px · Landscape', width: 1920, height: 1080 },
+    { label: 'Phone · 390 × 844 px · Portrait', width: 390, height: 844 },
+  ]) {
+    await chooseDropdown(page, 'Presentation resolution', resolution.label);
+    await expect
+      .poll(async () => {
+        const bounds = (await iframe.boundingBox())!;
+        return { width: bounds.width, height: bounds.height };
+      })
+      .toEqual({ width: resolution.width, height: resolution.height });
+    await expect
+      .poll(() =>
+        frame.locator('body').evaluate(() => ({ width: innerWidth, height: innerHeight })),
+      )
+      .toEqual({ width: resolution.width, height: resolution.height });
+    await expect
+      .poll(async () => {
+        const visible = (await viewport.boundingBox())!;
+        const project = (await iframe.boundingBox())!;
+        return project.x >= visible.x && project.y >= visible.y;
+      })
+      .toBe(true);
+    await viewport.evaluate((element) => {
+      element.scrollTo(element.scrollWidth, element.scrollHeight);
+    });
+    await expect
+      .poll(async () => {
+        const visible = (await viewport.boundingBox())!;
+        const project = (await iframe.boundingBox())!;
+        return (
+          project.x + project.width <= visible.x + visible.width &&
+          project.y + project.height <= visible.y + visible.height
+        );
+      })
+      .toBe(true);
+
+    if (resolution.width === 1920) {
+      await chooseDropdown(page, 'Presentation scale', 'Fit to window');
+      await expect
+        .poll(() =>
+          viewport.evaluate((element) => ({
+            width: element.scrollWidth - element.clientWidth,
+            height: element.scrollHeight - element.clientHeight,
+          })),
+        )
+        .toEqual({ width: 0, height: 0 });
+      await expect(iframe).toBeInViewport({ ratio: 1 });
+      await chooseDropdown(page, 'Presentation scale', 'Actual size · 100%');
+      await viewport.evaluate((element) => {
+        element.scrollTo(element.scrollWidth, element.scrollHeight);
+      });
+    }
+  }
+  await page.screenshot({ path: '/tmp/framekit-presentation-actual.png' });
+});
+
 test('presents exact selected resolutions, rotates and resizes without restarting project scripts', async ({
   page,
 }) => {
