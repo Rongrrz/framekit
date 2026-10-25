@@ -7,6 +7,7 @@ import {
   type TextButton,
 } from 'framekit';
 
+import { setIcon } from './icons/ai-decorations';
 import { button, colors, panel, round } from './ui';
 
 /** One selected value, native popover dismissal, and the same keyboard navigation as other menus. */
@@ -39,6 +40,7 @@ export const createDropdown = <T extends string | number>(
     item.TextXAlignment = 'Left';
     item.TextSize = 12;
     item.BackgroundTransparency = 1;
+    setIcon(item, 'check');
     return item;
   });
   const refresh = (): void => {
@@ -52,7 +54,7 @@ export const createDropdown = <T extends string | number>(
     items.forEach((item, index) => {
       const choice = options.choices[index]!;
       const current = choice.value === options.value();
-      item.Text = `${current ? '✓' : '  '}  ${text(choice)}`;
+      item.Text = text(choice);
       item.AccessibleLabel = text(choice);
       item.Size = udim2FromOffset(width - 12, 32);
       item.TextColor3 = current ? colors.accent : colors.text;

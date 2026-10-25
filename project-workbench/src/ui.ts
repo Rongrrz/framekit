@@ -18,6 +18,8 @@ import {
 } from 'framekit';
 
 import { themeChromeNode } from './chrome-theme';
+import { setIcon } from './icons/ai-decorations';
+import type { IconName } from './icons/ai-icons';
 import { colors } from './palette';
 
 export { colors } from './palette';
@@ -85,8 +87,24 @@ export const button = (
   });
   round(node);
   node.Parent = parent;
+  node.unsafeElement.dataset.workbenchButton = '';
   node.onClick(action);
   return themeChromeNode(node);
+};
+
+/** An icon-only button still has a descriptive name and a pointer tooltip. */
+export const iconButton = (
+  parent: GuiElement,
+  icon: IconName,
+  name: string,
+  action: () => void,
+  width = 32,
+): TextButton => {
+  const node = button(parent, name, action, width);
+  node.Text = '';
+  node.unsafeElement.title = name;
+  setIcon(node, icon, 'only');
+  return node;
 };
 
 export const input = (parent: GuiElement, name: string, text = ''): TextInput => {

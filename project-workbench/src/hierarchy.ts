@@ -223,7 +223,7 @@ export const createHierarchy = (
               : item.type === 'ImageLabel'
                 ? 'image'
                 : item.type === 'Script'
-                  ? 'script'
+                  ? 'code'
                   : item.type === 'TextLabel'
                     ? 'text'
                     : 'frame';
