@@ -1,8 +1,6 @@
 import {
   bindDialog,
-  color3FromHex,
   createFrame,
-  createTextArea,
   observeSize,
   setAccessibility,
   udim2,
@@ -12,10 +10,11 @@ import {
   type ScreenGui,
 } from 'framekit';
 
-import type { CodeResponse, CodeTheme } from './code-themes';
+import type { CodeTheme } from './code-themes';
 import { parseNetworkOrigins } from './document';
 import type { Editor } from './editor';
-import { button, colors, iconButton, input, label, mono, round } from './ui';
+import { createScriptEditor } from './script-editor';
+import { button, colors, iconButton, input, label, round } from './ui';
 
 /** Source is an editing buffer until Apply; ownership and history remain with the scene editor. */
 export const createScriptDialog = (
@@ -36,7 +35,8 @@ export const createScriptDialog = (
   const title = label(dialog, 'Script', 36, 20);
   title.Position = udim2FromOffset(20, 12);
   title.Size = udim2(1, -280, 0, 36);
-  const format = button(dialog, 'Format', () => formatSource(), 78);
+  const format = button(dialog, 'Format', () => code.format(), 78);
+  format.unsafeElement.title = 'Format TypeScript (Shift+Alt+F)';
   format.Position = udim2(1, -252, 0, 14);
   const apply = button(dialog, 'Apply script', () => save(), 100);
   apply.Position = udim2(1, -166, 0, 14);
@@ -53,21 +53,18 @@ export const createScriptDialog = (
   );
   hint.Position = udim2FromOffset(20, 54);
   hint.Size = udim2(1, -40, 0, 24);
-  const source = createTextArea({
-    Name: 'TypeScript source',
-    AccessibleLabel: 'TypeScript source',
-    TextSize: 13,
-    FontFamily: mono,
-    TextWrapped: false,
-    LineHeight: 1.6,
-    Position: udim2FromOffset(20, 88),
-    Size: udim2(1, -40, 1, -290),
-  });
-  source.Parent = dialog;
-  source.unsafeElement.spellcheck = false;
-  source.unsafeElement.setAttribute('autocapitalize', 'off');
-  source.unsafeElement.setAttribute('autocomplete', 'off');
-  round(source, 8, true);
+  const code = createScriptEditor(
+    dialog,
+    (message) => {
+      status.Text = message;
+    },
+    (busy) => {
+      format.Disabled = busy;
+    },
+  );
+  code.root.Position = udim2FromOffset(20, 88);
+  code.root.Size = udim2(1, -40, 1, -290);
+  const { source } = code;
   const originsLabel = label(dialog, 'Script settings · allowed backend origins', 28, 13);
   originsLabel.Position = udim2(0, 20, 1, -190);
   const origins = input(dialog, 'Allowed backend origins');
@@ -97,17 +94,8 @@ export const createScriptDialog = (
   setAccessibility(status, { role: 'status' });
   let currentId = '';
   let currentPrefab: string | null = null;
-  let worker: Worker | undefined;
-  const stop = (): void => {
-    worker?.terminate();
-    worker = undefined;
-    if (!format.isDestroyed()) {
-      format.Disabled = false;
-    }
-  };
   const modal = bindDialog(dialog, { initialFocus: source });
-  dialog.on('close', stop);
-  dialog.onDestroy(stop);
+  dialog.on('close', code.close);
   const save = (): void => {
     try {
       const snapshot = editor.state.get();
@@ -129,26 +117,6 @@ export const createScriptDialog = (
       status.Text = error instanceof Error ? error.message : String(error);
     }
   };
-  const formatSource = (): void => {
-    stop();
-    const before = source.Text;
-    format.Disabled = true;
-    worker = new Worker(new URL('./code-worker.ts', import.meta.url), { type: 'module' });
-    worker.onmessage = (event: MessageEvent<CodeResponse>) => {
-      stop();
-      if ('error' in event.data) {
-        status.Text = event.data.error;
-      } else if (source.Text === before) {
-        source.Text = event.data.result.source;
-        status.Text = 'Formatted. Apply script to save.';
-      }
-    };
-    worker.onerror = () => {
-      stop();
-      status.Text = 'Formatting unavailable. You can still edit and apply the source.';
-    };
-    worker.postMessage({ id: 1, source: before, language: 'typescript' });
-  };
   const resize = (): void => {
     dialog.Size = udim2FromOffset(
       Math.min(1000, window.innerWidth - 24),
@@ -168,14 +136,11 @@ export const createScriptDialog = (
       currentId = id;
       currentPrefab = snapshot.prefabId;
       title.Text = node.properties.Name;
-      source.Text = String(node.properties.Source);
       origins.Text = snapshot.project.networkOrigins?.join(', ') ?? '';
-      const light = getTheme() === 'github-light';
-      source.BackgroundColor3 = color3FromHex(light ? '#ffffff' : '#24292e');
-      source.TextColor3 = color3FromHex(light ? '#24292e' : '#e1e4e8');
       status.Text =
-        'Apply saves this script and its project backend permissions. Closing discards edits.';
+        'Shift+Alt+F formats code. Apply saves this script and its backend permissions. Closing discards edits.';
       modal.open(opener);
+      code.open(String(node.properties.Source), getTheme());
     },
   };
 };

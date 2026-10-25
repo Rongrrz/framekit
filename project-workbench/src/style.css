@@ -144,6 +144,50 @@
   tab-size: 2;
 }
 
+[data-script-editor] pre,
+[data-script-editor] textarea {
+  font-variant-ligatures: none;
+  tab-size: 2;
+}
+
+/* The native textarea keeps its caret, selection, and scrollbars above escaped token colors. */
+[data-script-editor] textarea {
+  caret-color: var(--script-foreground);
+  -webkit-text-fill-color: transparent;
+}
+
+[data-script-editor] textarea::selection {
+  background: #7c83fd55;
+  -webkit-text-fill-color: var(--script-foreground);
+}
+
+[data-script-gutter] {
+  border-right: 1px solid #8c959f26;
+  pointer-events: none;
+}
+
+[data-script-mirror] {
+  pointer-events: none;
+}
+
+[data-script-editor][data-composing] textarea {
+  -webkit-text-fill-color: currentcolor;
+}
+
+[data-script-editor][data-composing] [data-script-mirror] {
+  visibility: hidden;
+}
+
+@media (forced-colors: active) {
+  [data-script-editor] textarea {
+    -webkit-text-fill-color: currentcolor;
+  }
+
+  [data-script-mirror] {
+    visibility: hidden;
+  }
+}
+
 input[aria-invalid='true'] {
   outline: 1px solid #f3a49d;
 }
