@@ -1,18 +1,8 @@
-import { orderedNodes, type Interaction, type SceneDocument, type SceneNode } from './document';
+import { orderedNodes, type SceneDocument, type SceneNode } from './document';
 
-/** Each prefab instance owns its own local event references and public output boundary. */
-export type RuntimeScope = Readonly<{
-  id: string;
-  instance: string | null;
-  parent: string | null;
-  nodes: ReadonlyMap<string, string>;
-  bindings: readonly Interaction[];
-}>;
-
-export type ExpandedScene = Readonly<{
+type ExpandedScene = Readonly<{
   document: SceneDocument;
   owners: ReadonlyMap<string, string>;
-  scopes: readonly RuntimeScope[];
 }>;
 
 /** Stable expansion IDs preserve runtime identity while definitions remain shared application data. */
@@ -20,12 +10,10 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
   const definitions = new Map((document.prefabs ?? []).map((prefab) => [prefab.id, prefab]));
   const nodes: SceneNode[] = [];
   const owners = new Map<string, string>();
-  const scopes: RuntimeScope[] = [];
   const allocated = new Set(document.nodes.map((node) => node.id));
   const appendScope = (
-    scope: Pick<SceneDocument, 'nodes' | 'bindings'>,
+    scope: readonly SceneNode[],
     id: string,
-    parentScope: string | null,
     rootOverride?: Readonly<{
       id: string;
       parent: string | null;
@@ -33,9 +21,9 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
       owner: string;
     }>,
   ): void => {
-    const root = scope.nodes.find((node) => node.parent === null);
+    const root = scope.find((node) => node.parent === null);
     const ids = new Map(
-      scope.nodes.map((node) => {
+      scope.map((node) => {
         if (!id) {
           return [node.id, node.id] as const;
         }
@@ -51,15 +39,7 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
         return [node.id, global] as const;
       }),
     );
-    scopes.push({
-      id,
-      parent: parentScope,
-      instance: rootOverride?.id ?? null,
-      nodes: ids,
-      bindings: scope.bindings ?? [],
-    });
-
-    for (const node of orderedNodes({ ...document, nodes: scope.nodes })) {
+    for (const node of orderedNodes({ ...document, nodes: scope })) {
       const globalId = ids.get(node.id)!;
       const owner = rootOverride?.owner ?? node.id;
       const parent = node.parent === null ? (rootOverride?.parent ?? null) : ids.get(node.parent)!;
@@ -75,7 +55,7 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
           throw new TypeError('The prefab no longer exists.');
         }
 
-        appendScope(prefab, globalId, id, { id: globalId, parent, properties, owner });
+        appendScope(prefab.nodes, globalId, { id: globalId, parent, properties, owner });
       } else {
         if (owners.has(globalId)) {
           throw new TypeError('Expanded object IDs must remain unique.');
@@ -87,6 +67,6 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
     }
   };
 
-  appendScope(document, '', null);
-  return { document: { ...document, nodes }, owners, scopes };
+  appendScope(document.nodes, '');
+  return { document: { ...document, nodes }, owners };
 };

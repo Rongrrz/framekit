@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { highlightCode, prepareCode } from '../src/code-format';
 import { createSampleDocument } from '../src/document';
 import { createEditor } from '../src/editor';
-import { exportTypeScript } from '../src/export';
+import { exportSceneModules } from '../src/project-export';
 
 describe('formatted source', () => {
   it('highlights unfinished scripts without changing indentation or trailing whitespace', () => {
@@ -23,8 +23,8 @@ describe('formatted source', () => {
   });
 
   it('produces readable names, compact value constructors, and complete highlighted themes', async () => {
-    const result = await prepareCode(exportTypeScript(createSampleDocument()));
-    expect(result.source).toContain("const welcomeCard = createFrame({\n  Name: 'Welcome card',");
+    const result = await prepareCode(exportSceneModules(createSampleDocument())[0]!.source);
+    expect(result.source).toContain("const welcomeCard = createFrame({\n    Name: 'Welcome card',");
     expect(result.source).toContain('Position: udim2FromOffset(48, 48),');
     expect(result.source).toContain('const uiCorner = createUICorner({');
     expect(result.source).toContain("BackgroundColor3: color3FromHex('#ffffff'),");
@@ -46,7 +46,7 @@ describe('formatted source', () => {
     editor.edit('card', 'Name', 'class');
     editor.edit('headline', 'Name', 'class');
     editor.edit('headline', 'Text', '<script>alert("hello")</script>');
-    const result = await prepareCode(exportTypeScript(editor.state.get().document));
+    const result = await prepareCode(exportSceneModules(editor.state.get().document)[0]!.source);
     expect(result.source).toContain('const nodeClass = createFrame(');
     expect(result.source).toContain('const nodeClass2 = createTextLabel(');
 

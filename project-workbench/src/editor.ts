@@ -3,7 +3,6 @@ import { createObservableValue, udim2FromOffset, type ReadonlyObservableValue } 
 import {
   createSampleDocument,
   descendantIds,
-  parseDocument,
   validateHierarchy,
   type SceneDocument,
   type Interaction,
@@ -52,7 +51,6 @@ export type Editor = Readonly<{
   remove(): void;
   undo(): void;
   redo(): void;
-  load(text: string): void;
   configure(patch: Partial<Pick<SceneDocument, 'name' | 'width' | 'height'>>): void;
   setNetworkOrigins(origins: readonly string[]): void;
 }>;
@@ -380,10 +378,6 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         past.push(state.get());
         publish(next);
       }
-    },
-    load: (text): void => {
-      const document = parseDocument(text);
-      commitProject(document, document.nodes[0]?.id ?? null, null);
     },
     configure: (patch): void => {
       const current = state.get();

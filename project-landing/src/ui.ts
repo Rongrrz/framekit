@@ -219,29 +219,3 @@ export const createButton = (theme: ThemeValue, options: ButtonOptions): TextBut
 
   return button;
 };
-
-export const createPill = (
-  theme: ThemeValue,
-  label: string,
-  size: UDim2,
-  position: UDim2,
-  color: ThemeToken = 'accent',
-): TextLabel => {
-  const pill = createText(theme, {
-    text: label,
-    size,
-    position,
-    color,
-    textSize: typeScale.caption,
-    font: fonts.mono,
-    weight: 750,
-    xAlignment: 'Center',
-  });
-
-  pill.Name = `${label.replaceAll(/\s+/g, '')}Pill`;
-  pill.BackgroundTransparency = 0.88;
-  bindThemeColors(pill, theme, (palette) => ({ BackgroundColor3: palette[color] }));
-  addRoundedBorder(theme, pill, 999, color);
-
-  return pill;
-};

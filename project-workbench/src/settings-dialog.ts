@@ -24,6 +24,7 @@ import {
   canvasZoomChoices,
   defaultWorkspace,
   formatCanvasZoom,
+  panelWidthLimits,
   type WorkspacePreferences,
 } from './workspace';
 
@@ -261,19 +262,15 @@ export const createSettingsDialog = (
   right.Position = udim2(0.5, 6, 0, 44);
   right.Size = udim2(0.5, -6, 0, 34);
   widthTitle.Size = udim2(1, 0, 0, 32);
-  const message = label(
-    layout,
-    'Explorer: 200–360 px. Inspector: 260–420 px.',
-    54,
-    11,
-    colors.muted,
-  );
+  const widthHint = `Explorer: ${panelWidthLimits.left.min}–${panelWidthLimits.left.max} px. Inspector: ${panelWidthLimits.right.min}–${panelWidthLimits.right.max} px.`;
+  const message = label(layout, widthHint, 54, 11, colors.muted);
   message.Position = udim2FromOffset(0, 88);
   message.TextWrapped = true;
-  for (const [control, key, min, max] of [
-    [left, 'left', 200, 360],
-    [right, 'right', 260, 420],
+  for (const [control, key] of [
+    [left, 'left'],
+    [right, 'right'],
   ] as const) {
+    const { min, max } = panelWidthLimits[key];
     const apply = (): void => {
       const value = Number(control.Text);
       if (!control.Text.trim() || !Number.isFinite(value) || value < min || value > max) {
@@ -283,7 +280,7 @@ export const createSettingsDialog = (
       }
       control.unsafeElement.removeAttribute('aria-invalid');
       preferences.update((current) => ({ ...current, [key]: value }));
-      message.Text = 'Explorer: 200–360 px. Inspector: 260–420 px.';
+      message.Text = widthHint;
     };
     control.on('blur', apply);
     control.on('keydown', (event) => {

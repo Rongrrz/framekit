@@ -1,11 +1,4 @@
-import { orderedNodes, type SceneDocument } from './document';
-import {
-  definitionFor,
-  formatField,
-  nodeDefinitions,
-  type Field,
-  type PropertyValue,
-} from './schema';
+import { formatField, nodeDefinitions, type Field, type PropertyValue } from './schema';
 
 const reservedNames = new Set([
   'app',
@@ -69,18 +62,7 @@ const reservedNames = new Set([
   ...Object.keys(nodeDefinitions).map((type) => `create${type}`),
 ]);
 
-// These values match the runtime factories. Workbench-specific defaults still export explicitly.
-const runtimeDefaults: Readonly<Record<string, PropertyValue>> = {
-  Rotation: 0,
-  Visible: true,
-  ZIndex: 1,
-  LayoutOrder: 0,
-  AutomaticSize: 'None',
-  ClipsDescendants: false,
-  AnchorPoint: { X: 0, Y: 0 },
-  Enabled: true,
-};
-
+/** Authored names become safe identifiers without colliding with imports or prior declarations. */
 export const identifierFrom = (name: string, used: Set<string>): string => {
   const words = name
     .normalize('NFKD')
@@ -143,66 +125,4 @@ export const sourceValue = (field: Field, value: PropertyValue, imports: Set<str
     default:
       return JSON.stringify(value);
   }
-};
-
-/** Names become safe, unique identifiers; caller text is always emitted as a quoted literal. */
-export const exportTypeScript = (document: SceneDocument): string => {
-  const nodes = orderedNodes(document).filter((node) => node.type !== 'Script');
-  const imports = new Set(['createScreenGui', 'createFrame', 'udim2FromOffset', 'color3FromHex']);
-  const used = new Set(reservedNames);
-  const identifiers = new Map(
-    nodes.map((node) => [node.id, identifierFrom(node.properties.Name, used)]),
-  );
-  const lines = [
-    'const app = createScreenGui();',
-    '',
-    'const canvas = createFrame({',
-    `  Name: ${JSON.stringify(document.name)},`,
-    `  Size: udim2FromOffset(${document.width}, ${document.height}),`,
-    `  BackgroundColor3: color3FromHex('#f3f6f3'),`,
-    '});',
-    'canvas.Parent = app;',
-    '',
-  ];
-
-  for (const node of nodes) {
-    const identifier = identifiers.get(node.id)!;
-    const factory = `create${node.type}`;
-    imports.add(factory);
-    lines.push(`const ${identifier} = ${factory}({`);
-
-    for (const [name, value] of Object.entries(node.properties)) {
-      if (
-        Object.hasOwn(runtimeDefaults, name) &&
-        JSON.stringify(value) === JSON.stringify(runtimeDefaults[name])
-      ) {
-        continue;
-      }
-
-      lines.push(
-        `  ${name}: ${sourceValue(definitionFor(node.type).fields[name]!, value, imports)},`,
-      );
-    }
-
-    lines.push(
-      '});',
-      `${identifier}.Parent = ${node.parent === null ? 'canvas' : identifiers.get(node.parent)};`,
-      '',
-    );
-  }
-
-  lines.push(
-    "app.mount('#app');",
-    '',
-    '// Call app.destroy() when the surrounding application is disposed.',
-    '',
-  );
-  return [
-    `import {\n${[...imports]
-      .sort()
-      .map((name) => `  ${name},`)
-      .join('\n')}\n} from 'framekit';`,
-    '',
-    ...lines,
-  ].join('\n');
 };

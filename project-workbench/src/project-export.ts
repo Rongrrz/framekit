@@ -5,9 +5,9 @@ import {
   type PrefabDefinition,
   type SceneDocument,
 } from './document';
-import { identifierFrom, sourceValue } from './export';
 import { definitionFor } from './schema';
 import scriptContextSource from './script-context.ts?raw';
+import { identifierFrom, sourceValue } from './typescript-source';
 
 /** Every entry is a real project file; project documents themselves are not exported. */
 export type ProjectFile = Readonly<{
@@ -269,7 +269,6 @@ export const exportSceneModules = (document: SceneDocument): readonly ProjectFil
 
 /** The generated app includes the local FrameKit source package, so it does not depend on publication. */
 export const exportProject = async (document: SceneDocument): Promise<readonly ProjectFile[]> => {
-  validateHierarchy(document);
   const files: ProjectFile[] = [
     ...exportSceneModules(document),
     {

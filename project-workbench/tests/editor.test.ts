@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { createSampleDocument, parseDocument } from '../src/document';
 import { createEditor } from '../src/editor';
-import { exportTypeScript } from '../src/export';
 import { defaultProperties, nodeDefinitions, parseField } from '../src/schema';
 
 describe('Workbench documents', () => {
@@ -56,10 +55,9 @@ describe('Workbench documents', () => {
     }
   });
 
-  it('retains the current document and history after a failed import or edit', () => {
+  it('retains the current document and history after a failed edit', () => {
     const editor = createEditor();
     const original = editor.state.get();
-    expect(() => editor.load('{')).toThrow();
     expect(() => editor.edit('card', 'Rotation', Number.NaN)).toThrow();
     expect(() => editor.reparent('card', 'feature')).toThrow();
     expect(editor.state.get()).toBe(original);
@@ -119,17 +117,6 @@ describe('Workbench documents', () => {
     expect(() => editor.add('UICorner')).toThrow();
     editor.add('UIShadow');
     expect(editor.state.get().document.nodes.at(-1)?.parent).toBe('card');
-  });
-
-  it('exports parents before children and treats names and text as literals', () => {
-    const editor = createEditor();
-    editor.edit('headline', 'Text', '"; alert("no"); //');
-    const document = editor.state.get().document;
-    const source = exportTypeScript({ ...document, nodes: [...document.nodes].reverse() });
-    expect(source).toContain('createUICorner');
-    expect(source).toContain('welcomeCard.Parent = canvas;');
-    expect(source).toContain(JSON.stringify('"; alert("no"); //'));
-    expect(source).toContain("app.mount('#app')");
   });
 
   it('accepts compound editing values and rejects incomplete buffers', () => {

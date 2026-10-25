@@ -501,7 +501,7 @@ export const createProjectHome = (
   resize();
   return {
     view: home,
-    newProject: (opener): void => templates.open(opener),
+    newProject: templates.open,
     close: (): void => {
       modal.close();
       templates.close();

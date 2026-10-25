@@ -72,60 +72,23 @@ describe('Workbench preview', () => {
   });
 });
 
-describe('Prefab event preview', () => {
-  it('runs internal native handlers before handlers on the placed instance, as exported factories do', () => {
+describe('Design canvas events', () => {
+  it('keeps authored event connections inactive while editing', () => {
     const canvas = own(createFrame());
     const editor = createEditor();
-    editor.select('button');
-    const prefab = editor.createPrefab('Action');
-    editor.openPrefab(prefab);
     editor.connect({
-      id: 'change-button',
+      id: 'change-headline',
       source: 'button',
       event: 'Activated',
-      action: { type: 'set', target: 'button', property: 'Text', value: 'Internal handler ran' },
-    });
-    editor.openPrefab(null);
-    editor.connect({
-      id: 'read-button',
-      source: 'button',
-      event: 'Activated',
-      action: { type: 'copyText', source: 'button', target: 'headline' },
+      action: {
+        type: 'set',
+        target: 'headline',
+        property: 'Text',
+        value: 'Should only run in Present',
+      },
     });
     const preview = createScenePreview(canvas);
     preview.update(editor.state.get().project, null);
-    preview.setInteractive(true);
-    const button = canvas.findFirstChild('Get started', true)!;
-    const headline = canvas.findFirstChild('Headline', true)!;
-
-    if (button.isA('TextButton') && headline.isA('TextLabel')) {
-      button.unsafeElement.click();
-      expect(headline.Text).toBe('Internal handler ran');
-    }
-  });
-
-  it('runs prefab output connections in Preview and restores authored values when returning to Design', () => {
-    const canvas = own(createFrame());
-    const editor = createEditor();
-    editor.select('button');
-    const prefab = editor.createPrefab('Action');
-    editor.openPrefab(prefab);
-    editor.setEvents(['Pressed']);
-    editor.connect({
-      id: 'emit',
-      source: 'button',
-      event: 'Activated',
-      action: { type: 'emit', event: 'Pressed' },
-    });
-    editor.openPrefab(null);
-    editor.connect({
-      id: 'respond',
-      source: 'button',
-      event: 'Pressed',
-      action: { type: 'set', target: 'headline', property: 'Text', value: 'Button works' },
-    });
-    const preview = createScenePreview(canvas);
-    preview.update(editor.state.get().project, 'button');
     const button = canvas.findFirstChild('Get started', true)!;
     const headline = canvas.findFirstChild('Headline', true)!;
     expect(button.isA('TextButton')).toBe(true);
@@ -134,60 +97,6 @@ describe('Prefab event preview', () => {
     if (button.isA('TextButton') && headline.isA('TextLabel')) {
       button.unsafeElement.click();
       expect(headline.Text).toBe('Make something persistent.');
-      preview.setInteractive(true);
-      button.unsafeElement.click();
-      expect(headline.Text).toBe('Button works');
-      preview.setInteractive(false);
-      preview.update(editor.state.get().project, 'button', true);
-      expect(headline.Text).toBe('Make something persistent.');
-    }
-  });
-
-  it('keeps nested prefab outputs isolated between separate placed instances', () => {
-    const canvas = own(createFrame());
-    const editor = createEditor();
-    editor.select('button');
-    const child = editor.createPrefab('Button');
-    editor.openPrefab(child);
-    editor.setEvents(['Pressed']);
-    editor.connect({
-      id: 'emit',
-      source: 'button',
-      event: 'Activated',
-      action: { type: 'emit', event: 'Pressed' },
-    });
-    editor.openPrefab(null);
-    editor.connect({
-      id: 'increment',
-      source: 'button',
-      event: 'Pressed',
-      action: { type: 'increment', target: 'headline', amount: 1 },
-    });
-    editor.select('card');
-    const parent = editor.createPrefab('Panel');
-    editor.select(null);
-    editor.insertPrefab(parent);
-    const preview = createScenePreview(canvas);
-    preview.update(editor.state.get().project, null);
-    preview.setInteractive(true);
-    const panels = canvas
-      .getChildren()
-      .filter((node) => node.Name === 'Welcome card' || node.Name === 'Panel');
-    expect(panels).toHaveLength(2);
-    const first = panels[0]!;
-    const second = panels[1]!;
-    const button = first.findFirstChild('Get started', true)!;
-    const firstHeading = first.findFirstChild('Headline', true)!;
-    const secondHeading = second.findFirstChild('Headline', true)!;
-
-    if (
-      button.isA('TextButton') &&
-      firstHeading.isA('TextLabel') &&
-      secondHeading.isA('TextLabel')
-    ) {
-      button.unsafeElement.click();
-      expect(firstHeading.Text).toBe('1');
-      expect(secondHeading.Text).toBe('Make something persistent.');
     }
   });
 });

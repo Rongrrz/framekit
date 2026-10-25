@@ -163,10 +163,3 @@ export const scroll = (
   node.Parent = parent;
   return themeChromeNode(node);
 };
-
-export const sectionTitle = (parent: GuiElement, text: string): TextLabel => {
-  const node = label(parent, text, 34, 10, colors.muted);
-  node.FontWeight = 650;
-  node.LetterSpacing = 1.2;
-  return themeChromeNode(node);
-};

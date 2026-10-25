@@ -39,6 +39,12 @@ export const defaultWorkspace: WorkspacePreferences = {
 /** Zoom is shared by gestures, menus, keyboard commands, and saved workspace preferences. */
 export const canvasZoomLimits = { min: 0.1, max: 4 } as const;
 
+/** Splitters, Settings, and restored preferences use the same panel width contract. */
+export const panelWidthLimits = {
+  left: { min: 200, max: 360 },
+  right: { min: 260, max: 420 },
+} as const;
+
 export const formatCanvasZoom = (zoom: number): string =>
   zoom === 0 ? 'Fit canvas' : `${Math.round(zoom * 100)}%`;
 
@@ -53,19 +59,18 @@ const bindSplitter = (
   side: 'left' | 'right',
   preferences: ObservableValue<WorkspacePreferences>,
 ): void => {
+  const { min, max } = panelWidthLimits[side];
   setAccessibility(handle, {
     role: 'separator',
     label: side === 'left' ? 'Explorer width' : 'Properties width',
     orientation: 'vertical',
     focusable: true,
-    valueMin: side === 'left' ? 200 : 260,
-    valueMax: side === 'left' ? 360 : 420,
+    valueMin: min,
+    valueMax: max,
   });
   let drag: Readonly<{ id: number; x: number; width: number }> | undefined;
 
   const resize = (width: number): void => {
-    const min = side === 'left' ? 200 : 260;
-    const max = side === 'left' ? 360 : 420;
     preferences.update((current) => ({ ...current, [side]: Math.max(min, Math.min(max, width)) }));
   };
 

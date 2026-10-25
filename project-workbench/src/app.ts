@@ -128,7 +128,7 @@ export const createWorkbench = (): ScreenGui => {
   const settingsButton = iconButton(topActions, 'settings', 'Settings', () =>
     settings.open(settingsButton),
   );
-  const preview = createScenePreview(workspace.canvas, report);
+  const preview = createScenePreview(workspace.canvas);
   const presentation = createPresentation(app, canvasPreferences, report, () => settings.open());
   const present = button(
     topActions,

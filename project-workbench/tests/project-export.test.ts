@@ -7,10 +7,23 @@ import { build } from 'vite';
 import { expect, it } from 'vitest';
 
 import { prepareCode } from '../src/code-format';
-import { exportProject } from '../src/project-export';
-import { defaultProperties } from '../src/schema';
+import { createEditor } from '../src/editor';
+import { exportProject, exportSceneModules } from '../src/project-export';
+import { defaultProperties, nodeDefinitions } from '../src/schema';
 import { projectTemplates } from '../src/templates';
 import { zipProject } from '../src/zip';
+
+it('exports parents before children and treats authored names and text as literals', () => {
+  const editor = createEditor();
+  editor.edit('headline', 'Text', '"; alert("no"); //');
+  const document = editor.state.get().document;
+  const source = exportSceneModules({ ...document, nodes: [...document.nodes].reverse() })[0]!
+    .source;
+  expect(source).toContain('createUICorner');
+  expect(source).toContain('welcomeCard.Parent = canvas;');
+  expect(source).toContain(JSON.stringify('"; alert("no"); //'));
+  expect(source.indexOf('const welcomeCard =')).toBeLessThan(source.indexOf('const headline ='));
+});
 
 it('exports a self-contained project whose ZIP extracts and whose code type-checks, builds, and runs nested prefab events', async () => {
   const document = projectTemplates.find((template) => template.id === 'counter')!.create();
@@ -167,7 +180,7 @@ it('formats and highlights administrative files without changing their meaning',
   }
 });
 
-it('type-checks every template as exported TypeScript, including its attached behavior modules', async () => {
+it('type-checks every template and supported node as exported TypeScript, including attached behavior modules', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'framekit-templates-'));
   const root = resolve(process.cwd());
 
@@ -178,8 +191,21 @@ it('type-checks every template as exported TypeScript, including its attached be
       await mkdir(join(target, '..'), { recursive: true });
       await writeFile(target, file.source);
     }
-    for (const [index, template] of projectTemplates.entries()) {
-      const files = await exportProject(template.create());
+    const editor = createEditor();
+
+    for (const type of Object.keys(nodeDefinitions) as (keyof typeof nodeDefinitions)[]) {
+      editor.select(null);
+      editor.add('Frame');
+      editor.add(type);
+    }
+
+    const documents = [
+      ...projectTemplates.map((template) => template.create()),
+      editor.state.get().project,
+    ];
+
+    for (const [index, document] of documents.entries()) {
+      const files = await exportProject(document);
       for (const file of files.filter((file) => file.path.startsWith('src/'))) {
         const target = join(directory, `template-${index}`, file.path);
         await mkdir(join(target, '..'), { recursive: true });

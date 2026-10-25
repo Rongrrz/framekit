@@ -1,7 +1,12 @@
 import { type ScreenGui, type ObservableValue, watchOwnedValue } from 'framekit';
 
 import type { SceneDocument } from './document';
-import { canvasZoomLimits, defaultWorkspace, type WorkspacePreferences } from './workspace';
+import {
+  canvasZoomLimits,
+  defaultWorkspace,
+  panelWidthLimits,
+  type WorkspacePreferences,
+} from './workspace';
 
 const workspaceKey = 'framekit-workbench-layout-v1';
 
@@ -20,11 +25,11 @@ export const restoreWorkspace = (): WorkspacePreferences => {
       'zoom' in stored &&
       'pane' in stored &&
       typeof stored.left === 'number' &&
-      stored.left >= 200 &&
-      stored.left <= 360 &&
+      stored.left >= panelWidthLimits.left.min &&
+      stored.left <= panelWidthLimits.left.max &&
       typeof stored.right === 'number' &&
-      stored.right >= 260 &&
-      stored.right <= 420 &&
+      stored.right >= panelWidthLimits.right.min &&
+      stored.right <= panelWidthLimits.right.max &&
       typeof stored.zoom === 'number' &&
       (stored.zoom === 0 ||
         (stored.zoom >= canvasZoomLimits.min && stored.zoom <= canvasZoomLimits.max)) &&
