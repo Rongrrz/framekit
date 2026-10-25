@@ -13,6 +13,7 @@ import code from './ai-code.svg?url';
 import collapse from './ai-collapse.svg?url';
 import command from './ai-command.svg?url';
 import copy from './ai-copy.svg?url';
+import cursor from './ai-cursor.svg?url';
 import cut from './ai-cut.svg?url';
 import dashboard from './ai-dashboard.svg?url';
 import download from './ai-download.svg?url';
@@ -24,6 +25,7 @@ import eye from './ai-eye.svg?url';
 import file from './ai-file.svg?url';
 import folder from './ai-folder.svg?url';
 import frame from './ai-frame.svg?url';
+import hand from './ai-hand.svg?url';
 import image from './ai-image.svg?url';
 import input from './ai-input.svg?url';
 import layers from './ai-layers.svg?url';
@@ -46,6 +48,8 @@ import undo from './ai-undo.svg?url';
 
 /** Trusted local SVG assets shared by all workbench chrome. */
 export const icons = {
+  cursor,
+  hand,
   plus,
   close,
   chevron_down,

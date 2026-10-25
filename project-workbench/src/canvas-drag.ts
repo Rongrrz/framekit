@@ -93,7 +93,7 @@ export const bindCanvasDrag = (
   viewport.on(
     'pointerdown',
     (event) => {
-      if (event.button !== 0) {
+      if (event.button !== 0 || viewport.unsafeElement.hasAttribute('data-workbench-pan-ready')) {
         return;
       }
 
@@ -252,6 +252,9 @@ export const bindCanvasDrag = (
     (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (viewport.unsafeElement.hasAttribute('data-workbench-pan-click')) {
+        return;
+      }
       const id = clickSelection === undefined ? preview.idFromTarget(event.target) : clickSelection;
       clickSelection = undefined;
       if (suppressClick) {

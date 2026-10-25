@@ -13,6 +13,7 @@ import {
 } from 'framekit';
 
 import { bindCanvasDrag } from './canvas-drag';
+import { bindCanvasNavigation } from './canvas-navigation';
 import { createCanvasPreferences, deviceDocument } from './canvas-preferences';
 import { bindChromeTheme, themeChromeNode } from './chrome-theme';
 import { createCodeDialog } from './code-dialog';
@@ -36,16 +37,23 @@ import { definitionFor, nodeDefinitions, type NodeType } from './schema';
 import { createScriptDialog } from './script-dialog';
 import { createSettingsDialog } from './settings-dialog';
 import { button, colors, iconButton, label, panel, round, stack } from './ui';
-import { canvasZoomChoices, createWorkspace, defaultWorkspace, formatCanvasZoom } from './workspace';
+import {
+  canvasZoomChoices,
+  createWorkspace,
+  defaultWorkspace,
+  formatCanvasZoom,
+} from './workspace';
 
 /** Creates a standalone FrameKit application with an explicit, reversible scene document. */
 export const createWorkbench = (): ScreenGui => {
   const library = createProjectLibrary();
   const editor = createEditor();
   const preferences = createObservableValue(restoreWorkspace());
+  const handTool = createObservableValue(false);
   let activeProjectId: string | null = null;
   const status = createObservableValue('Select an object to start editing.');
   const app = createScreenGui({ Name: 'FrameKitWorkbench', ColorScheme: 'Dark' });
+  const keyboard = createUserInputService(app);
   const canvasPreferences = createCanvasPreferences(app);
   bindChromeTheme(app, canvasPreferences);
   themeChromeNode(createUIFocusRing({ Color: colors.accent, Thickness: 2, Offset: 2 })).Parent =
@@ -95,6 +103,7 @@ export const createWorkbench = (): ScreenGui => {
   };
   const showHome = (): void => {
     cancelCanvasDrag();
+    cancelCanvasNavigation();
     window.location.hash = '/';
     renderRoute();
   };
@@ -126,6 +135,7 @@ export const createWorkbench = (): ScreenGui => {
     'Present',
     () => {
       cancelCanvasDrag();
+      cancelCanvasNavigation();
       (document.activeElement as HTMLElement | null)?.blur();
       presentation.open(editor.state.get().document, present);
     },
@@ -263,6 +273,22 @@ export const createWorkbench = (): ScreenGui => {
   controls.Size = udim2FromOffset(0, 34);
   controls.AutomaticSize = 'X';
   stack(controls, 6, true);
+  const selectTool = iconButton(controls, 'cursor', 'Select tool', () => handTool.set(false));
+  selectTool.unsafeElement.title = 'Select tool · V';
+  const panTool = iconButton(controls, 'hand', 'Hand tool', () =>
+    handTool.update((value) => !value),
+  );
+  panTool.unsafeElement.title = 'Hand tool · H · Space-drag or middle-drag to pan';
+  watchOwnedValue(app, handTool, (active) => {
+    for (const [control, selected] of [
+      [selectTool, !active],
+      [panTool, active],
+    ] as const) {
+      control.BackgroundColor3 = selected ? colors.selected : colors.raised;
+      control.TextColor3 = selected ? colors.accent : colors.muted;
+      control.unsafeElement.setAttribute('aria-pressed', String(selected));
+    }
+  });
   const insert = button(
     controls,
     '+ Insert',
@@ -308,7 +334,10 @@ export const createWorkbench = (): ScreenGui => {
     change: (value) =>
       preferences.update((current) => ({ ...current, zoom: value, pane: 'canvas' })),
   });
-  watchOwnedValue(app, preferences, zoom.refresh);
+  watchOwnedValue(app, preferences, () => {
+    zoom.refresh();
+    zoom.control.unsafeElement.title += ' · Ctrl/⌘ + scroll to zoom';
+  });
   const commands = (): readonly Command[] => [
     ...insertCommands(),
     { id: 'undo', label: 'Undo', hint: 'Ctrl/Cmd Z', run: editor.undo },
@@ -414,6 +443,8 @@ export const createWorkbench = (): ScreenGui => {
   actionDivider.Size = udim2FromOffset(1, 20);
   const layout = controls.getChildren().find((node) => node.isA('UIListLayout'))!;
   controls.reorderChildren([
+    selectTool,
+    panTool,
     insert,
     undo,
     redo,
@@ -460,6 +491,21 @@ export const createWorkbench = (): ScreenGui => {
     preview,
     report,
   );
+  const cancelCanvasNavigation = bindCanvasNavigation(
+    workspace.viewport,
+    workspace.canvas,
+    preferences,
+    handTool,
+    keyboard,
+    cancelCanvasDrag,
+  );
+  let previousZoom = preferences.get().zoom;
+  watchOwnedValue(app, preferences, (value) => {
+    if (value.zoom !== previousZoom) {
+      cancelCanvasDrag();
+      previousZoom = value.zoom;
+    }
+  });
 
   watchOwnedValue(app, editor.state, (snapshot) => {
     preview.update(
@@ -488,7 +534,6 @@ export const createWorkbench = (): ScreenGui => {
     }
   });
 
-  const keyboard = createUserInputService(app);
   keyboard.inputBegan.subscribe((event, processed) => {
     if (
       !activeProjectId ||
@@ -596,6 +641,8 @@ export const createWorkbench = (): ScreenGui => {
       activeProjectId = project.id;
       leftSection.set('hierarchy');
       editor.replace(project.document);
+      handTool.set(false);
+      workspace.recenter();
       report(
         library.error.get() ??
           'Saved in this browser. Drag objects in Explorer to organize your interface.',
@@ -606,6 +653,7 @@ export const createWorkbench = (): ScreenGui => {
 
     if (!project) {
       cancelCanvasDrag();
+      cancelCanvasNavigation();
       code.close();
       palette.close();
       events.close();

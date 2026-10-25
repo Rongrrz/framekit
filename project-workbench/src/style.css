@@ -103,7 +103,31 @@
 }
 
 [data-workbench-editing] [data-scene-id] {
-  cursor: default;
+  cursor: default !important;
+}
+
+[data-workbench-pan-ready],
+[data-workbench-pan-ready] [data-scene-id] {
+  cursor: grab !important;
+  touch-action: none;
+  user-select: none;
+}
+
+[data-workbench-panning],
+[data-workbench-panning] [data-scene-id] {
+  cursor: grabbing !important;
+  touch-action: none;
+  user-select: none;
+}
+
+[data-workbench-pan-ready] [data-scene-id],
+[data-workbench-panning] [data-scene-id] {
+  pointer-events: none;
+}
+
+[data-workbench-grid] {
+  overflow-anchor: none;
+  background-attachment: local;
 }
 
 [data-workbench-grid] {
