@@ -15,7 +15,7 @@ import {
 import type { CodeResponse, CodeTheme } from './code-themes';
 import { parseNetworkOrigins } from './document';
 import type { Editor } from './editor';
-import { button, colors, input, label, mono, round } from './ui';
+import { button, colors, iconButton, input, label, mono, round } from './ui';
 
 /** Source is an editing buffer until Apply; ownership and history remain with the scene editor. */
 export const createScriptDialog = (
@@ -42,8 +42,7 @@ export const createScriptDialog = (
   apply.Position = udim2(1, -166, 0, 14);
   apply.BackgroundColor3 = colors.accent;
   apply.TextColor3 = colors.canvas;
-  const cancel = button(dialog, '×', () => modal.close(), 32);
-  cancel.AccessibleLabel = 'Close script editor';
+  const cancel = iconButton(dialog, 'close', 'Close script editor', () => modal.close(), 32);
   cancel.Position = udim2(1, -52, 0, 14);
   const hint = label(
     dialog,

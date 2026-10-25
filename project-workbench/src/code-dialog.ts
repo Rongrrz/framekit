@@ -23,9 +23,10 @@ import {
 
 import { codeThemes, type CodeResponse, type CodeTheme, type PreparedCode } from './code-themes';
 import type { Editor } from './editor';
+import { setIcon } from './icons/ai-decorations';
 import { exportProject, type ProjectFile } from './project-export';
 import { decorateTreeRow } from './tree-appearance';
-import { button, colors, label, mono, panel, round, scroll } from './ui';
+import { button, colors, iconButton, label, mono, panel, round, scroll } from './ui';
 import { zipProject } from './zip';
 
 const themeStorageKey = 'framekit-workbench-code-theme';
@@ -83,8 +84,7 @@ export const createCodeDialog = (
   );
   description.Position = udim2FromOffset(28, 58);
   description.Size = udim2(1, -56, 0, 24);
-  const close = button(dialog, '×', () => modal.close(), 34);
-  close.AccessibleLabel = 'Close export';
+  const close = iconButton(dialog, 'close', 'Close export', () => modal.close(), 34);
   close.Position = udim2(1, -54, 0, 22);
   const browser = scroll(dialog, 'Project files');
   browser.Position = udim2FromOffset(20, 104);
@@ -200,7 +200,8 @@ export const createCodeDialog = (
         .writeText(prepared.source)
         .then(() => {
           if (!dialog.isDestroyed()) {
-            copy.Text = '✓ Copied';
+            copy.Text = 'Copied';
+            setIcon(copy, 'check');
           }
         })
         .catch(() => {
@@ -261,6 +262,9 @@ export const createCodeDialog = (
   );
   zip.BackgroundColor3 = colors.accent;
   zip.TextColor3 = colors.canvas;
+  setIcon(zip, 'download');
+  setIcon(fileDownload, 'file');
+  setIcon(copy, 'copy');
   const filesToggle = button(
     dialog,
     'Files',
@@ -407,6 +411,7 @@ export const createCodeDialog = (
     gutter.Text = '';
     filename.Text = file.path;
     copy.Text = 'Copy code';
+    setIcon(copy, 'copy');
     copy.Disabled = true;
     fileDownload.Disabled = true;
     fileDownload.AccessibleLabel = `Download .${extension()}`;
@@ -525,6 +530,9 @@ export const createCodeDialog = (
     fileDownload.AccessibleLabel = `Download .${extension()}`;
     copy.Position = udim2(1, -28 - buttonWidth, 1, -52);
     copy.Size = udim2FromOffset(buttonWidth, 32);
+    if (copy.Text !== 'Copied') {
+      copy.Text = compact ? 'Copy' : 'Copy code';
+    }
   };
   const controller = new AbortController();
   window.addEventListener('resize', resize, { signal: controller.signal });

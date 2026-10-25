@@ -133,7 +133,7 @@ test('declares a custom output and connects it to scene behavior through the eve
   await expect(
     page.getByRole('button', { name: 'Remove event Accepted', exact: true }),
   ).toBeVisible();
-  await pick(page, 'Connection action', 'Emit custom event');
+  await chooseDropdown(page, 'Connection action', 'Emit custom event');
   await pick(page, 'Connection target', 'Accepted');
   await page.getByRole('button', { name: 'Save connection', exact: true }).click();
   await page.getByRole('button', { name: 'Close events', exact: true }).click();

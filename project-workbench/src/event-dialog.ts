@@ -3,7 +3,9 @@ import {
   bindKeyedChildren,
   createFrame,
   createObservableValue,
+  createUIPadding,
   setAccessibility,
+  udim,
   udim2,
   udim2FromOffset,
   vector2,
@@ -14,10 +16,13 @@ import {
 
 import type { Command } from './commands';
 import type { Interaction, SceneAction, SceneNode } from './document';
+import { createDropdown } from './dropdown';
 import type { Editor } from './editor';
+import { setIcon } from './icons/ai-decorations';
+import { nodeIcons } from './icons/ai-node-icons';
 import { eventsForNode } from './interactions';
 import { definitionFor, formatField, parseField } from './schema';
-import { button, colors, input, label, panel, round, scroll } from './ui';
+import { button, colors, iconButton, input, label, panel, round, scroll } from './ui';
 
 type ActionKind = SceneAction['type'];
 const actionLabels: Readonly<Record<ActionKind, string>> = {
@@ -62,8 +67,7 @@ export const createEventDialog = (
   const subtitle = label(dialog, '', 26, 12, colors.muted);
   subtitle.Position = udim2FromOffset(24, 58);
   subtitle.Size = udim2(1, -48, 0, 26);
-  const close = button(dialog, '×', () => modal.close(), 32);
-  close.AccessibleLabel = 'Close events';
+  const close = iconButton(dialog, 'close', 'Close events', () => modal.close(), 32);
   close.Position = udim2(1, -48, 0, 20);
   const viewport = scroll(dialog, 'Event editor');
   viewport.Position = udim2FromOffset(16, 94);
@@ -87,6 +91,8 @@ export const createEventDialog = (
     80,
   );
   addEvent.Position = udim2(1, -80, 0, 36);
+  addEvent.Text = 'Add';
+  setIcon(addEvent, 'plus');
   const outputs = scroll(content, 'Declared custom events');
   outputs.Position = udim2FromOffset(0, 80);
   outputs.Size = udim2(1, 0, 0, 72);
@@ -124,6 +130,8 @@ export const createEventDialog = (
   connectionsTitle.Position = udim2FromOffset(0, 164);
   connectionsTitle.LetterSpacing = 1;
   const newConnection = button(content, '+ New connection', () => load(), 150);
+  newConnection.Text = 'New connection';
+  setIcon(newConnection, 'plus');
   newConnection.Position = udim2(1, -150, 0, 164);
   const connections = scroll(content, 'Saved connections');
   connections.Position = udim2FromOffset(0, 206);
@@ -204,22 +212,19 @@ export const createEventDialog = (
   event.Position = udim2(0.6, 6, 0, 384);
   event.Size = udim2(0.4, -6, 0, 36);
   field('Do this…', 436);
-  const action = button(content, 'Set property', () =>
-    choose(
-      'Choose action',
-      (Object.keys(actionLabels) as ActionKind[]).map((type) => ({
-        id: type,
-        label: actionLabels[type],
-        hint: type === 'emit' ? 'Publish a custom output' : 'Change an object',
-        run: () => {
-          kind = type;
-          refresh();
-        },
-      })),
-      action,
-    ),
-  );
-  action.AccessibleLabel = 'Connection action';
+  const actionDropdown = createDropdown(content, {
+    label: 'Connection action',
+    choices: (Object.keys(actionLabels) as ActionKind[]).map((value) => ({
+      value,
+      label: actionLabels[value],
+    })),
+    value: () => kind,
+    change: (value) => {
+      kind = value;
+      refresh();
+    },
+  });
+  const action = actionDropdown.control;
   action.Position = udim2FromOffset(0, 466);
   action.Size = udim2(1, 0, 0, 36);
   field('Target or custom output', 518);
@@ -298,13 +303,19 @@ export const createEventDialog = (
   propertyControl.AccessibleLabel = 'Connection property';
   propertyControl.Position = udim2FromOffset(0, 630);
   propertyControl.Size = udim2(1, 0, 0, 36);
+  for (const picker of [source, event, target, propertyControl]) {
+    picker.TextXAlignment = 'Left';
+    picker.unsafeElement.dataset.workbenchDropdown = '';
+    picker.unsafeElement.setAttribute('aria-haspopup', 'dialog');
+    createUIPadding({ PaddingLeft: udim(0, 12), PaddingRight: udim(0, 30) }).Parent = picker;
+  }
   field('Value / increment amount', 682);
   const value = input(content, 'Connection value');
   value.Position = udim2FromOffset(0, 712);
   value.Size = udim2(1, 0, 0, 36);
   const help = label(
     content,
-    'Use comma-separated values for positions and sizes. Colors use #RRGGBB. Test connections in Preview.',
+    'Use comma-separated values for positions and sizes. Colors use #RRGGBB. Use Present to test your connections.',
     58,
     11,
     colors.muted,
@@ -378,6 +389,7 @@ export const createEventDialog = (
   save.Size = udim2(0.5, -6, 0, 32);
   save.BackgroundColor3 = colors.accent;
   save.TextColor3 = colors.canvas;
+  setIcon(save, 'check');
   const remove = button(
     content,
     'Delete connection',
@@ -393,6 +405,7 @@ export const createEventDialog = (
   remove.Position = udim2(0.5, 6, 0, 836);
   remove.Size = udim2(0.5, -6, 0, 32);
   remove.TextColor3 = colors.danger;
+  setIcon(remove, 'trash');
   const feedback = label(content, '', 64, 12, colors.muted);
   feedback.Position = udim2FromOffset(0, 888);
   feedback.Size = udim2(1, 0, 0, 64);
@@ -418,6 +431,7 @@ export const createEventDialog = (
           id: node.id,
           label: node.properties.Name,
           hint: node.prefabId ? 'Prefab instance' : node.type,
+          icon: node.prefabId ? 'prefab' : nodeIcons[node.type],
           run: () => run(node.id),
         })),
       opener,
@@ -435,7 +449,7 @@ export const createEventDialog = (
 
     source.Text = from?.properties.Name ?? 'Choose source';
     event.Text = triggerEvent || 'Choose event';
-    action.Text = actionLabels[kind];
+    actionDropdown.refresh();
     target.Text =
       kind === 'emit'
         ? emitted || 'Choose custom output'
@@ -455,7 +469,7 @@ export const createEventDialog = (
     feedback.TextColor3 = colors.muted;
     feedback.Text = editingId
       ? 'Connection saved. Changes are included in project undo and autosave.'
-      : 'Save this connection, then switch to Preview to try it.';
+      : 'Save this connection, then use Present to try it.';
   };
   const load = (binding?: Interaction): void => {
     const selected = currentNodes().find((node) => node.id === editor.state.get().selectedId);

@@ -16,6 +16,7 @@ import {
 import { previewResolution, resolutionLabel, type CanvasPreferences } from './canvas-preferences';
 import type { SceneDocument } from './document';
 import { createDropdown } from './dropdown';
+import { setIcon } from './icons/ai-decorations';
 import { exportSceneModules } from './project-export';
 import { createResolutionControls } from './resolution-controls';
 import { compileScripts } from './script-compiler';
@@ -47,6 +48,7 @@ export const createPresentation = (
   title.Size = udim2(1, -160, 0, 30);
   const exit = button(bar, 'Exit · Esc', () => modal.close(), 110);
   exit.AccessibleLabel = 'Exit presentation';
+  setIcon(exit, 'close');
   exit.Position = udim2(1, -126, 0, 6);
   title.TextSize = 13;
   const dimensions = label(bar, '', 20, 11, colors.muted);
