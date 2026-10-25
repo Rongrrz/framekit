@@ -73,7 +73,7 @@ export const createPresentation = (
   scale.Parent = host;
   host.unsafeElement.dataset.presentationHost = '';
   let activeDocument: SceneDocument | undefined;
-  let sizing: 'fit' | 'actual' = 'fit';
+  let sizing: 'fit' | '100%' = 'fit';
   const devices = createResolutionControls(bar, {
     preferences,
     document: () => activeDocument ?? { width: 960, height: 640 },
@@ -83,12 +83,12 @@ export const createPresentation = (
     custom,
   });
   const zoom = createDropdown(bar, {
-    label: 'Presentation scale',
+    label: 'Presentation zoom',
     width: 152,
     menuParent: dialog,
     choices: [
       { value: 'fit', label: 'Fit to window' },
-      { value: 'actual', label: 'Actual size · 100%' },
+      { value: '100%', label: '100% zoom' },
     ] as const,
     value: () => sizing,
     change: (value) => {
@@ -117,7 +117,7 @@ export const createPresentation = (
     const width = viewport.unsafeElement.clientWidth;
     const availableHeight = viewport.unsafeElement.clientHeight;
     const factor =
-      sizing === 'actual'
+      sizing === '100%'
         ? 1
         : Math.max(
             0.01,
@@ -155,7 +155,7 @@ export const createPresentation = (
       viewport.CanvasPosition = vector2(0, 0);
     }
 
-    dimensions.Text = `${resolutionLabel(resolution)} · ${Math.round(factor * 100)}% view`;
+    dimensions.Text = `${resolutionLabel(resolution)} · ${Math.round(factor * 100)}% zoom`;
     devices.refresh();
   };
   watchOwnedValue(dialog, preferences, layout);
