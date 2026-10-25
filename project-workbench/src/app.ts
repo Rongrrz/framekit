@@ -23,6 +23,8 @@ import { createEditor } from './editor';
 import { createEventDialog } from './event-dialog';
 import { bindWorkbenchFiles, restoreWorkspace } from './files';
 import { createHierarchy } from './hierarchy';
+import { setIcon } from './icons/ai-decorations';
+import { nodeIcons } from './icons/ai-node-icons';
 import { createPrefabLibrary } from './prefab-library';
 import { createPresentation } from './presentation';
 import { createScenePreview } from './preview';
@@ -33,7 +35,7 @@ import { createResolutionControls } from './resolution-controls';
 import { definitionFor, nodeDefinitions, type NodeType } from './schema';
 import { createScriptDialog } from './script-dialog';
 import { createSettingsDialog } from './settings-dialog';
-import { button, colors, label, panel, round, stack } from './ui';
+import { button, colors, iconButton, label, panel, round, stack } from './ui';
 import { createWorkspace, defaultWorkspace } from './workspace';
 
 /** Creates a standalone FrameKit application with an explicit, reversible scene document. */
@@ -60,6 +62,7 @@ export const createWorkbench = (): ScreenGui => {
   const background = panel('Workbench background', app, colors.canvas);
   const header = panel('Application header', background);
   header.Size = udim2(1, 0, 0, 52);
+  header.unsafeElement.dataset.workbenchDivider = 'bottom';
   const mark = label(header, 'F', 30, 20, colors.canvas);
   mark.Position = udim2FromOffset(16, 11);
   mark.Size = udim2FromOffset(30, 30);
@@ -75,10 +78,10 @@ export const createWorkbench = (): ScreenGui => {
   const documentTitle = label(header, '', 32, 12, colors.muted);
   documentTitle.Position = udim2FromOffset(176, 10);
   documentTitle.Size = udim2(1, -440, 0, 32);
+  documentTitle.ClipsDescendants = true;
   const topActions = panel('File actions', header);
   topActions.Position = udim2(1, -290, 0, 10);
   topActions.Size = udim2FromOffset(274, 32);
-  stack(topActions, 6, true);
   const files = bindWorkbenchFiles(app, preferences, report);
   const code = createCodeDialog(app, editor, files.download, report);
   const scripts = createScriptDialog(app, editor, code.getTheme);
@@ -97,10 +100,11 @@ export const createWorkbench = (): ScreenGui => {
   };
   const projectsButton = button(topActions, 'Projects', showHome, 88);
   projectsButton.AccessibleLabel = 'Back to projects';
-  button(topActions, 'Save', () => perform(save), 64);
-  const exportButton = button(topActions, 'Export', () => code.open(exportButton), 62);
-  exportButton.BackgroundColor3 = colors.accent;
-  exportButton.TextColor3 = colors.canvas;
+  setIcon(projectsButton, 'arrow_left');
+  const saveButton = iconButton(topActions, 'save', 'Save', () => perform(save));
+  saveButton.unsafeElement.title = 'Save project · Ctrl/⌘ S';
+  const exportButton = button(topActions, 'Export', () => code.open(exportButton), 96);
+  setIcon(exportButton, 'download');
   const workspace = createWorkspace(background, editor, preferences, canvasPreferences);
   const settings = createSettingsDialog(
     app,
@@ -112,10 +116,24 @@ export const createWorkbench = (): ScreenGui => {
   watchOwnedValue(app, canvasPreferences, (value) =>
     workspace.viewport.unsafeElement.toggleAttribute('data-workbench-grid', value.grid),
   );
-  const settingsButton = button(topActions, '⚙', () => settings.open(settingsButton), 34);
-  settingsButton.AccessibleLabel = 'Settings';
+  const settingsButton = iconButton(topActions, 'settings', 'Settings', () =>
+    settings.open(settingsButton),
+  );
   const preview = createScenePreview(workspace.canvas, report);
   const presentation = createPresentation(app, canvasPreferences, report, () => settings.open());
+  const present = button(
+    topActions,
+    'Present',
+    () => {
+      cancelCanvasDrag();
+      (document.activeElement as HTMLElement | null)?.blur();
+      presentation.open(editor.state.get().document, present);
+    },
+    104,
+  );
+  present.BackgroundColor3 = colors.accent;
+  present.TextColor3 = colors.canvas;
+  setIcon(present, 'play');
   workspace.canvas.unsafeElement.dataset.workbenchCanvas = '';
   const palette = createCommandPalette(app, perform);
 
@@ -124,6 +142,7 @@ export const createWorkbench = (): ScreenGui => {
       id: `insert:${type}`,
       label: `Add ${type}`,
       hint: definitionFor(type).category,
+      icon: nodeIcons[type],
       run: () => {
         editor.add(type);
         if (type === 'Script') {
@@ -154,6 +173,7 @@ export const createWorkbench = (): ScreenGui => {
       id: node.id,
       label: node.properties.Name,
       hint: node.type,
+      icon: node.prefabId ? 'prefab' : nodeIcons[node.type],
       run: () => editor.reparent(selected.id, node.id),
     }));
 
@@ -173,10 +193,12 @@ export const createWorkbench = (): ScreenGui => {
   const leftTabs = panel('Object libraries', workspace.hierarchy);
   leftTabs.Size = udim2(1, 0, 0, 38);
   const hierarchyTab = button(leftTabs, 'Hierarchy', () => leftSection.set('hierarchy'), 100);
+  setIcon(hierarchyTab, 'layers');
   hierarchyTab.AccessibleLabel = 'Hierarchy tab';
   hierarchyTab.Position = udim2FromOffset(8, 4);
   hierarchyTab.Size = udim2(0.5, -12, 0, 30);
   const prefabTab = button(leftTabs, 'Prefabs', () => leftSection.set('prefabs'), 100);
+  setIcon(prefabTab, 'prefab');
   prefabTab.AccessibleLabel = 'Prefabs tab';
   prefabTab.Position = udim2(0.5, 4, 0, 4);
   prefabTab.Size = udim2(0.5, -12, 0, 30);
@@ -194,8 +216,10 @@ export const createWorkbench = (): ScreenGui => {
   watchOwnedValue(app, leftSection, (section) => {
     hierarchyView.Visible = section === 'hierarchy';
     prefabView.Visible = section === 'prefabs';
-    hierarchyTab.BackgroundColor3 = section === 'hierarchy' ? colors.selected : colors.panel;
-    prefabTab.BackgroundColor3 = section === 'prefabs' ? colors.selected : colors.panel;
+    hierarchyTab.BackgroundColor3 = section === 'hierarchy' ? colors.raised : colors.panel;
+    prefabTab.BackgroundColor3 = section === 'prefabs' ? colors.raised : colors.panel;
+    hierarchyTab.TextColor3 = section === 'hierarchy' ? colors.text : colors.muted;
+    prefabTab.TextColor3 = section === 'prefabs' ? colors.text : colors.muted;
     hierarchyTab.unsafeElement.setAttribute('aria-pressed', String(section === 'hierarchy'));
     prefabTab.unsafeElement.setAttribute('aria-pressed', String(section === 'prefabs'));
   });
@@ -221,6 +245,7 @@ export const createWorkbench = (): ScreenGui => {
     }
   });
   const toolbar = panel('Toolbar', background);
+  toolbar.unsafeElement.dataset.workbenchDivider = 'bottom';
   toolbar.Position = udim2FromOffset(0, 53);
   toolbar.Size = udim2(1, 0, 0, 50);
   const toolbarScroll = createScrollingFrame({
@@ -242,15 +267,15 @@ export const createWorkbench = (): ScreenGui => {
     controls,
     '+ Insert',
     () => palette.open('Insert an object', insertCommands(), insert),
-    82,
+    92,
   );
   insert.BackgroundColor3 = colors.selected;
   insert.TextColor3 = colors.accent;
-  const undo = button(controls, '↶', () => perform(editor.undo), 34);
-  undo.AccessibleLabel = 'Undo';
+  insert.Text = 'Insert';
+  setIcon(insert, 'plus');
+  const undo = iconButton(controls, 'undo', 'Undo', () => perform(editor.undo));
   undo.unsafeElement.title = 'Undo · Ctrl/Cmd Z';
-  const redo = button(controls, '↷', () => perform(editor.redo), 34);
-  redo.AccessibleLabel = 'Redo';
+  const redo = iconButton(controls, 'redo', 'Redo', () => perform(editor.redo));
   redo.unsafeElement.title = 'Redo · Ctrl/Cmd Shift Z';
   const navigation = panel('Workspace panels', background);
   navigation.Position = udim2(0, 0, 1, -76);
@@ -273,18 +298,6 @@ export const createWorkbench = (): ScreenGui => {
     control.Size = udim2(1 / 3, -12, 0, 34);
     return { control, pane };
   });
-  const present = button(
-    controls,
-    'Present',
-    () => {
-      cancelCanvasDrag();
-      (document.activeElement as HTMLElement | null)?.blur();
-      presentation.open(editor.state.get().document, present);
-    },
-    90,
-  );
-  present.BackgroundColor3 = colors.selected;
-  present.TextColor3 = colors.accent;
   const zoom = createDropdown(controls, {
     label: 'Canvas zoom',
     width: 108,
@@ -360,15 +373,18 @@ export const createWorkbench = (): ScreenGui => {
       run: () => preferences.set(defaultWorkspace),
     },
   ];
-  const commandButton = button(
+  const commandButton = iconButton(
     controls,
-    '⌘K',
+    'command',
+    'Commands',
     () => palette.open('Commands', commands(), commandButton),
-    44,
+    32,
   );
-  commandButton.AccessibleLabel = 'Commands';
-  const eventsButton = button(controls, 'Events', () => events.open(eventsButton), 72);
-  const sceneButton = button(controls, '← Scene', () => openPrefab(null), 82);
+  commandButton.unsafeElement.title = 'Commands · Ctrl/⌘ K';
+  const eventsButton = button(controls, 'Events', () => events.open(eventsButton), 92);
+  setIcon(eventsButton, 'events');
+  const sceneButton = button(controls, 'Scene', () => openPrefab(null), 92);
+  setIcon(sceneButton, 'arrow_left');
   sceneButton.AccessibleLabel = 'Return to scene';
   const editPrefabButton = button(
     controls,
@@ -383,8 +399,9 @@ export const createWorkbench = (): ScreenGui => {
         perform(() => openPrefab(prefabId));
       }
     },
-    100,
+    124,
   );
+  setIcon(editPrefabButton, 'prefab');
   const devices = createResolutionControls(controls, {
     preferences: canvasPreferences,
     document: () => editor.state.get().document,
@@ -393,6 +410,27 @@ export const createWorkbench = (): ScreenGui => {
     menuParent: app,
     custom: () => settings.open(),
   });
+  const viewportDivider = panel('Viewport tools divider', controls, colors.border);
+  viewportDivider.Size = udim2FromOffset(1, 20);
+  const actionDivider = panel('Editor tools divider', controls, colors.border);
+  actionDivider.Size = udim2FromOffset(1, 20);
+  const layout = controls.getChildren().find((node) => node.isA('UIListLayout'))!;
+  controls.reorderChildren([
+    insert,
+    undo,
+    redo,
+    viewportDivider,
+    devices.resolution,
+    devices.orientation,
+    zoom.control,
+    actionDivider,
+    eventsButton,
+    commandButton,
+    sceneButton,
+    editPrefabButton,
+    layout,
+  ]);
+  topActions.reorderChildren([projectsButton, saveButton, exportButton, present, settingsButton]);
   watchOwnedValue(app, canvasPreferences, (value) => {
     const snapshot = editor.state.get();
     preview.update(
@@ -405,6 +443,7 @@ export const createWorkbench = (): ScreenGui => {
   const footer = panel('Status bar', background);
   footer.Position = udim2(0, 0, 1, -27);
   footer.Size = udim2(1, 0, 0, 27);
+  workspace.zoomLabel.Parent = footer;
   const message = label(footer, '', 26, 10, colors.muted);
   message.Position = udim2FromOffset(16, 0);
   message.Size = udim2(1, -260, 0, 26);
@@ -431,7 +470,8 @@ export const createWorkbench = (): ScreenGui => {
     );
     undo.Disabled = !snapshot.canUndo;
     redo.Disabled = !snapshot.canRedo;
-    documentTitle.Text = `${snapshot.project.name}${snapshot.prefabId ? `  /  ◇ ${snapshot.document.name}` : ''}`;
+    documentTitle.Text = `${snapshot.project.name}${snapshot.prefabId ? ` / ${snapshot.document.name}` : ''}`;
+    documentTitle.unsafeElement.title = documentTitle.Text;
     sceneButton.Disabled = !snapshot.prefabId;
     devices.refresh();
     devices.resolution.Disabled = Boolean(snapshot.prefabId);
@@ -502,8 +542,30 @@ export const createWorkbench = (): ScreenGui => {
   });
 
   const resizeHeader = (): void => {
-    documentTitle.Visible = window.innerWidth >= 780;
-    brand.Visible = window.innerWidth >= 600;
+    const compact = window.innerWidth < 780;
+    brand.Visible = window.innerWidth >= 1100;
+    const widths = [compact ? 32 : 88, 32, compact ? 32 : 96, compact ? 32 : 104, 32];
+    const actions = [projectsButton, saveButton, exportButton, present, settingsButton];
+    let x = 0;
+    actions.forEach((control, index) => {
+      control.Position = udim2FromOffset(x, 0);
+      control.Size = udim2FromOffset(widths[index]!, 32);
+      x += widths[index]! + 6;
+    });
+    topActions.Size = udim2FromOffset(x - 6, 32);
+    topActions.Position = udim2(1, -x - 10, 0, 10);
+    for (const [control, icon, text] of [
+      [projectsButton, 'arrow_left', 'Projects'],
+      [exportButton, 'download', 'Export'],
+      [present, 'play', 'Present'],
+    ] as const) {
+      control.Text = compact ? '' : text;
+      setIcon(control, icon, compact ? 'only' : 'leading');
+      control.unsafeElement.title = control.AccessibleLabel;
+    }
+    const titleX = brand.Visible ? 176 : 56;
+    documentTitle.Position = udim2FromOffset(titleX, 10);
+    documentTitle.Size = udim2(1, -x - titleX - 24, 0, 32);
     navigation.Visible = window.innerWidth < 1060;
   };
   const stop = observeSize(app, resizeHeader);

@@ -16,6 +16,7 @@ import {
 } from 'framekit';
 
 import { deviceDocument, type CanvasPreferences } from './canvas-preferences';
+import { themeChromeNode } from './chrome-theme';
 import type { Editor } from './editor';
 import { bindSelectionOverlay } from './selection-overlay';
 import { colors, label, panel } from './ui';
@@ -135,6 +136,7 @@ export const createWorkspace = (
     CanvasSize: udim2FromOffset(1000, 680),
   });
   viewport.Parent = body;
+  themeChromeNode(viewport);
   viewport.unsafeElement.dataset.workbenchGrid = '';
   setAccessibility(viewport, { role: 'region', label: 'Design canvas', focusable: true });
   const caption = label(viewport, 'CANVAS', 20, 10, colors.faint);

@@ -10,10 +10,7 @@ export const setIcon = (
 ): void => {
   const paint = (): void => {
     const { R, G, B } = node.TextColor3;
-    node.unsafeElement.style.setProperty(
-      '--workbench-icon-color',
-      `rgb(${Math.round(R * 255)}, ${Math.round(G * 255)}, ${Math.round(B * 255)})`,
-    );
+    node.unsafeElement.style.setProperty('--workbench-icon-color', `rgb(${R}, ${G}, ${B})`);
   };
 
   if (!node.unsafeElement.dataset.workbenchIcon) {

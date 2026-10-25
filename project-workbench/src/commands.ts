@@ -12,10 +12,18 @@ import {
   type TextButton,
 } from 'framekit';
 
-import { button, colors, input, label, round, scroll } from './ui';
+import { setIcon } from './icons/ai-decorations';
+import type { IconName } from './icons/ai-icons';
+import { button, colors, font, iconButton, input, label, panel, round, scroll } from './ui';
 
 /** Commands belong to the application; the palette only owns search, focus, and activation. */
-export type Command = Readonly<{ id: string; label: string; hint: string; run: () => void }>;
+export type Command = Readonly<{
+  id: string;
+  label: string;
+  hint: string;
+  icon?: IconName;
+  run: () => void;
+}>;
 
 /** The same searchable native modal serves commands, insertion, and parent selection. */
 export const createCommandPalette = (
@@ -39,11 +47,11 @@ export const createCommandPalette = (
   const title = label(dialog, 'Commands', 36, 12, colors.muted);
   title.Position = udim2FromOffset(20, 8);
   title.Size = udim2(1, -80, 0, 36);
-  const close = button(dialog, '✕', () => modal.close(), 30);
-  close.AccessibleLabel = 'Close commands';
+  const close = iconButton(dialog, 'close', 'Close commands', () => modal.close(), 30);
   close.Position = udim2(1, -46, 0, 12);
   const search = input(dialog, 'Search commands');
   search.PlaceholderText = 'Type a command…';
+  search.FontFamily = font;
   search.Position = udim2FromOffset(16, 52);
   search.Size = udim2(1, -32, 0, 40);
   const viewport = scroll(dialog, 'Commands');
@@ -67,28 +75,50 @@ export const createCommandPalette = (
   bindKeyedChildren(viewport, source, {
     key: (command) => command.id,
     create: (command) => {
-      const row = button(viewport, command.label, () => {
+      const row = panel('Command result', viewport);
+      row.Parent = undefined;
+      round(row, 7);
+      const name = label(row, '', 28, 13);
+      name.Name = 'Command label';
+      name.Position = udim2FromOffset(0, 3);
+      name.Size = udim2(1, -12, 0, 28);
+      const detail = label(row, '', 18, 11, colors.muted);
+      detail.Name = 'Command detail';
+      detail.Position = udim2FromOffset(34, 30);
+      detail.Size = udim2(1, -46, 0, 18);
+      detail.ClipsDescendants = true;
+      const control = button(row, command.label, () => {
         const current = source.get().find((item) => item.id === command.id);
 
         if (current) {
           activate(current);
         }
       });
-      row.Parent = undefined;
-      row.TextXAlignment = 'Left';
-      row.AccessibleLabel = command.label;
-      row.unsafeElement.title = command.hint;
-      items.set(command.id, row);
+      control.Text = '';
+      control.Size = udim2(1, 0, 1, 0);
+      control.BackgroundTransparency = 1;
+      control.unsafeElement.title = command.hint;
+      items.set(command.id, control);
       row.onDestroy(() => items.delete(command.id));
       return row;
     },
     update: (row, command, index) => {
-      row.Text = `   ${command.label}`;
-      row.unsafeElement.title = command.hint;
-      row.Position = udim2FromOffset(0, index * 40);
-      row.Size = udim2(1, -6, 0, 36);
+      row.Position = udim2FromOffset(0, index * 56);
+      row.Size = udim2(1, -6, 0, 52);
       row.BackgroundColor3 = index === active ? colors.selected : colors.panel;
-      row.TextColor3 = index === active ? colors.accent : colors.text;
+
+      for (const child of row.getChildren()) {
+        if (child.isA('TextLabel') && child.Name === 'Command label') {
+          child.Text = command.label;
+          child.TextColor3 = index === active ? colors.accent : colors.text;
+          setIcon(child, command.icon ?? 'command');
+        } else if (child.isA('TextLabel') && child.Name === 'Command detail') {
+          child.Text = command.hint;
+        } else if (child.isA('TextButton')) {
+          child.AccessibleLabel = command.label;
+          child.unsafeElement.title = command.hint;
+        }
+      }
     },
   });
 
