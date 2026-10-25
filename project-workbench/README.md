@@ -6,7 +6,7 @@ The landing/documentation app lives separately in `project-landing` and starts w
 
 Workbench is an editor built with public FrameKit APIs. The editor chrome and preview are
 separate ownership subtrees inside one application. Its project home offers a blank canvas, a welcome
-card, a dashboard, a settings panel, and interactive counters as starting points.
+card, a dashboard, a settings panel, a task board, and interactive counters as starting points.
 
 ## Editing
 
@@ -39,13 +39,21 @@ Choose Canvas in the inspector to edit its name and dimensions, or use “Edit c
 
 Projects autosave independently in this browser. Projects returns to the library, where you can
 search, sort, reopen, rename, duplicate, and delete saved projects. Deletion asks for confirmation.
-New project offers five templates. Reloading a project's URL reopens it; browser Back/Forward
+New project offers six templates. Reloading a project's URL reopens it; browser Back/Forward
 navigates between projects and home. The previous single autosaved document is migrated into the
 library without removing its original saved data.
 
+**Import project** in the library opens a `.framekit.json` backup as a new, independent project.
+Invalid files leave existing projects untouched and show an error in the library. Download a backup
+from a project's options menu or **Download project backup** in Commands. Backups preserve the full
+editable project, including prefabs, scripts, and event connections; workspace preferences and undo
+history stay in the browser. **New project from template** in Commands opens the template chooser
+directly, and canceling returns to the current project.
+
 Save and Ctrl/Cmd S save the complete project, including its prefabs and connections. Workspace
 preferences and code themes persist separately. If browser storage fails, editing remains available
-in memory and the save status explains the failure. Browser storage is local to this origin and profile.
+in memory and the save status explains the failure. Download a project backup to keep those changes.
+Browser storage is local to this origin and profile.
 
 ## Prefabs and events
 

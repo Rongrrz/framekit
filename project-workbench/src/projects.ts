@@ -91,7 +91,7 @@ export const createProjectLibrary = (): ProjectLibrary => {
 
     if (blocked) {
       error.set(
-        'Browser storage could not be restored. Keep this tab open and export code to keep your work.',
+        'Browser storage could not be restored. Keep this tab open and download a project backup to keep your work.',
       );
       return;
     }
@@ -101,7 +101,7 @@ export const createProjectLibrary = (): ProjectLibrary => {
       error.set(null);
     } catch {
       error.set(
-        'Could not save in this browser. Keep this tab open and export code to keep your work.',
+        'Could not save in this browser. Keep this tab open and download a project backup to keep your work.',
       );
     }
   };

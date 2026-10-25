@@ -390,7 +390,14 @@ export const createWorkbench = (): ScreenGui => {
       id: 'new',
       label: 'New project from template',
       hint: 'Choose a starting point',
-      run: showHome,
+      run: () => home.newProject(commandButton),
+    },
+    {
+      id: 'backup',
+      label: 'Download project backup',
+      hint: 'Editable Workbench project · import from the project library',
+      icon: 'download',
+      run: () => files.downloadProject(editor.state.get().project),
     },
     { id: 'code', label: 'Export TypeScript', hint: 'Source code', run: () => code.open() },
     {
@@ -623,8 +630,14 @@ export const createWorkbench = (): ScreenGui => {
     const project = library.create(document);
     openProject(project.id);
   };
-  const home = createProjectHome(app, library, openProject, createProject, perform, () =>
-    settings.open(),
+  const home = createProjectHome(
+    app,
+    library,
+    openProject,
+    createProject,
+    perform,
+    () => settings.open(),
+    files.downloadProject,
   );
 
   const renderRoute = (): void => {

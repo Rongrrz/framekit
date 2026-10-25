@@ -1,5 +1,6 @@
 import { type ScreenGui, type ObservableValue, watchOwnedValue } from 'framekit';
 
+import type { SceneDocument } from './document';
 import { canvasZoomLimits, defaultWorkspace, type WorkspacePreferences } from './workspace';
 
 const workspaceKey = 'framekit-workbench-layout-v1';
@@ -38,12 +39,15 @@ export const restoreWorkspace = (): WorkspacePreferences => {
   return workspace;
 };
 
-/** Downloads are source code; project documents stay in the browser library. */
+/** Downloads and their temporary URLs belong to the application lifetime. */
 export const bindWorkbenchFiles = (
   app: ScreenGui,
   preferences: ObservableValue<WorkspacePreferences>,
   report: (message: string) => void,
-): Readonly<{ download(name: string, data: BlobPart, mime: string): void }> => {
+): Readonly<{
+  download(name: string, data: BlobPart, mime: string): void;
+  downloadProject(document: SceneDocument): void;
+}> => {
   const urls = new Set<string>();
   const timers = new Set<number>();
 
@@ -60,21 +64,34 @@ export const bindWorkbenchFiles = (
     urls.forEach((url) => URL.revokeObjectURL(url));
   });
 
+  const download = (name: string, data: BlobPart, mime: string): void => {
+    const url = URL.createObjectURL(new Blob([data], { type: mime }));
+    urls.add(url);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = name;
+    anchor.click();
+    const timer = window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+      urls.delete(url);
+      timers.delete(timer);
+    }, 1000);
+    timers.add(timer);
+    report(`Downloaded ${name}.`);
+  };
+
   return {
-    download: (name, data, mime): void => {
-      const url = URL.createObjectURL(new Blob([data], { type: mime }));
-      urls.add(url);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = name;
-      anchor.click();
-      const timer = window.setTimeout(() => {
-        URL.revokeObjectURL(url);
-        urls.delete(url);
-        timers.delete(timer);
-      }, 1000);
-      timers.add(timer);
-      report(`Downloaded ${name}.`);
+    download,
+    downloadProject: (document): void => {
+      const name = document.name
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase();
+      download(
+        `${name || 'project'}.framekit.json`,
+        JSON.stringify(document, null, 2),
+        'application/json',
+      );
     },
   };
 };

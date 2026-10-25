@@ -16,7 +16,7 @@ import {
   type ScreenGui,
 } from 'framekit';
 
-import type { SceneDocument } from './document';
+import { parseDocument, type SceneDocument } from './document';
 import { createDropdown } from './dropdown';
 import { setIcon } from './icons/ai-decorations';
 import { createProjectTemplateDialog } from './project-template-dialog';
@@ -31,7 +31,8 @@ export const createProjectHome = (
   create: (document: SceneDocument) => void,
   perform: (action: () => void) => void,
   openSettings: () => void,
-): Readonly<{ view: Frame; close(): void }> => {
+  downloadProject: (document: SceneDocument) => void,
+): Readonly<{ view: Frame; newProject(opener?: GuiElement): void; close(): void }> => {
   const templates = createProjectTemplateDialog(app, create, perform);
   const home = panel('Projects home', app, colors.canvas);
   setAccessibility(home, { role: 'region', label: 'Projects home' });
@@ -61,6 +62,23 @@ export const createProjectHome = (
   newProject.TextColor3 = colors.canvas;
   const settings = iconButton(header, 'settings', 'Settings', openSettings, 34);
   settings.Position = udim2(1, -218, 0, 20);
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json,application/json';
+  fileInput.hidden = true;
+  fileInput.setAttribute('aria-label', 'Project backup file');
+  home.unsafeElement.append(fileInput);
+  const importProject = button(
+    header,
+    'Import project',
+    () => {
+      importStatus.Text = '';
+      resize();
+      fileInput.click();
+    },
+    126,
+  );
+  setIcon(importProject, 'folder');
   const viewport = scroll(home, 'Projects');
   viewport.Position = udim2FromOffset(0, 73);
   viewport.Size = udim2(1, 0, 1, -73);
@@ -69,6 +87,44 @@ export const createProjectHome = (
   greeting.FontWeight = 650;
   greeting.Position = udim2FromOffset(0, 36);
   const storage = label(content, 'Saved automatically in this browser.', 28, 12, colors.muted);
+  const importStatus = label(content, '', 32, 12, colors.danger);
+  importStatus.TextWrapped = true;
+  setAccessibility(importStatus, { role: 'status' });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (file.size > 5_000_000) {
+      importStatus.Text = 'Could not import project. Documents must be smaller than 5 MB.';
+      resize();
+      return;
+    }
+
+    void file
+      .text()
+      .then((text) => {
+        if (home.isDestroyed()) {
+          return;
+        }
+
+        const project = parseDocument(text);
+        importStatus.Text = '';
+        resize();
+        create(project);
+      })
+      .catch((error: unknown) => {
+        if (!home.isDestroyed()) {
+          importStatus.Text = `Could not import project. ${error instanceof Error ? error.message : String(error)}`;
+          resize();
+        }
+      });
+  });
+
   const search = input(content, 'Search projects');
   search.FontFamily = font;
   search.PlaceholderText = 'Search your projects…';
@@ -276,7 +332,7 @@ export const createProjectHome = (
       more.Position = udim2(1, -44, 0, 14);
       more.BackgroundTransparency = 1;
       const menu = panel('Project options', app);
-      menu.Size = udim2FromOffset(190, 128);
+      menu.Size = udim2FromOffset(220, 166);
       round(menu, 8, true);
       const options = [
         button(
@@ -286,7 +342,7 @@ export const createProjectHome = (
             menuBinding.close();
             manage(project.id, 'rename', more);
           },
-          174,
+          204,
         ),
         button(
           menu,
@@ -304,7 +360,22 @@ export const createProjectHome = (
               }
             });
           },
-          174,
+          204,
+        ),
+        button(
+          menu,
+          'Download project backup',
+          () => {
+            menuBinding.close();
+            perform(() => {
+              const current = library.state.get().find((entry) => entry.id === project.id);
+
+              if (current) {
+                downloadProject(current.document);
+              }
+            });
+          },
+          204,
         ),
         button(
           menu,
@@ -313,7 +384,7 @@ export const createProjectHome = (
             menuBinding.close();
             manage(project.id, 'delete', more);
           },
-          174,
+          204,
         ),
       ];
       options.forEach((option, index) => {
@@ -321,9 +392,9 @@ export const createProjectHome = (
         option.Position = udim2FromOffset(8, 8 + index * 38);
         option.BackgroundTransparency = 1;
         option.TextXAlignment = 'Left';
-        setIcon(option, (['edit', 'copy', 'trash'] as const)[index]!);
+        setIcon(option, (['edit', 'copy', 'download', 'trash'] as const)[index]!);
       });
-      options[2]!.TextColor3 = colors.danger;
+      options[3]!.TextColor3 = colors.danger;
       const menuBinding = bindMenu(more, menu, options);
       card.onDestroy(() => menu.destroy());
       card.unsafeElement.dataset.projectRow = '';
@@ -390,25 +461,33 @@ export const createProjectHome = (
 
   const resize = (): void => {
     const compact = window.innerWidth < 600;
+    const importErrorHeight = importStatus.Text ? 52 : 0;
     width = Math.min(1120, Math.max(240, window.innerWidth - (compact ? 32 : 96)));
     content.Position = udim2FromOffset((window.innerWidth - width) / 2, 0);
     greeting.TextSize = compact ? 26 : 30;
     brand.Visible = !compact;
     brandHint.Visible = !compact;
     newProject.Position = udim2(1, compact ? -160 : -172, 0, 20);
-    settings.Position = udim2(1, compact ? -202 : -218, 0, 20);
+    importProject.Position = udim2(1, compact ? -202 : -310, 0, 20);
+    importProject.Size = udim2FromOffset(compact ? 34 : 126, 32);
+    importProject.Text = compact ? '' : 'Import project';
+    importProject.unsafeElement.title = 'Import project';
+    setIcon(importProject, 'folder', compact ? 'only' : 'leading');
+    settings.Position = udim2(1, compact ? -244 : -356, 0, 20);
     storage.Position = udim2FromOffset(0, 84);
     storage.Text = library.error.get() ?? 'Saved automatically in this browser.';
     storage.TextWrapped = true;
     storage.Size = udim2(1, 0, 0, 34);
+    importStatus.Position = udim2FromOffset(0, compact ? 230 : 184);
+    importStatus.Size = udim2(1, 0, 0, 48);
     search.Position = udim2FromOffset(0, 140);
     search.Size = udim2FromOffset(compact ? width : Math.min(420, width - 208), 36);
     searchIcon.Position = udim2FromOffset(0, 142);
     sort.control.Position = udim2FromOffset(compact ? 0 : width - 184, compact ? 188 : 142);
     sizeColumn.Visible = width >= 650;
     dateColumn.Visible = width >= 650;
-    columns.Position = udim2FromOffset(0, compact ? 242 : 196);
-    cards.Position = udim2FromOffset(0, compact ? 282 : 236);
+    columns.Position = udim2FromOffset(0, (compact ? 242 : 196) + importErrorHeight);
+    cards.Position = udim2FromOffset(0, (compact ? 282 : 236) + importErrorHeight);
     publish();
   };
 
@@ -422,6 +501,7 @@ export const createProjectHome = (
   resize();
   return {
     view: home,
+    newProject: (opener): void => templates.open(opener),
     close: (): void => {
       modal.close();
       templates.close();
