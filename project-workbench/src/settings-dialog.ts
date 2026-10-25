@@ -27,7 +27,7 @@ import {
   type WorkspacePreferences,
 } from './workspace';
 
-/** Settings group related choices into small panels, while each preference keeps its existing owner. */
+/** A fixed shell keeps navigation still while each category scrolls inside the available space. */
 export const createSettingsDialog = (
   app: ScreenGui,
   preferences: ObservableValue<WorkspacePreferences>,
@@ -56,11 +56,9 @@ export const createSettingsDialog = (
   tabs.Size = udim2(1, -32, 0, 34);
   const selection = createObservableValue<'canvas' | 'appearance' | 'layout'>('canvas');
   const resize = (): void => {
-    const height =
-      selection.get() === 'canvas' ? 700 : selection.get() === 'appearance' ? 360 : 420;
     dialog.Size = udim2FromOffset(
       Math.min(560, window.innerWidth - 24),
-      Math.min(height, window.innerHeight - 32),
+      Math.min(640, window.innerHeight - 32),
     );
   };
   dialog.onDestroy(observeSize(dialog, resize, app));
@@ -83,7 +81,6 @@ export const createSettingsDialog = (
   });
   bindTabs(tabs, sections, { selection });
   watchOwnedValue(dialog, selection, (key) => {
-    resize();
     sections.forEach((section) => {
       section.tab.BackgroundColor3 = section.key === key ? colors.selected : colors.raised;
       section.tab.TextColor3 = section.key === key ? colors.accent : colors.muted;
