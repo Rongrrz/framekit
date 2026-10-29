@@ -13,6 +13,8 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto('/project-workbench/index.html');
   await createProject(page, 'Welcome card');
+  await page.getByRole('button', { name: 'Select tool', exact: true }).click();
+  await page.getByRole('button', { name: 'More tools', exact: true }).click();
 });
 
 test.afterEach(async ({ page }) => {
@@ -216,12 +218,12 @@ test('supports free canvas dragging, optional snapping and guides, and non-destr
   const canvas = page.locator('[data-workbench-canvas]');
   await expect(canvas).toHaveCSS('width', '390px');
   await expect(canvas).toHaveCSS('height', '844px');
-  await chooseDropdown(page, 'Canvas orientation', 'Landscape');
+  await chooseDropdown(page, 'Canvas resolution', 'Phone · 844 × 390 px · Landscape');
   await expect(canvas).toHaveCSS('width', '844px');
   await expect(canvas).toHaveCSS('height', '390px');
-  await page.getByRole('button', { name: 'Canvas settings', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: 'width', exact: true })).toHaveValue('960');
-  await expect(page.getByRole('textbox', { name: 'height', exact: true })).toHaveValue('640');
+  await page.getByRole('button', { name: 'Project settings', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'width', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'height', exact: true })).toHaveCount(0);
   await page.screenshot({ path: '/tmp/framekit-device-preview.png' });
   await page.reload();
   await expect(canvas).toHaveCSS('width', '844px');

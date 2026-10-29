@@ -163,13 +163,11 @@ export const createSettingsDialog = (
     preferences: canvas,
     document: getDocument,
     label: 'Device preview preset',
-    orientationLabel: 'Device preview orientation',
   });
   const deviceTitle = label(canvasSection, 'VIEWPORT', 28, 10, colors.muted);
   deviceTitle.Position = udim2FromOffset(0, 180);
   devices.resolution.Position = udim2FromOffset(0, 216);
   devices.resolution.Size = udim2(1, 0, 0, 34);
-  row(canvasSection, 'Orientation', 260, devices.orientation);
   const customTitle = label(
     canvasSection,
     'Custom size · width × height in pixels',
@@ -177,24 +175,24 @@ export const createSettingsDialog = (
     12,
     colors.muted,
   );
-  customTitle.Position = udim2FromOffset(0, 304);
+  customTitle.Position = udim2FromOffset(0, 260);
   const deviceWidth = input(canvasSection, 'Custom preview width');
-  deviceWidth.Position = udim2FromOffset(0, 338);
+  deviceWidth.Position = udim2FromOffset(0, 294);
   deviceWidth.Size = udim2(0.5, -14, 0, 34);
   const times = label(canvasSection, '×', 34, 14, colors.muted);
-  times.Position = udim2(0.5, -7, 0, 338);
+  times.Position = udim2(0.5, -7, 0, 294);
   times.Size = udim2FromOffset(14, 34);
   const deviceHeight = input(canvasSection, 'Custom preview height');
-  deviceHeight.Position = udim2(0.5, 14, 0, 338);
+  deviceHeight.Position = udim2(0.5, 14, 0, 294);
   deviceHeight.Size = udim2(0.5, -14, 0, 34);
   const deviceHelp = label(
     canvasSection,
-    '240–4096 px per side. The saved project size stays unchanged. Present uses this viewport too.',
+    '240–4096 px per side. This is a preview viewport. Websites adapt to the device.',
     52,
     11,
     colors.muted,
   );
-  deviceHelp.Position = udim2FromOffset(0, 382);
+  deviceHelp.Position = udim2FromOffset(0, 338);
   deviceHelp.TextWrapped = true;
   for (const [control, key] of [
     [deviceWidth, 'width'],
@@ -239,7 +237,7 @@ export const createSettingsDialog = (
     value: () => preferences.get().zoom,
     change: (zoom) => preferences.update((value) => ({ ...value, zoom })),
   });
-  row(canvasSection, 'Canvas zoom', 448, zoom.control);
+  row(canvasSection, 'Canvas zoom', 404, zoom.control);
   watchOwnedValue(dialog, preferences, zoom.refresh);
   watchOwnedValue(dialog, canvas, (value) => {
     precision.refresh();
@@ -262,7 +260,7 @@ export const createSettingsDialog = (
   right.Position = udim2(0.5, 6, 0, 44);
   right.Size = udim2(0.5, -6, 0, 34);
   widthTitle.Size = udim2(1, 0, 0, 32);
-  const widthHint = `Explorer: ${panelWidthLimits.left.min}–${panelWidthLimits.left.max} px. Inspector: ${panelWidthLimits.right.min}–${panelWidthLimits.right.max} px.`;
+  const widthHint = 'Drag a panel edge to resize. Collapse to zero; drag the edge back to reopen.';
   const message = label(layout, widthHint, 54, 11, colors.muted);
   message.Position = udim2FromOffset(0, 88);
   message.TextWrapped = true;
@@ -275,7 +273,7 @@ export const createSettingsDialog = (
       const value = Number(control.Text);
       if (!control.Text.trim() || !Number.isFinite(value) || value < min || value > max) {
         control.unsafeElement.setAttribute('aria-invalid', 'true');
-        message.Text = `Enter a width between ${min} and ${max} pixels.`;
+        message.Text = 'Enter a nonnegative width in pixels.';
         return;
       }
       control.unsafeElement.removeAttribute('aria-invalid');

@@ -5,7 +5,6 @@ import {
   createCanvasPreferences,
   previewResolution,
   resolutionLabel,
-  withOrientation,
 } from '../src/canvas-preferences';
 
 it('names exact resolutions and applies portrait or landscape consistently to every native orientation', () => {
@@ -14,16 +13,16 @@ it('names exact resolutions and applies portrait or landscape consistently to ev
   const document = { width: 960, height: 640 };
   const phone = { ...initial, device: 'phone' as const, landscape: false };
   expect(resolutionLabel(previewResolution(document, phone))).toBe('390 × 844 px · Portrait');
-  expect(previewResolution(document, withOrientation(document, phone, 'Landscape'))).toEqual({
+  expect(previewResolution(document, { ...phone, landscape: true })).toEqual({
     width: 844,
     height: 390,
   });
   const desktop = { ...initial, device: 'desktop' as const, landscape: false };
-  expect(previewResolution(document, withOrientation(document, desktop, 'Landscape'))).toEqual({
+  expect(previewResolution(document, desktop)).toEqual({
     width: 1440,
     height: 900,
   });
-  expect(previewResolution(document, withOrientation(document, desktop, 'Portrait'))).toEqual({
+  expect(previewResolution(document, { ...desktop, landscape: true })).toEqual({
     width: 900,
     height: 1440,
   });

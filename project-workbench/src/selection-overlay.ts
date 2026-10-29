@@ -27,7 +27,7 @@ export const bindSelectionOverlay = (world: Frame, canvas: Frame): void => {
   outline.unsafeElement.dataset.selectionBounds = '';
   createUIStroke({
     Color: color3FromHex('#3d9dff'),
-    Thickness: 2,
+    Thickness: 1,
     BorderStrokePosition: 'Inner',
   }).Parent = outline;
   let pending: number | undefined;

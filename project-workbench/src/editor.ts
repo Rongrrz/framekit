@@ -7,6 +7,7 @@ import {
   type SceneDocument,
   type Interaction,
   type SceneNode,
+  type LayoutBreakpoint,
 } from './document';
 import { cloneInternalConnections } from './interactions';
 import { moveBranch, type MoveDestination } from './move';
@@ -27,12 +28,19 @@ type Revision = Readonly<{
 
 /** History availability is published with each revision so controls update together. */
 export type EditorSnapshot = Revision &
-  Readonly<{ document: SceneDocument; canUndo: boolean; canRedo: boolean }>;
+  Readonly<{
+    document: SceneDocument;
+    layout: LayoutBreakpoint | null;
+    canUndo: boolean;
+    canRedo: boolean;
+  }>;
 
 /** One owner for document edits, selection, and reversible document history. */
 export type Editor = Readonly<{
   state: ReadonlyObservableValue<EditorSnapshot>;
   select(id: string | null): void;
+  setLayout(layout: LayoutBreakpoint | null): void;
+  resetLayout(): void;
   openPrefab(id: string | null): void;
   createPrefab(name: string): string;
   insertPrefab(id: string): void;
@@ -57,6 +65,7 @@ export type Editor = Readonly<{
 
 /** History stores immutable document revisions; selection alone never consumes an undo step. */
 export const createEditor = (initial: SceneDocument = createSampleDocument()): Editor => {
+  let layout: LayoutBreakpoint | null = null;
   const past: Revision[] = [];
   const future: Revision[] = [];
   let clipboard:
@@ -69,6 +78,7 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
     | undefined;
   const state = createObservableValue<EditorSnapshot>({
     document: initial,
+    layout,
     project: initial,
     prefabId: null,
     selectedId: initial.nodes[0]?.id ?? null,
@@ -79,6 +89,7 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
   const publish = (revision: Revision): void =>
     state.set({
       ...revision,
+      layout,
       document: editableDocument(revision.project, revision.prefabId),
       canUndo: past.length > 0,
       canRedo: future.length > 0,
@@ -170,6 +181,25 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
 
   return {
     state,
+    setLayout: (value): void => {
+      if (value === layout) {
+        return;
+      }
+
+      layout = value;
+      publish(state.get());
+    },
+    resetLayout: (): void => {
+      const node = selected();
+
+      if (!node || !layout || !node.responsive?.[layout]) {
+        return;
+      }
+
+      const responsive = { ...node.responsive };
+      delete responsive[layout];
+      transform(node.id, (node) => ({ ...node, responsive }));
+    },
     setNetworkOrigins: (networkOrigins): void =>
       commitProject({ ...state.get().project, networkOrigins }),
     select: (id): void => {
@@ -264,6 +294,19 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         }
 
         const validated = validateField(field, value, property);
+        if (layout && node.type !== 'Script' && property !== 'Name') {
+          return {
+            ...node,
+            responsive: {
+              ...node.responsive,
+              [layout]: {
+                ...node.responsive?.[layout],
+                [property]: validated,
+              },
+            },
+          };
+        }
+
         return { ...node, properties: { ...node.properties, [property]: validated } };
       }),
     reparent: (id, parent): void => {
@@ -283,6 +326,7 @@ export const createEditor = (initial: SceneDocument = createSampleDocument()): E
         clipboard = { root: clipboard.root, nodes: clipboard.nodes, bindings: clipboard.bindings };
       }
 
+      layout = null;
       publish({ project: document, prefabId: null, selectedId: document.nodes[0]?.id ?? null });
     },
     duplicate: (): void => {

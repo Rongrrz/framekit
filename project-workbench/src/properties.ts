@@ -140,7 +140,14 @@ export const createProperties = (
   const heading = label(parent, 'Inspector', 32, 13, colors.muted);
   heading.Position = udim2FromOffset(16, 8);
   heading.FontWeight = 650;
-  const canvasSettings = iconButton(parent, 'canvas', 'Canvas settings', () => editor.select(null));
+  const resetLayout = iconButton(parent, 'undo', 'Reset device overrides', () =>
+    editor.resetLayout(),
+  );
+  resetLayout.Position = udim2(1, -80, 0, 8);
+  resetLayout.unsafeElement.title = 'Reset this layer to shared styles for this device';
+  const canvasSettings = iconButton(parent, 'canvas', 'Project settings', () =>
+    editor.select(null),
+  );
   canvasSettings.Position = udim2(1, -44, 0, 8);
   const name = label(parent, '', 24, 16);
   name.Position = udim2FromOffset(16, 48);
@@ -303,10 +310,6 @@ export const createProperties = (
               PaddingTop: udim(0, 8),
               PaddingBottom: udim(0, 8),
             }).Parent = control;
-            const hint = label(fieldContent, 'Ctrl/⌘ Enter to apply', 20, 9, colors.faint);
-            hint.Position = udim2(1, -128, 0, top);
-            hint.Size = udim2FromOffset(128, 20);
-            hint.TextXAlignment = 'Right';
           }
           const count = names.length;
           control.Position =
@@ -412,15 +415,22 @@ export const createProperties = (
 
   watchOwnedValue(parent, editor.state, (snapshot) => {
     const selected = snapshot.document.nodes.find((node) => node.id === snapshot.selectedId);
+    resetLayout.Visible = Boolean(
+      selected && snapshot.layout && selected.responsive?.[snapshot.layout],
+    );
     name.Text = selected?.properties.Name ?? snapshot.document.name;
     type.Text = selected
-      ? `${selected.prefabId ? 'Prefab instance' : selected.type}  /  ${selected.parent ? 'Nested object' : 'Canvas child'}`
-      : 'Canvas settings';
+      ? `${snapshot.layout ? `${snapshot.layout} layout · ` : ''}${selected.prefabId ? 'Prefab instance' : selected.type}  /  ${selected.parent ? 'Nested object' : 'Canvas child'}`
+      : snapshot.prefabId
+        ? 'Prefab dimensions'
+        : 'Responsive website';
     const definitions: Readonly<Record<string, Field>> = selected
       ? definitionFor(selected.type).fields
-      : documentFields;
+      : snapshot.prefabId
+        ? documentFields
+        : { name: documentFields.name };
     const values: Readonly<Record<string, PropertyValue>> = selected
-      ? resolvedProperties(snapshot.document, selected)
+      ? resolvedProperties(snapshot.document, selected, snapshot.layout)
       : {
           name: snapshot.document.name,
           width: snapshot.document.width,

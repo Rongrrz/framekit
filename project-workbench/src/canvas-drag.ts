@@ -7,10 +7,11 @@ import {
   type UDim2,
 } from 'framekit';
 
-import type { CanvasPreferences } from './canvas-preferences';
+import { previewResolution, type CanvasPreferences } from './canvas-preferences';
 import type { SceneDocument } from './document';
 import type { Editor } from './editor';
 import { resolvedProperties } from './prefabs';
+import { breakpointForWidth } from './responsive';
 import { roundCanvasOffset, snapTranslation, type CanvasRect } from './snapping';
 import { colors, panel } from './ui';
 
@@ -115,7 +116,11 @@ export const bindCanvasDrag = (
         return;
       }
 
-      const properties = resolvedProperties(snapshot.document, node);
+      const properties = resolvedProperties(
+        snapshot.document,
+        node,
+        breakpointForWidth(previewResolution(snapshot.project, preferences.get()).width),
+      );
       const value = properties.Position;
       if (
         typeof value !== 'object' ||
@@ -161,7 +166,11 @@ export const bindCanvasDrag = (
       let angle = 0;
       let parent = snapshot.document.nodes.find((entry) => entry.id === node.parent);
       while (parent) {
-        const rotation = resolvedProperties(snapshot.document, parent).Rotation;
+        const rotation = resolvedProperties(
+          snapshot.document,
+          parent,
+          breakpointForWidth(previewResolution(snapshot.project, preferences.get()).width),
+        ).Rotation;
         if (typeof rotation === 'number') {
           angle += rotation;
         }

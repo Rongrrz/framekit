@@ -41,8 +41,8 @@ export const canvasZoomLimits = { min: 0.1, max: 4 } as const;
 
 /** Splitters, Settings, and restored preferences use the same panel width contract. */
 export const panelWidthLimits = {
-  left: { min: 200, max: 360 },
-  right: { min: 260, max: 420 },
+  left: { min: 0, max: Number.MAX_SAFE_INTEGER },
+  right: { min: 0, max: Number.MAX_SAFE_INTEGER },
 } as const;
 
 export const formatCanvasZoom = (zoom: number): string =>
@@ -59,19 +59,26 @@ const bindSplitter = (
   side: 'left' | 'right',
   preferences: ObservableValue<WorkspacePreferences>,
 ): void => {
-  const { min, max } = panelWidthLimits[side];
+  const { min } = panelWidthLimits[side];
+  const max = (): number => {
+    return Math.max(0, (handle.unsafeElement.parentElement?.clientWidth || window.innerWidth) - 10);
+  };
   setAccessibility(handle, {
     role: 'separator',
     label: side === 'left' ? 'Explorer width' : 'Properties width',
     orientation: 'vertical',
     focusable: true,
     valueMin: min,
-    valueMax: max,
+    valueMax: max(),
   });
   let drag: Readonly<{ id: number; x: number; width: number }> | undefined;
 
   const resize = (width: number): void => {
-    preferences.update((current) => ({ ...current, [side]: Math.max(min, Math.min(max, width)) }));
+    preferences.update((current) => {
+      const size = Math.max(min, Math.min(max(), width));
+      const other = side === 'left' ? 'right' : 'left';
+      return { ...current, [side]: size, [other]: Math.min(current[other], max() - size) };
+    });
   };
 
   const finish = (): void => {
@@ -90,7 +97,13 @@ const bindSplitter = (
 
     event.preventDefault();
     handle.focus();
-    drag = { id: event.pointerId, x: event.clientX, width: preferences.get()[side] };
+    const bounds = handle.unsafeElement.getBoundingClientRect();
+    const parent = handle.unsafeElement.parentElement!.getBoundingClientRect();
+    drag = {
+      id: event.pointerId,
+      x: event.clientX,
+      width: side === 'left' ? bounds.left - parent.left : parent.right - bounds.right,
+    };
     handle.setPointerCapture(event.pointerId);
   });
   handle.on('pointermove', (event) => {
@@ -117,7 +130,7 @@ const bindSplitter = (
 
     if (event.key === 'Home' || event.key === 'End') {
       event.preventDefault();
-      resize(event.key === 'Home' ? 0 : 1000);
+      resize(event.key === 'Home' ? 0 : max());
     }
   });
   watchOwnedValue(handle, preferences, (value) =>
@@ -138,12 +151,15 @@ export const createWorkspace = (
   viewport: ReturnType<typeof createScrollingFrame>;
   zoomLabel: ReturnType<typeof label>;
   recenter(): void;
+  locateSelection(): void;
 }> => {
   const body = panel('Workspace', app, colors.canvas);
   body.Position = udim2FromOffset(0, 104);
   body.Size = udim2(1, 0, 1, -132);
   const hierarchy = panel('Explorer panel', body);
   const properties = panel('Properties panel', body);
+  hierarchy.ClipsDescendants = true;
+  properties.ClipsDescendants = true;
   const viewport = createScrollingFrame({
     Name: 'Canvas viewport',
     ScrollingDirection: 'XY',
@@ -158,7 +174,7 @@ export const createWorkspace = (
   setAccessibility(viewport, { role: 'region', label: 'Design canvas', focusable: true });
   viewport.unsafeElement.setAttribute(
     'aria-description',
-    'Space-drag or middle-drag to pan. Scroll to move. Ctrl or Command plus scroll to zoom. H selects the Hand tool; V selects objects.',
+    'Space-drag or middle-drag to pan. Scroll to move. Ctrl or Command plus scroll to zoom. E toggles Hand and Select while the canvas is focused. F locates the selected layer.',
   );
   const caption = label(viewport, 'CANVAS', 20, 10, colors.faint);
   caption.LetterSpacing = 1.2;
@@ -172,7 +188,7 @@ export const createWorkspace = (
   }).Parent = world;
   const canvas = createFrame({
     Name: 'Scene canvas',
-    BackgroundColor3: color3FromHex('#f3f6f3'),
+    BackgroundColor3: colors.canvas,
   });
   canvas.Parent = world;
   const scale = createUIScale();
@@ -207,9 +223,12 @@ export const createWorkspace = (
     const compact = width < 1060;
     const height = Math.max(0, (app.AbsoluteSize.Y || window.innerHeight) - (compact ? 180 : 132));
     body.Size = udim2(1, 0, 1, compact ? -180 : -132);
-    const left = compact ? 0 : prefs.left;
-    const right = compact ? 0 : prefs.right;
+    const panelScale = Math.min(1, Math.max(0, width - 10) / Math.max(1, prefs.left + prefs.right));
+    const left = compact ? 0 : prefs.left * panelScale;
+    const right = compact ? 0 : prefs.right * panelScale;
     const available = Math.max(0, width - left - right - (compact ? 0 : 10));
+    setAccessibility(leftHandle, { valueNow: left, valueMax: width - 10 });
+    setAccessibility(rightHandle, { valueNow: right, valueMax: width - 10 });
     hierarchy.setProperties({
       Visible: !compact || prefs.pane === 'hierarchy',
       Position: udim2FromOffset(0, 0),
@@ -292,8 +311,8 @@ export const createWorkspace = (
       (document.height * zoom - document.height) / 2,
     );
     world.Size = udim2FromOffset(document.width * zoom, document.height * zoom);
-    // Native scroll space on every side lets the artboard move freely even while it fits on screen.
-    const padding = Math.max(10000, document.width * zoom * 2, document.height * zoom * 2);
+    // Keep a visible edge reachable in either direction, even at the pan limits.
+    const padding = Math.max(32, Math.min(viewportWidth, viewportHeight) / 2 - 48);
     const x = padding + Math.max(24, (viewportWidth - document.width * zoom) / 2);
     const y = padding + Math.max(54, (viewportHeight - document.height * zoom) / 2);
     world.Position = udim2FromOffset(x, y);
@@ -326,6 +345,47 @@ export const createWorkspace = (
     canvas,
     viewport,
     zoomLabel,
+    locateSelection: (): void => {
+      preferences.update((value) => ({ ...value, pane: 'canvas' }));
+      const { document, selectedId } = editor.state.get();
+      let node = document.nodes.find((entry) => entry.id === selectedId);
+      let target: HTMLElement | null = null;
+
+      while (node && !target) {
+        target = canvas.unsafeElement.querySelector<HTMLElement>(
+          `[data-scene-id="${CSS.escape(node.id)}"]`,
+        );
+        node = document.nodes.find((entry) => entry.id === node?.parent);
+      }
+
+      if (!target || !target.getClientRects().length) {
+        recenter = true;
+        layout();
+        return;
+      }
+
+      // Reveal children inside authored scrolling containers before centering the editor viewport.
+      let ancestor = target.parentElement;
+      const zoom = canvas.unsafeElement.getBoundingClientRect().width / canvas.Size.X.Offset;
+
+      while (ancestor && ancestor !== canvas.unsafeElement) {
+        const bounds = ancestor.getBoundingClientRect();
+        const item = target.getBoundingClientRect();
+        ancestor.scrollLeft += (item.left + item.width / 2 - bounds.left - bounds.width / 2) / zoom;
+        ancestor.scrollTop += (item.top + item.height / 2 - bounds.top - bounds.height / 2) / zoom;
+        ancestor = ancestor.parentElement;
+      }
+
+      const bounds = target.getBoundingClientRect();
+      const view = viewport.unsafeElement.getBoundingClientRect();
+      viewport.scrollBy(
+        vector2(
+          bounds.left + bounds.width / 2 - view.left - view.width / 2,
+          bounds.top + bounds.height / 2 - view.top - view.height / 2,
+        ),
+      );
+      viewport.focus({ preventScroll: true });
+    },
     recenter: (): void => {
       recenter = true;
       layout();

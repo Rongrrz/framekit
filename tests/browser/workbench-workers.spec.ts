@@ -24,7 +24,7 @@ test('export waits for cold formatting before enabling the displayed source down
   const download = page.getByRole('button', { name: 'Download .ts', exact: true });
   await expect(region).toContainText('Preparing source…');
   await expect(download).toBeDisabled();
-  await expectWorker(region).toContainText('const welcomeCard = createFrame({');
+  await expectWorker(region).toContainText('const welcomeCard = createScrollingFrame({');
   await expect(download).toBeEnabled();
 });
 

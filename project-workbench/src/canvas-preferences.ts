@@ -9,7 +9,7 @@ import type { SceneDocument } from './document';
 
 /** Device previews change the editing viewport without rewriting the authored scene dimensions. */
 export const devicePresets = [
-  { id: 'design', label: 'Design size', width: 0, height: 0 },
+  { id: 'design', label: 'Default preview', width: 0, height: 0 },
   { id: 'desktop', label: 'Desktop', width: 1440, height: 900 },
   { id: 'laptop', label: 'Laptop', width: 1280, height: 800 },
   { id: 'tablet', label: 'Tablet', width: 768, height: 1024 },
@@ -111,19 +111,6 @@ export const resolutionOrientation = ({ width, height }: Resolution): Orientatio
 
 export const resolutionLabel = (resolution: Resolution): string =>
   `${resolution.width} × ${resolution.height} px · ${resolutionOrientation(resolution)}`;
-
-/** The legacy landscape preference stores a quarter-turn, including landscape-native presets. */
-export const withOrientation = (
-  document: Resolution,
-  preferences: CanvasPreferences,
-  orientation: 'Portrait' | 'Landscape',
-): CanvasPreferences => {
-  const base = previewResolution(document, { ...preferences, landscape: false });
-  return {
-    ...preferences,
-    landscape: resolutionOrientation(base) !== orientation && base.width !== base.height,
-  };
-};
 
 export const deviceDocument = (
   document: SceneDocument,

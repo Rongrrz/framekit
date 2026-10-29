@@ -15,7 +15,7 @@ test('100% zoom keeps both dimensions at one CSS pixel per project pixel with re
   await expect(frame.locator('[data-framekit="ScreenGui"]')).toBeVisible();
   await chooseDropdown(page, 'Presentation zoom', '100% zoom');
   for (const resolution of [
-    { label: 'Design size · 960 × 640 px · Landscape', width: 960, height: 640 },
+    { label: 'Default preview · 960 × 640 px · Landscape', width: 960, height: 640 },
     { label: 'Full HD · 1920 × 1080 px · Landscape', width: 1920, height: 1080 },
     { label: '4K UHD · 3840 × 2160 px · Landscape', width: 3840, height: 2160 },
     { label: 'Phone · 390 × 844 px · Portrait', width: 390, height: 844 },
@@ -136,7 +136,7 @@ test('presents exact selected resolutions, rotates and resizes without restartin
   await page.goto('/project-workbench/');
   await createProject(page, 'Task board');
   await chooseDropdown(page, 'Canvas resolution', 'Phone · 390 × 844 px · Portrait');
-  await expect(page.getByRole('button', { name: 'Canvas orientation', exact: true })).toContainText(
+  await expect(page.getByRole('button', { name: 'Canvas resolution', exact: true })).toContainText(
     'Portrait',
   );
   await page.screenshot({ path: '/tmp/framekit-resolution-editor.png' });
@@ -154,7 +154,7 @@ test('presents exact selected resolutions, rotates and resizes without restartin
   await frame.getByRole('button', { name: 'Add task', exact: true }).click();
   await expect(frame.getByText('13 tasks · 0 completed', { exact: true })).toBeVisible();
   const iframe = await page.locator('iframe[title="Presented project"]').elementHandle();
-  await chooseDropdown(page, 'Presentation orientation', 'Landscape');
+  await chooseDropdown(page, 'Presentation resolution', 'Phone · 844 × 390 px · Landscape');
   await expect.poll(viewport).toEqual([844, 390]);
   await expect(frame.getByText('13 tasks · 0 completed', { exact: true })).toBeVisible();
   await chooseDropdown(page, 'Presentation resolution', 'Full HD · 1920 × 1080 px · Landscape');
@@ -197,15 +197,17 @@ test('resolution dropdowns support keyboard selection, exact dimensions and pers
   await page.goto('/project-workbench/');
   await createProject(page, 'Blank canvas');
   await chooseDropdown(page, 'Canvas resolution', 'Desktop · 1440 × 900 px · Landscape');
-  const orientation = page.getByRole('button', { name: 'Canvas orientation', exact: true });
-  await orientation.press('ArrowDown');
-  await page.getByRole('menuitem', { name: 'Portrait', exact: true }).press('Enter');
-  await expect(orientation).toContainText('Portrait');
-  await expect(orientation).toBeFocused();
+  const resolution = page.getByRole('button', { name: 'Canvas resolution', exact: true });
+  await resolution.press('ArrowDown');
+  await page
+    .getByRole('menuitem', { name: 'Desktop · 900 × 1440 px · Portrait', exact: true })
+    .press('Enter');
+  await expect(resolution).toContainText('Portrait');
+  await expect(resolution).toBeFocused();
   await expect(page.locator('[data-workbench-canvas]')).toHaveCSS('width', '900px');
   await expect(page.locator('[data-workbench-canvas]')).toHaveCSS('height', '1440px');
   await page.reload();
-  await expect(orientation).toContainText('Portrait');
+  await expect(resolution).toContainText('Portrait');
   await expect(page.getByRole('button', { name: 'Canvas resolution', exact: true })).toContainText(
     'Desktop · 900 × 1440 px · Portrait',
   );

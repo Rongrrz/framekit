@@ -1,4 +1,9 @@
-import { orderedNodes, type SceneDocument, type SceneNode } from './document';
+import {
+  orderedNodes,
+  type SceneDocument,
+  type SceneNode,
+  type ResponsiveProperties,
+} from './document';
 
 type ExpandedScene = Readonly<{
   document: SceneDocument;
@@ -19,6 +24,7 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
       parent: string | null;
       properties: SceneNode['properties'];
       owner: string;
+      responsive?: ResponsiveProperties;
     }>,
   ): void => {
     const root = scope.find((node) => node.parent === null);
@@ -48,6 +54,18 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
           ? { ...node.properties, ...rootOverride.properties }
           : node.properties;
 
+      const responsive = Object.fromEntries(
+        ['phone', 'tablet', 'desktop'].map((breakpoint) => [
+          breakpoint,
+          {
+            ...node.responsive?.[breakpoint as keyof ResponsiveProperties],
+            ...(node === root
+              ? rootOverride?.responsive?.[breakpoint as keyof ResponsiveProperties]
+              : {}),
+          },
+        ]),
+      );
+
       if (node.prefabId) {
         const prefab = definitions.get(node.prefabId);
 
@@ -55,13 +73,19 @@ export const expandScene = (document: SceneDocument): ExpandedScene => {
           throw new TypeError('The prefab no longer exists.');
         }
 
-        appendScope(prefab.nodes, globalId, { id: globalId, parent, properties, owner });
+        appendScope(prefab.nodes, globalId, {
+          id: globalId,
+          parent,
+          properties,
+          owner,
+          responsive,
+        });
       } else {
         if (owners.has(globalId)) {
           throw new TypeError('Expanded object IDs must remain unique.');
         }
 
-        nodes.push({ id: globalId, parent, type: node.type, properties });
+        nodes.push({ id: globalId, parent, type: node.type, properties, responsive });
         owners.set(globalId, owner);
       }
     }

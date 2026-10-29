@@ -157,7 +157,7 @@ export const createProjectHome = (
   columns.unsafeElement.dataset.workbenchDivider = 'bottom';
   const nameColumn = label(columns, 'Name', 32, 11, colors.muted);
   nameColumn.Position = udim2FromOffset(16, 0);
-  const sizeColumn = label(columns, 'Canvas size', 32, 11, colors.muted);
+  const sizeColumn = label(columns, 'Layout', 32, 11, colors.muted);
   sizeColumn.Position = udim2(1, -340, 0, 0);
   sizeColumn.Size = udim2FromOffset(140, 32);
   const dateColumn = label(columns, 'Last edited', 32, 11, colors.muted);
@@ -411,7 +411,7 @@ export const createProjectHome = (
       const showMetadata = width >= 650;
 
       if (size?.isA('TextLabel') && date?.isA('TextLabel')) {
-        size.Text = `${project.document.width} × ${project.document.height} px`;
+        size.Text = 'Responsive';
         size.Visible = showMetadata;
         date.Text = new Date(project.updatedAt).toLocaleDateString(undefined, {
           month: 'short',

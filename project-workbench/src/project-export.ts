@@ -5,6 +5,7 @@ import {
   type PrefabDefinition,
   type SceneDocument,
 } from './document';
+import { layoutBreakpoints } from './responsive';
 import { definitionFor } from './schema';
 import scriptContextSource from './script-context.ts?raw';
 import { identifierFrom, sourceValue } from './typescript-source';
@@ -70,13 +71,13 @@ const serializeScope = (
 
   if (!module) {
     imports.add('createFrame');
-    imports.add('udim2FromOffset');
+    imports.add('udim2FromScale');
     imports.add('color3FromHex');
     lines.push(
       '  const canvas = createFrame({',
       `    Name: ${JSON.stringify(document.name)},`,
-      `    Size: udim2FromOffset(${document.width}, ${document.height}),`,
-      "    BackgroundColor3: color3FromHex('#f3f6f3'),",
+      '    Size: udim2FromScale(1, 1),',
+      "    BackgroundColor3: color3FromHex('#111216'),",
       '    ...properties,',
       '  });',
       '  canvas.Parent = parent;',
@@ -116,6 +117,96 @@ const serializeScope = (
         '',
       );
     }
+  }
+
+  const responsiveNodes = scope.nodes.filter(
+    (node) =>
+      node.type !== 'Script' &&
+      node.responsive &&
+      Object.values(node.responsive).some((properties) => Object.keys(properties).length > 0),
+  );
+
+  if (responsiveNodes.length) {
+    const viewport = identifierFrom('responsive viewport', used);
+    const previous = identifierFrom('previous layout', used);
+    const update = identifierFrom('update layout', used);
+    const device = identifierFrom('device layout', used);
+    lines.push(`  const ${viewport} = ${rootName}.unsafeElement.ownerDocument.defaultView!;`);
+    const bases = new Map(
+      responsiveNodes.map((node) => {
+        const base = identifierFrom(`${node.properties.Name} shared styles`, used);
+        const target = names.get(node.id)! + (node.prefabId ? '.root' : '');
+        const keys = [
+          ...new Set(
+            Object.values(node.responsive!).flatMap((properties) => Object.keys(properties)),
+          ),
+        ];
+        const prefabRoot = node.prefabId
+          ? modules.get(node.prefabId)!.definition.nodes.find((entry) => entry.parent === null)!
+          : undefined;
+        lines.push(
+          `  const ${base} = {`,
+          ...keys.map((key) => {
+            const value = node.properties[key] ?? prefabRoot?.properties[key];
+            const source = prefabRoot
+              ? sourceValue(definitionFor(node.type).fields[key]!, value!, imports)
+              : `${target}.${key}`;
+            return `    ${key}: ${source},`;
+          }),
+          '  };',
+        );
+        return [node.id, base];
+      }),
+    );
+    lines.push(
+      `  let ${previous} = '';`,
+      `  const ${update} = (): void => {`,
+      `    const ${device} = ${viewport}.innerWidth < ${layoutBreakpoints[1].min} ? 'phone' : ${viewport}.innerWidth < ${layoutBreakpoints[2].min} ? 'tablet' : 'desktop';`,
+      `    if (${previous} === ${device}) return;`,
+      `    ${previous} = ${device};`,
+    );
+
+    for (const node of responsiveNodes) {
+      const target = names.get(node.id)! + (node.prefabId ? '.root' : '');
+      lines.push(`    ${target}.setProperties({`, `      ...${bases.get(node.id)},`);
+
+      const prefabRoot = node.prefabId
+        ? modules.get(node.prefabId)!.definition.nodes.find((entry) => entry.parent === null)!
+        : undefined;
+      const keys = new Set(
+        Object.values(node.responsive!).flatMap((properties) => Object.keys(properties)),
+      );
+
+      for (const breakpoint of layoutBreakpoints) {
+        const inherited = Object.fromEntries(
+          Object.entries(prefabRoot?.responsive?.[breakpoint.id] ?? {}).filter(([key]) =>
+            keys.has(key),
+          ),
+        );
+        const entries = Object.entries({ ...inherited, ...node.responsive?.[breakpoint.id] });
+
+        if (entries.length) {
+          lines.push(
+            `      ...(${device} === '${breakpoint.id}' ? {`,
+            ...entries.map(
+              ([key, value]) =>
+                `        ${key}: ${sourceValue(definitionFor(node.type).fields[key]!, value, imports)},`,
+            ),
+            '      } : {}),',
+          );
+        }
+      }
+
+      lines.push('    });');
+    }
+
+    lines.push(
+      '  };',
+      `  ${viewport}.addEventListener('resize', ${update});`,
+      `  ${rootName}.onDestroy(() => ${viewport}.removeEventListener('resize', ${update}));`,
+      `  ${update}();`,
+      '',
+    );
   }
 
   for (const output of outputNames.values()) {

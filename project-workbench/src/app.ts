@@ -14,7 +14,7 @@ import {
 
 import { bindCanvasDrag } from './canvas-drag';
 import { bindCanvasNavigation } from './canvas-navigation';
-import { createCanvasPreferences, deviceDocument } from './canvas-preferences';
+import { createCanvasPreferences, deviceDocument, previewResolution } from './canvas-preferences';
 import { bindChromeTheme, themeChromeNode } from './chrome-theme';
 import { createCodeDialog } from './code-dialog';
 import { createCommandPalette, type Command } from './commands';
@@ -33,6 +33,7 @@ import { createProjectHome } from './project-home';
 import { createProjectLibrary } from './projects';
 import { createProperties } from './properties';
 import { createResolutionControls } from './resolution-controls';
+import { breakpointForWidth, layoutBreakpoints } from './responsive';
 import { definitionFor, nodeDefinitions, type NodeType } from './schema';
 import { createScriptDialog } from './script-dialog';
 import { createSettingsDialog } from './settings-dialog';
@@ -49,14 +50,14 @@ export const createWorkbench = (): ScreenGui => {
   const library = createProjectLibrary();
   const editor = createEditor();
   const preferences = createObservableValue(restoreWorkspace());
-  const handTool = createObservableValue(false);
+  const handTool = createObservableValue(true);
   let activeProjectId: string | null = null;
-  const status = createObservableValue('Select an object to start editing.');
+  const status = createObservableValue('');
   const app = createScreenGui({ Name: 'FrameKitWorkbench', ColorScheme: 'Dark' });
   const keyboard = createUserInputService(app);
   const canvasPreferences = createCanvasPreferences(app);
   bindChromeTheme(app, canvasPreferences);
-  themeChromeNode(createUIFocusRing({ Color: colors.accent, Thickness: 2, Offset: 2 })).Parent =
+  themeChromeNode(createUIFocusRing({ Color: colors.accent, Thickness: 1, Offset: 0 })).Parent =
     app;
   const report = (message: string): void => status.set(message);
   const perform = (action: () => void): void => {
@@ -241,6 +242,7 @@ export const createWorkbench = (): ScreenGui => {
     perform,
     report,
     (id, opener) => scripts.open(id, opener),
+    workspace.locateSelection,
   );
   const events = createEventDialog(
     app,
@@ -274,11 +276,9 @@ export const createWorkbench = (): ScreenGui => {
   controls.AutomaticSize = 'X';
   stack(controls, 6, true);
   const selectTool = iconButton(controls, 'cursor', 'Select tool', () => handTool.set(false));
-  selectTool.unsafeElement.title = 'Select tool · V';
-  const panTool = iconButton(controls, 'hand', 'Hand tool', () =>
-    handTool.update((value) => !value),
-  );
-  panTool.unsafeElement.title = 'Hand tool · H · Space-drag or middle-drag to pan';
+  selectTool.unsafeElement.title = 'Select tool · V · E toggles tools on canvas';
+  const panTool = iconButton(controls, 'hand', 'Hand tool', () => handTool.set(true));
+  panTool.unsafeElement.title = 'Hand tool · H · E toggles tools on canvas';
   watchOwnedValue(app, handTool, (active) => {
     for (const [control, selected] of [
       [selectTool, !active],
@@ -346,12 +346,13 @@ export const createWorkbench = (): ScreenGui => {
     { id: 'copy', label: 'Copy selection', hint: 'Ctrl/Cmd C', run: () => editor.copy() },
     { id: 'cut', label: 'Cut selection', hint: 'Ctrl/Cmd X', run: () => editor.copy(true) },
     { id: 'paste', label: 'Paste into selection', hint: 'Ctrl/Cmd V', run: editor.paste },
+    { id: 'locate', label: 'Locate selection', hint: 'F', run: workspace.locateSelection },
     { id: 'delete', label: 'Delete selection', hint: 'Delete', run: editor.remove },
     { id: 'move', label: 'Move selection to…', hint: 'Reparent', run: move },
     {
       id: 'canvas',
-      label: 'Edit canvas settings',
-      hint: 'Name and artboard dimensions',
+      label: 'Edit project settings',
+      hint: 'Project name',
       run: () => {
         editor.select(null);
         preferences.update((value) => ({ ...value, pane: 'properties' }));
@@ -440,14 +441,77 @@ export const createWorkbench = (): ScreenGui => {
     preferences: canvasPreferences,
     document: () => editor.state.get().document,
     label: 'Canvas resolution',
-    orientationLabel: 'Canvas orientation',
     menuParent: app,
     custom: () => settings.open(),
+  });
+  const layoutEditing = createDropdown(controls, {
+    label: 'Layout editing',
+    width: 168,
+    menuParent: app,
+    choices: [
+      { value: 'shared', label: 'Shared styles' },
+      ...layoutBreakpoints.map((entry) => ({ value: entry.id, label: entry.label })),
+    ],
+    value: () => editor.state.get().layout ?? 'shared',
+    formatValue: (value) =>
+      value === 'shared' ? 'Shared styles' : `${value[0]!.toUpperCase()}${value.slice(1)} layout`,
+    change: (value) => {
+      if (value === 'shared') {
+        editor.setLayout(null);
+        return;
+      }
+
+      const layout = layoutBreakpoints.find((entry) => entry.id === value)!.id;
+      canvasPreferences.update((current) => ({ ...current, device: layout, landscape: false }));
+      editor.setLayout(layout);
+    },
+  });
+  watchOwnedValue(app, editor.state, () => {
+    layoutEditing.refresh();
+    layoutEditing.control.unsafeElement.title +=
+      ' · Override layout, visibility, content, or styling for this device';
+  });
+  const expandedTools = createObservableValue(false);
+  const moreTools = iconButton(controls, 'more', 'More tools', () =>
+    expandedTools.update((value) => !value),
+  );
+  moreTools.unsafeElement.title = 'Show or hide advanced tools';
+  watchOwnedValue(app, expandedTools, (expanded) => {
+    eventsButton.Visible = expanded;
+    moreTools.unsafeElement.setAttribute('aria-expanded', String(expanded));
+  });
+  const advancedToggles = (
+    [
+      ['snapping', 'Snap', 'Snap objects to nearby edges'],
+      ['guides', 'Guides', 'Show alignment guides while moving objects'],
+      ['grid', 'Grid', 'Show the canvas grid'],
+    ] as const
+  ).map(([key, name, tooltip]) => {
+    const control = button(
+      controls,
+      name,
+      () => canvasPreferences.update((value) => ({ ...value, [key]: !value[key] })),
+      64,
+    );
+    control.AccessibleLabel = `Toggle ${name.toLowerCase()}`;
+    control.unsafeElement.title = tooltip;
+    watchOwnedValue(app, expandedTools, (expanded) => {
+      control.Visible = expanded;
+    });
+    watchOwnedValue(app, canvasPreferences, (value) => {
+      control.BackgroundColor3 = value[key] ? colors.selected : colors.raised;
+      control.TextColor3 = value[key] ? colors.accent : colors.muted;
+      control.unsafeElement.setAttribute('aria-pressed', String(value[key]));
+    });
+    return control;
   });
   const viewportDivider = panel('Viewport tools divider', controls, colors.border);
   viewportDivider.Size = udim2FromOffset(1, 20);
   const actionDivider = panel('Editor tools divider', controls, colors.border);
   actionDivider.Size = udim2FromOffset(1, 20);
+  watchOwnedValue(app, expandedTools, (expanded) => {
+    actionDivider.Visible = expanded;
+  });
   const layout = controls.getChildren().find((node) => node.isA('UIListLayout'))!;
   controls.reorderChildren([
     selectTool,
@@ -457,11 +521,13 @@ export const createWorkbench = (): ScreenGui => {
     redo,
     viewportDivider,
     devices.resolution,
-    devices.orientation,
     zoom.control,
+    layoutEditing.control,
+    commandButton,
+    moreTools,
     actionDivider,
     eventsButton,
-    commandButton,
+    ...advancedToggles,
     sceneButton,
     editPrefabButton,
     layout,
@@ -469,12 +535,21 @@ export const createWorkbench = (): ScreenGui => {
   topActions.reorderChildren([projectsButton, saveButton, exportButton, present, settingsButton]);
   watchOwnedValue(app, canvasPreferences, (value) => {
     const snapshot = editor.state.get();
+
+    if (snapshot.layout) {
+      const layout = breakpointForWidth(previewResolution(snapshot.project, value).width);
+
+      if (layout !== snapshot.layout) {
+        editor.setLayout(layout);
+      }
+    }
+
     preview.update(
       deviceDocument(snapshot.document, value, snapshot.prefabId),
       snapshot.selectedId,
+      breakpointForWidth(previewResolution(snapshot.project, value).width),
     );
     devices.resolution.Disabled = Boolean(snapshot.prefabId);
-    devices.orientation.Disabled ||= Boolean(snapshot.prefabId);
   });
   const footer = panel('Status bar', background);
   footer.Position = udim2(0, 0, 1, -27);
@@ -518,6 +593,7 @@ export const createWorkbench = (): ScreenGui => {
     preview.update(
       deviceDocument(snapshot.document, canvasPreferences.get(), snapshot.prefabId),
       snapshot.selectedId,
+      breakpointForWidth(previewResolution(snapshot.project, canvasPreferences.get()).width),
     );
     undo.Disabled = !snapshot.canUndo;
     redo.Disabled = !snapshot.canRedo;
@@ -526,7 +602,6 @@ export const createWorkbench = (): ScreenGui => {
     sceneButton.Disabled = !snapshot.prefabId;
     devices.refresh();
     devices.resolution.Disabled = Boolean(snapshot.prefabId);
-    devices.orientation.Disabled ||= Boolean(snapshot.prefabId);
     sceneButton.Visible = Boolean(snapshot.prefabId);
     editPrefabButton.Disabled = !snapshot.document.nodes.find(
       (node) => node.id === snapshot.selectedId,
@@ -563,6 +638,13 @@ export const createWorkbench = (): ScreenGui => {
     }
 
     if (processed) {
+      return;
+    }
+
+    if (!modifier && !event.altKey && key === 'f') {
+      event.preventDefault();
+      cancelCanvasDrag();
+      workspace.locateSelection();
       return;
     }
 
@@ -654,12 +736,9 @@ export const createWorkbench = (): ScreenGui => {
       activeProjectId = project.id;
       leftSection.set('hierarchy');
       editor.replace(project.document);
-      handTool.set(false);
+      handTool.set(true);
       workspace.recenter();
-      report(
-        library.error.get() ??
-          'Saved in this browser. Drag objects in Explorer to organize your interface.',
-      );
+      report(library.error.get() ?? '');
     } else if (!project) {
       activeProjectId = null;
     }

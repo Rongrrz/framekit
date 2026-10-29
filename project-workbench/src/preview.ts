@@ -16,8 +16,14 @@ import {
   type UDim2,
 } from 'framekit';
 
-import { orderedNodes, type SceneDocument, type SceneNode } from './document';
+import {
+  orderedNodes,
+  type SceneDocument,
+  type SceneNode,
+  type LayoutBreakpoint,
+} from './document';
 import { expandScene } from './expand-scene';
+import { breakpointForWidth, responsiveProperties } from './responsive';
 import { definitionFor, type NodeType } from './schema';
 
 const factories = {
@@ -39,7 +45,7 @@ export const createScenePreview = (
   canvas: Frame,
 ): Readonly<{
   setPosition(id: string, position: UDim2): void;
-  update(document: SceneDocument, selectedId: string | null): void;
+  update(document: SceneDocument, selectedId: string | null, layout?: LayoutBreakpoint): void;
   idFromTarget(target: EventTarget | null): string | null;
 }> => {
   const handles = new Map<string, Instance>();
@@ -66,11 +72,16 @@ export const createScenePreview = (
         ? (element.dataset.sceneOwner ?? element.dataset.sceneId ?? null)
         : null;
     },
-    update: (authored, selectedId): void => {
+    update: (authored, selectedId, layout = breakpointForWidth(authored.width)): void => {
       const scene = expandScene(authored);
       const document = {
         ...scene.document,
-        nodes: scene.document.nodes.filter((node) => node.type !== 'Script'),
+        nodes: scene.document.nodes
+          .filter((node) => node.type !== 'Script')
+          .map((node) => ({
+            ...node,
+            properties: responsiveProperties(node, layout),
+          })),
       };
       const next = new Map(document.nodes.map((node) => [node.id, node]));
       const removed = new Set(

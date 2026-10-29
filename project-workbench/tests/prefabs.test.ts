@@ -1,4 +1,4 @@
-import { color3FromHex } from 'framekit';
+import { color3FromHex, udim2 } from 'framekit';
 import { describe, expect, it } from 'vitest';
 
 import { createSampleDocument, parseDocument } from '../src/document';
@@ -7,6 +7,16 @@ import { expandScene } from '../src/expand-scene';
 import { resolvedProperties } from '../src/prefabs';
 
 describe('linked prefabs', () => {
+  it('captures a scale-sized component relative to its authored ancestors', () => {
+    const editor = createEditor();
+    editor.edit('card', 'Size', udim2(1, -32, 1, -32));
+    editor.edit('feature', 'Size', udim2(1, -80, 0, 164));
+    editor.select('feature');
+    const id = editor.createPrefab('Fluid feature');
+    const prefab = editor.state.get().project.prefabs!.find((entry) => entry.id === id)!;
+    expect({ width: prefab.width, height: prefab.height }).toEqual({ width: 848, height: 164 });
+  });
+
   it('converts an owned group, places independent instances, edits the shared definition, and round trips it', () => {
     const editor = createEditor();
     editor.select('feature');

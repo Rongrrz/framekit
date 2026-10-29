@@ -88,11 +88,20 @@ nearby edges and centers snap before the eight-pixel grid. Hold Alt to move free
 to cancel a drag. A completed drag creates one undo step. Layout-controlled children are arranged
 through Hierarchy.
 
-The device selector previews desktop, laptop, tablet, phone, wide-screen, or custom dimensions;
-rotate switches orientation. Settings accepts custom widths and heights between 240 and 4096 pixels.
-These previews change the viewport without rewriting saved design dimensions. Scale-based
-properties respond to the preview size; fixed pixel values retain their authored sizes.
+The device selector combines resolution and orientation in one menu for desktop, laptop, tablet,
+phone, wide-screen, and custom viewports. Settings accepts custom widths and heights between 240 and 4096 pixels.
+Preview dimensions describe the device, not a fixed website canvas. Generated websites fill their
+container. Scale-based properties respond to the viewport; fixed pixel values keep their authored sizes.
+Use **Layout editing** to edit shared styles or overrides for phone (below 600 px), tablet
+(600–1023 px), or desktop (1024 px and up). Override position, size, visibility, typography, content,
+and styling. Alternate containers with device-specific visibility support entirely different compositions.
+The Inspector's reset button restores the selected layer's shared styles for that device; Undo restores overrides.
+Device overrides persist in project backups and switch automatically in presentation and exported websites.
 Prefab editing uses the component's own dimensions.
+
+Hand is the default canvas tool. Ctrl/Cmd + and − zoom around the cursor while it is over the canvas.
+Pan space is bounded; Fit canvas recenters the page. Panel edges resize down to zero and can be
+dragged back open. More tools reveals Events, snapping, guides, and grid toggles.
 
 Settings also controls zoom, code appearance, panel widths, and resetting the panel layout.
 These choices persist in this browser.
@@ -120,6 +129,8 @@ workspace preferences, and undo history are excluded.
 | Ctrl/Cmd Shift Z or Ctrl/Cmd Y | Redo outside text editing                                  |
 | Ctrl/Cmd D                     | Duplicate selection outside text editing                   |
 | Ctrl/Cmd C / X / V             | Copy / cut / paste branches outside text editing           |
+| E (canvas focused)             | Toggle Hand and Select tools                               |
+| F                              | Locate the hierarchy selection on canvas                   |
 | F2                             | Rename the selected object                                 |
 | Alt Up / Down                  | Reorder the selected sibling                               |
 | Delete / Backspace             | Delete selection outside text editing                      |

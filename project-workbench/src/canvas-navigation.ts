@@ -26,6 +26,7 @@ export const bindCanvasNavigation = (
   const window = document.defaultView!;
   let pan: Pan | undefined;
   let space = false;
+  let pointer: Vector2 | undefined;
 
   const paintCursor = (): void => {
     element.toggleAttribute('data-workbench-pan-ready', space || handTool.get());
@@ -126,6 +127,8 @@ export const bindCanvasNavigation = (
   viewport.on(
     'pointermove',
     (event) => {
+      pointer = vector2(event.clientX, event.clientY);
+
       if (pan?.pointer === event.pointerId) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -149,6 +152,9 @@ export const bindCanvasNavigation = (
     },
     { capture: true },
   );
+  viewport.on('pointerleave', () => {
+    pointer = undefined;
+  });
   viewport.on('pointercancel', () => finish());
   viewport.on('lostpointercapture', () => finish());
   viewport.on(
@@ -234,7 +240,7 @@ export const bindCanvasNavigation = (
         cancel();
         preferences.update((value) => ({ ...value, zoom: 0 }));
       } else {
-        zoomBy(event.key === '-' ? 1 / 1.2 : 1.2);
+        zoomBy(event.key === '-' ? 1 / 1.2 : 1.2, pointer);
       }
     } else if (!modified && !event.altKey) {
       if (
@@ -247,6 +253,11 @@ export const bindCanvasNavigation = (
         event.preventDefault();
         space = true;
         paintCursor();
+      } else if (event.key.toLowerCase() === 'e' && element.contains(document.activeElement)) {
+        event.preventDefault();
+        cancelObjectDrag();
+        finish();
+        handTool.update((value) => !value);
       } else if (event.key.toLowerCase() === 'h' || event.key.toLowerCase() === 'v') {
         event.preventDefault();
         handTool.set(event.key.toLowerCase() === 'h');

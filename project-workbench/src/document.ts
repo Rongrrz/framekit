@@ -10,11 +10,18 @@ import {
   type PropertyValue,
 } from './schema';
 
+/** Device overrides inherit shared properties and can replace layout, visibility, content, or styling. */
+export type LayoutBreakpoint = 'phone' | 'tablet' | 'desktop';
+export type ResponsiveProperties = Readonly<
+  Partial<Record<LayoutBreakpoint, Readonly<Record<string, PropertyValue>>>>
+>;
+
 /** Flat storage preserves sibling order while parent IDs describe ownership. */
 export type SceneNode = Readonly<{
   id: string;
   type: NodeType;
   prefabId?: string;
+  responsive?: ResponsiveProperties;
   parent: string | null;
   properties: Readonly<Record<string, PropertyValue> & { Name: string }>;
 }>;
@@ -177,7 +184,30 @@ const parseScope = (value: Record<string, unknown>, prefab: boolean): SceneDocum
       properties[key] = validateField(fields[key]!, property, key);
     }
 
+    const responsive: Partial<Record<LayoutBreakpoint, Record<string, PropertyValue>>> = {};
+
+    if (node.responsive !== undefined) {
+      for (const [breakpoint, overrides] of Object.entries(object(node.responsive))) {
+        if (!['phone', 'tablet', 'desktop'].includes(breakpoint)) {
+          throw new TypeError(`Unsupported layout breakpoint: ${breakpoint}.`);
+        }
+
+        const values: Record<string, PropertyValue> = {};
+
+        for (const [key, property] of Object.entries(object(overrides))) {
+          if (!Object.hasOwn(fields, key) || key === 'Name' || node.type === 'Script') {
+            throw new TypeError(`Unsupported responsive property: ${key}.`);
+          }
+
+          values[key] = validateField(fields[key]!, property, key);
+        }
+
+        responsive[breakpoint as LayoutBreakpoint] = values;
+      }
+    }
+
     return {
+      ...(node.responsive === undefined ? {} : { responsive }),
       id: node.id,
       type: node.type,
       parent: node.parent,

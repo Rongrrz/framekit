@@ -33,6 +33,7 @@ export const createHierarchy = (
   perform: (action: () => void) => void,
   report: (message: string) => void,
   editScript: (id: string, opener: GuiElement) => void,
+  locate: () => void,
 ): void => {
   const heading = label(parent, 'Explorer', 38, 13, colors.muted);
   heading.Position = udim2FromOffset(16, 4);
@@ -61,7 +62,7 @@ export const createHierarchy = (
   root.BackgroundTransparency = 1;
   root.unsafeElement.title = 'Drop here to move an object to the top level';
   tree.Position = udim2FromOffset(8, 124);
-  tree.Size = udim2(1, -16, 1, -178);
+  tree.Size = udim2(1, -16, 1, -154);
   setAccessibility(tree, { label: 'Scene hierarchy' });
   const rows = createObservableValue<readonly TreeViewItem[]>([]);
   const source = createObservableValue<
@@ -81,18 +82,8 @@ export const createHierarchy = (
   let lastSelection: string | null = null;
   const rowIds = new Map<Frame, string>();
   const count = label(parent, '', 24, 10, colors.faint);
-  count.Position = udim2(0, 16, 1, -49);
+  count.Position = udim2(0, 16, 1, -25);
   count.Size = udim2(1, -32, 0, 24);
-  const help = label(
-    parent,
-    'Drag to move · F2 rename · Right-click for more',
-    20,
-    9,
-    colors.faint,
-  );
-  help.Position = udim2(0, 16, 1, -25);
-  help.Size = udim2(1, -32, 0, 20);
-  help.ClipsDescendants = true;
 
   const publish = (): void => {
     const { document, selectedId } = editor.state.get();
@@ -435,7 +426,18 @@ export const createHierarchy = (
   tree.on(
     'keydown',
     (event) => {
-      if (event.key === 'F2') {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest('input, textarea, [contenteditable="true"]')
+      ) {
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'f' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        locate();
+      } else if (event.key === 'F2') {
         event.preventDefault();
         startRename();
       } else if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {

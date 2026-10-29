@@ -5,6 +5,7 @@ import {
   type PrefabDefinition,
   type SceneDocument,
   type SceneNode,
+  type LayoutBreakpoint,
 } from './document';
 import { defaultProperties, definitionFor } from './schema';
 
@@ -38,13 +39,19 @@ export const editableDocument = (
 export const resolvedProperties = (
   document: SceneDocument,
   node: SceneNode,
+  layout: LayoutBreakpoint | null = null,
 ): SceneNode['properties'] => {
   const root = node.prefabId
     ? document.prefabs
         ?.find((prefab) => prefab.id === node.prefabId)
         ?.nodes.find((entry) => entry.parent === null)
     : undefined;
-  return root ? { ...root.properties, ...node.properties } : node.properties;
+  return {
+    ...root?.properties,
+    ...node.properties,
+    ...(layout ? root?.responsive?.[layout] : {}),
+    ...(layout ? node.responsive?.[layout] : {}),
+  };
 };
 
 export const replaceScope = (
@@ -114,26 +121,35 @@ export const makePrefab = (
 
     return whollyInside;
   });
-  const properties = selected?.properties ?? defaultProperties('Frame');
-  const size = properties.Size;
-  const width = Math.max(
-    4,
-    Math.min(
-      4096,
-      typeof size === 'object' && 'X' in size && typeof size.X === 'object' && 'Offset' in size.X
-        ? size.X.Offset || 320
-        : 320,
-    ),
-  );
-  const height = Math.max(
-    4,
-    Math.min(
-      4096,
-      typeof size === 'object' && 'Y' in size && typeof size.Y === 'object' && 'Offset' in size.Y
-        ? size.Y.Offset || 180
-        : 180,
-    ),
-  );
+  const authoredSize = (
+    node: SceneNode | undefined,
+  ): Readonly<{ width: number; height: number }> => {
+    if (!node) {
+      return document;
+    }
+
+    const parent = authoredSize(document.nodes.find((entry) => entry.id === node.parent));
+    const size = resolvedProperties(document, node).Size;
+
+    if (
+      typeof size !== 'object' ||
+      !('X' in size) ||
+      typeof size.X !== 'object' ||
+      !('Scale' in size.X) ||
+      typeof size.Y !== 'object' ||
+      !('Scale' in size.Y)
+    ) {
+      return parent;
+    }
+
+    return {
+      width: parent.width * size.X.Scale + size.X.Offset,
+      height: parent.height * size.Y.Scale + size.Y.Offset,
+    };
+  };
+  const dimensions = selected ? authoredSize(selected) : { width: 320, height: 180 };
+  const width = Math.max(4, Math.min(4096, dimensions.width));
+  const height = Math.max(4, Math.min(4096, dimensions.height));
   const prefab: PrefabDefinition = {
     id,
     name: name.trim().slice(0, 200) || 'New prefab',

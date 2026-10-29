@@ -303,3 +303,9 @@ input[aria-invalid='true'] {
     transition: none;
   }
 }
+
+/* Keep focus decoration inside editable fields, including those flush with a scroll clip. */
+[data-workbench-theme] input:focus-visible,
+[data-workbench-theme] textarea:focus-visible {
+  outline-offset: -1px;
+}

@@ -83,7 +83,7 @@ export const createProjectTemplateDialog = (
     const document = template.create();
     const dimensions = label(
       card,
-      `${document.width} × ${document.height} px · ${document.nodes.length ? 'Interactive template' : 'Blank canvas'}`,
+      document.nodes.length ? 'Responsive · Editable components' : 'Responsive website',
       24,
       10,
       colors.faint,

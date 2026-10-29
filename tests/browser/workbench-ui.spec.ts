@@ -100,6 +100,7 @@ test('quantizes canvas movement at fractional zoom and persists decimal precisio
     await page.mouse.move(bounds.x + 103, bounds.y + 37, { steps: 5 });
     await page.mouse.up();
   };
+  await page.getByRole('button', { name: 'Select tool', exact: true }).click();
   await drag();
   const offset = page.getByRole('textbox', { name: 'Position X offset', exact: true });
   await expect(offset).toHaveValue(/^-?\d+$/);

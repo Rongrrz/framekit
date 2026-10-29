@@ -13,6 +13,7 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto('/project-workbench/index.html');
   await createProject(page, 'Welcome card');
+  await page.getByRole('button', { name: 'Select tool', exact: true }).click();
 });
 
 test.afterEach(async ({ page }) => {
@@ -51,6 +52,8 @@ test('applies dimensions, colors, rotation, and visibility through property cont
 }) => {
   const card = page.locator('[data-scene-id="card"]');
   for (const [name, value] of [
+    ['Size X scale', '0'],
+    ['Size Y scale', '0'],
     ['Size X offset', '720'],
     ['Size Y offset', '480'],
     ['BackgroundColor3', '#112233'],
@@ -70,10 +73,10 @@ test('applies dimensions, colors, rotation, and visibility through property cont
   await expect(card).toBeHidden();
   await visible.click();
   await expect(card).toBeVisible();
-  await page.getByRole('button', { name: 'Canvas settings', exact: true }).click();
-  await page.getByRole('textbox', { name: 'width', exact: true }).fill('1200');
-  await page.getByRole('textbox', { name: 'width', exact: true }).press('Enter');
-  await expect(page.locator('[data-workbench-canvas]')).toHaveCSS('width', '1200px');
+  await page.getByRole('button', { name: 'Project settings', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'width', exact: true })).toHaveCount(0);
+  await chooseDropdown(page, 'Canvas resolution', 'Laptop · 1280 × 800 px · Landscape');
+  await expect(page.locator('[data-workbench-canvas]')).toHaveCSS('width', '1280px');
 });
 
 test('inserts, renames, reparents, duplicates, and deletes through the editor', async ({
@@ -167,7 +170,7 @@ test('shows formatted highlighted code in persistent themes and downloads the di
   await page.getByRole('button', { name: 'Export', exact: true }).click();
   const region = page.getByRole('region', { name: 'Generated TypeScript' });
   const source = region.locator('pre').filter({ hasText: "from 'framekit'" });
-  await expectWorker(source).toContainText('const welcomeCard = createFrame({');
+  await expectWorker(source).toContainText('const welcomeCard = createScrollingFrame({');
   const tokenColors = await source
     .locator('span[style*="color"]')
     .evaluateAll((nodes) => new Set(nodes.map((node) => (node as HTMLElement).style.color)).size);
@@ -348,7 +351,7 @@ test('releases its GUI, modal, and owned observers when destroyed', async ({ pag
 test('creates projects from templates, manages the library, and keeps project histories separate', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: 'Canvas settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Project settings', exact: true }).click();
   const projectName = page.getByRole('textbox', { name: 'name', exact: true });
   await projectName.fill('First canvas');
   await projectName.press('Enter');
@@ -365,7 +368,7 @@ test('creates projects from templates, manages the library, and keeps project hi
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
   await expect(page.locator('[data-project-row]')).toHaveCount(2);
-  await expect(page.getByRole('list', { name: 'Saved projects' })).toContainText('960 × 640 px');
+  await expect(page.getByRole('list', { name: 'Saved projects' })).toContainText('Responsive');
   await chooseDropdown(page, 'Sort projects', 'Name · A–Z');
   await expect(page.locator('[data-project-row]').first()).toContainText('Dashboard');
   await chooseDropdown(page, 'Sort projects', 'Name · Z–A');

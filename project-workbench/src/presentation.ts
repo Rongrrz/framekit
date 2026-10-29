@@ -78,7 +78,6 @@ export const createPresentation = (
     preferences,
     document: () => activeDocument ?? { width: 960, height: 640 },
     label: 'Presentation resolution',
-    orientationLabel: 'Presentation orientation',
     menuParent: dialog,
     custom,
   });
@@ -108,9 +107,7 @@ export const createPresentation = (
     viewport.Size = udim2(1, 0, 1, -height);
     devices.resolution.Position = udim2FromOffset(16, 58);
     devices.resolution.Size = compact ? udim2(1, -32, 0, 32) : udim2FromOffset(330, 32);
-    devices.orientation.Position = compact ? udim2FromOffset(16, 100) : udim2FromOffset(354, 58);
-    devices.orientation.Size = compact ? udim2(0.5, -20, 0, 32) : udim2FromOffset(130, 32);
-    zoom.control.Position = compact ? udim2(0.5, 4, 0, 100) : udim2FromOffset(492, 58);
+    zoom.control.Position = compact ? udim2(0.5, 4, 0, 100) : udim2FromOffset(354, 58);
     zoom.control.Size = compact ? udim2(0.5, -20, 0, 32) : udim2FromOffset(152, 32);
 
     const resolution = previewResolution(activeDocument, preferences.get());

@@ -29,6 +29,7 @@ const openScene = async (page: Page, nodes: readonly object[]): Promise<void> =>
     );
   }, nodes);
   await page.goto('/project-workbench/index.html#/project/selection-regression');
+  await page.getByRole('button', { name: 'Select tool', exact: true }).click();
 };
 
 /** Read an actual rendered pixel so changing only the selected object's z-index cannot pass. */
@@ -99,7 +100,7 @@ test('draws selection above opaque children and overlapping high-z siblings with
   await expect
     .poll(async () => {
       const bounds = (await target.boundingBox())!;
-      return colorAt(page, bounds.x + 1, bounds.y + 60);
+      return colorAt(page, bounds.x + 0.5, bounds.y + 60);
     })
     .toEqual([61, 157, 255, 255]);
   await expect(target).toHaveCSS('z-index', '1');
@@ -110,7 +111,7 @@ test('draws selection above opaque children and overlapping high-z siblings with
 
   // The decoration must not intercept canvas selection or raise the selected scene object.
   const bounds = (await target.boundingBox())!;
-  await page.mouse.click(bounds.x + 1, bounds.y + 60);
+  await page.mouse.click(bounds.x + 0.5, bounds.y + 60);
   await expect(page.getByRole('treeitem', { name: 'Opaque sibling', exact: true })).toHaveAttribute(
     'aria-selected',
     'true',
@@ -189,7 +190,7 @@ test('selection follows nested rotation, zoom and scrolling, and clears for hidd
   );
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await matchesTarget();
-  await expect(outline).toHaveCSS('box-shadow', 'rgb(61, 157, 255) 0px 0px 0px 2px inset');
+  await expect(outline).toHaveCSS('box-shadow', 'rgb(61, 157, 255) 0px 0px 0px 1px inset');
   const before = (await target.boundingBox())!;
   await page.locator('[data-scene-id="scroll"]').evaluate((element) => {
     element.scrollTop = 120;
